@@ -304,6 +304,8 @@ return(list(csp=CSP,unc=unc,af=acbp))}
 calc.fixed = function(Nkdo,Nunp,afbp,kpdo,CSP,DI,Qcont){
 
 	# generates hyptadinit
+
+if(Nunp>0) {
 	ind = rep((1:Nunp),rep(2,Nunp))  # ind = c(1,1,2,2,3,3) when Nunp=3
 	Qgen=kpdo[1:2];kpdo=kpdo[-(1:2)];if(Qcont==2)kpdo=c(kpdo,Qgen) # if Q is contributor subject to dropout, put those alleles last in kpdo 
 	hyptadinit=rep(0,nrow(afbp))
@@ -329,6 +331,14 @@ if (DI==0) {
 			pUall.end <- rbind(pUall.end,pUall)
 			}
 	pUall <- pUall.end[-1,]
+} else {
+ind=c(1,1)
+hyptadinit=rep(0,nrow(afbp))
+if(length(kpdo)) for(u in 1:length(kpdo))hyptadinit = hyptadinit +(rownames(afbp)==kpdo[u])
+if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
+pUall <- which(CSPset>0)
+}
+
 
 
 # CHANGE: edit pUall
@@ -524,6 +534,22 @@ return(list(hpdrout=hpdrout,hddrout=hddrout))}
 #----------------------------------------	
 
 
+#-----------------------------------------
+# zero.cont()
+#-----------------------------------------
+# Calculates likelihood when there are zero unknown contributors
+# Returns a single likelihood
+
+zero.cont = function(DI,DO,CSP,hyptadinit,af,unc,nrep,BB){
+	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
+	if(DI | sum(CSPset*(hyptadinit==0))==0) 
+	term = 1; tmp = hyptadinit^BB[2]; drpin =  DI*(1-DO) # dropin rate
+	for(z in 1:nrep) if(CSP[z,1]!=999){ # check that the replicate is not missing at this locus
+		vdosedr = tmp*DO[z]/(tmp*DO[z]+1-DO[z])  # dropout probabilities in replicate z for the allele "doses" specified by hyptad
+		term = term * prod(vdosedr[!CSP[z,] & !unc[z,]],na.rm=T) * prod(1-vdosedr[CSP[z,]!=0],na.rm=T) * prod(drpin[z]*af[CSP[z,] & !hyptadinit]) * prod(1-drpin[z]*af[!CSP[z,] & !unc[z,] & !hyptadinit]) # contributions to the likelihood from (in order): dropouts, non-dropouts, dropins and non-dropins.
+	}
+	if (DI | sum(CSPset*(hyptadinit==0))==0) return(term) else return (0)
+}
 
 
 
