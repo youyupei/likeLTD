@@ -53,10 +53,17 @@ for(itr in 1:niter){ # start simulated annealing loop
 # CHANGE: this loop
 for(j in 1:nloc){ # for each locus
 	#if(DI*max(1-DO)*max(afbp[setdiff(rownames(afbp)[apply(unc,2,prod)==0],kpdo),1])>1) return(0) # don't allow dropin rate in any replicate to exceed 1/max(af)
+if(NU!=0) {
 	if(Drin*max(1-nupa$do)*max(nu[[j]]$af[setdiff(rownames(nu[[j]]$af)[apply(nu[[j]]$unc,2,prod)==0],known[[j]][mfunpr]),1])>1) {nupa$l[j]=0} else {
 		nu.tmp=Calclik.1(known[[j]][mfunpr],nupa$do,Drin,nu[[j]]$af,nu[[j]]$csp,nu[[j]]$unc,nrep,c(nupa$locadj[[j]],nupa$beta),nu[[j]]$pUall,NU,nupa$rcont,1+nupa$deg,nu[[j]]$tprof,nu[[j]]$index,nu[[j]]$fragments,nu[[j]]$v.index) 
 		nupa$l[j] = Adjust.Like(nu.tmp,nu[[j]]$pUall,nu[[j]]$af,NU,rr)
 		}
+	} else {
+	if(Drin*max(1-nupa$do)*max(nu[[j]]$af[setdiff(rownames(nu[[j]]$af)[apply(nu[[j]]$unc,2,prod)==0],known[[j]][mfunpr]),1])>1) {nupa$l[j]=0} else {
+		nupa$l[j] = zero.cont(Drin,nupa$do,nu[[j]]$csp,nu[[j]]$hyptadinit*nupa$beta,nu[[j]]$af[,1],nu[[j]]$unc,nrep,c(nupa$locadj[j],nupa$beta))
+		}
+	}
+
 	if(Drin*max(1-depa$do)*max(de[[j]]$af[setdiff(rownames(de[[j]]$af)[apply(de[[j]]$unc,2,prod)==0],known[[j]][mfunpr]),1])>1) {depa$l[j]=0} else {
 		de.tmp=Calclik.1(known[[j]][mfunpr],depa$do,Drin,de[[j]]$af,de[[j]]$csp,de[[j]]$unc,nrep,c(depa$locadj[[j]],depa$beta),de[[j]]$pUall,NU+1,depa$rcont,1+depa$deg,de[[j]]$tprof,de[[j]]$index,de[[j]]$fragments,de[[j]]$v.index)
 		depa$l[j] = Adjust.Like(de.tmp,de[[j]]$pUall,nu[[j]]$af,NU+1,rr)
