@@ -40,6 +40,9 @@ maxd = depa = start$depa
 # 5. Main loop.
 for(itr in 1:niter){ # start simulated annealing loop
 	
+	if(itr==1) time.begin <- proc.time()[3]
+
+
 	# copy of inital objects before updates are proposed, in case updates are rejected
 	nupa.old = nupa
 	depa.old = depa
@@ -78,6 +81,9 @@ if(NU!=0) {
 	decision = decide(depa.old,nupa.old,depa,nupa,itr)
 	nupa = decision$nupa
 	depa = decision$depa
+
+
+if(itr==1) {time.end <- proc.time()[3]; print(paste("Approx run time =", round(((time.end-time.begin)*niter)/60), "minutes"))}
 
 
 	# Generate reports (interim or final)
