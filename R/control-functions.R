@@ -397,10 +397,13 @@ return(y)}
 
 Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,tprof,index,fragments,v.index){
 
+tprof.init <- rep(0,nrow(afbp))
 if(length(kpdo)) for(u in 1:length(kpdo)){
 	vec = (rownames(afbp)==kpdo[u])
-	if(sum(vec)) tprof = tprof + vec*deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
+	if(sum(vec)) tprof.init = tprof.init + vec*deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
 	} 
+
+matrix(data=rep(tprof.init,times=nrow(pUall)),nrow=nrow(pUall))
 
 tmp = deg[index]^-fragments * rcont[index] # doses for U/X
 for(u in 1:(2*Nunp)){ # for each contributor (2 alleles each).Loop required to sum contributions at the same allele
