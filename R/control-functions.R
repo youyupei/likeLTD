@@ -397,7 +397,7 @@ return(y)}
 
 Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,tprof,index,fragments,v.index){
 
-tprof.init <- c(tprof[1,])
+tprof.init <- c(tprof[,1])
 if(length(kpdo)) for(u in 1:length(kpdo)){
 	vec = (rownames(afbp)==kpdo[u])
 	if(sum(vec)) tprof.init = tprof.init * deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
