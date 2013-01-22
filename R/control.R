@@ -38,6 +38,8 @@ maxd = depa = start$depa
 
 #-------------------------------------------------------------------------
 # 5. Main loop.
+shrink <<- 1
+
 for(itr in 1:niter){ # start simulated annealing loop
 	
 	if(itr==1) time.begin <- proc.time()[3]
