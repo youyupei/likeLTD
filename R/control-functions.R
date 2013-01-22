@@ -171,7 +171,7 @@ mfunpr <<- 1:2; if(Nkdo>0) mfunpr <<- c(mfunpr,2+2*Nknd+(1:(2*Nkdo)))
 propose.new = function(nupa,depa,itr,rcontupsd=0.01,degupsd=0.001,doupsd=0.01){
  
 print(paste('currently processing',itr,'th iteration'))
-shrink = (1-1/niter)^itr # reduce SD of parameter updates as SA algorithm progresses
+shrink <<- shrink*(1-(1/niter)) # reduce SD of parameter updates as SA algorithm progresses
 
 # propose updates for numerator parameters
  	nupa$rcont = abs(rnorm(nN,nupa$rcont,shrink*rcontupsd)); if(!Drin) nupa$rcont[nN]=0 # new rcont values must be positive and final value must be zero if Drin=F
