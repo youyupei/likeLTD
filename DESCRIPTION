@@ -1,17 +1,9 @@
 Package: likeLTD
-Version: 5.0
-Date: 2012-01-15
-Title: DNA profile evidence
-Authors@R: c(person("David", "Balding", role = c("aut")),
-             person("Adrian", "Timpson", role = c("aut", "cre")),
-             person("Christopher", "Steele", role = c("aut")),
-             person("Mayeul", "d'Avezac", role = c("ctb")))
-Depends: R (>= 1.8.0)
-Suggests: gplots
-Description: Suite of R code for evaluating DNA profile evidence, including
-complex mixtures and when profiles are subject to dropout. See Balding DJ,
-Buckleton J, Interpreting low template DNA profiles, ForensicScience
-International: Genetics, 4: 1-10, 2009, for a description of the statistical
-model, but recent developments are not described in that paper.
-License: LGPL (>= 2)
-URL: https://sites.google.com/site/baldingstatisticalgenetics/software/likeltd-r-forensic-dna-r-code
+Title: Tools to determine DNA profile evidence.
+Description: Tools to determine DNA profile evidence.
+Depends: R (>= 2.10), gplots
+Version: 5.0.0
+Date: 2013-01-15
+Author: David Balding, Adrian Timpson, Christopher Steele.
+Maintainer: Adrian Timpson <a.timpson@ucl.ac.uk>
+License: GPL-2
