@@ -212,16 +212,11 @@ return(list(nupa=nupa,depa=depa))}
 # Returns:
 #	L:  overall likelihood	
 
-calc.L = function(either.pa,either.N,lap=50,Drinpen=2,degpen=50){
+calc.L = function(either.pa,either.N,lap=50,Drinpen=2,degpen=50,bemn=-4.35,besd=0.38){
 # CHANGE: Mistake in L?
 	#L = prod(either.pa$l*dgamma(either.pa$locadj,lap,lap))*exp(-Drinpen*nupa$rcont[either.N])*exp(-degpen*sum(either.pa$deg))
-	bemn=-4.35
-	besd=0.38
 	L = prod(either.pa$l*dgamma(either.pa$locadj,lap,lap))*exp(-Drinpen*either.pa$rcont[either.N]-degpen*sum(either.pa$deg))*dnorm(either.pa$beta,bemn,besd)
 
-# bemn=-4.35
-# besd=0.38
-# nupa$beta (BB)=-4.35
 
 	return(L)}
 #----------------------------------------------------
