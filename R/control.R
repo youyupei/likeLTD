@@ -49,10 +49,11 @@ for(itr in 1:niter){ # start simulated annealing loop
 	nupa.old = nupa
 	depa.old = depa
 
-
+if(itr>1) {
 	new = propose.new(nupa,depa,itr) # convenient here for a simple loop, but note this slightly changes the initial values before they are used by Calclik.1()
 	nupa = new$nupa
 	depa = new$depa
+}
 
 
 # CHANGE: this loop
