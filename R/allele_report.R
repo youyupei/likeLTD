@@ -18,7 +18,8 @@ UnusualAlleles <- function(frequencies, profile) {
       unique.alleles <- unique(strsplit(profile[name,locus],',')[[1]]) 
       for(allele in unique.alleles){
 
-        x = afreq[afreq$Marker==locus & afreq$Allele==allele, ]
+        condition = frequencies$Marker==locus & frequencies$Allele==allele
+        x = frequencies[condition, ]
         if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
           frame = data.frame(name=name, locus=locus, allele=allele, EA1=x$EA1,
                              EA3=x$EA3, EA4=x$EA4)
@@ -51,7 +52,7 @@ ReadRefProfile <- function(path) {
   #   path: Path to file with the profile. 
   # returns: The profile minus some faff.
   
-  raw = read.table(ref.file, header=T, colClasses='character', row.names=1,
+  raw = read.table(path, header=T, colClasses='character', row.names=1,
                    sep=',', quote = "\"")
   result = raw[,2:ncol(raw)]
   # removes spaces from formatting
@@ -67,7 +68,7 @@ QueriedAndKnown <- function(path) {
   #
   # Args:
   #   path: Path to file with the profile. 
-  raw = read.table(ref.file, header=T, colClasses='character', row.names=1,
+  raw = read.table(path, header=T, colClasses='character', row.names=1,
                    sep=',', quote = "\"")
   return(raw$known.queried == 'queried')
 }
@@ -360,7 +361,7 @@ SuggestHypothesis = function(queried, known, ref, cprofs) {
   # Returns: List of strings with sensible hypothesis. 
 
   # estimates all possible hypotheses
-  summary = SummaryGenerator(queried, known, ref.only, cprofs)
+  summary = SummaryGenerator(queried, known, ref, cprofs)
   other.both = summary$other.rep + summary$other.unrep
   other.rep  = summary$other.rep
 
@@ -375,7 +376,7 @@ SuggestHypothesis = function(queried, known, ref, cprofs) {
   GenerateHypothesis = function(n) {
     #  Generates a hypothesis
     #  Ugly way to call badly designed functions.
-    summary = SummaryGenerator(n[[1]], n[[2]], ref.only, cprofs)
+    summary = SummaryGenerator(n[[1]], n[[2]], ref, cprofs)
     result = HypothesisGenerator(n[[1]], n[[2]], summary$other.rep,
                                  summary$other.unrep)
     return(result)
@@ -399,8 +400,6 @@ AlleleReport <- function( frequency.file, mixed.file, ref.file,
   #   output.path: Path where the output should be stored.
   
 
-  # Reads frequency table
-  afreq = read.table(frequency.file,sep="\t",header=T)
 
   # Formats the output path
   if(identical(output.path, NA)) {
@@ -409,19 +408,19 @@ AlleleReport <- function( frequency.file, mixed.file, ref.file,
   }
 
   # Reads raw crime scene profile from  file
-  csp.only = ReadCSPProfile(mixed.file)
+  csp.data = ReadCSPProfile(mixed.file)
 
   # Reads raw reference profile from  file
-  ref.only = ReadRefProfile(ref.file)
+  ref.data = ReadRefProfile(ref.file)
 
 
   # Transform data to an internal represenation
-  cprofs <- InternalRepresentation(csp.only)
+  cprofs <- InternalRepresentation(csp.data)
 
   # Extracts Queried and Knowns
   queried.vs.known <- QueriedAndKnown(ref.file)
-  name.queried = row.names(ref.only)[queried.vs.known]
-  name.known   = row.names(ref.only)[!queried.vs.known]
+  names.queried = row.names(ref.data)[queried.vs.known]
+  names.known   = row.names(ref.data)[!queried.vs.known]
 
 
 
@@ -453,7 +452,7 @@ AlleleReport <- function( frequency.file, mixed.file, ref.file,
   title(paste(stain,'Allele Report'))
 
   # Tabular Summary 
-  summary = SummaryGenerator(name.queried, name.known, ref.only, cprofs)
+  summary = SummaryGenerator(names.queried, names.known, ref.data, cprofs)
   textplot(summary$summary, valign='top', cex=tablesize)
   title('Summary. {}=unreplicated, []=absent')
 
@@ -474,19 +473,20 @@ AlleleReport <- function( frequency.file, mixed.file, ref.file,
          pch=c(15,15))
 
   # Rare Alleles
-  rare <- UnusualAlleles(afreq, ref.only)
+  afreq = read.table(frequency.file,sep="\t",header=T)
+  rare <- UnusualAlleles(afreq, ref.data)
   if(length(rare)==0) rare = 'No unusual alleles in Q or K profiles'
   textplot(rare, cex=1, valign='top')
   title('Rare alleles')
 
   # Approximae representation.
   # Estimate how well each reference profile is represented in the CSP
-  estimates <- EstimateCSP(ref.only, cprofs)
+  estimates <- EstimateCSP(ref.data, cprofs)
   textplot(estimates, cex=1, valign='top')
   title('Approximate representation %')
 
   # Suggested hypothesis.
-  suggested = SuggestHypothesis(name.queried, name.known, ref.only, cprofs)
+  suggested = SuggestHypothesis(names.queried, names.known, ref.data, cprofs)
   textplot(suggested, cex=1, valign='top')
   title(main='Suggested Hypotheses',
         sub= paste('Note: likeLTD is limited to 2 unknowns. If more than 2 ', 
