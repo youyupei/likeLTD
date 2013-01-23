@@ -1,240 +1,498 @@
-#------------------------------------------------
-# Generates an allele summary, suggested hypotheses, and sundry info
-# from the mixed and reference profile .csv,
-# using various interactive user inputs
-#------------------------------------------------
-# NOT NECESSARY if packages are already installed!!!!
-#install.packages('tcltk')
-#install.packages('gplots')
+UnusualAlleles <- function(frequencies, profile) {
+  # Searches for unusual alleles.
+  #
+  # Such alleles are likely to be mistakes.
+  #
+  # Args:
+  #   freqencies: Table of allele frequencies.“
+  #   profile: A profile with just the facts. 
+  #
+  # returns: data frame with the rare alleles. 
 
-#----------------------------------------------
-require(tcltk)
-tclRequire("BWidget")
-library('gplots')
-#-----------------------------------------------
-startDir = getwd()
+  rare =data.frame(name=NULL, locus=NULL, allele=NULL, EA1=NULL, EA3=NULL,
+                   EA4=NULL)
 
-#-----------------------------------------------
-# 1. choose allele frequency file
-alleleFreq = tk_choose.files(caption='Please choose the ALLELE FREQUENCY file...')
-afreq = read.table(alleleFreq,sep="\t",header=T)
+  for(name in row.names(profile)){
+    for(locus in colnames(profile)){
+      # loop over unique allele names.
+      unique.alleles <- unique(strsplit(profile[name,locus],',')[[1]]) 
+      for(allele in unique.alleles){
 
-#-----------------------------------------------
-# 1. choose stain folder
-case = tk_choose.dir(startDir, 'Please choose the STAIN folder...') 
-caseName = rev(strsplit(case,'/')[[1]])[1]
-setwd(case)
+        x = afreq[afreq$Marker==locus & afreq$Allele==allele, ]
+        if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
+          frame = data.frame(name=name, locus=locus, allele=allele, EA1=x$EA1,
+                             EA3=x$EA3, EA4=x$EA4)
+          rare=rbind(rare, frame)
+        }
+      }  # loop over alleles
+    } # loop over loci
+  } # loop over people
 
-#-----------------------------------------------
-# 2. choose mixed CSP file
-CSPfile = tk_choose.files(caption='Please choose the MIXED CSP file...')
+  return(rare)
+}
 
-#-----------------------------------------------
-# 3. choose reference file
-REFfile = tk_choose.files(caption='Please choose the REFERENCE file...')
+ReadCSPProfile <- function(path) {
+  # Reads profile from path.
+  #
+  # Args:
+  #   path: Path to file with the profile. 
+  # returns: The profile 
+  
+  raw = read.table(path, header=T, colClasses='character', sep=',')
+  return(raw[,5:dim(raw)[2]])
+}
+ReadRefProfile <- function(path) {
+  # Reads profile from path.
+  #
+  # Makes sure everything is formatted as should be, e.g. removes spaces and
+  # such.
+  #
+  # Args:
+  #   path: Path to file with the profile. 
+  # returns: The profile minus some faff.
+  
+  raw = read.table(ref.file, header=T, colClasses='character', row.names=1,
+                   sep=',', quote = "\"")
+  result = raw[,2:ncol(raw)]
+  # removes spaces from formatting
+  for(locus in 1:ncol(result)){
+    for(person in 1:nrow(result)){
+      result[person, locus] = gsub(' ', '', result[person, locus])
+    }
+  }
+  return(result)
+}
+QueriedAndKnown <- function(path) {
+  # Reads profile from path and returns queried vs known column.
+  #
+  # Args:
+  #   path: Path to file with the profile. 
+  raw = read.table(ref.file, header=T, colClasses='character', row.names=1,
+                   sep=',', quote = "\"")
+  return(raw$known.queried == 'queried')
+}
 
-#-----------------------------------------------
-# 4. Read mixed profile, and reference profiles
-rawCSP = read.table(CSPfile,header=T,colClasses='character',sep=',')
-onlyCSP = rawCSP[,5:dim(rawCSP)[2]]
+InternalRepresentation <- function(profile) {
+  # Takes a profile and transforms it to the cprofs format.
+  #
+  # cprofs is an internal format to do calulations on a crime scene profile.
+  #
+  # Args:
+  #   profile: The crime-scene profile to  process.
+  # Returns: The same information in a different format.
 
-REF.all = read.table(REFfile,header=T,colClasses='character',row.names=1,sep=',',quote = "\"")
-REF = REF.all[,2:dim(REF.all)[[2]]]
+  # Half the crime profile is empty for some reason.
+  nrep = nrow(profile)/2
 
-# removes spaces from formatting
-for(locus in 1:dim(REF)[2]){
-	for(person in 1:dim(REF)[1]){
-		REF[person,locus] = gsub(' ','',REF[person,locus])}}
+  result = list()
+  # each column in profile will be a new column in the output
+  for(locus in colnames(profile)){	
 
-caseName = strsplit((strsplit(case,'cases/')[[1]])[2],'/')[[1]][1]
+    # creates a list of reps in each loci
+  	result[[locus]]=list()  
 
-#-----------------------------------------------
-# 4. Search for unusual alleles that may be mistakes
-rare =data.frame(name=NULL,locus=NULL,allele=NULL,EA1=NULL,EA3=NULL,EA4=NULL)
-for(name in 1:dim(REF)[1]){
-	for(locus in 1:dim(REF)[2]){
-		for(allele in unique(strsplit(REF[name,locus],',')[[1]])){
-			x = afreq[afreq$Marker==names(REF)[locus]&afreq$Allele==allele,]
-			if(x$EA1<2|x$EA3<2|x$EA4<2)rare=rbind(rare,data.frame(name=row.names(REF)[name],locus=names(REF)[locus],allele=allele,EA1=x$EA1,EA3=x$EA3,EA4=x$EA4))
-}}}
-if(length(rare)==0)rare='No unusual alleles in Q or K profiles'
-#-----------------------------------------------
-# 5. Transform CSP into 'cprofs' format
-nrep = dim(onlyCSP)[1]/2
-cprofs = as.list(onlyCSP[0,]) # creates a list of all loci
-for(locus in 1:length(cprofs)){	
-	cprofs[[locus]]=list()  # creates a list of reps in each loci
-	for(rep in 1:nrep){
-		cprofs[[locus]][[rep]]=list(csp=NULL,unc=NULL) # fills it with NULL csp and unc
-		if (is.na(onlyCSP[(2*rep)-1,locus])) cprofs[[locus]][rep]=list(NULL) # NAs must be formatted differently
-		else {
-			csp.value = gsub(' ','', onlyCSP[(2*rep)-1,locus]); if(csp.value!='')cprofs[[locus]][[rep]]$csp = strsplit(csp.value,',')[[1]] # values into csp 
-			unc.value = gsub(' ','', onlyCSP[(2*rep),locus]); if(unc.value!='')cprofs[[locus]][[rep]]$unc = strsplit(unc.value,',')[[1]] # values into unc 
-		}}}
-#-----------------------------------------------
-# 6. Estimate how well each reference profile is represented in the CSP
-allRepCSP = array(0,c(dim(REF)[1],nrep+1))
-for(person in 1:dim(REF)[1]){
-	for(rep in 1:nrep){
-		representedCSP=c()
-		for(locus in 1:length(cprofs)){
-			alleles = unique(strsplit(REF[person,locus],',')[[1]])
-			if(!is.null(cprofs[[locus]][[rep]]))representedCSP = c(representedCSP,alleles%in%cprofs[[locus]][[rep]]$csp)
-			}
-		allRepCSP[person,rep] = round(100*sum(representedCSP)/length(representedCSP))
-		}}
-if(nrep==1)allRepCSP[,nrep+1]= allRepCSP[,nrep]
-if(nrep>1)allRepCSP[,nrep+1]= round(rowSums(allRepCSP)/nrep)
-runNames = c(); for(n in 1:nrep)runNames[n]=paste('run',n)
-estimates = data.frame(allRepCSP,row.names=rownames(REF));colnames(estimates)=c(runNames,'total')
-estimates = estimates[order(estimates[,nrep+1],decreasing=T),]
-names = rownames(estimates)
+    # now creates the items in the list at this locus
+	  for(rep in 1:nrep){
+		  if (!is.na(profile[(2*rep)-1,locus])) {
+        # Figures out csp
+			  csp = gsub(' ','', profile[(2*rep)-1, locus]);
+        if(csp != '') csp = unlist(strsplit(csp, ',')) 
+        # Figures out unc
+			  unc = gsub(' ','', profile[(2*rep), locus]);
+        if(unc != '') unc = unlist(strsplit(unc, ','))
+        # fills it with NULL csp and unc at first
+		    result[[locus]][[rep]]=list(csp=csp, unc=unc) 
+		  }
+      # NAs must be formatted differently
+      else result[[locus]][rep]=list(NULL) 
+    } # loop over each replicate
 
-#-----------------------------------------------
-# 7. allele table for CSP
-nloc = length(cprofs); nrep = length(cprofs[[1]])
-alleles = array(0,c(2*nrep,nloc))
-cspCombined.all = replicated.all = unreplicated.all = vector('list',nloc)
-for(l in 1:nloc){ 
-	cspCombined = c()
-	for(r in 1:nrep){
-		if(is.null(cprofs[[l]][[r]])){
-			alleles[2*r-1,l]='NA'
-			alleles[2*r,l] ='NA'
-			}
-		if(!is.null(cprofs[[l]][[r]])){
-			alleles[2*r-1,l] = paste(cprofs[[l]][[r]]$csp,collapse=' ')
-			alleles[2*r,l] = paste(cprofs[[l]][[r]]$unc,collapse=' ')
-			}
-		cspCombined=c(cspCombined,cprofs[[l]][[r]]$csp)
-		}
-	if(!is.null(cspCombined)){
-		cspCombined.all[[l]] = cspCombined 
-		replicated.all[[l]] = unique(cspCombined[duplicated(cspCombined)])
-		unreplicated.all[[l]] = cspCombined[!cspCombined%in%replicated.all[[l]]]}}
+  } # loop over loci
+  return(result)
+}
 
-alleleRows = c();for(r in 1:nrep)alleleRows=c(alleleRows,paste('csp',r),paste('unc',r))
-alleles = data.frame(alleles);row.names(alleles)=alleleRows;colnames(alleles)=names(cprofs)
+EstimateCSP <- function(ref, cprofs) {
+  # Estimate how well each reference profile is represented in the CSP
+  #
+  # Args: 
+  #   ref: reference profile.
+  #   cprofs: crime scene profile, internal representation.
+  # Returns: 
+  #   A data frame where row refer to people and colums to replicates, and the
+  #   content is an estimate of how well that person and loci matches the CSP.
+  #   There is an additional column for the sum over all replicates.
+  nrep = length(cprofs[[1]])
+      
+  # Constructs the result data frame.
+  result = data.frame(array(0, c(nrow(ref), nrep+1)), row.names=rownames(ref))
+  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('run', n)})
+  colnames(result)[nrep+1] = 'Total' 
+  
+  # now add data.
+  for(person in row.names(ref)){
+	  for(rep in 1:nrep){
+      # number of alleles in common for given person and CSP replicate, across
+      # all loci
+			nalleles = 0
+      # How many reference loci exists in a given replicate
+      nloci = 0
+			for(locus in 1:length(cprofs)){
+				if(!is.null(cprofs[[locus]][[rep]])) {
+          # figure out unique alleles in reference 
+			  	alleles  <- unique(unlist(strsplit(ref[person,locus],',')))
+          # figure out howmany of these allele are in CSP
+          represented = alleles %in% cprofs[[locus]][[rep]]$csp
+          nalleles <- nalleles + sum(represented) / length(represented)
+          # this locus exists in replicate 
+          nloci    <- nloci + 1
+		    }
+      }
+      if(nloci > 0) result[person, rep] = round(100*nalleles/nloci)
+	  }
+  }
+  if(nrep==1)  result[, nrep+1] = result[, nrep]
+  else         result[, nrep+1] = round(rowSums(result)/nrep)
+   
+  # Reorders rows and return
+  return(result[order(result[, nrep+1], decreasing=T), ])
+}
 
-#-----------------------------------------------
-# 8. Extracts Queried and Knowns
-nameQ = row.names(REF)[REF.all$known.queried=='queried']
-nameK = row.names(REF)[REF.all$known.queried=='known']
+Private_NullifyItem <- function(n) {
+  # Returns NULL if n is character(0), else returns n.
+  #
+  # This is a helper function for internal use only.
+  if(identical(n, character(0))) return(NULL)
+  return(n)
+}
 
-#-----------------------------------------------
-# 9. Function to calculate 'summary', the allele table for Q and K
-# This is re-used in the wrapper once Q and K is specified, because 'summary' varies accordingly.
-# It also gets used to calculate possible hypotheses when there are 2 Q's, using otherRep and other Unrep
-summary.generator = function(nameQ,nameK){
-	knownNames = c()
-	for (name in nameQ)knownNames =c(knownNames,paste(name,'(Q)'))
-	for (name in nameK)knownNames =c(knownNames,paste(name,'(K)'))
-	ncont = length(knownNames)
+FlattenCSP <- function(v, subitem='csp') {
+  # Flatten and filters elements of cprofs defining one locus.
+  # 
+  # This function is mostly for internal use. It takes a single lo“flattens the
+  # cprofs object, selects its subitems with a given name, and put them all in
+  # a single vector.
+  #
+  # Args:
+  #   v: A locus element from cprofs. 
+  #   subitem: Name of the subitem
+  result <- sapply(v, function(n) n[subitem], simplify=FALSE)
+  result <- unlist(result, use.names=FALSE)
+  return(Filter(function(n) !(n == ""), result))
+}
+AllCSP <- function(cprofs, subitem='csp') {
+  # Flatten and filters elements of cprofs into a list of vectors.
+  # 
+  # This function is mostly for internal use. It applies to each element of
+  # cprofs the function FlattenCSP.
+  #
+  # Args:
+  #   v: A locus element from cprofs. 
+  # First, get all results across CSP
+  result <- sapply(cprofs, function(n) FlattenCSP(n, subitem))
+  # Then nullifies elements evaluating to character 0. 
+  return(sapply(result, Private_NullifyItem))
+}
+ReplicatedAlleles <- function(cprofs) {
+  # For each locus, lists replicated alleles.
+  #  
+  # Args:
+  #  v: cprofs data object
+  # Returns:
+  #   A list over loci, where each subitem is a vector of replicated alleles.
+  allcsp <- AllCSP(cprofs, subitem='csp')
+  allcsp <- sapply(allcsp, function(n) n[duplicated(n)])
+  return(sapply(allcsp, Private_NullifyItem))
+}
+UnreplicatedAlleles <- function(cprofs) {
+  # For each locus, lists replicated alleles.
+  #  
+  # Args:
+  #  v: cprofs data object
+  # Returns: 
+  #   A list over loci, where each subitem is a vector of unreplicated alleles.
+  allcsp <- AllCSP(cprofs, subitem='csp')
+  allcsp <- sapply(allcsp, function(n) setdiff(n, n[duplicated(n)]))
+  return(sapply(allcsp, Private_NullifyItem))
+}
 
-	index = c(); for (x in c(nameQ,nameK))index = c(index,which(row.names(REF)==x))
-	known = as.list(onlyCSP[0,])
-	for(locus in 1:length(cprofs))known[[locus]] = strsplit(paste(REF[[locus]][index],collapse=','),',')[[1]] # converts into a vector
+AlleleTable <- function(cprofs) {
+  # Allele table of a Crime Scene Profile
+  #
+  # Creates a better looking table for a CSP. 
+  nloc = length(cprofs)
+  nrep = length(cprofs[[1]])
 
-	summary = array(0,c(ncont+1,nloc))
-	otherRep <<- numeric(nloc); otherUnrep = numeric(nloc)
-	for(l in 1:nloc){ 
-		contCombined = c()
-		for(c in 1:ncont){
-			cont = known[[l]][(2*c-1):(2*c)]
-			contCombined = c(contCombined,cont)
-			summary[c,l] = paste(paste(cont[cont%in%replicated.all[[l]]],collapse=' '),'{',paste(cont[cont%in%unreplicated.all[[l]]],collapse=' '),'}','[',paste(cont[!cont%in%cspCombined.all[[l]]],collapse=' '),']',sep='')
-			}
-		# other alleles not found in the cprofs
-		unattributable = cspCombined.all[[l]][!cspCombined.all[[l]]%in%contCombined]
-		unattributableRep = unique(unattributable[duplicated(unattributable)]); otherRep[l] = length(unattributableRep)
-		unattributableUnrep = unattributable[!unattributable%in%unattributableRep]; otherUnrep[l] = length(unattributableUnrep)
-		summary[dim(summary)[1],l] = paste(paste(unattributableRep,collapse=' '),'{',paste(unattributableUnrep,collapse=' '),'}',sep='')
-		}
-	summary = data.frame(summary);row.names(summary)=c(knownNames,'Unattributable');colnames(summary)=names(cprofs)
-return(list(summary=summary,otherRep=otherRep,otherUnrep=otherUnrep))}
+  alleles = data.frame(array(0, c(2*nrep,nloc)))
+  rowfunc <- function(n) {c(paste('csp', n), paste('unc', n))}
+  row.names(alleles) = sapply(1:nrep, rowfunc)
+  colnames(alleles)  = names(cprofs)
+
+  for(l in 1:nloc){ 
+    for(r in 1:nrep){
+      if(!is.null(cprofs[[l]][[r]])){
+        alleles[2*r-1,l] = paste(cprofs[[l]][[r]]$csp, collapse=' ')
+        alleles[2*r,l]   = paste(cprofs[[l]][[r]]$unc, collapse=' ')
+      }
+      else {
+        alleles[2*r-1,l]='NA'
+        alleles[2*r,l] ='NA'
+      }
+    } # loop over replicates
+  } # loop over loci
+
+  return(alleles)
+}
+
+SummaryGenerator = function(queried, known, ref, cprofs){
+  # Summnarizes the allele table for Q and K
+  # 
+  # Args:
+  #  queried: Names of queried individuals in reference profile (rows).
+  #  known: Names of known individuals in reference profile (rows).
+  #  ref: the reference profile
+  #  cprofs: the crime scene profile, external format
+  all.names = c( sapply(queried, function(n) paste(n, '(Q)'), USE.NAMES=FALSE),
+                 sapply(known, function(n) paste(n, '(K)'), USE.NAMES=FALSE) )
+  ncont = length(all.names)
+  # index: indexing of ref such that queries come first and known profiles come
+  # second.
+  index = sapply(c(queried, known), function(n) which(row.names(ref) == n))
+  # known.loci: list over locus where each item contains the alleles with the
+  # same indexing as index. 
+  known.loci = list()
+  for(locus in names(ref)) {
+    string = paste(ref[[locus]][index], collapse=',')
+    known.loci[[locus]] = unlist(strsplit(string, ',')) 
+  }
+
+  # Figures out all, replicated, and unreplicated alleles in crime scene.
+  csp.combined.all <- AllCSP(cprofs)
+  replicated.all   <- ReplicatedAlleles(cprofs) 
+  unreplicated.all <- UnreplicatedAlleles(cprofs) 
+
+  #  construct summary data frame scaffold.
+  summary = data.frame(array(0, c(length(all.names)+1, length(ref))))
+  row.names(summary) = c(all.names,'Unattributable')
+  colnames(summary)  = names(cprofs)
+
+  # other.rep: per locus, number of unattributable and replicated
+  # alleles
+  other.rep = list()
+  # other.unrep: per locus, number of unattributable and unreplicated
+  # alleles
+  other.unrep = list()
+  for(locus in names(ref)){ 
+    # loop over people
+    for(c in 1:length(all.names)){
+      # alleles for this person in reference profile
+      cont = known.loci[[locus]][(2*c-1):(2*c)]
+      rep   = paste(cont[ cont %in% replicated.all[[locus]]],   collapse=' ')
+      unrep = paste(cont[ cont %in% unreplicated.all[[locus]]], collapse=' ')
+      none  = paste(cont[!cont %in% csp.combined.all[[locus]]], collapse=' ')
+      summary[c,locus] = paste(rep, '{', unrep,'}','[', none,']',sep='')
+    }
+    # other alleles not found in the cprofs
+    notfound = !csp.combined.all[[locus]] %in% known.loci[[locus]]
+    unattr = csp.combined.all[[locus]][notfound]
+    unattr.rep = unique(unattr[duplicated(unattr)])
+    unattr.rep.string = paste(unattr.rep, collapse=' ')
+    unattr.unrep = unattr[!unattr %in% unattr.rep]
+    unattr.unrep.string = paste(unattr.unrep, collapse=' ')
+
+    other.rep[locus] = length(unattr.rep)
+    other.unrep[locus] = length(unattr.unrep)
+
+    summary[nrow(summary), locus] = paste( unattr.rep.string, '{',
+                                           unattr.unrep.string, '}',
+                                           sep='' )
+  }
+
+  # coerce to numerics
+  other.rep = as.numeric(other.rep)
+  other.unrep = as.numeric(other.unrep)
+  return( list(summary=summary, other.rep=other.rep, other.unrep=other.unrep) )
+}
+
+HypothesisGenerator = function(queried, known, other.rep, other.unrep){
+  # function to calculate possible hypotheses
+  # 
+  # Needs to be done with various permutations of 2 Q's
+
+  other.both = other.rep + other.unrep
+  min.u = ceiling(max(other.rep)/2)
+  # TODO: Not sure the next line should have "divide by 2". Might be over
+  # replicated only.
+  max.u = ceiling(max(other.both)/2) 
+
+  hypotheses = c()
+  for(unknowns in min.u:max.u) {
+
+    extras   = other.both - 2*unknowns
+    unattributable.alleles = sum(extras[extras>0])
+    drop.in = unattributable.alleles != 0
+
+    Q = paste(queried,'(Q)',sep='')
+    others = c()
+    if(length(known) > 0 ) {
+      pasting <- function(n) paste(known[n], '(K', n, ')', sep='')
+      others = sapply(1:length(known), pasting)
+    }
+    if(unknowns > 0) {
+      U = sapply(1:unknowns, function(n) paste('U', n, sep=''))
+      others = c(others, U, recursive=TRUE)
+    }
+    if(unattributable.alleles !=0) {
+      D = paste(unattributable.alleles, 'dropins', sep='')
+      others = c(others, D, recursive=TRUE)
+    }
+         
+    others <- paste(others, collapse='+')
+    string <- paste(Q, '+', others,' vs X+', others, sep='') 
+    hypotheses[unknowns-min.u+1] = string
+  }
+  return(hypotheses[!is.na(hypotheses)])
+}
+
+
+SuggestHypothesis = function(queried, known, ref, cprofs) {
+  # Figures out sensible explanation of crime profile.
+  #
+  # Returns: List of strings with sensible hypothesis. 
+
+  # estimates all possible hypotheses
+  summary = SummaryGenerator(queried, known, ref.only, cprofs)
+  other.both = summary$other.rep + summary$other.unrep
+  other.rep  = summary$other.rep
+
+  # Each element of hypothesis is a different, hum, hypothesis.
+  hypothesis = list(list(queried, known))
+  if(length(queried)==2)
+    hypothesis = list( hypothesis,
+                       list(queried[2], known), 
+                       list(queried[1], c(queried[2], known)), 
+                       list(queried[2], c(queried[1], known)) )
+   
+  GenerateHypothesis = function(n) {
+    #  Generates a hypothesis
+    #  Ugly way to call badly designed functions.
+    summary = SummaryGenerator(n[[1]], n[[2]], ref.only, cprofs)
+    result = HypothesisGenerator(n[[1]], n[[2]], summary$other.rep,
+                                 summary$other.unrep)
+    return(result)
+  }
+  # suggested: The hypothesis generator is applied to each hypothesis. Each
+  # element of suggested is a string detailing the hypothesis.
+  suggested = sapply(hypothesis, GenerateHypothesis, USE.NAMES=FALSE,
+                     simplify=FALSE)
+  return(suggested)
+}
+
+AlleleReport <- function( frequency.file, mixed.file, ref.file,
+                          case.name='dummy', output.path=NA ) {
+  # Generates an allele summary from input profiles:
+  #
+  # Args:
+  #   frequency.file: File holding the allele frequencies
+  #   mixed.file: Mixed crime scene profile
+  #   ref.file: Reference profiles
+  #   casename: Name of the current case
+  #   output.path: Path where the output should be stored.
+  
+
+  # Reads frequency table
+  afreq = read.table(frequency.file,sep="\t",header=T)
+
+  # Formats the output path
+  if(identical(output.path, NA)) {
+    startDir = getwd()
+    output.path = file.path(startDir, case.name)
+  }
+
+  # Reads raw crime scene profile from  file
+  csp.only = ReadCSPProfile(mixed.file)
+
+  # Reads raw reference profile from  file
+  ref.only = ReadRefProfile(ref.file)
+
+
+  # Transform data to an internal represenation
+  cprofs <- InternalRepresentation(csp.only)
+
+  # Extracts Queried and Knowns
+  queried.vs.known <- QueriedAndKnown(ref.file)
+  name.queried = row.names(ref.only)[queried.vs.known]
+  name.known   = row.names(ref.only)[!queried.vs.known]
 
 
 
-#--------------------------------------------------------------
-# 10. function to calculate possible hypotheses
-# needs to be done with various permutations of 2 Q's
-hypothesis.generator = function(nameQ,nameK,otherRep,otherUnrep){
-	
-	otherBoth = otherRep+otherUnrep
-	minU = ceiling(max(otherRep)/2)
-	maxU = ceiling(max(otherBoth)/2) 
+  # Generate 'summary', whether multiple Q or single Q
 
-	hypotheses = c()
-	for(n in 1:(maxU-minU+1)){
-		Unknowns=minU+n-1
-		extras = otherBoth-(2*(Unknowns))
-		Unattributable.alleles = sum(extras[extras>0])
-		if(Unattributable.alleles==0)Drop.in=F;if(Unattributable.alleles!=0)Drop.in=T
+  #-----------------------------------------------
+  # 12. Write the allele report
+  # works out sensible font size
+  csp.total = unc.total = numeric(nrep)
+  for(l in names(cprofs)){ 
+    for(r in 1:length(l)){
+      csp.total[r] = csp.total[r] + length(cprofs[[l]][[r]]$csp)
+      unc.total[r] = unc.total[r] + length(cprofs[[l]][[r]]$unc)
+    }
+  }
+  tablesize = min(1,25/max(c(csp.total,unc.total)))
 
-		Q = paste(nameQ,'(Q)',sep='')
-		K = c(); if(length(nameK)>0)for(n in 1:length(nameK))K=paste(K,paste(nameK[n],'(K',n,')',sep=''),sep='+')
-		U = c(); if(Unknowns>0)for(n in 1:Unknowns)U=paste(U,paste('U',n,sep=''),sep='+')
-		D = c(); if(Drop.in)D = paste('+',Unattributable.alleles,'dropins',sep='')
-		hypotheses[n] = paste(Q,K,U,D,' vs X',K,U,D,sep='')
-		}
-return(hypotheses[!is.na(hypotheses)])}
+  case = 'demo/hammer'
+  stain = basename(case)
+  output.path = file.path(case, paste(stain, '-allele report.pdf', sep=''))
+  
+  # Start plotting proper. 
+  pdf(width=8.25,height=11.5,file=output.path)
+  par(mfrow=c(6,1), mai=c(0.7,0.5,0.5,0.5))
 
-#--------------------------------------------------------------
-# 10.1 estimates all possible hypotheses
-if(length(nameQ)==1){
-	s = summary.generator(nameQ,nameK)
-	suggested = hypothesis.generator(nameQ,nameK,s$otherRep,s$otherUnrep)}
-if(length(nameQ)==2){
-	suggested=c()
-	s1 = summary.generator(nameQ[1],nameK)
-	suggested=c(suggested,hypothesis.generator(nameQ[1],nameK,s1$otherRep,s1$otherUnrep))
+  # Allele report
+  alleles <- AlleleTable(cprofs)
+  textplot(alleles, valign='top',cex=tablesize)
+  title(paste(stain,'Allele Report'))
 
-	s2 = summary.generator(nameQ[2],nameK)
-	suggested=c(suggested,hypothesis.generator(nameQ[2],nameK,s2$otherRep,s2$otherUnrep))
+  # Tabular Summary 
+  summary = SummaryGenerator(name.queried, name.known, ref.only, cprofs)
+  textplot(summary$summary, valign='top', cex=tablesize)
+  title('Summary. {}=unreplicated, []=absent')
 
-	nameK1 = c(nameQ[2],nameK)
-	s3 = summary.generator(nameQ[1],nameK1)
-	suggested=c(suggested,hypothesis.generator(nameQ[1],nameK1,s3$otherRep,s3$otherUnrep))
+  # Unattributable Alleles
+  other.both = summary$other.rep + summary$other.unrep
+  other.rep  = summary$other.rep
+  yaxp=c(0, max(other.both), max(other.both))
+  if(max(other.both)==0) yaxp=c(0,1,1)
+  barplot(other.both, names.arg=names(cprofs), yaxp=yaxp, main='Unattributable
+          alleles', ylab='No. alleles')
+  barplot(add=T, col='black', other.rep, yaxt='n')
+  if(max(other.both) > 3) abline(h=2, lty=2)
+  if(max(other.both) > 5) abline(h=4, lty=2)
+  if(max(other.both) > 7) abline(h=6, lty=2) 
+  if(max(other.both) > 9) abline(h=8, lty=2);
+  legend(x=0, y=max(other.both), yjust=0, bty='n',
+         c('replicated','unreplicated'), xpd=NA, col=c('black','grey'),
+         pch=c(15,15))
 
-	nameK2 = c(nameQ[1],nameK)
-	s4 = summary.generator(nameQ[2],nameK2)
-	suggested=c(suggested,hypothesis.generator(nameQ[2],nameK2,s4$otherRep,s4$otherUnrep))
-	}	
-text = 
-'Note: likeLTD is limited to 2 unknowns. If more than 2 
-unknowns are suggested,this may indicate a mixed profile
-with too many alleles to be statisically informative.'
+  # Rare Alleles
+  rare <- UnusualAlleles(afreq, ref.only)
+  if(length(rare)==0) rare = 'No unusual alleles in Q or K profiles'
+  textplot(rare, cex=1, valign='top')
+  title('Rare alleles')
 
-#-----------------------------------------------
-# 11. generate 'summary', whether multiple Q or single Q
-summary = summary.generator(nameQ,nameK)
-otherBoth = summary$otherRep+summary$otherUnrep
-otherRep = summary$otherRep
+  # Approximae representation.
+  # Estimate how well each reference profile is represented in the CSP
+  estimates <- EstimateCSP(ref.only, cprofs)
+  textplot(estimates, cex=1, valign='top')
+  title('Approximate representation %')
 
-#-----------------------------------------------
-# 12. Write the allele report
-# works out sensible font size
-CSPtotal = UNCtotal = numeric(nrep)
-for(l in 1:nloc){ 
-	for(r in 1:nrep){
-		CSPtotal[r] = CSPtotal[r]+length(cprofs[[l]][[r]]$csp)
-		UNCtotal[r] = UNCtotal[r]+length(cprofs[[l]][[r]]$unc)
-		}}
-tablesize = min(1,25/max(c(CSPtotal,UNCtotal)))
-
-stain = rev(strsplit(case,'/')[[1]])[1]
-pdf(width=8.25,height=11.5,file=paste(case,'/',stain,'-allele report.pdf',sep=''))
-par(mfrow= c(6,1),mai = c(0.7,0.5,0.5,0.5))
-textplot(alleles,valign='top',cex=tablesize);title(paste(stain,'Allele Report'))
-textplot(summary$summary,valign='top',cex=tablesize);title('Summary. {}=unreplicated, []=absent')
-yaxp=c(0,max(otherBoth),max(otherBoth));if(max(otherBoth)==0)yaxp=c(0,1,1)
-barplot(otherBoth,names.arg=names(cprofs),yaxp=yaxp,main='Unattributable alleles',ylab='No. alleles')
-barplot(add=T,col='black',otherRep, yaxt='n')
-if(max(otherBoth)>3)abline(h=2,lty=2);if(max(otherBoth)>5)abline(h=4,lty=2);if(max(otherBoth)>7)abline(h=6,lty=2);if(max(otherBoth)>9)abline(h=8,lty=2);
-legend(x=0,y=max(otherBoth),yjust=0,bty='n',c('replicated','unreplicated'),xpd=NA,col=c('black','grey'),pch=c(15,15))
-textplot(rare,cex=1,valign='top');title('Rare alleles')
-textplot(estimates,cex=1,valign='top');title('Approximate representation %')
-textplot(suggested,cex=1,valign='top');title(main='Suggested Hypotheses',sub=text)
-dev.off()
-save.image(file = paste(case,'inputs.RData',sep='/'))
-
+  # Suggested hypothesis.
+  suggested = SuggestHypothesis(name.queried, name.known, ref.only, cprofs)
+  textplot(suggested, cex=1, valign='top')
+  title(main='Suggested Hypotheses',
+        sub= paste('Note: likeLTD is limited to 2 unknowns. If more than 2 ', 
+                   'unknowns are suggested,this may indicate a mixed profile',
+                   'with too many alleles to be statisically informative.',
+                   sep=''))
+  dev.off()
+  save.image(file = paste(case,'inputs.RData',sep='/'))
+}
