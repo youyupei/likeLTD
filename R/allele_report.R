@@ -402,20 +402,19 @@ pack.admin.input = function( frequencyFile, mixedFile, refFile,
   #   casename: Name of the current case
   #   outputPath: Path where the output should be stored.
   #   checkFiles: Whether to check file existence and such.
-  library('gplots')
   if(is.null(outputPath)) outputPath = file.path(getwd(), caseName)
 
   if(checkFiles) {
     for(path in c(frequencyFile, mixedFile, refFile)) {
       if(!file.exists(path))
-        warning(paste(path, "does not exist."))
+        stop(paste(path, "does not exist."))
       else { 
         info <- file.info(path)
-        if(info$isdir) warning(paste(path, "is not a file."))
+        if(info$isdir) stop(paste(path, "is not a file."))
       }
     } # loop over files.
     if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
-      warning(paste(outputPath, " exists and is not a directory."))
+      stop(paste(outputPath, " exists and is not a directory."))
   } # condition whether to check files.
   admin = list( caseName='hammer',
                 frequencyFile=frequencyFile,
@@ -493,6 +492,7 @@ allele.report <- function(admin, genetics=NULL) {
   #          pack.admin.input.
   
   # reads genetics information if not given on input.
+  library('gplots')
   if(is.null(genetics)) genetics = pack.genetics.input(admin)
 
 
