@@ -541,7 +541,12 @@ return(list(hpdrout=hpdrout,hddrout=hddrout))}
 # Calculates likelihood when there are zero unknown contributors
 # Returns a single likelihood
 
-zero.cont = function(DI,DO,CSP,hyptadinit,af,unc,nrep,BB){
+zero.cont = function(DI,DO,CSP,hyptadinit,af,unc,nrep,BB,kpdo,deg,rcont){
+	if(length(kpdo)) for(u in 1:length(kpdo)){
+		vec = (rownames(af)==kpdo[u])
+		if(sum(vec)) hyptadinit = hyptadinit *deg[trunc((u+1)/2)]^-af[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
+	} 
+	hyptadinit <- hyptadinit*BB[2]
 	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
 	if(DI | sum(CSPset*(hyptadinit==0))==0) 
 	term = 1; tmp = hyptadinit^BB[2]; drpin =  DI*(1-DO) # dropin rate
