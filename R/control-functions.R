@@ -329,7 +329,10 @@ if (DI==0) {
 } else {
 ind=c(1,1)
 hyptadinit=rep(0,nrow(afbp))
-if(length(kpdo)) for(u in 1:length(kpdo))hyptadinit = hyptadinit +(rownames(afbp)==kpdo[u])
+if(length(kpdo)) for(u in 1:length(kpdo)) {
+  vec = (rownames(afbp)==kpdo[u])
+  if(sum(vec)) hyptadinit = hyptadinit + (rownames(afbp)==kpdo[u])
+}
 if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
 pUall <- which(CSPset>0)
 }
@@ -398,7 +401,7 @@ if(length(kpdo)) for(u in 1:length(kpdo)){
 	if(sum(vec)) tprof.init = tprof.init * deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
 	} 
 
-tprof = t(matrix(data=rep(tprof.init,times=nrow(pUall)),nrow=nrow(pUall)))
+tprof <- t(matrix(data=rep(tprof.init,times=nrow(pUall)),nrow=nrow(pUall),byrow=TRUE))
 
 tmp = deg[index]^-fragments * rcont[index] # doses for U/X
 for(u in 1:(2*Nunp)){ # for each contributor (2 alleles each).Loop required to sum contributions at the same allele
