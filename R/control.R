@@ -66,7 +66,7 @@ if(NU!=0) {
 		}
 	} else {
 	if(Drin*max(1-nupa$do)*max(nu[[j]]$af[setdiff(rownames(nu[[j]]$af)[apply(nu[[j]]$unc,2,prod)==0],known[[j]][mfunpr]),1])>1) {nupa$l[j]=0} else {
-		nupa$l[j] = zero.cont(Drin,nupa$do,nu[[j]]$csp,nu[[j]]$hyptadinit*nupa$beta,nu[[j]]$af[,1],nu[[j]]$unc,nrep,c(nupa$locadj[j],nupa$beta))
+		nupa$l[j] = zero.cont(Drin,nupa$do,nu[[j]]$csp,nu[[j]]$hyptadinit,nu[[j]]$af[,1],nu[[j]]$unc,nrep,c(nupa$locadj[j],nupa$beta),known[[j]][mfunpr],1+nupa$deg,nupa$rcont)
 		}
 	}
 
