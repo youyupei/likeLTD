@@ -54,6 +54,12 @@ checkNoException <- function(expr, msg="") {
 }
 
 "test_pack.admin.input" <- svTest(function() {
+  # Tests pack.admin.input interface
+  # 
+  # Checks it packs the data as expected.
+  # Checks it raises an exception if files do not exist and checkFile is TRUE.
+  # Checks it does not raise an exception if checkFiles is FALSE.
+  # Checks it does not raise an exception if checkFiles is TRUE and files exist
   frequencyFile = 'data/lgc-allele-freqs-wbp.txt'
   mixedFile = 'hammer/hammer-CSP.csv'
   refFile = 'hammer/hammer-reference.csv'
@@ -61,13 +67,23 @@ checkNoException <- function(expr, msg="") {
   outputPath = 'hammer'
 
   callme <- function(checkfile) {
-    pack.admin.input( caseName='hammer',
+    # Helper function to convserve finger strength
+    pack.admin.input( caseName=caseName,
                       frequencyFile=frequencyFile,
                       mixedFile=mixedFile,
                       refFile=refFile, 
                       outputPath=outputPath,
                       checkFiles=checkfile )
   }
+ 
+  # Checks it packs the data as expected.
+  admin <- callme(FALSE)
+  checkEquals(length(admin), 5)
+  checkEquals(admin$caseName, caseName)
+  checkEquals(admin$frequencyFile, frequencyFile)
+  checkEquals(admin$mixedFile, mixedFile)
+  checkEquals(admin$refFile, refFile)
+  checkEquals(admin$outputPath, outputPath)
 
   checkException(callme(checkfile=TRUE), msg="No file found exception")
   checkNoException(callme(TRUE), msg="Files not checked.")
