@@ -390,8 +390,8 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
   return(suggested)
 }
 
-pack.admin.input = function( frequencyFile, mixedFile, refFile,
-                             caseName='dummy', outputPath=NULL,
+pack.admin.input = function( mixedFile, refFile, caseName='dummy',
+                             frequencyFile=NULL, outputPath=NULL,
                              checkFiles=TRUE ) {
   # Packs and verifies administrative information.
   #
@@ -405,7 +405,9 @@ pack.admin.input = function( frequencyFile, mixedFile, refFile,
   if(is.null(outputPath)) outputPath = file.path(getwd(), caseName)
 
   if(checkFiles) {
-    for(path in c(frequencyFile, mixedFile, refFile)) {
+    paths = c(mixedFile, refFile) 
+    if(!is.null(frequencyFile)) paths = c(frequencyFile, paths, recursive=TRUE)
+    for(path in paths) {
       if(!file.exists(path))
         stop(paste(path, "does not exist."))
       else { 
@@ -439,7 +441,12 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   unknown: Number of unkown contributors in CSP.
   #   ethnic: Ethnicity of contributors.
   #   fst: not sure. 
-  afreq        = read.table(admin$frequencyFile, sep="\t", header=T)
+  if(is.null(admin$frequencyFile)) {
+    dummyEnv <- new.env()
+    data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
+    afreq      = dummyEnv[['lgc-allele-freqs-wbp']]
+  }
+  else afreq   = read.table(admin$frequencyFile, sep="\t", header=T)
   cspData      = read.csp.profile(admin$mixedFile)
   refData      = read.ref.profile(admin$refFile)
   cprofs       = internal.representation(cspData)

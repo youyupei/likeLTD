@@ -10,7 +10,7 @@ likeLTD.path <- path.package('likeLTD')
 caseName = 'hammer'
 datapath <- file.path(file.path(likeLTD.path, 'extdata'), caseName)
 # Construct input: frequency file.
-frequencyFile = file.path(datapath, 'lgc-allele-freqs-wbp.txt')
+frequencyFile = NULL #file.path(datapath, 'lgc-allele-freqs-wbp.txt')
 # Construct input: crime scene profile
 mixedFile = file.path(datapath, 'hammer-CSP.csv')
 # Construct input: reference profiles
