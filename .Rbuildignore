@@ -3,3 +3,4 @@ R/control-functions.R
 R/control.R
 R/output-report.R
 tests/
+demo/

@@ -511,7 +511,7 @@ allele.report <- function(admin, genetics=NULL) {
   tablesize = min(1,25/max(c(cspTotal,uncTotal)))
 
   outputPath = file.path( admin$outputPath, 
-                          paste(admin$caseName, '-allele report.pdf', sep='') )
+                          paste(admin$caseName, '-allele_report.pdf', sep='') )
   
   # Start plotting proper. 
   pdf(width=8.25,height=11.5,file=outputPath)
