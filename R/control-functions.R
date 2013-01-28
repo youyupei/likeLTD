@@ -140,7 +140,7 @@ nloc <<- length(cprofs); nrep <<- length(cprofs[[1]])
 nN <<- Nkdo+Qdrop+NU+1; # numbers subject to dropout under Hp, the + 1 is for dropin (the parameter always exists but is zero if Drin=F) is modelled
 nRef <<- nN - max(1,NU+Qdrop)
 dN <<- Nkdo+NU+1+1 # numbers subject to dropout under Hd
-dRef <<- dN - max(1,Qdrop+NU+1)
+dRef <<- dN - max(1,NU+1)
 mfunpr <<- 1:2; if(Nkdo>0) mfunpr <<- c(mfunpr,2+2*Nknd+(1:(2*Nkdo)))
 }
 #----------------------------------------------------
