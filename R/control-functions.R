@@ -171,7 +171,7 @@ mfunpr <<- 1:2; if(Nkdo>0) mfunpr <<- c(mfunpr,2+2*Nknd+(1:(2*Nkdo)))
 propose.new = function(nupa,depa,itr,rcontupsd=0.01,degupsd=0.001,doupsd=0.01){
  
 print(paste('currently processing',itr,'th iteration'))
-shrink <<- shrink*(1-(1/niter)) # reduce SD of parameter updates as SA algorithm progresses
+shrink = (1-1/niter)^itr # reduce SD of parameter updates as SA algorithm progresses
 
 # propose updates for numerator parameters
  	nupa$rcont = abs(rnorm(nN,nupa$rcont,shrink*rcontupsd)); if(!Drin) nupa$rcont[nN]=0 # new rcont values must be positive and final value must be zero if Drin=F
@@ -283,34 +283,36 @@ return(list(csp=CSP,unc=unc,af=acbp))}
 #	Nkdo: Number of knowns subject to dropout. Set in global.objects()
 #	Nunp: number of unprofiled contributors, either NU (pros) or NU+1 (def). Set in GUI
 #	afbp: Adjusted allele fractions and allele lengths. Use af from prepro()
-#	kpdo: known alleles. Use known[[j]][mfunpr]. known and mfunpr from global.objects()
+#	known.alleles: Use known[[j]][mfunpr]. known and mfunpr from global.objects()
 #	CSP: CSP for all replicates. Use csp from prepro(). Different for pros and def if Q is not subject to dropout.
 #	DI: DI probability (used to determine whether to use Ureq or not), from Drin. Set in GUI.
 #	Qcont:  Use 0 for def, or Qdrop or 1+Qdrop for pros. Set in global.objects(). 0 if Q is not assumed to be a contributor (i.e. under Hd), =1 if Q is a contributor not subject to dropout and =2 if Q is a contributor subject to dropout.
 
 # Returns:
-#	hyptadinit: a vector of allele doses from profiled contributors. 
+#	kpdo: Alleles form known contributors. Differ for pros and def ans def cannot include Q's alleles. Also specific order set.
 #	pUall: Generates all the permutations of genotypes for the unprofiled contributors.
-#	tprof: a matrix of allele doses from profiled contributors.
 #	index: internal abstraction
 #	fragments: matrix of fragment lengths across all permutations
 #	v.index: Internal abstraction required to index specific elements in tprof matrix.
 
-calc.fixed = function(Nkdo,Nunp,afbp,kpdo,CSP,DI,Qcont){
+calc.fixed = function(Nkdo,Nunp,afbp,known.alleles,CSP,DI,Qcont){
 
-	# generates hyptadinit
+	# generates kpdo
+	Qgen=known.alleles[1:2]
+	if(Qcont==0)kpdo=known.alleles[-(1:2)] # defence case. Excludes Qs alleles.
+	if(Qcont==1)kpdo=known.alleles # prosecution case. Includes Qs alleles.
+	if(Qcont==2)kpdo=c(known.alleles[-(1:2)],Qgen) # if Q is contributor subject to dropout, put those alleles last in kpdo 
+
+	# generates presence/absence of known alleles
+	presence = rep(0,nrow(afbp)) 
+	if(length(kpdo)) for(u in 1:length(kpdo))presence = presence + (rownames(afbp)==kpdo[u])
 
 if(Nunp>0) {
-	ind = rep((1:Nunp),rep(2,Nunp))  # ind = c(1,1,2,2,3,3) when Nunp=3
-	Qgen=kpdo[1:2];kpdo=kpdo[-(1:2)];if(Qcont==2)kpdo=c(kpdo,Qgen) # if Q is contributor subject to dropout, put those alleles last in kpdo 
-	hyptadinit=rep(0,nrow(afbp))
-	if(length(kpdo)) for(u in 1:length(kpdo))hyptadinit = hyptadinit +(rownames(afbp)==kpdo[u])
-
 	# generates pUall
 	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP # T for alleles that occur in CSP at least once
 
 if (DI==0) {
-		Ureq = which((CSPset * (hyptadinit == 0)) > 0)  # identify alleles in CSP but not in kpdo, so must come from the U or X
+		Ureq = which((CSPset * (presence == 0)) > 0)  # identify alleles in CSP but not in kpdo, so must come from the U or X
 		nUx =  2*Nunp - length(Ureq)} else {nUx <- 2*Nunp}
 		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
 		pUall.end <- matrix(data=c(rep(0, times=2*Nunp)),ncol=2*Nunp)
@@ -329,14 +331,9 @@ if (DI==0) {
 } else {
 ind=c(1,1)
 hyptadinit=rep(0,nrow(afbp))
-if(length(kpdo)) for(u in 1:length(kpdo)) {
-  vec = (rownames(afbp)==kpdo[u])
-  if(sum(vec)) hyptadinit = hyptadinit + (rownames(afbp)==kpdo[u])
-}
 if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
 pUall <- which(CSPset>0)
 }
-
 
 
 # CHANGE: edit pUall
@@ -344,12 +341,12 @@ if(is.matrix(pUall)==FALSE) pUall <- t(as.matrix(pUall))
 
 	# generates other fixed values
 	N = dim(pUall)[1] # number of genotypes 
-	tprof = matrix(hyptadinit,ncol=N,nrow=length(hyptadinit),byrow=F) # doses from known contributors
-	index = Nkdo+ind
 	fragments = t(matrix(afbp[pUall,2],nrow=N))
-	v.index = (0:(N-1))*length(hyptadinit)
+	v.index = (0:(N-1))*nrow(afbp)
+	if(Nunp>0) index = (length(kpdo)/2) + rep((1:Nunp),rep(2,Nunp))  else index = (length(kpdo)/2) + ind
 
-return(list(hyptadinit=hyptadinit,pUall=pUall,tprof=tprof,index=index,fragments=fragments,v.index=v.index))}
+
+return(list(kpdo=kpdo,pUall=pUall,index=index,fragments=fragments,v.index=v.index))}
 #-----------------------------------------
 
 #-----------------------------------------
@@ -374,7 +371,7 @@ return(y)}
 # Calculates likelihoods,called for each locus, for each iteration.
 
 # Arguments required are:
-#	kpdo: Known profiles subject to drop out. Use known[[j]][mfunpr] from global.objects()
+#	kpdo: Known profiles subject to drop out. Use nu[[j]]$kpdo or de[[j]]$kpdo from calc.fixed()
 #	DO: Drop-out. Different for pros or def. Use nupa$do or depa$do from either propose.new(), or initialised by start.values()
 #	DI: Drop-in T or F (used to determine whether to use Ureq or not). Use Drin from GUI 
 #	afbp: allele fractions and allele lengths. Use nu[[j]]$af from calc.fixed().
@@ -386,24 +383,24 @@ return(y)}
 #	Nunp: Number of unprofiled contributors. Use NU for pros and NU+1 for defence, set in GUI.
 #	rcont: Relative contribution. Use nupa$rcont or depa$rcont,from either propose.new(), or initialised by start.values()
 #	deg: Degradation parameter. Use 1+nupa$deg or 1+depa$deg, from either propose.new(), or initialised by start.values()
-#	tprof: doses from known contributors. Use nu[[j]]$tprof or de[[j]]$tprof from calc.fixed()
 #	index: internal abstraction. Use nu[[j]]$index or de[[j]]$index from calc.fixed()
 #	fragments: matrix of fragment lengths across all permutations. Use nu[[j]]$fragments or de[[j]]$fragments from calc.fixed()
 #	v.index: Internal abstraction required to index specific elements in tprof matrix. Use nu[[j]]$v.index or de[[j]]$v.index from calc.fixed()
 
 # returns the likelihood
 
-Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,tprof,index,fragments,v.index){
+Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,index,fragments,v.index){
 
-tprof.init <- c(tprof[,1])
+# Generates hyptadinit and tprof (a matrix of identical hyptadinits) for the known doses 
+hyptadinit=rep(0,nrow(afbp))
 if(length(kpdo)) for(u in 1:length(kpdo)){
 	vec = (rownames(afbp)==kpdo[u])
-	if(sum(vec)) tprof.init = tprof.init * deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
+	if(sum(vec)) hyptadinit = hyptadinit + vec*deg[trunc((u+1)/2)]^-afbp[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
 	} 
-
-tprof <- t(matrix(data=rep(tprof.init,times=nrow(pUall)),nrow=nrow(pUall),byrow=TRUE))
-
+tprof = matrix(hyptadinit,ncol=dim(pUall)[1],nrow=length(hyptadinit),byrow=F) # doses from known contributors
+	
 tmp = deg[index]^-fragments * rcont[index] # doses for U/X
+
 for(u in 1:(2*Nunp)){ # for each contributor (2 alleles each).Loop required to sum contributions at the same allele
 	tprof[pUall[,u]+ v.index] = tprof[pUall[,u]+ v.index] + tmp[u,]
 	}
@@ -435,7 +432,7 @@ for(z in 1:nrep) if(CSP[z,1]!=999){ # check for missing replicate. Loop required
 	if(!is.matrix(term.4))term.4=1;if(is.matrix(term.4)){	# only calculates product of rows if there are values
 	term.4[!index.4] = 1 # 1.52 replaces indexed values with 1
 	term.4 = prod.matrix(term.4)}} # 0.72 product of each row 
-	
+
 	if(DI==0)term.5=1; if(DI!=0){ # only necessary if drop-in is modelled
 	index.5 = t(!CSP[z,]&!unc[z,]& zero) # 1.31 contribution from non-dropin 
 	term.5 = 1-drpin[z] * af.5 # 0.44
@@ -541,7 +538,8 @@ return(list(hpdrout=hpdrout,hddrout=hddrout))}
 # Calculates likelihood when there are zero unknown contributors
 # Returns a single likelihood
 
-zero.cont = function(DI,DO,CSP,hyptadinit,af,unc,nrep,BB,kpdo,deg,rcont){
+zero.cont = function(DI,DO,CSP,af,unc,nrep,BB,kpdo,deg,rcont){
+	hyptadinit=rep(0,times=length(af))
 	if(length(kpdo)) for(u in 1:length(kpdo)){
 		vec = (rownames(af)==kpdo[u])
 		if(sum(vec)) hyptadinit = hyptadinit *deg[trunc((u+1)/2)]^-af[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
