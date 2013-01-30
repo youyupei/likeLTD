@@ -416,27 +416,27 @@ for(z in 1:nrep) if(CSP[z,1]!=999){ # check for missing replicate. Loop required
 	vdosedr = tmp.1/(tmp.1+1-DO[z]) # 0.64 drop-out probabilities for doses 
 	
 	term.2 = vdosedr[,!CSP[z,] & !unc[z,]] # 0.44 contribution from dropout 
-	if(!is.matrix(term.2))term.2=1;if(is.matrix(term.2)){	# only calculates product of rows if there are values
+	if(!is.matrix(term.2)&nrow(pUall)==1)term.2=prod(term.2,na.rm=TRUE) else if(!is.matrix(term.2)) term.2=1;if(is.matrix(term.2)){	# only calculates product of rows if there are values
 	term.2[c(is.nan(term.2))] = 1 # 1.04 replaces NaNs with 1
 	term.2 = prod.matrix(term.2)} # 0.58 product of each row
 
 	if(sum(CSP[z,])==0)term.3=1; if(sum(CSP[z,])!=0){ # avoids trying to calc product of blank matrix if CSP[z,])==0
 	term.3 = 1-vdosedr[,CSP[z,]!=0] # 0.12 contribution from non-dropout
-	if(!is.matrix(term.3))term.3=1;if(is.matrix(term.3)){	# only calculates product of rows if there are values
+	if(!is.matrix(term.3)&nrow(pUall)==1)term.3=prod(term.3,na.rm=TRUE)else if(!is.matrix(term.3)) term.3=1;if(is.matrix(term.3)){	# only calculates product of rows if there are values
 	term.3[c(is.nan(term.3))] = 1 # 0.21 replaces NaNs with 1
 	term.3 = prod.matrix(term.3)}} # 0.13 product of each row
 
 	if(DI==0)term.4=1; if(DI!=0){ # only necessary if drop-in is modelled
 	index.4 = t(CSP[z,] & zero) # 1.28 contribution from drop-in 
 	term.4 = drpin[z] * af.4  # 0.22
-	if(!is.matrix(term.4))term.4=1;if(is.matrix(term.4)){	# only calculates product of rows if there are values
+	if(!is.matrix(term.4)&nrow(pUall)==1)term.4=prod(term.4,na.rm=TRUE)else if(!is.matrix(term.4)) term.4=1;if(is.matrix(term.4)){	# only calculates product of rows if there are values
 	term.4[!index.4] = 1 # 1.52 replaces indexed values with 1
 	term.4 = prod.matrix(term.4)}} # 0.72 product of each row 
 
 	if(DI==0)term.5=1; if(DI!=0){ # only necessary if drop-in is modelled
 	index.5 = t(!CSP[z,]&!unc[z,]& zero) # 1.31 contribution from non-dropin 
 	term.5 = 1-drpin[z] * af.5 # 0.44
-	if(!is.matrix(term.5))term.5=1;if(is.matrix(term.5)){	# only calculates product of rows if there are values
+	if(!is.matrix(term.5)&nrow(pUall)==1)term.5=prod(term.5,na.rm=TRUE)else if(!is.matrix(term.5)) term.5=1;if(is.matrix(term.5)){	# only calculates product of rows if there are values
 	term.5[!index.5] = 1 # 1.25 replaces indexed values with 1
 	term.5 = prod.matrix(term.5)}} # 0.70 product of each row 
 
