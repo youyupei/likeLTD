@@ -5,7 +5,7 @@ unusual.alleles <- function(afreq, profile) {
   #
   # Args:
   #   freqencies: Table of allele afreq“
-  #   profile: A profile with just the facts. 
+  #   profile: The reference profile in the genetics list
   #
   # returns: data frame with the rare alleles. 
 
