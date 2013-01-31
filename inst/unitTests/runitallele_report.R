@@ -152,7 +152,8 @@ test_read.csp.profile <- svTest(function(){
   path = Reduce(file.path, c("extdata", "hammer", "hammer-CSP.csv"))
   path = system.file(path, package="likeLTD")
   # Now read data.
-  read.csp.profile = getFromNamespace("read.csp.profile", "likeLTD")
+  if(! "read.csp.profile" %in% ls(.GlobalEnv))
+    read.csp.profile = getFromNamespace("read.csp.profile", "likeLTD")
   result = read.csp.profile(path)
   # And check it
   checkEquals(result, csp.data())
@@ -165,7 +166,8 @@ test_read.ref.profile <- svTest(function(){
   path = Reduce(file.path, c("extdata", "hammer", "hammer-reference.csv"))
   path = system.file(path, package="likeLTD")
   # Now read data.
-  read.ref.profile = getFromNamespace("read.ref.profile", "likeLTD")
+  if(! "read.ref.profile" %in% ls(.GlobalEnv))
+    read.ref.profile = getFromNamespace("read.ref.profile", "likeLTD")
   result = read.ref.profile(path)
   checkEquals(result, ref.data())
 })
@@ -176,7 +178,8 @@ test_queried.vs.known <- svTest(function() {
   path = Reduce(file.path, c("extdata", "hammer", "hammer-reference.csv"))
   path = system.file(path, package="likeLTD")
   # Now read data.
-  queried.vs.known = getFromNamespace( "queried.vs.known", "likeLTD")
+  if(! "queried.vs.known" %in% ls(.GlobalEnv))
+    queried.vs.known = getFromNamespace( "queried.vs.known", "likeLTD")
   result = queried.vs.known(path)
   checkEquals(result, c(TRUE, FALSE, FALSE))
 })
@@ -212,7 +215,9 @@ internal.representation.data = function() {
 
 test_internal.representation <- svTest(function() {
   # Tests that the internal representation is correctly constructed.
-  internal.representation = getFromNamespace( "internal.representation", "likeLTD")
+  if(! "internal.representation" %in% ls(.GlobalEnv))
+    internal.representation = getFromNamespace("internal.representation", 
+                                               "likeLTD")
   result = internal.representation(csp.data())
   checkEquals(result, internal.representation.data())
 })
@@ -226,7 +231,8 @@ test_estimates.csp <- svTest(function() {
   check = data.frame(check, row.names=c("Suspect", "Victim 1", "Victim 2"))
   colnames(check) <- c("run 1", "run 2", "Total")
 
-  estimates.csp = getFromNamespace("estimate.csp", "likeLTD")
+  if(! "estimates.csp" %in% ls(.GlobalEnv))
+    estimates.csp = getFromNamespace("estimate.csp", "likeLTD")
   result = estimates.csp(ref.data(), cprofs)
   checkEquals(result, check)
 })
@@ -238,7 +244,8 @@ test_summary.generator <- svTest(function() {
   cprofs = internal.representation.data()
    
   # Test with known = Victim 1 only.
-  summary.generator = getFromNamespace( "summary.generator", "likeLTD")
+  if(! "summary.generator" %in% ls(.GlobalEnv))
+    summary.generator = getFromNamespace( "summary.generator", "likeLTD")
   result = summary.generator(queried, c("Victim 1"), ref, cprofs)
 
   summary = list( D3   = c("14 16{}[]", "16 16{}[]", "{}"),
@@ -310,7 +317,8 @@ test_unusual.alleles <- svTest(function() {
   data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
   afreq      = dummyEnv[['lgc-allele-freqs-wbp']]
   
-  unusual.alleles = getFromNamespace("unusual.alleles", "likeLTD")
+  if(! "unusual.alleles" %in% ls(.GlobalEnv))
+    unusual.alleles = getFromNamespace("unusual.alleles", "likeLTD")
   result = unusual.alleles(afreq, ref.data())
   check = list( name=c("Suspect"), locus=c("D19"), allele=c("17.2"), EA1=c(0),
                 EA3=c(2), EA4=c(1) )

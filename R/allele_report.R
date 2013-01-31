@@ -426,6 +426,13 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
   return(admin)
 }
 
+load.frequencies <- function() {
+  # Frequency table provided in package. 
+  dummyEnv <- new.env()
+  data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
+  return(dummyEnv[['lgc-allele-freqs-wbp']])
+}
+
 pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
                                unknowns=0, ethnic='EA1', fst=NULL) {
   # Generates and packs genetics input into a list.
@@ -441,11 +448,8 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   unknown: Number of unkown contributors in CSP.
   #   ethnic: Ethnicity of contributors.
   #   fst: not sure. 
-  if(is.null(admin$frequencyFile)) {
-    dummyEnv <- new.env()
-    data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
-    afreq      = dummyEnv[['lgc-allele-freqs-wbp']]
-  }
+  if(is.null(admin$frequencyFile))
+       afreq   = load.frequencies()
   else afreq   = read.table(admin$frequencyFile, sep="\t", header=T)
   cspData      = read.csp.profile(admin$mixedFile)
   refData      = read.ref.profile(admin$refFile)
