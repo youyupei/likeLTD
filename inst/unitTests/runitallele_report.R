@@ -62,6 +62,35 @@ checkNoException <- function(expr, msg="") {
   checkTrue(!foundError, msg=msg)
 }
 
+internal.representation.data = function() {
+  # Internal represenation data as reconstructed by hand.
+  # 
+  # Used for testing both the construction of the internal representation and
+  # the pack.genetic.input test.
+  result = list( D3=  list( list(csp=c("14", "16"), unc=""),
+                            list(csp=c("14", "16"), unc="") ),
+                 vWA= list( list(csp=c("15", "16", "19"), unc=""),
+                            list(csp=c("15", "16", "17", "19"), unc="") ),
+                 D16= list( list(csp=c("11", "13", "14"), unc=""),
+                            list(csp=c("11", "13", "14"), unc="") ),
+                 D2=  list( list(csp=c("20", "23", "24", "25"), unc=""),
+                            list(csp=c("20", "24", "25"), unc="") ),
+                 D8=  list( list(csp=c("11", "12", "13", "15"), unc=""),
+                            list(csp=c("11", "12", "13", "15"), unc="") ),
+                 D21= list( list(csp=c("28", "31"), unc=""),
+                            list(csp=c("28", "29", "30", "31", "31.2"), unc="") ),
+                 D18= list( list(csp=c(""), unc=""),
+                            list(csp=c("13", "14", "16", "17"), unc="") ),
+                 D19= list( list(csp=c("12", "13", "15.2", "17.2"), unc=""),
+                            list(csp=c("12", "13", "14", "15.2", "17.2"), unc="") ),
+                 TH01=list( list(csp=c("6", "8", "9", "9.3"), unc=""),
+                            list(csp=c("6", "8", "9", "9.3"), unc="") ),
+                 FGA= list( list(csp=c("22"), unc=""), 
+                            list(csp=c("22", "23", "25"), unc="") ) )
+  return(result)
+}
+
+
 ###################################
 # Finally, the unit-test themselves
 ###################################
@@ -184,34 +213,6 @@ test_queried.vs.known <- svTest(function() {
   checkEquals(result, c(TRUE, FALSE, FALSE))
 })
 
-
-internal.representation.data = function() {
-  # Internal represenation data as reconstructed by hand.
-  # 
-  # Used for testing both the construction of the internal representation and
-  # the pack.genetic.input test.
-  result = list( D3=  list( list(csp=c("14", "16"), unc=""),
-                            list(csp=c("14", "16"), unc="") ),
-                 vWA= list( list(csp=c("15", "16", "19"), unc=""),
-                            list(csp=c("15", "16", "17", "19"), unc="") ),
-                 D16= list( list(csp=c("11", "13", "14"), unc=""),
-                            list(csp=c("11", "13", "14"), unc="") ),
-                 D2=  list( list(csp=c("20", "23", "24", "25"), unc=""),
-                            list(csp=c("20", "24", "25"), unc="") ),
-                 D8=  list( list(csp=c("11", "12", "13", "15"), unc=""),
-                            list(csp=c("11", "12", "13", "15"), unc="") ),
-                 D21= list( list(csp=c("28", "31"), unc=""),
-                            list(csp=c("28", "29", "30", "31", "31.2"), unc="") ),
-                 D18= list( list(csp=c(""), unc=""),
-                            list(csp=c("13", "14", "16", "17"), unc="") ),
-                 D19= list( list(csp=c("12", "13", "15.2", "17.2"), unc=""),
-                            list(csp=c("12", "13", "14", "15.2", "17.2"), unc="") ),
-                 TH01=list( list(csp=c("6", "8", "9", "9.3"), unc=""),
-                            list(csp=c("6", "8", "9", "9.3"), unc="") ),
-                 FGA= list( list(csp=c("22"), unc=""), 
-                            list(csp=c("22", "23", "25"), unc="") ) )
-  return(result)
-}
 
 test_internal.representation <- svTest(function() {
   # Tests that the internal representation is correctly constructed.

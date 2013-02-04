@@ -1,45 +1,52 @@
 
-known.alleles <- function(nameQ, nameK, refData) {
+known.alleles <- function(allNames, refData) {
   # Filters reference profile data to those used in this run.
   #
   # Also transforms data in profile to a vector of characters, e.g. "14,16" to
   # c("14", "16")
   #
   # Parameters:
-  #   nameQ: Name(s) of queried individuals. The names should correspond to
-  #   rows in refData.
-  #   nameK: Name(s) of known individuals, The names should correspond to rows
-  #   in refData.
-    
-  # reformats each locus by putting all alleles into a single vector.
+  #   allNames: Name(s) of individuals we want in profile. The names should
+  #   correspond to rows in refData. Although not specifically required by this
+  #   function, the queried individual is expected to come first.
+  # Returns: 
+  #   reformats each locus by putting all alleles into a single vector.
   reformat.locus <- function(n) {
     result <- lapply(n, function(v) strsplit(v, ','))
     return(unlist(result))
   }
   # Now apply reformat.locus to each locus
-  return( lapply(refData[c(nameQ, nameK), ], reformat.locus) )
+  result <- lapply(refData[allNames, ], reformat.locus) 
+  return(data.frame(result, stringsAsFactors=FALSE))
 }
 
 has.dropouts <- function(name, refData, cprofs) {
-  # True some alleles in profile are not CSP.
+  # True if some alleles in profile are not CSP.
   #
   # Parameters:
   #   name: Name of the profile to check.
   #   refData: Reference profiles.
   #   cprofs: Crime Scene Profile, internal representation.
-  queried = known.alleles(name, c(), refData)
+  queried = known.alleles(name, refData)
   # Checks if there are any dropout for specific locus
   for(locus in names(cprofs)) 
     for(replicate in cprofs[[locus]]) {
       # Replicate could be empty or invalid in some way.
       # In that case, we shouldn't call missing alleles as missing. 
-      validRep = !any(sapply(replicate$csp, function(n) is.na(n) || n == ""))
-      if(validRep  && any(!known[[locus]] %in% replicate$csp)) return(TRUE)
+      validRep = !any(sapply(replicate$csp, is.na))
+      if(validRep && any(!queried[[locus]] %in% replicate$csp)) return(TRUE)
     }
   return(FALSE)
 }
 
-profiles.with.dropouts <- function(nameK, refData, cprofs) {
+known.with.dropouts <- function(name, refData, cprofs) {
+  # Filters refDAta for those alleles with dropouts. 
+  #
+  # Returns in format of known.alleles
+  dropouts = sapply(name, has.dropouts, refData=refData, cprofs=cprofs) 
+  return(known.alleles(name[dropouts], refData))
+}
+nb.with.dropouts <- function(nameK, refData, cprofs) {
   # Number of profiles with dropouts.
   #
   # Computes number of profiles named in nameK with dropouts. 
@@ -50,7 +57,7 @@ profiles.with.dropouts <- function(nameK, refData, cprofs) {
   #   cprofs: Crime Scene Profile, internal representation.
   return( sum(sapply( nameK, has.dropouts, refData=refData, cprofs=cprofs)) )
 } 
-profiles.without.dropouts <- function(nameK, refData, cprofs) {
+nb.without.dropouts <- function(nameK, refData, cprofs) {
   # Number of profiles without dropouts.
   #
   # Computes number of profiles named in nameK with dropouts. 
@@ -59,190 +66,182 @@ profiles.without.dropouts <- function(nameK, refData, cprofs) {
   #   nameK: Names of the profile to check.
   #   refData: Reference profiles.
   #   cprofs: Crime Scene Profile, internal representation.
-  return(length(nameK) - knowns.with.dropouts(nameK, refData, cprofs))
+  return(length(nameK) - nb.with.dropouts(nameK, refData, cprofs))
 } 
 
-ethnic.frequencies <- function(ethnic, loci, afreq=NULL) {
+ethnic.frequencies <- function(ethnic, loci=NULL, afreq=NULL) {
   # Reformats allele frequencies to include only given ethnic group and loci.
   #
   # Parameters:
   #   ethnic: Name of ethnic group. Should correspond to what's in afreq.
-  #   loci: Names of the loci to use.
+  #   loci: Names of the loci to use. Or use all.
   #   afreq: Frequency table. If NULL, loads in frequency table provided with
   #          likeLTD package.
  
+  # Load frequency database if needed. 
   if(is.null(afreq)) afreq <- load.frequencies()
-  frq <<- vector("list", length(loci))
-  for(j in 1:length(loci)) {
-    marker = loci[j]
-    only.locus <- subset(afreq, Marker=marker)
-    frq[[j]] <- matrix(c(only.locus[ethnic], only.locus$BP), , 2)
-    rownames(frq[[j]]) <- only.locus$Allele
+  # figueres out loci
+  if(is.null(loci)) loci <- t(unique(afreq['Marker']))
+
+  # Function which recreates the input for a single locus.
+  # Input of a locus consists of one row per allele type.
+  # Also filters out alleles with 0 frequencies 
+  filter.locus <- function(n) {
+    locus <- subset(afreq, Marker==n)
+    result <- matrix(c(locus[[ethnic]], locus[["BP"]]), , 2)
+    result[is.na(result[, 2]), 2] <- 0
+    rownames(result) <- locus$Allele
+    return(result[result[, 1] > 0, ])
   }
-  return(frq)
+  # now apply function over all loci.
+  result <- sapply(loci, filter.locus)
+  # Then center around mean fragment length
+  s1 = sum( sapply(result, function(n) sum(n[, 1] * n[, 2], na.rm=TRUE)) )
+  s2 = sum( sapply(result, function(n) sum(n[, 1], na.rm=TRUE)) )
+  for(j in 1:length(result)) result[[j]][,2] <- result[[j]][, 2] - s1/s2
+  return(result)
 }
 
+add.missing.alleles <- function(frequencies, cprofs, queried, profiled=NULL) {
+  # Add missing alleles to frequencies.
+  #
+  # The crime scene profile may present alleles which are missing from the
+  # frequency database. We only add those alleles which present in queried
+  # profile, and those in the known profiles which are subject to dropout.
+  #
+  # Parameters:
+  #   frequencies: Arranged frequency table as returned by ethnic.frequencies.
+  #   cprofs: Internal representation of the CSP.
+  #   queried: queried profile as returned by known.alleles
+  #   profiled: A list of loci containing further alleles. The CSP alleles
+  #             which are not in these profiles and not in the database will be
+  #             added to the database.
+  # Returns: Frequency database filled with missing alleles. Also, it is
+  #          reordered so htat loci follow the same order as cprofs.[
+  for(locus in names(frequencies)) {
+     freq.alleles <- row.names(frequencies[[locus]])
 
-#----------------------------------------------------
-# global.objects()
-#----------------------------------------------------
-# function to assign various global objects.
-# Some are calculated, some are simple declarations (see declarations below)
+     # Alleles in queried profile not in database
+     missing.alleles <- setdiff(queried[[locus]], freq.alleles)
+     
+     # Now check CSP alleles which are not in profiles and not in frequency
+     # table.
+     # Alleles which are in CSP. 
+     csp.alleles <- unlist(sapply(cprofs[[locus]], function(n) n$csp))
+     # Check that this is not an NA, 
+     # And remove empty string.
+     invalidCSP = unlist(sapply(cprofs[[locus]], function(n) is.na(n$csp)))
+     if(any(invalidCSP)) csp.alleles <- c()
+     else csp.alleles <- setdiff(csp.alleles, c(""))
+     # skip if no alleles in CSP. 
+     if(!setequal(csp.alleles, c())) {
+       # Alleles which are in CSP but not in profiled
+       csp.profiled <- setdiff(csp.alleles, profiled[[locus]])
+       
+       # Add to unknown alleles those in csp.profiled which are not in database
+       missing.alleles <- union( missing.alleles, 
+                                 setdiff(csp.profiled, freq.alleles) )
+     }
 
-#	 Calculated:
-#	 known: formatted profiles of Qs and Ks
-#	 Qdrop: T or F, calculates if Q is subject to drop out
-#	 Nknd: calculates 'number of knowns with no dropout'
-#	 Nkdo: calculates 'number of knowns with drop out'
-#	 frq: calculates adjusted allele frequencies
-
-# No arguments handed to this function, 
-# instead it uses objects in workspace generated by GUI, 
-# some objects are inhereted from inputs.RData which is loaded by GUI
-
-# No values are returned by this function,
-# instead all objects are assigned globally
-
-global.objects=function(){
-
-# 1. Converts Queried and Known into a suitable format
-
-index = c(); for (x in c(nameQ,nameK))index = c(index,which(rownames(refData)==x)) # the index of K in refData
-known <<- as.list(cspData[0,])
-for(locus in 1:length(cprofs))known[[locus]] <<- strsplit(paste(refData[[locus]][index],collapse=','),',')[[1]] # converts into a vector
-
-# 2. check for dropout from the queried profile
-nloc <- length(cspData)
-allCheck=0;	for(r in 1:nrep){
-	check=0; for(l in 1:nloc){
-		suppressWarnings(if(sum(is.na(cprofs[[l]][[r]]$csp))==0)check=check+sum(!known[[l]][1:2]%in%cprofs[[l]][[r]]$csp))
-		allCheck=allCheck+check
-		}}
-if(allCheck==0)Qdrop<<-FALSE;if(allCheck!=0)Qdrop<<-TRUE
-
-# 3. checks each known profile for dropout
-
-Nknd <<- 0; Nkdo <<- 0; knownDropout=c()
-if(length(known[[l]])>2)for(x in 2:(length(known[[l]])/2)){
-	eachLoc=c();for(r in 1:nrep)for(l in 1:nloc)suppressWarnings(if(sum(is.na(cprofs[[l]][[r]]$csp))==0)eachLoc=c(eachLoc,!known[[l]][(x*2-1):(x*2)]%in%cprofs[[l]][[r]]$csp))
-	if(sum(eachLoc)==0)Nknd<<-Nknd+1
-	if(sum(eachLoc)!=0){Nkdo<<-Nkdo+1;knownDropout=c(knownDropout,x)}	
-	}
-
-# 4. Allele frequencies, based on ethnic group
-
-frq <<- vector("list",nloc)
-for(j in 1:nloc){
-	marker = names(cprofs)[j]
-	if(ethnic=='EA1') frq[[j]] <<- matrix(c(subset(afreq,Marker==marker)$EA1,subset(afreq,Marker==marker)$BP),,2)
-	if(ethnic=='EA2') frq[[j]] <<- matrix(c(subset(afreq,Marker==marker)$EA2,subset(afreq,Marker==marker)$BP),,2)
-	if(ethnic=='EA3') frq[[j]] <<- matrix(c(subset(afreq,Marker==marker)$EA3,subset(afreq,Marker==marker)$BP),,2)
-	if(ethnic=='EA4') frq[[j]] <<- matrix(c(subset(afreq,Marker==marker)$EA4,subset(afreq,Marker==marker)$BP),,2)
-	rownames(frq[[j]]) <<- subset(afreq,Marker==marker)$Allele
-	}
-# adjusted by mean fragment length for the data base
-
-s1=0; s2=0; for(j in 1:nloc) {s1 = s1 + sum(frq[[j]][,1]*frq[[j]][,2],na.rm=T); s2 = s2 + sum(frq[[j]][,1])}
-meanbp = s1/s2 # mean fragment length for the database
-for(j in 1:nloc) {frq[[j]][,2] <<- frq[[j]][,2] - meanbp; frq[[j]][is.na(frq[[j]][,2]),2] <<- 0}
-
-initiated <<- as.character(Sys.time())
-BB <<-  -4.35 # slope parameter of the multi-dose dropout model, taken from  Tvederbrink et al 2009
-nloc <<- length(cprofs); nrep <<- length(cprofs[[1]])
-nN <<- Nkdo+Qdrop+unknowns+1; # numbers subject to dropout under Hp, the + 1 is for dropin (the parameter always exists but is zero if Drin=F) is modelled
-nRef <<- nN - max(1,unknowns+Qdrop)
-dN <<- Nkdo+unknowns+1+1 # numbers subject to dropout under Hd
-dRef <<- dN - max(1,Qdrop+unknowns+1)
-mfunpr <<- 1:2; if(Nkdo>0) mfunpr <<- c(mfunpr,2+2*Nknd+(1:(2*Nkdo)))
+     # Now add to database all missing alleles, with rownames
+     if(!setequal(missing.alleles, c())) {
+       names <- c(row.names(frequencies[[locus]]), missing.alleles)
+       new.rows <- t(array(c(1, 0), c(2, length(missing.alleles))))
+       frequencies[[locus]] <- rbind(frequencies[[locus]], new.rows)
+       row.names(frequencies[[locus]]) <- names
+     }
+  } # loop over loci
+  return(frequencies[names(cprofs)])
 }
-#----------------------------------------------------
-# prepro()
-#----------------------------------------------------
-# function to pre-process CSP, unc alleles and allele fractions.
-#
-# Called for each locus. Allele counts are converted to allele fractions after
-# removing zero count alleles, then adding alleles in CSP or Qgen that are
-# missing, and then making fst and sampling adjustments.
 
-# Arguments
-#   Qdr: Indicates whether alleles of the queried contributor Q are subject to
-#     dropout (NB since V4.2 this has been automatically set in the wrapper
-#     where the variable is called Qdrop, in earlier versions the user had to
-#     set this value). Different for pros and def if Q is not subject to
-#     dropout. 
-#   kpnd:	a vector of even length;
-#       - the first two entries form the genotype of Q, with duplicate entry
-#         for homozygotes. Each entry a character string, "7" or "9.3".  The
-#         alleles of Q are subject to sampling and fst adjustments and must be
-#         included in afbp.
-#       - Entries (2*i-1,2*i) for i>1, if any, specify the genotype of a
-#         profiled full contributor of DNA (i.e. no dropout) to the CSP; these
-#         alleles need not be in afbp as their population fractions are not
-#         required; they are removed from the CSP and included in unc, an error
-#         is generated if any of them is not observed in the CSP. 
-#   call:	a list of lists.  The length of the outer list is the number of
-#       replicates, nrep; there is no upper limit, but nrep must be the same
-#       for each locus (not checked), which can be achieved artificially if
-#       needed by specifying NULL replicates.  Each inner list is of length 2:
-#       - [[1]] alleles of crime scene profile (CSP) alleles
-#       - [[2]] uncertain alleles (unc) - this list should include allelic
-#         positions at which there is substantial uncertainty whether or not a
-#         CSP allele is present.  The uncertainty may be caused by low peak
-#         height, or stutter or other artefact that could mask a low-level
-#         allele.  If CSP and unc have any allele in common an error message
-#         is generated and zero is returned.
-#   acbp:	matrix with two columns:
-#     1) database counts of alleles at the locus;
-#     2) fragment length in bp, positive and negative values allowed and the
-#        average (however measured) should be close to zero.  The rownames must
-#        be the allele names using the same notation as used for the alleles
-#        specified in the input file, i.e. in definitions of cprofs and known 
-#   adj: sampling adjustment applied to the alleles of Q to avoid very low
-#     counts for rare alleles, and to allow for the allele counts to take into
-#     account the genotype of Q.  The default value is adj = 1; there are
-#     reasons to prefer adj = 2 but the value of adj is much less important
-#     than Fst (see below) unless the database size is very small.  fst:
-#     allows for shared ancestry of Q with X. Recommended that Fst should be at
-#     least 0.02, and may need to be as high as 0.05 in some populations (e.g.
-#     small, isolated subpopulations of the population from which the reference
-#     database has been drawn).
+presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
+  # Matrices signifiying presence or absence of alleles in CSP.
+  # 
+  # A presence matrix for a given locus is an n by m matrix, where n is the
+  # number of replicates and m is the number of alleles in the frequency
+  # database. Each element (n,m) of the matrix is either TRUE if the allele is
+  # present in that replicate of the CSP, or FALSE otherwise. 
+  #
+  # Note:
+  #   Alleles which are in the CSP but not in the frequency database are
+  #   *ignored*. It might be a good idea to call add.missing.alleles first.
+  #
+  # Parameters:
+  #   frequencies: Allele frequency database as returned by ethnic.frequencies.
+  #   cprofs: CSP, internal representation
+  #   ...:  Other lists over locus where each element is a list of
+  #         alleles for which presence should be counted, much as is in cprofs.
+  #         The outer (column) dimension of the list should be over loci, in
+  #         the same order as in cprofs. The rows can be over replicates or
+  #         something. In practice, these arguments are for non-dropout
+  #         reference profiles in the presence matrix for "uncertain" alleles.
+  #   type: Should be "csp" or "unc", depending on whether the presence matrix
+  #         is computed for detected or uncertain alleles in CSP.
+  # Returns: A list of presence matrices, one for each locus in CSP.
+  # 
+  # Note: The loci must occur in the same order in *all* input lists.  
+  presence.per.locus <- function(frq.locus, cprofs.locus, ..., type="csp") {
+    # Same as presence.matrices but for a single locus.
+    
+    # Check if valid locus first.
+    invalidCSP = unlist(sapply(cprofs.locus, function(n) is.na(n$csp)))
+    if( any(invalidCSP) ) return(NULL)
 
-# Returns: A list containing the following:
-#   csp: matrix of indicators of CSP alleles, 1 row per replicate. Different
-#     for pros and def if Q is not subject to dropout.
-#   unc: matrix of indicators of uncertain alleles, 1 row per replicate.
-#     Different for pros and def if Q is not subject to dropout.
-#   af: allele frequencies, adjusted
-prepro = function(Qdr, kpnd, call, acbp, adj=1, fst=0.02){
-
-  # remove any zero-frequency alleles
-  acbp = acbp[acbp[, 1] > 0, ] 
-  Qgen = kpnd[1:2]; if(Qdr) kpnd = kpnd[-(1:2)]
-  for(i in 1:2) if(sum(rownames(acbp)==Qgen[i])==0) {acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = Qgen[i]}  # if allele of Q is not in database, insert it with count 1 and set the fragment length to 0
-  nrep = length(call)
-  CSP = matrix(0,nrep,nrow(acbp)) # matrix of indicators of CSP alleles, 1 row per replicate
-  unc = matrix(0,nrep,nrow(acbp)) # matrix of indicators of uncertain alleles, 1 row per replicate
-  for(z in 1:nrep) if(length(call[[z]])>1){ # this condition checks that the replicate is not missing at the locus
-    if(length(setdiff(kpnd,call[[z]][[1]])) != 0) {print(paste("Error: non-dropout allele not observed in CSP; CSP = ",call[[z]][[1]]," non-dropout alleles = ",kpnd)); return(NULL)} # check if there's a contributor wrongly labelled as non-dropout
-    tmp = setdiff(call[[z]][[1]],kpnd) # CSP alleles not attributable to profiled non-dropout contributors.
-    if(length(tmp)) for(i in 1:length(tmp)){
-      if(sum(rownames(acbp) == tmp[i]) == 0) {  # if CSP allele is not in database, insert it with count 1 and fragment length 0
-        CSP = cbind(rep(0,nrep),CSP); unc = cbind(rep(0,nrep),unc); acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = tmp[i]
-        }
-      CSP[z,] = CSP[z,] + (rownames(acbp) == tmp[i]) # encode CSP alleles
+    # count: creates a row of the matrix.
+    #        A row consists of 0 and 1, where 0 indicates that the allele is
+    #        not present in the CSP. It is also possible to add other list of
+    #        alleles via the ellipsis. In that case, a row consists of integers
+    #        indicating the number of lists in which the allele is found. 
+    rep = row.names(frq.locus)
+    if(length(list(...)) == 0) {
+      count <- function(n) as.integer(rep %in% n[[type]])
+    }
+    else {
+      count <- function(n) {
+        result <- c( as.integer(rep %in% n[[type]]),
+                     sapply( list(...), function(n) as.integer(rep %in% n)) ) 
+        result <- t(matrix(result, nrow=length(rep)))
+        return(colSums(result))
       }
-    if(length(kpnd)) for(i in 1:length(kpnd)) unc[z,] = unc[z,] + (rownames(acbp) == kpnd[i]) # non-dropout alleles are coded as uncertain because they can mask the allele of an unprofiled contributor
-    tmp = call[[z]][[2]]
-    if(length(tmp)) for(i in 1:length(tmp)) unc[z,] = unc[z,] + (rownames(acbp) == tmp[i]) # uncertain alleles from input file
-    } 
-  else CSP[z,1] = 999 # flags missing replicate 
-  if(sum(CSP*unc)) {print(paste("Error: an allele is both uncertain and in CSP; call = ",call)); return(NULL)}
-    
-  # The sampling adjustment, double sampling adjustment for homozygotes
-  acbp[Qgen,1] = acbp[Qgen,1]+adj*(1+(Qgen[1]==Qgen[2])); acbp[,1] = acbp[,1]/sum(acbp[,1])  
+    }
+    # create result matrix“
+    result <- sapply(cprofs.locus, count) 
+    return(t(matrix(result, ncol=length(cprofs.locus))))
+  }
+  return(mapply(presence.per.locus, frequencies, cprofs, ..., type=type))
+}
 
-  # fst adjustment, after adjustment acbp[,1] still sums to 1
-  acbp[,1] = acbp[,1]*(1-fst)/(1+fst); acbp[,1][Qgen] = acbp[,1][Qgen] + (1+(Qgen[1]==Qgen[2]))*fst/(1+fst)  
-    
-  return(list(csp=CSP,unc=unc,af=acbp))
+
+adjust.frequencies <- function(frequencies, queriedAlleles, adj=1, fst=0.02) {
+  # Adjust frequencies for current case.
+  #
+  # Parameters:
+  #   frequencies: List of allele frequency per locus, for a given ethnic group
+  #                (see ethnic.frequencies), completed for rare alleles in
+  #                queried profile (see add.missing.alleles). The loci in both
+  #                frequencies and queriedAlleles should occur in the same
+  #                order.
+  #   queriedAlleles: Profile of the queried individual, with colums as locus.
+  #   adj: sampling adjustment applied to the alleles of Q to avoid very low
+  #        counts for rare alleles, and to allow for the allele counts to take
+  #        into account the genotype of Q.  The default value is adj = 1; there
+  #        are reasons to prefer adj = 2 but the value of adj is much less
+  #        important than Fst (see below) unless the database size is very
+  #        small.  
+  #   fst: allows for shared ancestry of Q with X. Recommended that Fst should
+  #        be at least 0.02, and may need to be as high as 0.05 in some
+  #        populations (e.g.  small, isolated subpopulations of the population
+  #        from which the reference database has been drawn).
+
+  adjust.per.locus <- function(frq.locus, q.loc, adj=1, fst=0.02) {
+    # Applies operations to a single locus.
+    homozygote <- as.integer(q.loc[1] == q.loc[2])
+    frq.locus[q.loc, 1] <- frq.locus[q.loc, 1] + adj * (1 + homozygote)
+    #  shared ancestry adjustements.
+    frq.locus[, 1] <- frq.locus[, 1] / sum(frq.locus[, 1]) * (1 - fst) / (1 + fst) 
+    frq.locus[q.loc, 1] <- frq.locus[q.loc, 1] + fst / (1 + fst) * (1 + homozygote)
+    return(frq.locus)
+  }
+  return(mapply(adjust.per.locus, frequencies, queriedAlleles, adj=adj,
+                fst=fst))
 }
