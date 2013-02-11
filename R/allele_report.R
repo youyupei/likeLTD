@@ -434,7 +434,7 @@ load.frequencies <- function() {
 }
 
 pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
-                               unknowns=0, ethnic='EA1', fst=NULL) {
+                               unknowns=0, ethnic='EA1', fst=NULL, adj=1) {
   # Generates and packs genetics input into a list.
   #
   # This list contains all the genetics data needed to perform all subsequent
@@ -447,7 +447,9 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   dropin: Whether to model drop-ins. 
   #   unknown: Number of unkown contributors in CSP.
   #   ethnic: Ethnicity of contributors.
-  #   fst: not sure. 
+  #   adj: not sure
+  #   fst: not sure.  If NULL and ethnic is 'EA1', then defaults to 0.02,
+  #        otherwise to 0.03.
   if(is.null(admin$frequencyFile))
        afreq   = load.frequencies()
   else afreq   = read.table(admin$frequencyFile, sep="\t", header=T)
@@ -489,6 +491,8 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
                    ethnic      = ethnic,
                    # Not sure.
                    fst         = fst,
+                   # Not sure.
+                   adj         = adj,
                    # Number of replicates.
                    nrep        = length(cprofs[[1]]) )
   return(genetics)
