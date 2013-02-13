@@ -391,12 +391,12 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
 }
 
 pack.admin.input = function( mixedFile, refFile, caseName='dummy',
-                             frequencyFile=NULL, outputPath=NULL,
+                             databaseFile=NULL, outputPath=NULL,
                              checkFiles=TRUE ) {
   # Packs and verifies administrative information.
   #
   # Args:
-  #   frequencyFile: File holding the allele afreq
+  #   databaseFile: File holding the allele afreq
   #   mixedFile: Mixed crime scene profile
   #   refFile: Reference profiles
   #   casename: Name of the current case
@@ -406,7 +406,7 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
 
   if(checkFiles) {
     paths = c(mixedFile, refFile) 
-    if(!is.null(frequencyFile)) paths = c(frequencyFile, paths, recursive=TRUE)
+    if(!is.null(databaseFile)) paths = c(databaseFile, paths, recursive=TRUE)
     for(path in paths) {
       if(!file.exists(path))
         stop(paste(path, "does not exist."))
@@ -419,14 +419,14 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
       stop(paste(outputPath, " exists and is not a directory."))
   } # condition whether to check files.
   admin = list( caseName='hammer',
-                frequencyFile=frequencyFile,
+                databaseFile=databaseFile,
                 mixedFile=mixedFile,
                 refFile=refFile,
                 outputPath=outputPath )
   return(admin)
 }
 
-load.frequencies <- function() {
+load.allele.database <- function() {
   # Frequency table provided in package. 
   dummyEnv <- new.env()
   data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
@@ -450,9 +450,9 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   adj: not sure
   #   fst: not sure.  If NULL and ethnic is 'EA1', then defaults to 0.02,
   #        otherwise to 0.03.
-  if(is.null(admin$frequencyFile))
-       afreq   = load.frequencies()
-  else afreq   = read.table(admin$frequencyFile, sep="\t", header=T)
+  if(is.null(admin$databaseFile))
+       afreq   = load.allele.database()
+  else afreq   = read.table(admin$databaseFile, sep="\t", header=T)
   cspData      = read.csp.profile(admin$mixedFile)
   refData      = read.ref.profile(admin$refFile)
   cprofs       = internal.representation(cspData)
@@ -466,7 +466,7 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
     else                fst = 0.03
   }
 
-  genetics = list( # Allele frequency table.
+  genetics = list( # Allele database table.
                    afreq       = afreq,
                    # Crime scene profile data.
                    cspData     = cspData,

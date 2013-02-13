@@ -79,7 +79,7 @@ ref.data <- function() {
   return(ref)
 } 
 
-ethnic.frequencies.data <- function() {
+ethnic.database.data <- function() {
   # Creates ethnic frequency data for tests.
   d3 = c( 1, 5, 115, 232, 216, 170, 123, 12, # first column
           -93.9413043478, -89.9413043478, -85.9413043478, -81.9413043478,
@@ -175,7 +175,7 @@ test_known.alleles <- svTest(function()  {
   checkEquals(result, check)
 })
 
-test_check.dropouts <- svTest(function() {
+test_has.dropouts <- svTest(function() {
   # Checks that we can figure out dropouts.
   cprofs = internal.representation.data()
 
@@ -193,13 +193,13 @@ test_check.dropouts <- svTest(function() {
   checkTrue(!has.dropouts("Suspect", ref.data(), cprofs))
 })
 
-test_ethnic.frequencies <- svTest(function() {
+test_ethnic.database <- svTest(function() {
   # Test ethnic frequency function
-  if(! "ethnic.frequencies" %in% ls(.GlobalEnv))
-    ethnic.frequencies = getFromNamespace("ethnic.frequencies", "likeLTD")
-  result = ethnic.frequencies('EA1')
+  if(! "ethnic.database" %in% ls(.GlobalEnv))
+    ethnic.database = getFromNamespace("ethnic.database", "likeLTD")
+  result = ethnic.database('EA1')
 
-  check <- ethnic.frequencies.data()
+  check <- ethnic.database.data()
   checkEquals(result$D3, check$D3)
   checkEquals(result$D18, check$D18)
   checkEquals(result$D19, check$D19)
@@ -208,7 +208,7 @@ test_ethnic.frequencies <- svTest(function() {
 
 test_add.missing.alleles <- svTest(function() {
   # Add test for missing alleles.
-  frq <- ethnic.frequencies.data()
+  frq <- ethnic.database.data()
   cprofs <- internal.representation.data()[c("D3", "D18", "D19")]
   known <- known.alleles.data()
 
@@ -240,7 +240,7 @@ test_add.missing.alleles <- svTest(function() {
 
 test_presence.matrices <- svTest(function() {
   # Test construction of presence matrices.
-  frq <- ethnic.frequencies.data()
+  frq <- ethnic.database.data()
   frq$D19 = rbind(frq$D19, c(1, 0))
   row.names(frq$D19)[nrow(frq$D19)] <- "17.2"
   cprofs <- internal.representation.data()[c("D3", "D18", "D19")]
@@ -270,7 +270,7 @@ test_presence.matrices <- svTest(function() {
 
 test_adjust.frequencies <- svTest(function(){ 
   # Test frequency adjustments.
-  frq <- ethnic.frequencies.data()[c("D3", "D18", "D19")]
+  frq <- ethnic.database.data()[c("D3", "D18", "D19")]
   frq$D19 = rbind(frq$D19, c(1, 0))
   row.names(frq$D19)[nrow(frq$D19)] <- "17.2"
   knownAlleles <- known.alleles.data()[1:2, c("D3", "D18", "D19")]
@@ -288,7 +288,7 @@ test_adjust.frequencies <- svTest(function(){
   row.names(d3) <- c("12", "13", "14", "15", "16", "17", "18", "19")
 
   if(! "adjust.frequencies" %in% ls(.GlobalEnv))
-    presence.matrices = getFromNamespace("adjust.frequencies", "likeLTD")
+    adjust.frequencies = getFromNamespace("adjust.frequencies", "likeLTD")
   result = adjust.frequencies(frq, knownAlleles)
   checkEquals(result$D3, d3)
 
@@ -317,4 +317,152 @@ test_adjust.frequencies <- svTest(function(){
   row.names(d3) <- c("12", "13", "14", "15", "16", "17", "18", "19")
   result = adjust.frequencies(frq, knownAlleles, adj=10, fst=0.45)
   checkEquals(result$D3, d3)
+})
+
+
+test_all.profiles.per.locus <- svTest(function() {
+  if(! "all.profiles.per.locus" %in% ls(.GlobalEnv))
+    all.profiles.per.locus = getFromNamespace("all.profiles.per.locus", "likeLTD")
+  result = all.profiles.per.locus(2)
+  checkEquals(result, matrix(c(1, 1, 2, 1, 2, 2), nrow=3))
+  
+  result = all.profiles.per.locus(2, 2)
+  check = matrix( c(1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1,
+                    2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2), nrow=9 )
+  checkEquals(result, check)
+  
+  result = all.profiles.per.locus(2, 3)
+  check = matrix( c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,
+                    2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
+                    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1,
+                    2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2,
+                    2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1,
+                    1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2,
+                    1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2,
+                    2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1,
+                    2, 2), ncol=6 )
+  checkEquals(result, check)
+
+  result = all.profiles.per.locus(3)
+  check = matrix(c(1, 1, 1, 2, 2, 3, 1, 2, 3, 2, 3, 3), ncol=2,)
+  checkEquals(result, check)
+  
+  result = all.profiles.per.locus(3, 2)
+  check = matrix(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,
+                   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1,
+                   1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+                   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 2, 2, 3, 1, 1,
+                   1, 2, 2, 3, 1, 1, 1, 2, 2, 3, 1, 1, 1, 2, 2, 3, 1, 1, 1, 2,
+                   2, 3, 1, 1, 1, 2, 2, 3, 1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3,
+                   1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3, 1, 2,
+                   3, 2, 3, 3), ncol=4) 
+  checkEquals(result, check)
+})
+
+test_genoperms.per.locus.no.dropin <- svTest(function() {
+  alleleNames = c("one", "two", "three", "four", "five")
+  cspPresence = c(T, F, F, T, F)
+  profPresence = c(T, T, T, F, F)
+  # Basic trial
+  if(! "genoperms.per.locus" %in% ls(.GlobalEnv))
+    genoperms.per.locus <- getFromNamespace("genoperms.per.locus", "likeLTD")
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  checkTrue(is.matrix(result))
+  checkTrue(nrow(result) == 5)
+  for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
+  checkTrue(all(result[, 1] <= result[, 2]))
+
+  # Try with csp matrix.
+  cspPresence = matrix(c(T, F, F, F, F, F, F, T, F, F), nrow=2)
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  checkTrue(is.matrix(result))
+  checkTrue(nrow(result) == 5)
+  for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
+  checkTrue(all(result[, 1] <= result[, 2]))
+
+  # Try with too large CSP vs contribs
+  cspPresence = c(T, T, T, T, T)
+  profPresence = c(T, F, F, F, F)
+  checkException( genoperms.per.locus(cspPresence, profPresence, alleleNames,
+                                      1, FALSE) )
+  # Try with exact match
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  checkEquals(result, matrix(0, 1, 0))
+
+  # Try with two contributors 
+  profPresence = c(T, T, F, F, F)
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  for(i in 1:nrow(result)) checkTrue(all(3:5 %in% result[i,]))
+  checkTrue(nrow(result) == 24)
+})
+
+test_genoperms.per.locus.with.dropin <- svTest(function() {
+  alleleNames = c("one", "two", "three", "four", "five")
+  cspPresence = NULL
+  profPresence = NULL
+
+  # Basic trial
+  if(! "genoperms.per.locus" %in% ls(.GlobalEnv))
+    genoperms.per.locus <- getFromNamespace("genoperms.per.locus", "likeLTD")
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, TRUE)
+  checkTrue(is.matrix(result))
+  checkTrue(nrow(result) == 15)
+  checkTrue(ncol(result) == 2)
+  checkTrue(all(result, combinations(5, 2, rep=T)))
+
+  # Try with two unknowns
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, TRUE)
+  checkTrue(nrow(result) == (5*3)^2)
+  checkTrue(ncol(result) == 4)
+  checkEquals(result, unique(result))
+
+  # Try with three unknowns
+  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 3, TRUE)
+  checkTrue(nrow(result) == (5*3)^3)
+  checkTrue(ncol(result) == 6)
+  checkEquals(result, unique(result))
+  return(result)
+})
+
+test_known.epg.per.locus = svTest(function() {
+
+  profiles =  matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0), nrow=6)
+  # NA is to make sure we can pass vectors that are too long, e.g. with
+  # unknown contributors.
+  degradation = c(1.001, 1.002, 1.003, NA) 
+  relContrib  = c(0.01, 0.02, 0.03, NA)
+  database = matrix(c(1.316143e-02, 5.483929e-03, 1.513564e-01,
+                         1.239368e-01, 1.907064e-01, 1.096786e-03,
+                         1.360014e-01, 1.173561e-01, 1.194153e-01,
+                         7.567822e-02, 3.948429e-02, 1.645179e-02,
+                         7.677500e-03, 2.193571e-03, 7.005870e+01,
+                         7.405870e+01, 7.805870e+01, 8.205870e+01,
+                         8.605870e+01, 8.805870e+01, 9.005870e+01,
+                         9.405870e+01, 9.805870e+01, 1.020587e+02,
+                         1.060587e+02, 1.100587e+02, 1.140587e+02,
+                         1.180587e+02), ncol=2)
+
+  if(! "known.epg.per.locus" %in% ls(.GlobalEnv))
+    known.epg.per.locus <- getFromNamespace("known.epg.per.locus", "likeLTD")
+  result <- known.epg.per.locus(relContrib, degradation, database[, 2],
+                                profiles)
+  checkTrue(all(result[!colSums(profiles)] == 0))
+  checkEquals(result[colSums(profiles) > 0][[1]], relContrib[1] * degradation[1]^-database[5, 2])
+  checkEquals( result[colSums(profiles) > 0][[2]], 
+               relContrib[3] * degradation[3]^-database[7, 2] )
+  checkEquals( result[colSums(profiles) > 0][[3]], 
+               relContrib[1] * degradation[1]^-database[9, 2] 
+               + 2.0 * relContrib[2] * degradation[2]^-database[9, 2] 
+               + relContrib[3] * degradation[3]^-database[9, 2]  )
+})
+
+test_selective.col.product.mat.mat= svTest(function() {
+
+  if(! "selective.col.product" %in% ls(.GlobalEnv))
+    selective.col.product <- getFromNamespace("selective.col.product", "likeLTD")
+  
 })

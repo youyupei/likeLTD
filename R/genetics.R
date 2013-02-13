@@ -1,4 +1,3 @@
-
 known.alleles <- function(allNames, refData) {
   # Filters reference profile data to those used in this run.
   #
@@ -78,8 +77,8 @@ nb.without.dropouts <- function(nameK, refData, cprofs) {
   return(length(nameK) - nb.with.dropouts(nameK, refData, cprofs))
 } 
 
-ethnic.frequencies <- function(ethnic, loci=NULL, afreq=NULL) {
-  # Reformats allele frequencies to include only given ethnic group and loci.
+ethnic.database <- function(ethnic, loci=NULL, afreq=NULL) {
+  # Reformats allele database to include only given ethnic group and loci.
   #
   # Parameters:
   #   ethnic: Name of ethnic group. Should correspond to what's in afreq.
@@ -88,7 +87,7 @@ ethnic.frequencies <- function(ethnic, loci=NULL, afreq=NULL) {
   #          likeLTD package.
  
   # Load frequency database if needed. 
-  if(is.null(afreq)) afreq <- load.frequencies()
+  if(is.null(afreq)) afreq <- load.allele.database()
   # figueres out loci
   if(is.null(loci)) loci <- t(unique(afreq['Marker']))
 
@@ -111,15 +110,15 @@ ethnic.frequencies <- function(ethnic, loci=NULL, afreq=NULL) {
   return(result)
 }
 
-add.missing.alleles <- function(frequencies, cprofs, queried, profiled=NULL) {
-  # Add missing alleles to frequencies.
+add.missing.alleles <- function(alleleDb, cprofs, queried, profiled=NULL) {
+  # Add missing alleles to alleleDb
   #
   # The crime scene profile may present alleles which are missing from the
   # frequency database. We only add those alleles which present in queried
   # profile, and those in the known profiles which are subject to dropout.
   #
   # Parameters:
-  #   frequencies: Arranged frequency table as returned by ethnic.frequencies.
+  #   alleleDb: Arranged frequency table as returned by ethnic.database
   #   cprofs: Internal representation of the CSP.
   #   queried: queried profile as returned by known.alleles
   #   profiled: A list of loci containing further alleles. The CSP alleles
@@ -127,8 +126,8 @@ add.missing.alleles <- function(frequencies, cprofs, queried, profiled=NULL) {
   #             added to the database.
   # Returns: Frequency database filled with missing alleles. Also, it is
   #          reordered so htat loci follow the same order as cprofs.[
-  for(locus in names(frequencies)) {
-     freq.alleles <- row.names(frequencies[[locus]])
+  for(locus in names(alleleDb)) {
+     freq.alleles <- row.names(alleleDb[[locus]])
 
      # Alleles in queried profile not in database
      missing.alleles <- setdiff(queried[[locus]], freq.alleles)
@@ -154,16 +153,16 @@ add.missing.alleles <- function(frequencies, cprofs, queried, profiled=NULL) {
 
      # Now add to database all missing alleles, with rownames
      if(!setequal(missing.alleles, c())) {
-       names <- c(row.names(frequencies[[locus]]), missing.alleles)
+       names <- c(row.names(alleleDb[[locus]]), missing.alleles)
        new.rows <- t(array(c(1, 0), c(2, length(missing.alleles))))
-       frequencies[[locus]] <- rbind(frequencies[[locus]], new.rows)
-       row.names(frequencies[[locus]]) <- names
+       alleleDb[[locus]] <- rbind(alleleDb[[locus]], new.rows)
+       row.names(alleleDb[[locus]]) <- names
      }
   } # loop over loci
-  return(frequencies[names(cprofs)])
+  return(alleleDb[names(cprofs)])
 }
 
-presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
+presence.matrices <- function(alleleDb, cprofs, ..., type="csp") {
   # Matrices signifiying presence or absence of alleles in CSP.
   # 
   # A presence matrix for a given locus is an n by m matrix, where n is the
@@ -178,13 +177,13 @@ presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
   # Note: 
   #  The following is expected to be TRUE
   #
-  #  > names(frequencies) == names(cprofs) 
+  #  > names(alleleDb) == names(cprofs) 
   #
   #  It has implications on the loci which are in the database and the order in
   #  which they are presented. 
   #
   # Parameters:
-  #   frequencies: Allele frequency database as returned by ethnic.frequencies. 
+  #   alleleDb: Allele frequency database as returned by ethnic.database. 
   #   cprofs: CSP, internal representation
   #   ...:  Other lists over locus where each element is a list of
   #         alleles for which presence should be counted, much as is in cprofs.
@@ -197,7 +196,7 @@ presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
   # Returns: A list of presence matrices, one for each locus in CSP.
   # 
   # Note: The loci must occur in the same order in *all* input lists.  
-  presence.per.locus <- function(frqLocus, cprofsLocus, ..., type="csp") {
+  presence.per.locus <- function(alleleDbLocus, cprofsLocus, ..., type="csp") {
     # Same as presence.matrices but for a single locus.
     
     # Check if valid locus first.
@@ -209,7 +208,7 @@ presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
     #        not present in the CSP. It is also possible to add other list of
     #        alleles via the ellipsis. In that case, a row consists of integers
     #        indicating the number of lists in which the allele is found. 
-    rep = row.names(frqLocus)
+    rep = row.names(alleleDbLocus)
     if(length(list(...)) == 0) {
       count <- function(n) as.integer(rep %in% n[[type]])
     }
@@ -227,23 +226,22 @@ presence.matrices <- function(frequencies, cprofs, ..., type="csp") {
     return(result)
   }
   # Sanity check. Don't know how to do this for ellipsis though...
-  if( any(names(frequencies) != names(cprofs)) ) {
-    stop("CSP and frequencies do not have same names.")
+  if( any(names(alleleDb) != names(cprofs)) ) {
+    stop("CSP and alleleDb do not have same names.")
   }
 
-  return(mapply(presence.per.locus, frequencies, cprofs, ..., type=type))
+  return(mapply(presence.per.locus, alleleDb, cprofs, ..., type=type))
 }
 
 
-adjust.frequencies <- function(frequencies, queriedAlleles, adj=1, fst=0.02) {
+adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
   # Adjust frequencies for current case.
   #
   # Parameters:
-  #   frequencies: List of allele frequency per locus, for a given ethnic group
-  #                (see ethnic.frequencies), completed for rare alleles in
-  #                queried profile (see add.missing.alleles). The loci in both
-  #                frequencies and queriedAlleles should occur in the same
-  #                order.
+  #   alleleDb: Allele database for given locus, for a given ethnic group (see
+  #             ethnic.database), completed for rare alleles in queried
+  #             profile (see add.missing.alleles). The loci in both alleleDb
+  #             and queriedAlleles should occur in the same order.
   #   queriedAlleles: Profile of the queried individual, with colums as locus.
   #                   This will generally be something returned by
   #                   known.alleles.
@@ -257,17 +255,18 @@ adjust.frequencies <- function(frequencies, queriedAlleles, adj=1, fst=0.02) {
   #        be at least 0.02, and may need to be as high as 0.05 in some
   #        populations (e.g.  small, isolated subpopulations of the population
   #        from which the reference database has been drawn).
-
-  adjust.per.locus <- function(frqLocus, q.loc, adj=1, fst=0.02) {
+  adjust.per.locus <- function(alleleDbLocus, q.loc, adj=1, fst=0.02) {
     # Applies operations to a single locus.
     homozygote <- as.integer(q.loc[1] == q.loc[2])
-    frqLocus[q.loc, 1] <- frqLocus[q.loc, 1] + adj * (1 + homozygote)
+    alleleDbLocus[q.loc, 1] <- alleleDbLocus[q.loc, 1] + adj * (1 + homozygote)
     #  shared ancestry adjustements.
-    frqLocus[, 1] <- frqLocus[, 1] / sum(frqLocus[, 1]) * (1 - fst) / (1 + fst) 
-    frqLocus[q.loc, 1] <- frqLocus[q.loc, 1] + fst / (1 + fst) * (1 + homozygote)
-    return(frqLocus)
+    alleleDbLocus[, 1] <-
+      alleleDbLocus[, 1] / sum(alleleDbLocus[, 1]) * (1 - fst) / (1 + fst) 
+    alleleDbLocus[q.loc, 1] <-
+      alleleDbLocus[q.loc, 1] + fst / (1 + fst) * (1 + homozygote)
+    return(alleleDbLocus)
   }
-  return(mapply(adjust.per.locus, frequencies, queriedAlleles, adj=adj,
+  return(mapply(adjust.per.locus, alleleDb, queriedAlleles, adj=adj,
                 fst=fst))
 }
 
@@ -288,14 +287,14 @@ all.profiles.per.locus = function(nAlleles, nContrib=1) {
   
   # All possible permutations of "nContrib" contributors.
   nContribPerms = permutations(nrow(singleContributor), nContrib, rep=T)
-  # Function to apply single column from contributor permutations to the allele
-  # combinations of a single contributor.
-  apply.perms <- function(n, alleles, perms) alleles[perms[, n], ]
-  # All possible allele combintations of "nContrib" contributors.
-  unknownContributors <- do.call( cbind, 
-                                  lapply( 1:nContrib, apply.perms, 
-                                          alleles=singleContributor, 
-                                          perms=nContribPerms ) )
+  # The next two lines create a matrix where the first two columns is
+  # singleContributor in the order given by the first column of nContribPerms.
+  # The next two columns is singleContributor in the order given by
+  # nContribPerms's second column. And so on and so forth.
+  apply.perms <- function(n, sing, perms) sing[perms[, n], ]
+  columns <- lapply(1:nContrib, apply.perms, sing=singleContributor,
+                    perms=nContribPerms) 
+  unknownContributors <- do.call(cbind, columns)
   return(unknownContributors)
 }
 
@@ -383,98 +382,217 @@ genoperms.per.locus = function(cspPresence, profPresence,
   return(unknownContributors) 
 }
 
-#-----------------------------------------
-# calc.fixed()
-#-----------------------------------------
-# Calculates all objects that vary by locus, but fixed by iteration. Differs for pros and def.
+known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
+                                profiles) {
+  # Creates "electropherogram" vector for a given locus.
+  #
+  # In practice, the "electropherogram" is a vector giving the dose for each
+  # allele present in the known profiles.
+  #
+  # Parameters:
+  #   relContrib: relative contributions from each individual. It should be
+  #               vector of the same length as the number of individuals in the
+  #               profile.  
+  #   degradation: degradation of the DNA from each individual. 
+  #   fragmentLengths: The str lengths for a given locus.
+  #   profiles: A matrix of (2n) by m, where is the number of individuals in
+  #             the profile, m is the number of alleles in the frequency table,
+  #             and each element indicate the presence or absence of that
+  #             particular allele in the makeup of each individual.
+  # Returns: A vector with an element per allele. Each element is zero if is
+  #          not within the known profile, or it is its dose within the
+  #          candidate CSP.
 
-# Arguments required are:
-#	Nkdo: Number of knowns subject to dropout. Set in global.objects()
-#	Nunp: number of unprofiled contributors, either NU (pros) or NU+1 (def). Set in GUI
-#	afbp: Adjusted allele fractions and allele lengths. Use af from prepro()
-#	known.alleles: Use known[[j]][mfunpr]. known and mfunpr from global.objects()
-#	CSP: CSP for all replicates. Use csp from prepro(). Different for pros and def if Q is not subject to dropout.
-#	DI: DI probability (used to determine whether to use Ureq or not), from Drin. Set in GUI.
-#	Qcont:  Use 0 for def, or Qdrop or 1+Qdrop for pros. Set in global.objects(). 0 if Q is not assumed to be a contributor (i.e. under Hd), =1 if Q is a contributor not subject to dropout and =2 if Q is a contributor subject to dropout.
+  indices = which(profiles > 0) - 1
+  strands = indices %% nrow(profiles) + 1
+  indivs  = trunc((strands - 1) / 2) + 1
+  alleles = trunc(indices / nrow(profiles)) + 1
+  doses = mapply( function(d, r, L) r*d^{-L}, 
+                  degradation[indivs], 
+                  relContrib[indivs], 
+                  fragmentLengths[alleles] )
+  result = array(0.0, ncol(profiles))
+  for(i in 1:length(alleles)) 
+    result[alleles[i]] = result[alleles[i]] + doses[i]
+  return(result)
+}
 
-# Returns:
-#	kpdo: Alleles form known contributors. Differ for pros and def ans def cannot include Q's alleles. Also specific order set.
-#	pUall: Generates all the permutations of genotypes for the unprofiled contributors.
-#	index: internal abstraction
-#	fragments: matrix of fragment lengths across all permutations
-#	v.index: Internal abstraction required to index specific elements in tprof matrix.
+all.epg.per.locus <- function(relContrib, degradation, profPresence,
+                              knownFragLengths, unknonwFragLengths,
+                              unknownContributors) {
+  # Creates "electropherogram" for each possible set of unknown contributors.
+  #
+  # Parameters:
+  #   relContrib: relative contributions from each individual. It should be
+  #               vector of the same length as the number of individuals in the
+  #               profile.  
+  #   degradation: degradation of the DNA from each individual. 
+  #   profPresence: Presence matrix for known profiles.
+  #   knownFragLengths: matrix with fragment lengths for each allele in each
+  #                     known profile.
+  #   unknownFragLengths: matrix with fragment lengths for each allele in each
+  #                       unknown contributor.
+  #   nprofs: Number of profiled individuals. Used as an offset into
+  #           relContrib and degradation arrays.
+  # Returns: A vector with an element per allele. Each element is zero if is
+  #          not within the known profile, or it is its dose within the
+  #          candidate CSP.
 
-calc.fixed = function(Nkdo,Nunp,afbp,known.alleles,CSP,DI,Qcont){
+  # "electropherogram" from known profiles
+  knownEPG <- known.epg.per.locus(relContrib, degradation, knownFragLengths,
+                                  profPresence)
 
-	# generates kpdo
-	Qgen=known.alleles[1:2]
-	if(Qcont==0)kpdo=known.alleles[-(1:2)] # defence case. Excludes Qs alleles.
-	if(Qcont==1)kpdo=known.alleles # prosecution case. Includes Qs alleles.
-	if(Qcont==2)kpdo=c(known.alleles[-(1:2)],Qgen) # if Q is contributor subject to dropout, put those alleles last in kpdo 
+  # allEPG: for each set of unknown contributors, total EPG of known and
+  #         unknowns.
+  # At point of creation, contains only component from known profiles.
+  allEPG = matrix(knownEPG, ncol=nrow(unknownContributors),
+                  nrow=length(knownEPG), byrow=F) 
+  # Add into allEPG the components from unknown contributors.
+  nUnknowns = ncol(unknownContributors)
+  if(nUnknowns > 0) {
+    indices = (nrow(profPresence)/2):ncol(unknownContributors)
+    unknownDoses =  rcont[index] * degradation[index]^-unknownFragLengths
+    # Perform sum over each DNA strand of each unknown contributor. 
+    for(u in 1:nUnknowns){
+      indices = unknownContributors[, u] + v.index
+      allEPG[indices] = allEPG[indices]  + unknownDoses[u, ]
+    }
+  }
+  return(allEPG)
+}
 
-	# generates presence/absence of known alleles
-	presence = rep(0,nrow(afbp)) 
-	if(length(kpdo)) for(u in 1:length(kpdo))presence = presence + (rownames(afbp)==kpdo[u])
+selective.col.product <- function(condition, input) {
+  # Column-wise product over selected columns or elements.
+  #
+  # If all(condition == FALSE), returns 1. Otherwise does one of the following.
+  #
+  # - If condition and input matrices: 
+  #   Performs column-wise multiplication of input elements, ignoring those
+  #   which are *not* selected by the condition matrix.
+  # - If condition is a matrix and input a vector: 
+  #   Creates a matrix whith the same dimensions as condition
+  # - If condition is a vector and input is a matrix: 
+  #   Performs column-wise multiplication of selected input columns only.
+  # - If condition and input are vectors:
+  #   Sets elements in input which are FALSE to 1, and returns it.
+  # 
+  # Column-wise multiplication means column 1 times column 2 times...
+  #
+  # Parameters:
+  #   condition: a logical vector or a logical matrix. See above.
+  #   input: input matrix with data for which to perform calculation.
+  # Return: 
+  #   - if condition is always FALSE, returns the scalar 1.0
+  #   - otherwise a vector with the same length as there are rows in input
+  # 
+  # Note: Really should be done through R's multiple dispatch...
+  #       Maybe once I've read up on it.
 
-if(Nunp>0) {
-	# generates pUall
-	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP # T for alleles that occur in CSP at least once
+  if(all(condition == FALSE)) return(1)
 
-	if (DI==0) {
-		Ureq = which((CSPset * (presence == 0)) > 0)  # identify alleles in CSP but not in kpdo, so must come from the U or X
-		nUx =  2*Nunp - length(Ureq)
-  } else {nUx <- 2*Nunp}
-  if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
-		pUall.end <- matrix(data=c(rep(0, times=2*Nunp)),ncol=2*Nunp)
-		for(j in 1:nrow(Ux)){  # all possible allocations of required + random alleles to the unprofileds
-			if (DI==0){
-        pUall =
-				if(length(unique(c(Ureq,Ux[j,])))==(2*Nunp)) {permutations(2*Nunp,2*Nunp,c(Ureq,Ux[j,]),set=F)} else {unique(permutations(2*Nunp,2*Nunp,c(Ureq,Ux[j,]),set=F))}
-				}
-			else {pUall = 
-				if(length(unique(Ux[j,]))==(2*Nunp)) {permutations(2*Nunp,2*Nunp,Ux[j,],set=F)}else {unique(permutations(2*Nunp,2*Nunp,Ux[j,],set=F))} 
-				}
-			
-			pUall = pUall[which(apply(pUall[,2*(1:Nunp)-1,drop=F]<=pUall[,2*(1:Nunp),drop=F],1,prod)>0),,drop=F]
-			pUall.end <- rbind(pUall.end,pUall)
-			}
-	pUall <- pUall.end[-1,]
-} 
+  # condition is a matrix
+  if(is.matrix(condition)) {  
+    # Both are matrices.
+    if(is.matrix(input)) {
+      if(any(dim(condition) != dim(input)))
+        stop("condition and input have different dimensions.") 
+      output = mapply( function(i) prod(input[condition[, i], i], na.rm=T),
+                       1:nrow(condition) )
+    # condition is matrix, input is a vector
+    } else {
+      if(nrow(condition) != length(input)) 
+        stop("condition does not have as many row as input has elements.") 
+      output = apply(condition, 1, function(n) prod(input[n], na.rm=T))
+    }
 
+  } else if(is.matrix(input)) {
+    # condition is a vector and input is a matrix.
+    if(ncol(input) != length(condition))
+      stop("condition does not have as many elements as input has columns.") 
 
-if(Nunp==0) {
-	if(DI==0) {
-		ind=c(1,1)
-		if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
-		presenceQ = rep(0,nrow(afbp)) 
-		for(u in 0:1) {presenceQ = presenceQ + (rownames(afbp)==kpdo[length(kpdo)-u])}
-		pUall <- which(presenceQ>0)   # If no unknowns set pUall to genotype of Q
-		} 
-
-	if(DI!=0) {
-		ind=c(1,1)
-		nUx <- 2
-		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
-		pUall.end <- matrix(data=c(rep(0, times=length(ind))),ncol=length(ind))
-		for(j in 1:nrow(Ux)){ 
-			pUall = if(length(unique(Ux[j,]))==(length(ind))) {permutations(length(ind),length(ind),Ux[j,],set=F)}else {unique(permutations(length(ind),length(ind),Ux[j,],set=F))} 
-			pUall = pUall[which(apply(pUall[,1,drop=F]<=pUall[,2,drop=F],1,prod)>0),,drop=F]
-			pUall.end <- rbind(pUall.end,pUall)
-			}
-		pUall <- pUall.end[-1,]
-		}
-	}
+    nbAlleles = sum(condition)
+    if(sum(condition) == 1) {
+      output = input[, condition]
+      output[is.na(output)] = 1
+    } else {
+      output = apply(input[, condition], 1,
+                     function(n) prod(n, na.rm=T))
+    } 
+  } else {
+    # condition and input are vectors
+    if(length(input) != length(condition))
+      stop("condition does not have as many elements as input.") 
+    output = input
+    output[condition] = 1.0
+  }
+  return(output)
+}
 
 
-# CHANGE: edit pUall
-if(is.matrix(pUall)==FALSE) pUall <- t(as.matrix(pUall))
+create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
+                                        alleleDb, doDropin, nUnknowns) {
+  # Creates a likelyhood function for a given scenario and locus 
+  #
+  # A scenario is given by the number of unknown contributors, whether to model
+  # dropin, so on and so forth.
 
-	# generates other fixed values
-	N = dim(pUall)[1] # number of genotypes 
-	fragments = t(matrix(afbp[pUall,2],nrow=N))
-	v.index = (0:(N-1))*nrow(afbp)
-	if(Nunp>0) index = (length(kpdo)/2) + rep((1:Nunp),rep(2,Nunp))  else index = (length(kpdo)/2) + ind
+  # All possible sets of alleles from unknown contributors within this
+  # scenario.
+  unknownContributors <- genoperms.per.locus(cspPresence, profPresence, alleleDb,
+                                             doDropin, nUnknowns)
+  # v.index: index matrix to access alleles across possible agreggate profiles. 
+  v.index = 0:(nrow(unknownContributors)-1) * nrow(alleleDb)
+  # Lengths of each short tandem repeat.
+  fragmentLengths = alleleDb[unknownContributors, 2] 
+  # permLengths: lengths of each short tandem repeaeat in the database for each
+  #              unknown contributor.
+  permLengths = matrix(fragmentLengths, ncol=nrow(unknownContributors), byrow=T)
+
+  # Mask for empty alleles in each epg 
+  knownZero = !( colSums(profPresence) > 0 )
+  zeroAll = apply(unknownContributors, 1, 
+                  function(n) { 
+                    result <- knownZero; result[n] = FALSE; return(result) } )
+
+  # nrep: Number of replicates.
+  nrep = nrow(cspPresence)
+  # validReps: Valid replicates
+  validReps = rowSums(cspPresence) > 0
 
 
-return(list(kpdo=kpdo,pUall=pUall,index=index,fragments=fragments,v.index=v.index))}
-#-----------------------------------------
+  result.function <- function(dropout, dropin, localAdjustement, tverderbrink,
+                              rcont, degradation) {
+    # Likelyhood function for a given scenario and locus
+    #
+    # This function is specific to the scenario for which it was created.
+    # However, it still requires nuisance parameters to compute likelyhoods.
+    allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
+                                knownFragLengths, unknownFragLengths,
+                                unknownContributors)
+    allEPG = t(allEPG * localAdjustment)^tverderbrink
+    dropinRate =  dropin * (1 - dropout) # dropin rate
+
+
+    repResult = matrix(1, ncol=4, nrow=nrep)
+    for(i in 1: nrep) 
+      if(validCSP[i]) {
+
+        vDoseDropout = allEPG * dropout[i]
+        vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
+
+        csp = cspPresence[z, ]
+        unc = uncPresence[z, ]
+        
+        repResult[1] = selective.col.prod(!csp & !unc, vDoseDropout)
+        repResult[2] = selective.col.prod(csp, 1 - vDoseDropout)
+        if(doDropin != 0) { # only necessary if drop-in is modelled
+          repResult[3] = selective.col.prod( t(csp & zero), 
+                                             dropinRate[i] * alleleDb[, 1] )
+          repResult[4] = selective.col.prod( t(!csp & !unc & zero),
+                                             1 - dropinRate[i] * allelDb[, 1] )
+        } 
+      }
+    return(result)
+  }
+  return(result.function)
+}
