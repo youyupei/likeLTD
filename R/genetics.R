@@ -456,8 +456,8 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
     # profiles. 
     v.index = 0:(nrow(unprofdContributors)-1) * ncol(unprofdContributors)
     indices = (nrow(profPresence)/2):ncol(unprofdContributors)
-    unknownDoses =  relContrib[indices] *
-                    degradation[indices]^-unknownFragLengths
+    unknownDoses = relContrib[indices] *
+                   degradation[indices]^-unknownFragLengths
     # Perform sum over each DNA strand of each unknown contributor.
     for(u in 1:nUnknowns){
       indices = unprofdContributors[, u] + v.index
@@ -539,7 +539,7 @@ selective.row.prod <- function(condition, input) {
 
 
 create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
-                                        alleleDb, doDropin, nUnknowns) {
+                                        alleleDb, nUnknowns, doDropin) {
   # Creates a likelyhood function for a given scenario and locus
   #
   # A scenario is given by the number of unknown contributors, whether to model
@@ -550,8 +550,9 @@ create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
   #############################################################################
   # All possible sets of alleles from unknown contributors within this
   # scenario.
-  unprofdContributors <- unprofd.per.locus(cspPresence, profPresence, alleleDb,
-                                           doDropin, nUnknowns)
+  unprofdContributors <- unprofd.per.locus(cspPresence, profPresence,
+                                           row.names(alleleDb), nUnknowns,
+                                           doDropin)
   # Lengths of each short tandem repeat.
   knownFragLengths = alleleDb[unprofdContributors, 2] 
   # unknownFragLengths: lengths of each short tandem repeaeat in the database
@@ -571,22 +572,22 @@ create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
   validReps = rowSums(cspPresence) > 0
 
   # Prepare heterozygote adjustment.
-	if(nUnknowns > 0) {
+  if(nUnknowns > 0) {
     het <- 1 + (unprofdContributors[, 2*(1:nUnknowns)-1]
                   < unprofdContributors[, 2*(1:nUnknowns)])
   } else het <- 1 + (unprofdContributors[, 1] < unprofdContributors[, 2])
-	if (nUnknowns > 1) het <- apply(het, 1, prod, na.rm=T)
+  if (nUnknowns > 1) het <- apply(het, 1, prod, na.rm=T)
 
   # Prepare allele fractions 
-	fraction <- matrix(alleleDb[unprofdContributors, 1],
+  fraction <- matrix(alleleDb[unprofdContributors, 1],
                      ncol=ncol(unprofdContributors))
-	fraction <- apply(fraction, 1, prod, na.rm=T)
+  fraction <- apply(fraction, 1, prod, na.rm=T)
 
   #############################################################################
   ####################  PER LOCUS OBJECTIVE FUNCTION  #########################
   #############################################################################
   result.function <- function(rcont, degradation, localAdjustment,
-                              tverderbrink, dropout, dropin=0) {
+                              tvedebrink, dropout, dropin=0) {
     # Likelyhood function for a given scenario and locus
     #
     # This function is specific to the scenario for which it was created.
@@ -599,7 +600,7 @@ create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
     #   degradation: relative degradation from each profiled individual in this
     #          scenario.
     #   localAdjustment: a scalar floating point value.
-    #   tverderbrink: a scalar floating point value.
+    #   tvedebrink: a scalar floating point value.
     #   dropout: the dropout rate for each replicate.
     #   dropin: scalar floating point giving overall dropin rate, prior to
     #           adjustement by dropout rate.
@@ -608,12 +609,12 @@ create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
     allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
                                 knownFragLengths, unknownFragLengths,
                                 unprofdContributors)
-    allEPG = t(allEPG * localAdjustment)^tverderbrink
+    allEPG = t(allEPG * localAdjustment)^tvedebrink
     dropinRate =  dropin * (1 - dropout) # dropin rate
 
 
     # res: (Partial) Likelihood per allele.
-    res = array(1, nrow(alleleDb))
+    res = array(1, length(fraction))
     # Loop over replicates.
     for(i in 1: nrep) {
       csp = cspPresence[i, ]
@@ -636,7 +637,7 @@ create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
     } # End of loop over replicates.
 
     # Figure out likelihood for good and return.
-    return(sum(res * fractions * het))
+    return(sum(res * fraction * het))
   }
 
   ############################################################################# 
