@@ -57,7 +57,7 @@ known.with.dropouts <- function(name, refData, cprofs) {
 nb.with.dropouts <- function(nameK, refData, cprofs) {
   # Number of profiles with dropouts.
   #
-  # Computes number of profiles named in nameK with dropouts. 
+  # Computes number of profiles named in nameK with dropouts.
   #
   # Parameters:
   #   nameK: Names of the profile to check.
@@ -68,7 +68,7 @@ nb.with.dropouts <- function(nameK, refData, cprofs) {
 nb.without.dropouts <- function(nameK, refData, cprofs) {
   # Number of profiles without dropouts.
   #
-  # Computes number of profiles named in nameK with dropouts. 
+  # Computes number of profiles named in nameK with dropouts.
   #
   # Parameters:
   #   nameK: Names of the profile to check.
@@ -95,7 +95,7 @@ ethnic.database <- function(ethnic, loci=NULL, afreq=NULL) {
   # Input of a locus consists of one row per allele type.
   # Also filters out alleles with 0 frequencies 
   filter.locus <- function(n) {
-    locus <- subset(afreq, Marker==n)
+    locus <- afreq[afreq$Marker == n, ]
     result <- matrix(c(locus[[ethnic]], locus[["BP"]]), , 2)
     result[is.na(result[, 2]), 2] <- 0
     rownames(result) <- locus$Allele
@@ -143,10 +143,10 @@ add.missing.alleles <- function(alleleDb, cprofs, queried, profiled=NULL) {
      else csp.alleles <- setdiff(csp.alleles, c(""))
      # skip if no alleles in CSP. 
      if(!setequal(csp.alleles, c())) {
-       # Alleles which are in CSP but not in profiled
+       # Alleles which are in CSP but not in profiled
        csp.profiled <- setdiff(csp.alleles, profiled[[locus]])
        
-       # Add to unknown alleles those in csp.profiled which are not in database
+       # Add to unprofiled alleles those in csp.profiled which are not in database
        missing.alleles <- union( missing.alleles, 
                                  setdiff(csp.profiled, freq.alleles) )
      }
@@ -255,15 +255,16 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
   #        be at least 0.02, and may need to be as high as 0.05 in some
   #        populations (e.g.  small, isolated subpopulations of the population
   #        from which the reference database has been drawn).
-  adjust.per.locus <- function(alleleDbLocus, q.loc, adj=1, fst=0.02) {
+  adjust.per.locus <- function(alleleDbLocus, queriedLocus, adj=1, fst=0.02) {
+
     # Applies operations to a single locus.
-    homozygote <- as.integer(q.loc[1] == q.loc[2])
-    alleleDbLocus[q.loc, 1] <- alleleDbLocus[q.loc, 1] + adj * (1 + homozygote)
+    homozygote <- as.integer(queriedLocus[1] == queriedLocus[2])
+    alleleDbLocus[queriedLocus, 1] <- alleleDbLocus[queriedLocus, 1] + adj * (1 + homozygote)
     #  shared ancestry adjustements.
     alleleDbLocus[, 1] <-
       alleleDbLocus[, 1] / sum(alleleDbLocus[, 1]) * (1 - fst) / (1 + fst) 
-    alleleDbLocus[q.loc, 1] <-
-      alleleDbLocus[q.loc, 1] + fst / (1 + fst) * (1 + homozygote)
+    alleleDbLocus[queriedLocus, 1] <-
+      alleleDbLocus[queriedLocus, 1] + fst / (1 + fst) * (1 + homozygote)
     return(alleleDbLocus)
   }
   return(mapply(adjust.per.locus, alleleDb, queriedAlleles, adj=adj,
@@ -271,35 +272,36 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
 }
 
 all.profiles.per.locus = function(nAlleles, nContrib=1) {
-  # All possible agreggate profiles for a given locus.
+  # All possible agreggate profiles for a given locus.
   #
   # Computes all possible combined profiles from n contributors.
   # This is a permutation on combinations: it grows way too fast as
   # :math:`N=[0.5*nAlleles*(nAlleles+1)]^{nContrib}`.
-  # 
+  # 
   # Parameters:
-  #   nAlleles: number of alleles. 
-  #   nContrib: number of unknowns contributors.
+  #   nAlleles: number of alleles. 
+  #   nContrib: number of unprofiled contributors.
   
   # All possible genotypes for a single contributor.
-  singleContributor = combinations(nAlleles, 2, rep=T)
+  singleContributor = combinations(nAlleles, 2, repeats.allowed=T)
   if(nContrib == 1) return(singleContributor)
   
   # All possible permutations of "nContrib" contributors.
-  nContribPerms = permutations(nrow(singleContributor), nContrib, rep=T)
-  # The next two lines create a matrix where the first two columns is
+  nContribPerms = permutations(nrow(singleContributor), nContrib,
+                               repeats.allowed=T)
+  # The next two lines create a matrix where the first two columns is
   # singleContributor in the order given by the first column of nContribPerms.
   # The next two columns is singleContributor in the order given by
   # nContribPerms's second column. And so on and so forth.
   apply.perms <- function(n, sing, perms) sing[perms[, n], ]
   columns <- lapply(1:nContrib, apply.perms, sing=singleContributor,
                     perms=nContribPerms) 
-  unknownContributors <- do.call(cbind, columns)
-  return(unknownContributors)
+  unprofdContributors <- do.call(cbind, columns)
+  return(unprofdContributors)
 }
 
-genoperms.per.locus = function(cspPresence, profPresence,
-                               alleleNames, nUnknowns, dropin) {
+unprofd.per.locus = function(cspPresence, profPresence, alleleNames, nUnknowns,
+                             dropin) {
   # Profiles of unknown contributors for given locus.
   #
   # Figures out all possible profiles of n contributors, including dependance
@@ -313,7 +315,7 @@ genoperms.per.locus = function(cspPresence, profPresence,
   #   profPresence: Known profiles for given locus. Same type of format as
   #              cspLocus.
   #   alleleNames: Name of the alleles, e.g. columns of the previous two.
-  #   nUnknowns: number of unknown contributors. 
+  #   nUnknowns: number of unknown contributors. 
   #   dropin: TRUE if modelling drop-ins.
   #
   # Return: A m by (2n) matrix where the colums (grouped by twos) correspond to
@@ -341,9 +343,9 @@ genoperms.per.locus = function(cspPresence, profPresence,
   # Seems it's formally equivalent to one unknown and dropin.
   if(nUnknowns == 0 && dropin == TRUE) nUnknowns = 1
 
-  # Case without dropin: check that there are enough unknown contributors to
-  # account for the alleles in the CSP that are not in the known profile.
-  # Might be able to return early here also.
+  # Case without dropin: check that there are enough unknown contributors to
+  # account for the alleles in the CSP that are not in the known profile.
+  # Might be able to return early here also.
   if(dropin == FALSE) {
     # cspPresence: logical vector indicating alleles occurence in CSP.
     if(is.matrix(cspPresence)) cspPresence <- colSums(cspPresence) > 0
@@ -359,27 +361,27 @@ genoperms.per.locus = function(cspPresence, profPresence,
     #                in the case of dropins, then there are no known unknowns.
     knownUnknowns = which(cspPresence & !profPresence) 
 
-    # Not enough contributors, return empty matrix.
+    # Not enough contributors, return empty matrix.
     if(length(knownUnknowns) > 2*nUnknowns)  
       stop("Not enough unknown contributors.")
     if(length(knownUnknowns) == 2*nUnknowns) return(matrix(0, 1, 0))
   }
 
-  # Compute all genotype permutations. 
-  unknownContributors = all.profiles.per.locus(length(alleleNames), nUnknowns)
+  # Compute all genotype permutations. 
+  unprofdContributors = all.profiles.per.locus(length(alleleNames), nUnknowns)
 
   # If dropins are not modelled, then make sure that alleles in CSP but not in
-  # profiled are in (sum of) unknown contributors. 
+  # profiled are in (sum of) unknown contributors. 
   if (dropin == FALSE) {
-    hasKnownUnknowns <- apply( unknownContributors, 1, 
+    hasKnownUnknowns <- apply( unprofdContributors, 1, 
                                function(n) all(knownUnknowns %in% n) )
-    unknownContributors <- unknownContributors[hasKnownUnknowns, , drop=FALSE]
+    unprofdContributors <- unprofdContributors[hasKnownUnknowns, , drop=FALSE]
   }
 
-  if(is.matrix(unknownContributors) == FALSE)
-    unknownContributors <- t(as.matrix(unknownContributors))
+  if(is.matrix(unprofdContributors) == FALSE)
+    unprofdContributors <- t(as.matrix(unprofdContributors))
 
-  return(unknownContributors) 
+  return(unprofdContributors) 
 }
 
 known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
@@ -392,11 +394,11 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
   # Parameters:
   #   relContrib: relative contributions from each individual. It should be
   #               vector of the same length as the number of individuals in the
-  #               profile.  
+  #               profile.
   #   degradation: degradation of the DNA from each individual. 
-  #   fragmentLengths: The str lengths for a given locus.
-  #   profiles: A matrix of (2n) by m, where is the number of individuals in
-  #             the profile, m is the number of alleles in the frequency table,
+  #   fragmentLengths: The str lengths for a given locus.
+  #   profiles: A matrix of (2n) by m, where is the number of individuals in
+  #             the profile, m is the number of alleles in the frequency table,
   #             and each element indicate the presence or absence of that
   #             particular allele in the makeup of each individual.
   # Returns: A vector with an element per allele. Each element is zero if is
@@ -418,22 +420,22 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
 }
 
 all.epg.per.locus <- function(relContrib, degradation, profPresence,
-                              knownFragLengths, unknonwFragLengths,
-                              unknownContributors) {
+                              knownFragLengths, unknownFragLengths,
+                              unprofdContributors) {
   # Creates "electropherogram" for each possible set of unknown contributors.
   #
   # Parameters:
   #   relContrib: relative contributions from each individual. It should be
   #               vector of the same length as the number of individuals in the
-  #               profile.  
+  #               profile.
   #   degradation: degradation of the DNA from each individual. 
   #   profPresence: Presence matrix for known profiles.
   #   knownFragLengths: matrix with fragment lengths for each allele in each
   #                     known profile.
   #   unknownFragLengths: matrix with fragment lengths for each allele in each
   #                       unknown contributor.
-  #   nprofs: Number of profiled individuals. Used as an offset into
-  #           relContrib and degradation arrays.
+  #   nprofs: Number of profiled individuals. Used as an offset into
+  #           relContrib and degradation arrays.
   # Returns: A vector with an element per allele. Each element is zero if is
   #          not within the known profile, or it is its dose within the
   #          candidate CSP.
@@ -445,24 +447,28 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   # allEPG: for each set of unknown contributors, total EPG of known and
   #         unknowns.
   # At point of creation, contains only component from known profiles.
-  allEPG = matrix(knownEPG, ncol=nrow(unknownContributors),
+  allEPG = matrix(knownEPG, ncol=nrow(unprofdContributors),
                   nrow=length(knownEPG), byrow=F) 
   # Add into allEPG the components from unknown contributors.
-  nUnknowns = ncol(unknownContributors)
+  nUnknowns = ncol(unprofdContributors)
   if(nUnknowns > 0) {
-    indices = (nrow(profPresence)/2):ncol(unknownContributors)
-    unknownDoses =  rcont[index] * degradation[index]^-unknownFragLengths
-    # Perform sum over each DNA strand of each unknown contributor. 
+    # v.index: index matrix to access alleles across possible agreggate
+    # profiles. 
+    v.index = 0:(nrow(unprofdContributors)-1) * ncol(unprofdContributors)
+    indices = (nrow(profPresence)/2):ncol(unprofdContributors)
+    unknownDoses =  relContrib[indices] *
+                    degradation[indices]^-unknownFragLengths
+    # Perform sum over each DNA strand of each unknown contributor.
     for(u in 1:nUnknowns){
-      indices = unknownContributors[, u] + v.index
+      indices = unprofdContributors[, u] + v.index
       allEPG[indices] = allEPG[indices]  + unknownDoses[u, ]
     }
   }
   return(allEPG)
 }
 
-selective.col.product <- function(condition, input) {
-  # Column-wise product over selected columns or elements.
+selective.row.prod <- function(condition, input) {
+  # Row-wise product over selected columns or elements.
   #
   # If all(condition == FALSE), returns 1. Otherwise does one of the following.
   #
@@ -470,43 +476,46 @@ selective.col.product <- function(condition, input) {
   #   Performs column-wise multiplication of input elements, ignoring those
   #   which are *not* selected by the condition matrix.
   # - If condition is a matrix and input a vector: 
-  #   Creates a matrix whith the same dimensions as condition
+  #   Equivalent to creating a matrix whith the same dimensions as condition
+  #   from the input, where row ``i`` is ``input[condition[i, ]]``, then apply
+  #   product.
   # - If condition is a vector and input is a matrix: 
-  #   Performs column-wise multiplication of selected input columns only.
+  #   Performs column-wise multiplication of selected input columns only.
   # - If condition and input are vectors:
-  #   Sets elements in input which are FALSE to 1, and returns it.
+  #   Sets elements in input which are FALSE to 1, and returns it.
   # 
-  # Column-wise multiplication means column 1 times column 2 times...
+  # Row-wise multiplication means column 1 times column 2 times... e.g. along
+  # rows. 
   #
   # Parameters:
   #   condition: a logical vector or a logical matrix. See above.
   #   input: input matrix with data for which to perform calculation.
-  # Return: 
-  #   - if condition is always FALSE, returns the scalar 1.0
+  # Return: 
+  #   - if condition is always FALSE, returns the scalar 1.0
   #   - otherwise a vector with the same length as there are rows in input
   # 
-  # Note: Really should be done through R's multiple dispatch...
+  # Note: Really should be done through R's method thingie...
   #       Maybe once I've read up on it.
 
   if(all(condition == FALSE)) return(1)
 
-  # condition is a matrix
+  # condition is a matrix
   if(is.matrix(condition)) {  
-    # Both are matrices.
+    # Both are matrices.
     if(is.matrix(input)) {
       if(any(dim(condition) != dim(input)))
         stop("condition and input have different dimensions.") 
-      output = mapply( function(i) prod(input[condition[, i], i], na.rm=T),
+      output = mapply( function(i) prod(input[i, condition[i, ]], na.rm=T),
                        1:nrow(condition) )
-    # condition is matrix, input is a vector
+    # condition is matrix, input is a vector
     } else {
-      if(nrow(condition) != length(input)) 
-        stop("condition does not have as many row as input has elements.") 
+      if(ncol(condition) != length(input)) 
+        stop("condition does not have as many columns as input has elements.") 
       output = apply(condition, 1, function(n) prod(input[n], na.rm=T))
     }
 
   } else if(is.matrix(input)) {
-    # condition is a vector and input is a matrix.
+    # condition is a vector and input is a matrix.
     if(ncol(input) != length(condition))
       stop("condition does not have as many elements as input has columns.") 
 
@@ -515,15 +524,15 @@ selective.col.product <- function(condition, input) {
       output = input[, condition]
       output[is.na(output)] = 1
     } else {
-      output = apply(input[, condition], 1,
-                     function(n) prod(n, na.rm=T))
+      output = apply(input[, condition], 1, prod, na.rm=T)
     } 
   } else {
-    # condition and input are vectors
+    # condition and input are vectors
     if(length(input) != length(condition))
       stop("condition does not have as many elements as input.") 
     output = input
-    output[condition] = 1.0
+    output[!condition] = 1.0
+    output[is.na(output)] = 1.0
   }
   return(output)
 }
@@ -531,68 +540,107 @@ selective.col.product <- function(condition, input) {
 
 create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
                                         alleleDb, doDropin, nUnknowns) {
-  # Creates a likelyhood function for a given scenario and locus 
+  # Creates a likelyhood function for a given scenario and locus
   #
-  # A scenario is given by the number of unknown contributors, whether to model
+  # A scenario is given by the number of unknown contributors, whether to model
   # dropin, so on and so forth.
 
+  #############################################################################
+  ##############################  PREPARATION  ################################
+  #############################################################################
   # All possible sets of alleles from unknown contributors within this
   # scenario.
-  unknownContributors <- genoperms.per.locus(cspPresence, profPresence, alleleDb,
-                                             doDropin, nUnknowns)
-  # v.index: index matrix to access alleles across possible agreggate profiles. 
-  v.index = 0:(nrow(unknownContributors)-1) * nrow(alleleDb)
+  unprofdContributors <- unprofd.per.locus(cspPresence, profPresence, alleleDb,
+                                           doDropin, nUnknowns)
   # Lengths of each short tandem repeat.
-  fragmentLengths = alleleDb[unknownContributors, 2] 
-  # permLengths: lengths of each short tandem repeaeat in the database for each
-  #              unknown contributor.
-  permLengths = matrix(fragmentLengths, ncol=nrow(unknownContributors), byrow=T)
+  knownFragLengths = alleleDb[unprofdContributors, 2] 
+  # unknownFragLengths: lengths of each short tandem repeaeat in the database
+  #                     for each unknown contributor.
+  unknownFragLengths = matrix(knownFragLengths, ncol=nrow(unprofdContributors),
+                              byrow=T)
 
-  # Mask for empty alleles in each epg 
+  # Mask for empty alleles in each epg 
   knownZero = !( colSums(profPresence) > 0 )
-  zeroAll = apply(unknownContributors, 1, 
+  zeroAll = apply(unprofdContributors, 1, 
                   function(n) { 
                     result <- knownZero; result[n] = FALSE; return(result) } )
 
-  # nrep: Number of replicates.
+  # nrep: Number of replicates.
   nrep = nrow(cspPresence)
   # validReps: Valid replicates
   validReps = rowSums(cspPresence) > 0
 
+  # Prepare heterozygote adjustment.
+	if(nUnknowns > 0) {
+    het <- 1 + (unprofdContributors[, 2*(1:nUnknowns)-1]
+                  < unprofdContributors[, 2*(1:nUnknowns)])
+  } else het <- 1 + (unprofdContributors[, 1] < unprofdContributors[, 2])
+	if (nUnknowns > 1) het <- apply(het, 1, prod, na.rm=T)
 
-  result.function <- function(dropout, dropin, localAdjustement, tverderbrink,
-                              rcont, degradation) {
+  # Prepare allele fractions 
+	fraction <- matrix(alleleDb[unprofdContributors, 1],
+                     ncol=ncol(unprofdContributors))
+	fraction <- apply(fraction, 1, prod, na.rm=T)
+
+  #############################################################################
+  ####################  PER LOCUS OBJECTIVE FUNCTION  #########################
+  #############################################################################
+  result.function <- function(rcont, degradation, localAdjustment,
+                              tverderbrink, dropout, dropin=0) {
     # Likelyhood function for a given scenario and locus
     #
     # This function is specific to the scenario for which it was created.
-    # However, it still requires nuisance parameters to compute likelyhoods.
+    # It hides everything except the nuisance parameters over which to
+    # optimize.
+    #
+    # Parameters:
+    #   rcont: relative contribution from each profiled individual in this
+    #          scenario.
+    #   degradation: relative degradation from each profiled individual in this
+    #          scenario.
+    #   localAdjustment: a scalar floating point value.
+    #   tverderbrink: a scalar floating point value.
+    #   dropout: the dropout rate for each replicate.
+    #   dropin: scalar floating point giving overall dropin rate, prior to
+    #           adjustement by dropout rate.
+    # Returns: A scalar value giving the likelihood for this locus and
+    #          scenario.
     allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
                                 knownFragLengths, unknownFragLengths,
-                                unknownContributors)
+                                unprofdContributors)
     allEPG = t(allEPG * localAdjustment)^tverderbrink
     dropinRate =  dropin * (1 - dropout) # dropin rate
 
 
-    repResult = matrix(1, ncol=4, nrow=nrep)
-    for(i in 1: nrep) 
-      if(validCSP[i]) {
+    # res: (Partial) Likelihood per allele.
+    res = array(1, nrow(alleleDb))
+    # Loop over replicates.
+    for(i in 1: nrep) {
+      csp = cspPresence[i, ]
+      unc = uncPresence[i, ]
+      if(any(csp)) {
 
         vDoseDropout = allEPG * dropout[i]
         vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
 
-        csp = cspPresence[z, ]
-        unc = uncPresence[z, ]
         
-        repResult[1] = selective.col.prod(!csp & !unc, vDoseDropout)
-        repResult[2] = selective.col.prod(csp, 1 - vDoseDropout)
-        if(doDropin != 0) { # only necessary if drop-in is modelled
-          repResult[3] = selective.col.prod( t(csp & zero), 
-                                             dropinRate[i] * alleleDb[, 1] )
-          repResult[4] = selective.col.prod( t(!csp & !unc & zero),
-                                             1 - dropinRate[i] * allelDb[, 1] )
+        res = res * selective.row.prod(!csp & !unc, vDoseDropout)
+        res = res * selective.row.prod(csp, 1 - vDoseDropout)
+        if(dropin != 0) { # only necessary if drop-in is modelled
+          res = res * selective.row.prod( t(csp & zeroAll),
+                                          dropinRate[i] * alleleDb[, 1] )
+          res = res * selective.row.prod( t(!csp & !unc & zeroAll),
+                                          1 - dropinRate[i] * alleleDb[, 1] )
         } 
-      }
-    return(result)
+      } # End of if(any(csp)) 
+    } # End of loop over replicates.
+
+    # Figure out likelihood for good and return.
+    return(sum(res * fractions * het))
   }
+
+  ############################################################################# 
+  ####################  RETURNING OBJECTIVE FUNCTION  #########################
+  ############################################################################# 
   return(result.function)
 }

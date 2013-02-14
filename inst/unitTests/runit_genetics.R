@@ -359,69 +359,69 @@ test_all.profiles.per.locus <- svTest(function() {
   checkEquals(result, check)
 })
 
-test_genoperms.per.locus.no.dropin <- svTest(function() {
+test_unprofd.per.locus <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
-  cspPresence = c(T, F, F, T, F)
-  profPresence = c(T, T, T, F, F)
+  cspPresence = c(TRUE, FALSE, FALSE, TRUE, FALSE)
+  profPresence = c(TRUE, TRUE, TRUE, FALSE, FALSE)
   # Basic trial
-  if(! "genoperms.per.locus" %in% ls(.GlobalEnv))
-    genoperms.per.locus <- getFromNamespace("genoperms.per.locus", "likeLTD")
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  if(! "unprofd.per.locus" %in% ls(.GlobalEnv))
+    unprofd.per.locus <- getFromNamespace("unprofd.per.locus", "likeLTD")
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
   checkTrue(all(result[, 1] <= result[, 2]))
 
   # Try with csp matrix.
-  cspPresence = matrix(c(T, F, F, F, F, F, F, T, F, F), nrow=2)
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  cspPresence = matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE,
+                         FALSE), nrow=2)
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
   checkTrue(all(result[, 1] <= result[, 2]))
 
   # Try with too large CSP vs contribs
-  cspPresence = c(T, T, T, T, T)
-  profPresence = c(T, F, F, F, F)
-  checkException( genoperms.per.locus(cspPresence, profPresence, alleleNames,
-                                      1, FALSE) )
+  cspPresence = c(TRUE, TRUE, TRUE, TRUE, TRUE)
+  profPresence = c(TRUE, FALSE, FALSE, FALSE, FALSE)
+  checkException( unprofd.per.locus(cspPresence, profPresence, alleleNames, 1,
+                                    FALSE) )
   # Try with exact match
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
   checkEquals(result, matrix(0, 1, 0))
 
   # Try with two contributors 
-  profPresence = c(T, T, F, F, F)
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  profPresence = c(TRUE, TRUE, FALSE, FALSE, FALSE)
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
   for(i in 1:nrow(result)) checkTrue(all(3:5 %in% result[i,]))
   checkTrue(nrow(result) == 24)
 })
 
-test_genoperms.per.locus.with.dropin <- svTest(function() {
+test_unprofd.per.locus.with.dropin <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
   cspPresence = NULL
   profPresence = NULL
 
   # Basic trial
-  if(! "genoperms.per.locus" %in% ls(.GlobalEnv))
-    genoperms.per.locus <- getFromNamespace("genoperms.per.locus", "likeLTD")
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 1, TRUE)
+  if(! "unprofd.per.locus" %in% ls(.GlobalEnv))
+    unprofd.per.locus <- getFromNamespace("unprofd.per.locus", "likeLTD")
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, TRUE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 15)
   checkTrue(ncol(result) == 2)
-  checkTrue(all(result, combinations(5, 2, rep=T)))
+  checkEquals(result, combinations(5, 2, rep=TRUE))
 
-  # Try with two unknowns
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 2, TRUE)
+  # Try with two unprofiled contributors.
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, TRUE)
   checkTrue(nrow(result) == (5*3)^2)
   checkTrue(ncol(result) == 4)
   checkEquals(result, unique(result))
 
-  # Try with three unknowns
-  result <- genoperms.per.locus(cspPresence, profPresence, alleleNames, 3, TRUE)
+  # Try with three unprofiled contributors.
+  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 3, TRUE)
   checkTrue(nrow(result) == (5*3)^3)
   checkTrue(ncol(result) == 6)
   checkEquals(result, unique(result))
-  return(result)
 })
 
 test_known.epg.per.locus = svTest(function() {
@@ -432,7 +432,7 @@ test_known.epg.per.locus = svTest(function() {
                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0), nrow=6)
   # NA is to make sure we can pass vectors that are too long, e.g. with
-  # unknown contributors.
+  # unprofiled contributors.
   degradation = c(1.001, 1.002, 1.003, NA) 
   relContrib  = c(0.01, 0.02, 0.03, NA)
   database = matrix(c(1.316143e-02, 5.483929e-03, 1.513564e-01,
@@ -460,9 +460,99 @@ test_known.epg.per.locus = svTest(function() {
                + relContrib[3] * degradation[3]^-database[9, 2]  )
 })
 
-test_selective.col.product.mat.mat= svTest(function() {
+test_selective.row.prod.mat.mat= svTest(function() {
 
-  if(! "selective.col.product" %in% ls(.GlobalEnv))
-    selective.col.product <- getFromNamespace("selective.col.product", "likeLTD")
+  if(! "selective.row.prod" %in% ls(.GlobalEnv))
+    selective.row.prod <- getFromNamespace("selective.row.prod", "likeLTD")
   
+  condition = matrix(FALSE, nrow=6, ncol=3)
+  input     = matrix(2, nrow=6, ncol=3)
+
+  # Checks all False
+  checkEquals(selective.row.prod(condition, input), 1)
+
+  # Checks full rows can be unselected.
+  condition = matrix(c(TRUE, FALSE), nrow=6, ncol=3)
+  checkEquals(selective.row.prod(condition, input), rep(c(2^3, 1), 3))
+
+  # Checks more random selection.
+  condition = matrix(c(TRUE, FALSE), nrow=6, ncol=3, byrow=TRUE)
+  checkEquals(selective.row.prod(condition, input), rep(c(4, 2), 3))
+
+  # Check that this is not a matrix-vector selection
+  input[5:6, 1:2] = 3 
+  input[5:6, 3] = 4 
+  input[1:4, 3] = 5
+  checkEquals(selective.row.prod(condition, input), c(10, 2, 10, 2, 12, 3))
+
+  condition = matrix(TRUE, nrow=7, ncol=3)
+  checkException(selective.row.prod(condition, input))
+  condition = matrix(TRUE, nrow=6, ncol=4)
+  checkException(selective.row.prod(condition, input))
+})
+
+test_selective.row.prod.vec.mat= svTest(function() {
+
+  if(! "selective.row.prod" %in% ls(.GlobalEnv))
+    selective.row.prod <- getFromNamespace("selective.row.prod", "likeLTD")
+  
+  condition = rep(FALSE, 3)
+  input     = matrix(2, nrow=6, ncol=3)
+
+  # Checks all False
+  checkEquals(selective.row.prod(condition, input), 1)
+
+  condition = rep(TRUE, 3)
+  checkEquals(selective.row.prod(condition, input), rep(8, 6))
+
+  condition = c(TRUE, FALSE, FALSE)
+  checkEquals(selective.row.prod(condition, input), rep(2, 6))
+
+  condition = c(TRUE, FALSE, TRUE)
+  input[, 2] = 6
+  checkEquals(selective.row.prod(condition, input), rep(4, 6))
+  
+  input[, 3] = 6
+  checkEquals(selective.row.prod(condition, input), rep(12, 6))
+
+  condition = c(TRUE, FALSE, TRUE, TRUE)
+  checkException(selective.row.prod(condition, input))
+})
+
+test_selective.row.prod.mat.vec = svTest(function() {
+
+  if(! "selective.row.prod" %in% ls(.GlobalEnv))
+    selective.row.prod <- getFromNamespace("selective.row.prod", "likeLTD")
+  
+  condition = matrix(FALSE, nrow=6, ncol=3)
+  input     = rep(2, 3)
+
+  # Checks all False
+  checkEquals(selective.row.prod(condition, input), 1)
+
+  # Checks full rows can be unselected.
+  condition = matrix(c(TRUE, FALSE), nrow=6, ncol=3)
+  checkEquals(selective.row.prod(condition, input), rep(c(2^3, 1), 3))
+
+  # Checks more random selection.
+  condition = matrix(c(TRUE, FALSE), nrow=6, ncol=3, byrow=TRUE)
+  checkEquals(selective.row.prod(condition, input), rep(c(4, 2), 3))
+
+  input = 1:3
+  condition = matrix(c(TRUE, FALSE), nrow=6, ncol=3, byrow=TRUE)
+  checkEquals(selective.row.prod(condition, input), rep(c(3, 2), 3))
+
+  checkException(selective.row.prod(condition, 1:4))
+})
+
+test_selective.row.prod.vec.vec = svTest(function() {
+
+  if(! "selective.row.prod" %in% ls(.GlobalEnv))
+    selective.row.prod <- getFromNamespace("selective.row.prod", "likeLTD")
+
+  checkEquals(selective.row.prod(rep(FALSE, 3), rep(2, 3)), 1)
+  checkEquals(selective.row.prod(rep(TRUE, 3), rep(2, 3)), rep(2, 3))
+  checkEquals(selective.row.prod(c(TRUE, FALSE, TRUE), rep(2, 3)), c(2, 1, 2))
+
+  checkException(selective.row.prod(rep(TRUE, 3), 1:4))
 })

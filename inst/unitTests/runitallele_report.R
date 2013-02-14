@@ -102,7 +102,7 @@ internal.representation.data = function() {
   # Checks it raises an exception if files do not exist and checkFile is TRUE.
   # Checks it does not raise an exception if checkFiles is FALSE.
   # Checks it does not raise an exception if checkFiles is TRUE and files exist
-  frequencyFile = 'data/lgc-allele-freqs-wbp.txt'
+  databaseFile = 'data/lgc-allele-freqs-wbp.txt'
   mixedFile = 'hammer/hammer-CSP.csv'
   refFile = 'hammer/hammer-reference.csv'
   caseName = 'hammer'
@@ -111,7 +111,7 @@ internal.representation.data = function() {
   callme <- function(checkfile) {
     # Helper function to convserve finger strength
     pack.admin.input( caseName=caseName,
-                      frequencyFile=frequencyFile,
+                      databaseFile=databaseFile,
                       mixedFile=mixedFile,
                       refFile=refFile, 
                       outputPath=outputPath,
@@ -122,7 +122,7 @@ internal.representation.data = function() {
   admin <- callme(FALSE)
   checkEquals(length(admin), 5)
   checkEquals(admin$caseName, caseName)
-  checkEquals(admin$frequencyFile, frequencyFile)
+  checkEquals(admin$databaseFile, databaseFile)
   checkEquals(admin$mixedFile, mixedFile)
   checkEquals(admin$refFile, refFile)
   checkEquals(admin$outputPath, outputPath)
