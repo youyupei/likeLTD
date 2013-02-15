@@ -249,21 +249,24 @@ for(i in 1:2) if(sum(rownames(acbp)==Qgen[i])==0) {acbp = rbind(c(1,0),acbp); ro
 nrep = length(call)
 CSP = matrix(0,nrep,nrow(acbp)) # matrix of indicators of CSP alleles, 1 row per replicate
 unc = matrix(0,nrep,nrow(acbp)) # matrix of indicators of uncertain alleles, 1 row per replicate
-for(z in 1:nrep) if(length(call[[z]])>1){ # this condition checks that the replicate is not missing at the locus
-	if(length(setdiff(kpnd,call[[z]][[1]])) != 0) {print(paste("Error: non-dropout allele not observed in CSP; CSP = ",call[[z]][[1]]," non-dropout alleles = ",kpnd)); return(NULL)} # check if there's a contributor wrongly labelled as non-dropout
-	tmp = setdiff(call[[z]][[1]],kpnd) # CSP alleles not attributable to profiled non-dropout contributors.
-	if(length(tmp)) for(i in 1:length(tmp)){
-		if(sum(rownames(acbp) == tmp[i]) == 0) {  # if CSP allele is not in database, insert it with count 1 and fragment length 0
-			CSP = cbind(rep(0,nrep),CSP); unc = cbind(rep(0,nrep),unc); acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = tmp[i]
+for(z in 1:nrep) 
+  if(length(call[[z]])>1){ # this condition checks that the replicate is not missing at the locus
+		if(length(setdiff(kpnd,call[[z]][[1]])) != 0) {print(paste("Error: non-dropout allele not observed in CSP; CSP = ",call[[z]][[1]]," non-dropout alleles = ",kpnd)); return(NULL)} # check if there's a contributor wrongly labelled as non-dropout
+		tmp = setdiff(call[[z]][[1]],kpnd) # CSP alleles not attributable to profiled non-dropout contributors.
+		if(length(tmp) > 0 && tmp != "")
+      for(i in 1:length(tmp)){
+			  if(sum(rownames(acbp) == tmp[i]) == 0) {  # if CSP allele is not in database, insert it with count 1 and fragment length 0
+				  CSP = cbind(rep(0,nrep),CSP); unc = cbind(rep(0,nrep),unc); acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = tmp[i]
+				}
+			  CSP[z,] = CSP[z,] + (rownames(acbp) == tmp[i]) # encode CSP alleles
 			}
-		CSP[z,] = CSP[z,] + (rownames(acbp) == tmp[i]) # encode CSP alleles
-		}
-	if(length(kpnd)) for(i in 1:length(kpnd)) unc[z,] = unc[z,] + (rownames(acbp) == kpnd[i]) # non-dropout alleles are coded as uncertain because they can mask the allele of an unprofiled contributor
-	tmp = call[[z]][[2]]
-	if(length(tmp)) for(i in 1:length(tmp)) unc[z,] = unc[z,] + (rownames(acbp) == tmp[i]) # uncertain alleles from input file
-	} 
-else CSP[z,1] = 999 # flags missing replicate 
-if(sum(CSP*unc)) {print(paste("Error: an allele is both uncertain and in CSP; call = ",call)); return(NULL)}
+		if(length(kpnd)) 
+      for(i in 1:length(kpnd)) unc[z,] = unc[z,] + (rownames(acbp) == kpnd[i]) # non-dropout alleles are coded as uncertain because they can mask the allele of an unprofiled contributor
+		tmp = call[[z]][[2]]
+		if(length(tmp)) 
+      for(i in 1:length(tmp)) unc[z,] = unc[z,] + (rownames(acbp) == tmp[i]) # uncertain alleles from input file
+  } else CSP[z,1] = 999 # flags missing replicate 
+if(sum(CSP*unc)) {stop(paste("Error: an allele is both uncertain and in CSP; call = ",call)); return(NULL)}
 	
 # The sampling adjustment, double sampling adjustment for homozygotes
 acbp[Qgen,1] = acbp[Qgen,1]+adj*(1+(Qgen[1]==Qgen[2])); acbp[,1] = acbp[,1]/sum(acbp[,1])  
@@ -311,10 +314,16 @@ if(Nunp>0) {
 	# generates pUall
 	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP # T for alleles that occur in CSP at least once
 
-if (DI==0) {
+	if (DI==0) {
 		Ureq = which((CSPset * (presence == 0)) > 0)  # identify alleles in CSP but not in kpdo, so must come from the U or X
-		nUx =  2*Nunp - length(Ureq)} else {nUx <- 2*Nunp}
-		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
+		nUx =  2*Nunp - length(Ureq)
+  } else {nUx <- 2*Nunp}
+	if(nUx < 0) {
+      stop("Not enough unknown contributors.")
+    return(0)
+  } else if(nUx > 0) {
+    Ux = combinations(nrow(afbp),nUx,rep=T)
+  } else {Ux = matrix(0,1,0)} 
 		pUall.end <- matrix(data=c(rep(0, times=2*Nunp)),ncol=2*Nunp)
 		for(j in 1:nrow(Ux)){  # all possible allocations of required + random alleles to the unprofileds
 			if (DI==0){pUall =
@@ -328,12 +337,31 @@ if (DI==0) {
 			pUall.end <- rbind(pUall.end,pUall)
 			}
 	pUall <- pUall.end[-1,]
-} else {
-ind=c(1,1)
-hyptadinit=rep(0,nrow(afbp))
-if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
-pUall <- which(CSPset>0)
-}
+} 
+
+
+if(Nunp==0) {
+	if(DI==0) {
+		ind=c(1,1)
+		if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
+		presenceQ = rep(0,nrow(afbp)) 
+		for(u in 0:1) {presenceQ = presenceQ + (rownames(afbp)==kpdo[length(kpdo)-u])}
+		pUall <- which(presenceQ>0)   # If no unknowns set pUall to genotype of Q
+		} 
+
+	if(DI!=0) {
+		ind=c(1,1)
+		nUx <- 2
+		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
+		pUall.end <- matrix(data=c(rep(0, times=length(ind))),ncol=length(ind))
+		for(j in 1:nrow(Ux)){ 
+			pUall = if(length(unique(Ux[j,]))==(length(ind))) {permutations(length(ind),length(ind),Ux[j,],set=F)}else {unique(permutations(length(ind),length(ind),Ux[j,],set=F))} 
+			pUall = pUall[which(apply(pUall[,1,drop=F]<=pUall[,2,drop=F],1,prod)>0),,drop=F]
+			pUall.end <- rbind(pUall.end,pUall)
+			}
+		pUall <- pUall.end[-1,]
+		}
+	}
 
 
 # CHANGE: edit pUall
@@ -391,6 +419,7 @@ return(y)}
 
 Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,index,fragments,v.index){
 
+
 # Generates hyptadinit and tprof (a matrix of identical hyptadinits) for the known doses 
 hyptadinit=rep(0,nrow(afbp))
 if(length(kpdo)) for(u in 1:length(kpdo)){
@@ -401,9 +430,11 @@ tprof = matrix(hyptadinit,ncol=dim(pUall)[1],nrow=length(hyptadinit),byrow=F) # 
 	
 tmp = deg[index]^-fragments * rcont[index] # doses for U/X
 
+if(Nunp>0) {
 for(u in 1:(2*Nunp)){ # for each contributor (2 alleles each).Loop required to sum contributions at the same allele
 	tprof[pUall[,u]+ v.index] = tprof[pUall[,u]+ v.index] + tmp[u,]
 	}
+}
 
 N = dim(tprof)[2] # size of array 
 zero = !tprof # used in index.4 and index.5, avoids redundancy 
@@ -411,20 +442,23 @@ af.4 = af.5 = matrix(afbp[,1], nrow =N,ncol=length(afbp[,1]),byrow=T) # matrix a
 tmp = t(tprof*BB[1])^BB[2] # Tvederbrink adjustment 
 drpin =  DI*(1-DO) # dropin rate
 term.1 = 1 # product of 4 types of contribution
+
 for(z in 1:nrep) if(CSP[z,1]!=999){ # check for missing replicate. Loop required for each replicate
 	tmp.1 = tmp*DO[z] # 0.22 avoids redundancy of calculating twice
 	vdosedr = tmp.1/(tmp.1+1-DO[z]) # 0.64 drop-out probabilities for doses 
 	
 	term.2 = vdosedr[,!CSP[z,] & !unc[z,]] # 0.44 contribution from dropout 
+	if(sum(!CSP[z,] & !unc[z,])!=1){
 	if(!is.matrix(term.2)&nrow(pUall)==1)term.2=prod(term.2,na.rm=TRUE) else if(!is.matrix(term.2)) term.2=1;if(is.matrix(term.2)){	# only calculates product of rows if there are values
 	term.2[c(is.nan(term.2))] = 1 # 1.04 replaces NaNs with 1
-	term.2 = prod.matrix(term.2)} # 0.58 product of each row
+	term.2 = prod.matrix(term.2)} else {term.2[is.na(term.2)]=1}} # 0.58 product of each row
 
 	if(sum(CSP[z,])==0)term.3=1; if(sum(CSP[z,])!=0){ # avoids trying to calc product of blank matrix if CSP[z,])==0
 	term.3 = 1-vdosedr[,CSP[z,]!=0] # 0.12 contribution from non-dropout
+	if(sum(CSP[z,])!=1){
 	if(!is.matrix(term.3)&nrow(pUall)==1)term.3=prod(term.3,na.rm=TRUE)else if(!is.matrix(term.3)) term.3=1;if(is.matrix(term.3)){	# only calculates product of rows if there are values
 	term.3[c(is.nan(term.3))] = 1 # 0.21 replaces NaNs with 1
-	term.3 = prod.matrix(term.3)}} # 0.13 product of each row
+	term.3 = prod.matrix(term.3)}} else {term.3[is.na(term.3)]=1}} # 0.13 product of each row
 
 	if(DI==0)term.4=1; if(DI!=0){ # only necessary if drop-in is modelled
 	index.4 = t(CSP[z,] & zero) # 1.28 contribution from drop-in 
@@ -461,7 +495,8 @@ return(term.1)}
 # Returns the adjusted final likelihood
 
 Adjust.Like <- function(like.array,pUall,afbp,Nunp,rel) {
-	het <- 1+(pUall[,2*(1:Nunp)-1]<pUall[,2*(1:Nunp)]) # homozygocity adjustment
+	if(Nunp>0) het <- 1+(pUall[,2*(1:Nunp)-1]<pUall[,2*(1:Nunp)]) # homozygocity adjustment
+	else het <- 1+(pUall[,1]<pUall[,2])
 	if (Nunp>1) het <- prod.matrix(het) # multiple homozygocity adjustments if Nunp=3
 	fraction <- matrix(data=afbp[pUall[,],1], ncol=ncol(pUall)) # set allele frequencies
 	fraction <- prod.matrix(fraction) # allele frequency adjustment
@@ -532,28 +567,7 @@ return(list(hpdrout=hpdrout,hddrout=hddrout))}
 #----------------------------------------	
 
 
-#-----------------------------------------
-# zero.cont()
-#-----------------------------------------
-# Calculates likelihood when there are zero unknown contributors
-# Returns a single likelihood
 
-zero.cont = function(DI,DO,CSP,af,unc,nrep,BB,kpdo,deg,rcont){
-	hyptadinit=rep(0,times=length(af))
-	if(length(kpdo)) for(u in 1:length(kpdo)){
-		vec = (rownames(af)==kpdo[u])
-		if(sum(vec)) hyptadinit = hyptadinit *deg[trunc((u+1)/2)]^-af[kpdo[u],2]*rcont[trunc((u+1)/2)] # the allele dose from a profiled contributor is the corresponding element of rcont times deg (degradation parameter) for that contributor raised to the power of -fragment length
-	} 
-	hyptadinit <- hyptadinit*BB[2]
-	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
-	if(DI | sum(CSPset*(hyptadinit==0))==0) 
-	term = 1; tmp = hyptadinit^BB[2]; drpin =  DI*(1-DO) # dropin rate
-	for(z in 1:nrep) if(CSP[z,1]!=999){ # check that the replicate is not missing at this locus
-		vdosedr = tmp*DO[z]/(tmp*DO[z]+1-DO[z])  # dropout probabilities in replicate z for the allele "doses" specified by hyptad
-		term = term * prod(vdosedr[!CSP[z,] & !unc[z,]],na.rm=T) * prod(1-vdosedr[CSP[z,]!=0],na.rm=T) * prod(drpin[z]*af[CSP[z,] & !hyptadinit]) * prod(1-drpin[z]*af[!CSP[z,] & !unc[z,] & !hyptadinit]) # contributions to the likelihood from (in order): dropouts, non-dropouts, dropins and non-dropins.
-	}
-	if (DI | sum(CSPset*(hyptadinit==0))==0) return(term) else return (0)
-}
 
 
 

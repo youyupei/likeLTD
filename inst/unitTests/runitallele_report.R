@@ -260,7 +260,7 @@ test_summary.generator <- svTest(function() {
                   TH01 = c("9 9.3{}[]", "6 8{}[]", "{}"),
                   FGA  = c("22{23}[]", "22{25}[]", "{}") )
   summary = data.frame( summary, stringsAsFactors=FALSE,
-                        row.names=c( "Suspect (Q)", "Victim 1 (K)",
+     data                   row.names=c( "Suspect (Q)", "Victim 1 (K)",
                                     "Unattributable") )
   check = list( summary=summary,
                 otherRep=c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0),

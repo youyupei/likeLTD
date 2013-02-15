@@ -34,33 +34,8 @@ function () {
 
 
 ###############################################################
-# Then two functions to help design unit tests + data functions
+# Then data functions
 ###############################################################
-
-temporary.directory <- function(expr) {
-  # Creates a temporary working directory.
-  #
-  # The temp directory is created. The working directory is set to it. The
-  # expression is evaluated. Whatever happens, the directory should be
-  # removed when we exit this function.
-  startdir = getwd()
-  tryCatch( { 
-              directory = tempfile()
-              dir.create(directory, recursive=TRUE)
-              setwd(directory)
-              ;expr;
-            },
-            finally = {
-              try(unlink(directory, TRUE, TRUE), silent=TRUE)
-              setwd(startdir)
-            } )
-}
-
-checkNoException <- function(expr, msg="") {
-  foundError <- FALSE
-  tryCatch(expr, error=function(n) foundError <- TRUE)
-  checkTrue(!foundError, msg=msg)
-}
 
 ref.data <- function() {
   # Reference profile used throughout the tests. 
@@ -359,14 +334,17 @@ test_all.profiles.per.locus <- svTest(function() {
   checkEquals(result, check)
 })
 
-test_unprofd.per.locus <- svTest(function() {
+test_possible.profiles <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
   cspPresence = c(TRUE, FALSE, FALSE, TRUE, FALSE)
   profPresence = c(TRUE, TRUE, TRUE, FALSE, FALSE)
+  queriedPresence = rep(FALSE, 5)
+  missingReps = rep(FALSE, 2)
   # Basic trial
-  if(! "unprofd.per.locus" %in% ls(.GlobalEnv))
-    unprofd.per.locus <- getFromNamespace("unprofd.per.locus", "likeLTD")
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  if(! "possible.profiles" %in% ls(.GlobalEnv))
+    possible.profiles <- getFromNamespace("possible.profiles", "likeLTD")
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
@@ -375,7 +353,8 @@ test_unprofd.per.locus <- svTest(function() {
   # Try with csp matrix.
   cspPresence = matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE,
                          FALSE), nrow=2)
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, FALSE)
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
@@ -384,41 +363,48 @@ test_unprofd.per.locus <- svTest(function() {
   # Try with too large CSP vs contribs
   cspPresence = c(TRUE, TRUE, TRUE, TRUE, TRUE)
   profPresence = c(TRUE, FALSE, FALSE, FALSE, FALSE)
-  checkException( unprofd.per.locus(cspPresence, profPresence, alleleNames, 1,
-                                    FALSE) )
+  checkException( possible.profiles(queriedPresence, cspPresence, profPresence,
+                                    missingReps, alleleNames, 1, FALSE) )
   # Try with exact match
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 2, FALSE)
   checkEquals(result, matrix(0, 1, 0))
 
   # Try with two contributors 
   profPresence = c(TRUE, TRUE, FALSE, FALSE, FALSE)
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, FALSE)
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 2, FALSE)
   for(i in 1:nrow(result)) checkTrue(all(3:5 %in% result[i,]))
   checkTrue(nrow(result) == 24)
 })
 
-test_unprofd.per.locus.with.dropin <- svTest(function() {
+test_possible.profiles.with.dropin <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
   cspPresence = NULL
   profPresence = NULL
+  queriedPresence = NULL
+  missingReps = NULL
 
   # Basic trial
-  if(! "unprofd.per.locus" %in% ls(.GlobalEnv))
-    unprofd.per.locus <- getFromNamespace("unprofd.per.locus", "likeLTD")
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 1, TRUE)
+  if(! "possible.profiles" %in% ls(.GlobalEnv))
+    possible.profiles <- getFromNamespace("possible.profiles", "likeLTD")
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 1, TRUE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 15)
   checkTrue(ncol(result) == 2)
   checkEquals(result, combinations(5, 2, rep=TRUE))
 
-  # Try with two unprofiled contributors.
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 2, TRUE)
+  # Try with two possible.profiles.
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 2, TRUE)
   checkTrue(nrow(result) == (5*3)^2)
   checkTrue(ncol(result) == 4)
   checkEquals(result, unique(result))
 
-  # Try with three unprofiled contributors.
-  result <- unprofd.per.locus(cspPresence, profPresence, alleleNames, 3, TRUE)
+  # Try with three possible.profiles.
+  result <- possible.profiles(queriedPresence, cspPresence, profPresence,
+                              missingReps, alleleNames, 3, TRUE)
   checkTrue(nrow(result) == (5*3)^3)
   checkTrue(ncol(result) == 6)
   checkEquals(result, unique(result))
@@ -433,31 +419,32 @@ test_known.epg.per.locus = svTest(function() {
                        0, 0, 0, 0, 0, 0, 0, 0), nrow=6)
   # NA is to make sure we can pass vectors that are too long, e.g. with
   # unprofiled contributors.
-  degradation = c(1.001, 1.002, 1.003, NA) 
+  degradation = c(0.001, 0.002, 0.003, NA) 
   relContrib  = c(0.01, 0.02, 0.03, NA)
   database = matrix(c(1.316143e-02, 5.483929e-03, 1.513564e-01,
-                         1.239368e-01, 1.907064e-01, 1.096786e-03,
-                         1.360014e-01, 1.173561e-01, 1.194153e-01,
-                         7.567822e-02, 3.948429e-02, 1.645179e-02,
-                         7.677500e-03, 2.193571e-03, 7.005870e+01,
-                         7.405870e+01, 7.805870e+01, 8.205870e+01,
-                         8.605870e+01, 8.805870e+01, 9.005870e+01,
-                         9.405870e+01, 9.805870e+01, 1.020587e+02,
-                         1.060587e+02, 1.100587e+02, 1.140587e+02,
-                         1.180587e+02), ncol=2)
+                      1.239368e-01, 1.907064e-01, 1.096786e-03,
+                      1.360014e-01, 1.173561e-01, 1.194153e-01,
+                      7.567822e-02, 3.948429e-02, 1.645179e-02,
+                      7.677500e-03, 2.193571e-03, 7.005870e+01,
+                      7.405870e+01, 7.805870e+01, 8.205870e+01,
+                      8.605870e+01, 8.805870e+01, 9.005870e+01,
+                      9.405870e+01, 9.805870e+01, 1.020587e+02,
+                      1.060587e+02, 1.100587e+02, 1.140587e+02,
+                      1.180587e+02), ncol=2)
 
   if(! "known.epg.per.locus" %in% ls(.GlobalEnv))
     known.epg.per.locus <- getFromNamespace("known.epg.per.locus", "likeLTD")
   result <- known.epg.per.locus(relContrib, degradation, database[, 2],
                                 profiles)
   checkTrue(all(result[!colSums(profiles)] == 0))
-  checkEquals(result[colSums(profiles) > 0][[1]], relContrib[1] * degradation[1]^-database[5, 2])
+  checkEquals( result[colSums(profiles) > 0][[1]],
+               relContrib[1] * (1.0 + degradation[1])^-database[5, 2])
   checkEquals( result[colSums(profiles) > 0][[2]], 
-               relContrib[3] * degradation[3]^-database[7, 2] )
+               relContrib[3] * (1.0 + degradation[3])^-database[7, 2] )
   checkEquals( result[colSums(profiles) > 0][[3]], 
-               relContrib[1] * degradation[1]^-database[9, 2] 
-               + 2.0 * relContrib[2] * degradation[2]^-database[9, 2] 
-               + relContrib[3] * degradation[3]^-database[9, 2]  )
+               relContrib[1] * (1.0 + degradation[1])^-database[9, 2] 
+               + 2.0 * relContrib[2] * (1.0 + degradation[2])^-database[9, 2] 
+               + relContrib[3] * (1.0 + degradation[3])^-database[9, 2]  )
 })
 
 test_selective.row.prod.mat.mat= svTest(function() {
