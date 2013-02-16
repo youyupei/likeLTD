@@ -10,7 +10,7 @@ function () {
 	## Specific actions for svUnit: prepare context
 	if ("package:svUnit" %in% search()) {
 		.Log <- Log() ## Make sure .Log is created
-		.Log$..Unit <- "inst/unitTests/runit_genetics.R"
+		.Log$..Unit <- "inst/unitTests/runit_objectivePerLocus.R"
 		.Log$..File <- ""
 		.Log$..Obj <- ""
 		.Log$..Tag <- ""
@@ -40,7 +40,7 @@ test_TH01.regression.with.dropin = svTest(function() {
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
   queriedPresence = NULL
   uncPresence = matrix(0, nrow=2, ncol=7)
-  missingReps = c(FALSE, FALSE)
+  missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
                         0.17109857641686809782, 0.09871071716357775194,
                         0.15122213268869189040, 0.33767570955322767645,
@@ -83,8 +83,8 @@ test_TH01.regression.no.dropin = svTest(function() {
   profPresence = matrix(c(0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
   uncPresence = matrix(0, nrow=2, ncol=7)
-  queriedPresence = NULL
-  missingReps = c(FALSE, FALSE)
+  queriedPresence = matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0), nrow=2)
+  missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
                         0.17109857641686809782, 0.09871071716357775194,
                         0.15122213268869189040, 0.33767570955322767645,
@@ -130,8 +130,9 @@ test_D18.regression.with.dropin = svTest(function() {
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0), nrow=4)
   uncPresence = matrix(0, nrow=2, ncol=7)
-  queriedPresence = NULL
-  missingReps = c(FALSE, FALSE)
+  queriedPresence = matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                             1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=2,)
+  missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 1.31614289551437e-02, 5.48392873130988e-03,
                          1.51356432984153e-01, 1.23936789327603e-01,
                          1.90706419554123e-01, 1.09678574626198e-03,
@@ -165,13 +166,13 @@ test_D18.regression.with.dropin = svTest(function() {
   objective.function <- create.likelihood.per.locus(queriedPresence,
                                                     profPresence, cspPresence,
                                                     uncPresence, missingReps,
-                                                    alleleDb, 1,
+                                                    alleleDb, 0,
                                                     arguments$dropin)
 
-  checkEquals(do.call(objective.function, arguments), 9.06669340994184e-06)
+  checkEquals(do.call(objective.function, arguments), 9.09495530595364e-06)
   arguments$degradation = rep(2e-2, 4)
-  checkEquals(do.call(objective.function, arguments), 4.27972472968122e-05)
+  checkEquals(do.call(objective.function, arguments), 5.75530620496417e-05)
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
                             0.00216652022387600, 0.00131485405088635)
-  checkEquals(do.call(objective.function, arguments), 3.77630662967064e-05)
+  checkEquals(do.call(objective.function, arguments), 5.13626195539709e-05)
 })

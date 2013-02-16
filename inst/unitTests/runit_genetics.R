@@ -339,7 +339,7 @@ test_possible.profiles <- svTest(function() {
   cspPresence = c(TRUE, FALSE, FALSE, TRUE, FALSE)
   profPresence = c(TRUE, TRUE, TRUE, FALSE, FALSE)
   queriedPresence = rep(FALSE, 5)
-  missingReps = rep(FALSE, 2)
+  missingReps = FALSE
   # Basic trial
   if(! "possible.profiles" %in% ls(.GlobalEnv))
     possible.profiles <- getFromNamespace("possible.profiles", "likeLTD")

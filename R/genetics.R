@@ -346,15 +346,20 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
   # Might be able to return early here also.
   if(dropin == FALSE) {
 
-    doColSums <- function(input) {
+    doColSums <- function(input, misReps) {
       # Return logical vector indicating allele occurence.
-      if(!is.matrix(input)) return(input > 0)
-      whichRows = !rep(missingReps, length(missingReps)/nrow(input))
-      return(colSums(input[whichRows, , drop=FALSE]) > 0)
+      if(!is.matrix(input)) input = matrix(input, nrow=1)
+      if(!missing(misReps)) {
+        whichRows = !rep(misReps, nrow(input)/length(misReps))
+        if(nrow(input) %% length(misReps) != 0)
+          stop('Expected nrow(input) to be a multiple of lengths(missingReps)')
+        input = input[whichRows, , drop=FALSE]
+      }
+      return(colSums(input) > 0)
     }
 
     # Reduce matrices to a single logical vector
-    cspPresence  = doColSums(cspPresence)
+    cspPresence  = doColSums(cspPresence, missingReps)
     profPresence = doColSums(profPresence)
     queriedPresence = doColSums(queriedPresence)
     
@@ -423,8 +428,8 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
 }
 
 all.epg.per.locus <- function(relContrib, degradation, profPresence,
-                              knownFragLengths, unknownFragLengths,
-                              allProfiles) {
+                              knownFragLengths, FragLengths, allProfiles,
+                              addProfiles=TRUE) {
   # Creates "electropherogram" for each possible set of unknown contributors.
   #
   # Parameters:
@@ -435,9 +440,12 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   #   profPresence: Presence matrix for known profiles.
   #   knownFragLengths: matrix with fragment lengths for each allele in each
   #                     known profile.
-  #   unknownFragLengths: matrix with fragment lengths for each allele in each
-  #                       unknown contributor.
-  #   allProfiles: All possible profiles, excluding known profiles.
+  #   FragLengths: matrix with fragment lengths for each allele each computed
+  #                profile.
+  #   allProfiles: All computed profiles, excluding known profiles.
+  #   addProfiles: Seems there are case when we don't want to add in computed
+  #                profiles... Like when dropin = TRUE and unknonws = 0. Not
+  #                sure why.
   # Returns: A vector with an element per allele. Each element is zero if is
   #          not within the known profile, or it is its dose within the
   #          candidate CSP.
@@ -453,13 +461,13 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
                   nrow=length(knownEPG), byrow=F) 
   # Add into allEPG the components from unknown contributors.
   nUnknowns = ncol(allProfiles)
-  if(nUnknowns > 0) {
+  if(addProfiles) {
     # v.index: index matrix to access alleles across possible agreggate
     # profiles. 
     v.index = 0:(nrow(allProfiles)-1) * length(knownFragLengths)
     indices = nrow(profPresence)/2 + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
     unknownDoses = relContrib[indices] *
-                   (1.0 + degradation[indices])^-unknownFragLengths
+                   (1.0 + degradation[indices])^-FragLengths
     # Perform sum over each DNA strand of each unknown contributor.
     for(u in 1:nUnknowns){
       indices = allProfiles[, u] + v.index
@@ -499,7 +507,7 @@ selective.row.prod <- function(condition, input) {
   # Note: Really should be done through R's method thingie...
   #       Maybe once I've read up on it.
 
-  if(all(condition == FALSE)) return(1)
+  if(!any(condition)) return(1)
 
   # condition is a matrix
   if(is.matrix(condition)) {  
@@ -509,33 +517,35 @@ selective.row.prod <- function(condition, input) {
         stop("condition and input have different dimensions.") 
       output = mapply( function(i) prod(input[i, condition[i, ]], na.rm=T),
                        1:nrow(condition) )
-    # condition is matrix, input is a vector
-    } else {
-      if(ncol(condition) != length(input)) 
-        stop("condition does not have as many columns as input has elements.") 
-      output = apply(condition, 1, function(n) prod(input[n], na.rm=T))
+      return(output)
     }
 
-  } else if(is.matrix(input)) {
-    # condition is a vector and input is a matrix.
+    # condition is matrix, input is a vector
+    if(ncol(condition) != length(input)) 
+      stop("condition does not have as many columns as input has elements.") 
+    return(apply(condition, 1, function(n) prod(input[n], na.rm=T)))
+  }
+
+  # condition is a vector and input is a matrix.
+  if(is.matrix(input)) {
     if(ncol(input) != length(condition))
       stop("condition does not have as many elements as input has columns.") 
 
     nbAlleles = sum(condition)
-    if(sum(condition) == 1) {
-      output = input[, condition]
-      output[is.na(output)] = 1
-    } else {
-      output = apply(input[, condition], 1, prod, na.rm=T)
-    } 
-  } else {
-    # condition and input are vectors
-    if(length(input) != length(condition))
-      stop("condition does not have as many elements as input.") 
-    output = input
-    output[!condition] = 1.0
-    output[is.na(output)] = 1.0
+    if(sum(condition) != 1) 
+      return(apply(input[, condition], 1, prod, na.rm=T))
+
+    output = input[, condition]
+    output[is.na(output)] = 1
+    return(output)
   }
+
+  # condition and input are vectors
+  if(length(input) != length(condition))
+    stop("condition does not have as many elements as input.") 
+  output = input
+  output[!condition] = 1.0
+  output[is.na(output)] = 1.0
   return(output)
 }
 
@@ -557,23 +567,21 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
                                    missingReps, row.names(alleleDb),
                                    nUnknowns, doDropin)
   
-  # Lengths of each short tandem repeat.
-  knownFragLengths = alleleDb[, 2] 
-  # unknownFragLengths: lengths of each short tandem repeat in the database
-  #                     for each unknown contributor.
-  unknownFragLengths = matrix(knownFragLengths[allProfiles],
-                              ncol=nrow(allProfiles), byrow=T)
+  # FragLengths: lengths of each short tandem repeat for each profile.
+  FragLengths = matrix(alleleDb[allProfiles, 2],
+                       ncol=nrow(allProfiles), byrow=T)
 
   # Mask for empty alleles in each epg 
   knownZero = !( colSums(profPresence) > 0 )
-  zeroAll = apply(allProfiles, 1, 
-                  function(n) { 
-                    result <- knownZero; result[n] = FALSE; return(result) } )
+  if(nUnknowns == 0)
+    zeroAll = matrix(knownZero, ncol=nrow(allProfiles), nrow=nrow(alleleDb))
+  else
+    zeroAll = apply(allProfiles, 1, 
+                    function(n) { 
+                      result <- knownZero; result[n] = FALSE; result } )
 
   # nrep: Number of replicates.
   nrep = nrow(cspPresence)
-  # validReps: Valid replicates
-  validReps = rowSums(cspPresence) > 0
 
   # Prepare heterozygote adjustment.
   if(nUnknowns > 0) {
@@ -610,8 +618,8 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
     # Returns: A scalar value giving the likelihood for this locus and
     #          scenario.
     allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
-                                knownFragLengths, unknownFragLengths,
-                                allProfiles)
+                                alleleDb[, 2], FragLengths, allProfiles,
+                                nUnknowns > 0)
     allEPG = t(allEPG * localAdjustment)^tvedebrink
     dropinRate =  dropin * (1 - dropout) # dropin rate
 
@@ -627,7 +635,6 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
         vDoseDropout = allEPG * dropout[i]
         vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
 
-        
         res = res * selective.row.prod(!csp & !unc, vDoseDropout) *
                     selective.row.prod(csp != 0, 1 - vDoseDropout)
         # only necessary if drop-in is modelled

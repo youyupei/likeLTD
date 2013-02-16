@@ -93,8 +93,8 @@ originalEnv$nameQK <- c(genetics$nameQ, genetics$nameK)
 originalEnv$remainingNames = originalEnv$nameQK[originalEnv$nameQK != originalEnv$nameQ]
 originalEnv$nrep <- 2
 originalEnv$nloc <- length(originalEnv$cprofs)
-originalEnv$NU = 0
-originalEnv$Drin = FALSE
+originalEnv$NU = 1
+originalEnv$Drin = TRUE
 originalEnv$fst = 0.02
 originalEnv$ethnic = 'EA1'
 originalEnv$adj = 1
@@ -117,7 +117,7 @@ originalEnv$otherBoth <- genetics$summary$otherUnrep +
 evalq(library(gtools), envir=originalEnv)
 evalq(global.objects(), envir=originalEnv)
 evalq({
-  nu = de = list(); for(j in 1:1) { #c(3:7, 9:10)) {
+  nu = de = list(); for(j in 7:7) { #c(3:7, 9:10)) {
     print(paste('Currently processing fixed objects for',names(cprofs)[j]))
 
     # sampling (and other) adjustments, creates a list of objects for each locus (fixed across iterations)
@@ -134,11 +134,11 @@ evalq({
 evalq( { start = start.values()
          start$depa$beta=-4.35 
          maxd = depa = start$depa
+         depa$deg <- rep(2e-2, 4)
          depa$deg <- c(0.00723217060006922, 0.00569441925951047,
                        0.00216652022387600, 0.00131485405088635)
-         depa$deg <- rep(3e-3, 4)
 
-         j = 1
+         j = 7
          de.tmp=Calclik.1(de[[j]]$kpdo, depa$do, Drin, de[[j]]$af, de[[j]]$csp,
                           de[[j]]$unc, nrep, c(depa$locadj[[j]], depa$beta),
                           de[[j]]$pUall, NU, depa$rcont, 1+depa$deg,
@@ -154,24 +154,24 @@ get_permorder <- function(oldPerms, newPerms) {
   return(apply(oldPerms, 1, check))
 } 
 
-# allProfiles = allProfiles$D18
-# missingReps         = missing.csp.per.locus(genetics$cprofs$D3)
-# cspPresence         = cspPresence$D3
-# uncPresence         = uncPresence$D3
-# queriedPresence     = profPresence$D3[1:2, ]
-# profPresence        = profPresence$D3[3:6, ]
-# alleleDb            = alleleDb$D3
-# genetics$dropin = FALSE
-# genetics$unknowns = 0
-# objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
-#                                                   uncPresence, missingReps,
-#                                                   alleleDb,
-#                                                   genetics$unknowns,
-#                                                   genetics$dropin)
-# arguments = list(rcont=originalEnv$depa$rcont,
-#                  degradation=originalEnv$depa$deg,
-#                  localAdjustment=originalEnv$depa$locadj[7],
-#                  tvedebrink=originalEnv$BB,
-#                  dropout=originalEnv$depa$do,
-#                  dropin=genetics$dropin)
-# newRes <- do.call(objective.function, arguments)
+missingReps      = missing.csp.per.locus(genetics$cprofs$D18)
+cspPresence      = cspPresence$D18
+uncPresence      = uncPresence$D18
+queriedPresence  = profPresence$D18[1:2, ]
+profPresence     = profPresence$D18[3:6, ]
+alleleDb         = alleleDb$D18
+genetics$dropin = TRUE
+genetics$unknowns = 0
+objective.function <- create.likelihood.per.locus(queriedPresence,
+                                                  profPresence, cspPresence,
+                                                  uncPresence, missingReps,
+                                                  alleleDb,
+                                                  genetics$unknowns,
+                                                  genetics$dropin)
+arguments = list(rcont           = originalEnv$depa$rcont,
+                 degradation     = originalEnv$depa$deg,
+                 localAdjustment = originalEnv$depa$locadj[7],
+                 tvedebrink      = originalEnv$BB,
+                 dropout         = originalEnv$depa$do,
+                 dropin          = genetics$dropin)
+newRes <- do.call(objective.function, arguments)
