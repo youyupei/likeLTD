@@ -93,8 +93,8 @@ originalEnv$nameQK <- c(genetics$nameQ, genetics$nameK)
 originalEnv$remainingNames = originalEnv$nameQK[originalEnv$nameQK != originalEnv$nameQ]
 originalEnv$nrep <- 2
 originalEnv$nloc <- length(originalEnv$cprofs)
-originalEnv$NU = 1
-originalEnv$Drin = TRUE
+originalEnv$NU = 2
+originalEnv$Drin = FALSE
 originalEnv$fst = 0.02
 originalEnv$ethnic = 'EA1'
 originalEnv$adj = 1
@@ -160,8 +160,8 @@ uncPresence      = uncPresence$D18
 queriedPresence  = profPresence$D18[1:2, ]
 profPresence     = profPresence$D18[3:6, ]
 alleleDb         = alleleDb$D18
-genetics$dropin = TRUE
-genetics$unknowns = 0
+genetics$dropin = originalEnv$Drin
+genetics$unknowns = originalEnv$NU
 objective.function <- create.likelihood.per.locus(queriedPresence,
                                                   profPresence, cspPresence,
                                                   uncPresence, missingReps,

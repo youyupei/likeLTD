@@ -169,4 +169,24 @@ test_D18.regression.with.dropin = svTest(function() {
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
                             0.00216652022387600, 0.00131485405088635)
   checkEquals(do.call(objective.function, arguments), 5.13626195539709e-05)
+
+  objective.function <- create.likelihood.per.locus(queriedPresence,
+                                                    profPresence, cspPresence,
+                                                    uncPresence, missingReps,
+                                                    alleleDb, 1, TRUE)
+  arguments$degradation = rep(3e-3, 4)
+  checkEquals(do.call(objective.function, arguments), 9.06669340994184e-06)
+  arguments$degradation = rep(2e-2, 4)
+  checkEquals(do.call(objective.function, arguments), 4.27972472968122e-05)
+  arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
+                            0.00216652022387600, 0.00131485405088635)
+  checkEquals(do.call(objective.function, arguments), 3.77630662967064e-05)
+
+  objective.function <- create.likelihood.per.locus(queriedPresence,
+                                                    profPresence, cspPresence,
+                                                    uncPresence, missingReps,
+                                                    alleleDb, 2, TRUE)
+  arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
+                            0.00216652022387600, 0.00131485405088635)
+  checkEquals(do.call(objective.function, arguments), 1.3537562256385e-05)
 })
