@@ -57,8 +57,7 @@ test_TH01.regression.with.dropin = svTest(function() {
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
                    localAdjustment=1,
                    tvedebrink=-4.35,
-                   dropout=c(0.175, 0.105),
-                   dropin=TRUE)
+                   dropout=c(0.175, 0.105) )
 
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
@@ -66,8 +65,7 @@ test_TH01.regression.with.dropin = svTest(function() {
   objective.function <- create.likelihood.per.locus(queriedPresences,
                                                     profPresence, cspPresence,
                                                     uncPresence, missingReps,
-                                                    alleleDb, 2,
-                                                    arguments$dropin)
+                                                    alleleDb, 2, TRUE)
 
   checkEquals(do.call(objective.function, arguments), 0.0204764693571788)
   arguments$degradation = rep(2e-2, 4)
@@ -101,8 +99,7 @@ test_TH01.regression.no.dropin = svTest(function() {
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
                    localAdjustment=1,
                    tvedebrink=-4.35,
-                   dropout=c(0.175, 0.105),
-                   dropin=FALSE)
+                   dropout=c(0.175, 0.105) )
 
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
@@ -110,8 +107,7 @@ test_TH01.regression.no.dropin = svTest(function() {
   objective.function <- create.likelihood.per.locus(queriedPresence,
                                                     profPresence, cspPresence,
                                                     uncPresence, missingReps,
-                                                    alleleDb, 2,
-                                                    arguments$dropin)
+                                                    alleleDb, 2, FALSE)
 
   checkEquals(do.call(objective.function, arguments), 0.0194512081797547)
   arguments$degradation = rep(2e-2, 4)
@@ -157,8 +153,7 @@ test_D18.regression.with.dropin = svTest(function() {
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
                    localAdjustment=1,
                    tvedebrink=-4.35,
-                   dropout=c(0.175, 0.105),
-                   dropin=TRUE)
+                   dropout=c(0.175, 0.105) )
 
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
@@ -166,8 +161,7 @@ test_D18.regression.with.dropin = svTest(function() {
   objective.function <- create.likelihood.per.locus(queriedPresence,
                                                     profPresence, cspPresence,
                                                     uncPresence, missingReps,
-                                                    alleleDb, 0,
-                                                    arguments$dropin)
+                                                    alleleDb, 0, TRUE)
 
   checkEquals(do.call(objective.function, arguments), 9.09495530595364e-06)
   arguments$degradation = rep(2e-2, 4)

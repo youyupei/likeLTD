@@ -598,7 +598,7 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
   ####################  PER LOCUS OBJECTIVE FUNCTION  #########################
   #############################################################################
   result.function <- function(rcont, degradation, localAdjustment,
-                              tvedebrink, dropout, dropin=0) {
+                              tvedebrink, dropout) {
     # Likelyhood function for a given scenario and locus
     #
     # This function is specific to the scenario for which it was created.
@@ -613,15 +613,12 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
     #   localAdjustment: a scalar floating point value.
     #   tvedebrink: a scalar floating point value.
     #   dropout: the dropout rate for each replicate.
-    #   dropin: scalar floating point giving overall dropin rate, prior to
-    #           adjustement by dropout rate.
     # Returns: A scalar value giving the likelihood for this locus and
     #          scenario.
     allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
                                 alleleDb[, 2], FragLengths, allProfiles,
                                 nUnknowns > 0)
     allEPG = t(allEPG * localAdjustment)^tvedebrink
-    dropinRate =  dropin * (1 - dropout) # dropin rate
 
 
     # res: (Partial) Likelihood per allele.
@@ -638,11 +635,11 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
         res = res * selective.row.prod(!csp & !unc, vDoseDropout) *
                     selective.row.prod(csp != 0, 1 - vDoseDropout)
         # only necessary if drop-in is modelled
-        if(dropin != 0) 
+        if(doDropin) 
           res = res * selective.row.prod( t(csp & zeroAll),
-                                          dropinRate[i] * alleleDb[, 1] ) *
+                                          (1 - dropout[i]) * alleleDb[, 1] ) *
                       selective.row.prod( t(!csp & !unc & zeroAll),
-                                          1 - dropinRate[i] * alleleDb[, 1] )
+                                          1 - (1 - dropout[i]) * alleleDb[, 1] )
       } # End of if(any(csp)) 
     } # End of loop over replicates.
 

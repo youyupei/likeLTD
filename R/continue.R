@@ -172,6 +172,5 @@ arguments = list(rcont           = originalEnv$depa$rcont,
                  degradation     = originalEnv$depa$deg,
                  localAdjustment = originalEnv$depa$locadj[7],
                  tvedebrink      = originalEnv$BB,
-                 dropout         = originalEnv$depa$do,
-                 dropin          = genetics$dropin)
+                 dropout         = originalEnv$depa$do )
 newRes <- do.call(objective.function, arguments)
