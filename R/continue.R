@@ -25,43 +25,43 @@ admin <- pack.admin.input( caseName=caseName,
                            outputPath=outputPath )
 # Finally call allele.report
 genetics <- pack.genetics.input(admin, unknowns=2, dropin=FALSE)
-# All known profiles
-knownAlleles <- known.alleles( c("Suspect", "Victim 1", "Victim 2"),
-                               genetics$refData )
-# Only profiles of people who are not queried and are not subject to dropout.
-knownAllelesNoDropouts = known.without.dropouts( c("Victim 1", "Victim 2"),
-                                                 genetics$refData,
-                                                 genetics$cprofs )
-# Only profiles of people who are not queried and are not subject to dropout.
-knownAllelesDropouts = known.with.dropouts( c("Victim 1", "Victim 2"),
-                                            genetics$refData,
-                                            genetics$cprofs )
-# Whether queried profile has dropout.
-hasDropouts <- has.dropouts(c("Suspect"), genetics$refData, genetics$cprofs)
-# Number of not-queried profiles which are not subject to dropouts.
-nbNoDrop <- length(knownAllelesNoDropouts)
+# # All known profiles
+# knownAlleles <- known.alleles( c("Suspect", "Victim 1", "Victim 2"),
+#                                genetics$refData )
+# # Only profiles of people who are not queried and are not subject to dropout.
+# knownAllelesNoDropouts = known.without.dropouts( c("Victim 1", "Victim 2"),
+#                                                  genetics$refData,
+#                                                  genetics$cprofs )
+# # Only profiles of people who are not queried and are not subject to dropout.
+# knownAllelesDropouts = known.with.dropouts( c("Victim 1", "Victim 2"),
+#                                             genetics$refData,
+#                                             genetics$cprofs )
+# # Whether queried profile has dropout.
+# hasDropouts <- has.dropouts(c("Suspect"), genetics$refData, genetics$cprofs)
+# # Number of not-queried profiles which are not subject to dropouts.
+# nbNoDrop <- length(knownAllelesNoDropouts)
 
-# Add alleles in CSP which are not in database.
-alleleDb <- add.missing.alleles( ethnic.database('EA1'), 
-                                 genetics$cprofs, knownAlleles[1:2, ] )
-# Adjust frequencies depending on case parameters.
-alleleDb <- adjust.frequencies(alleleDb, knownAlleles[1:2, ], adj=genetics$adj,
-                          fst=genetics$fst)
-# Presence matrix of the CSP
-cspPresence = presence.matrices(alleleDb, genetics$cprofs)
-# Presence matrix of unknown contributors.
-if(length(knownAllelesNoDropouts) == 0) {
-  uncPresence = presence.matrices(alleleDb, genetics$cprofs, type="unc")
-} else {
-  uncPresence = presence.matrices(alleleDb, genetics$cprofs, knownAllelesNoDropouts,
-                                  type="unc")
-}
+# # Add alleles in CSP which are not in database.
+# alleleDb <- add.missing.alleles( ethnic.database('EA1'), 
+#                                  genetics$cprofs, knownAlleles[1:2, ] )
+# # Adjust frequencies depending on case parameters.
+# alleleDb <- adjust.frequencies(alleleDb, knownAlleles[1:2, ], adj=genetics$adj,
+#                           fst=genetics$fst)
+# # Presence matrix of the CSP
+# cspPresence = presence.matrices(alleleDb, genetics$cprofs)
+# # Presence matrix of unknown contributors.
+# if(length(knownAllelesNoDropouts) == 0) {
+#   uncPresence = presence.matrices(alleleDb, genetics$cprofs, type="unc")
+# } else {
+#   uncPresence = presence.matrices(alleleDb, genetics$cprofs, knownAllelesNoDropouts,
+#                                   type="unc")
+# }
 
-prof.presence.per.locus <- function(prof, alleleDb) {
-  matrix( sapply(prof, function(n) as.integer(rownames(alleleDb) %in% n)), 
-          nrow = length(prof), byrow=T )
-}
-profPresence <- mapply(prof.presence.per.locus, knownAlleles[, names(alleleDb)], alleleDb)
+# prof.presence.per.locus <- function(prof, alleleDb) {
+#   matrix( sapply(prof, function(n) as.integer(rownames(alleleDb) %in% n)), 
+#           nrow = length(prof), byrow=T )
+# }
+# profPresence <- mapply(prof.presence.per.locus, knownAlleles[, names(alleleDb)], alleleDb)
 
 # allProfiles = mapply( function(csp, prof, freq, alleles, n, d) {
 #                                 allProfiles(csp, prof, rownames(freq), d, n)
@@ -72,11 +72,11 @@ profPresence <- mapply(prof.presence.per.locus, knownAlleles[, names(alleleDb)],
 # fragments = mapply( function(freq, perms) t(matrix(freq[perms,2],nrow=nrow(perms))), 
 #                     alleleDb, allProfiles )
 
-indices <- rep( 1: max(1, genetics$unknowns), 
-                rep(2, max(1, genetics$unknowns)) ) + nrow(knownAlleles) / 2 
+# indices <- rep( 1: max(1, genetics$unknowns), 
+#                 rep(2, max(1, genetics$unknowns)) ) + nrow(knownAlleles) / 2 
 
-degradation <- rep(1.003, nrow(knownAlleles) / 2 + genetics$unknowns)
-rcont <- rep(0.1, nrow(knownAlleles) / 2 + genetics$unknowns)
+# degradation <- rep(1.003, nrow(knownAlleles) / 2 + genetics$unknowns)
+# rcont <- rep(0.1, nrow(knownAlleles) / 2 + genetics$unknowns)
 
 
 # Recreates original env
@@ -146,31 +146,31 @@ evalq( { start = start.values()
          depa$l[j] <- Adjust.Like(de.tmp, de[[j]]$pUall, de[[j]]$af, NU, rr)
        }, envir=originalEnv)
 
-get_permorder <- function(oldPerms, newPerms) {
-  # Figure out mapping from newPerms to oldPerms
-  # 
-  # The return should be such that newPerms[return, ] == oldPerms. 
-  check <- function(i) which(apply(newPerms, 1, function(n)  all(i == n))) 
-  return(apply(oldPerms, 1, check))
-} 
+# get_permorder <- function(oldPerms, newPerms) {
+#   # Figure out mapping from newPerms to oldPerms
+#   # 
+#   # The return should be such that newPerms[return, ] == oldPerms. 
+#   check <- function(i) which(apply(newPerms, 1, function(n)  all(i == n))) 
+#   return(apply(oldPerms, 1, check))
+# } 
 
-missingReps      = missing.csp.per.locus(genetics$cprofs$D18)
-cspPresence      = cspPresence$D18
-uncPresence      = uncPresence$D18
-queriedPresence  = profPresence$D18[1:2, ]
-profPresence     = profPresence$D18[3:6, ]
-alleleDb         = alleleDb$D18
-genetics$dropin = originalEnv$Drin
-genetics$unknowns = originalEnv$NU
-objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                  profPresence, cspPresence,
-                                                  uncPresence, missingReps,
-                                                  alleleDb,
-                                                  genetics$unknowns,
-                                                  genetics$dropin)
-arguments = list(rcont           = originalEnv$depa$rcont,
-                 degradation     = originalEnv$depa$deg,
-                 localAdjustment = originalEnv$depa$locadj[7],
-                 tvedebrink      = originalEnv$BB,
-                 dropout         = originalEnv$depa$do )
-newRes <- do.call(objective.function, arguments)
+# missingReps      = missing.csp.per.locus(genetics$cprofs$D18)
+# cspPresence      = cspPresence$D18
+# uncPresence      = uncPresence$D18
+# queriedPresence  = profPresence$D18[1:2, ]
+# profPresence     = profPresence$D18[3:6, ]
+# alleleDb         = alleleDb$D18
+# genetics$dropin = originalEnv$Drin
+# genetics$unknowns = originalEnv$NU
+# objective.function <- create.likelihood.per.locus(queriedPresence,
+#                                                   profPresence, cspPresence,
+#                                                   uncPresence, missingReps,
+#                                                   alleleDb,
+#                                                   genetics$unknowns,
+#                                                   genetics$dropin)
+# arguments = list(rcont           = originalEnv$depa$rcont,
+#                  degradation     = originalEnv$depa$deg,
+#                  localAdjustment = originalEnv$depa$locadj[7],
+#                  tvedebrink      = originalEnv$BB,
+#                  dropout         = originalEnv$depa$do )
+# newRes <- do.call(objective.function, arguments)

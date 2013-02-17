@@ -363,17 +363,17 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
     profPresence = doColSums(profPresence)
     queriedPresence = doColSums(queriedPresence)
     
-    # knownUnknowns: indices of the alleles in the crime scene which are not
-    #                in the known profiles. Indices are for freqLocus rows.
-    #                in the case of dropins, then there are no known unknowns.
-    knownUnknowns = which(cspPresence & !profPresence) 
+    # required: indices of the alleles in the crime scene which are not in the
+    #           known profiles. Indices are for freqLocus rows. In the case of
+    #           dropins, then there are no required alleles.
+    required = which(cspPresence & !profPresence) 
 
     # Not enough contributors, return empty matrix.
-    if(length(knownUnknowns) > 2*nUnknowns)  
+    if(length(required) > 2*nUnknowns)  
       stop("Not enough unknown contributors.")
     if(nUnknowns == 0) 
       return(matrix(which(colSums(queriedPresence) > 0), nrow=1))
-    if(length(knownUnknowns) == 2*nUnknowns) return(matrix(0, 1, 0))
+    if(length(required) == 2*nUnknowns) return(matrix(0, 1, 0))
   }
 
   # Compute all genotype permutations. 
@@ -382,9 +382,8 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
   # If dropins are not modelled, then make sure that alleles in CSP but not in
   # profiled are in (sum of) unknown contributors. 
   if (dropin == FALSE) {
-    hasKnownUnknowns <- apply( allProfiles, 1, 
-                               function(n) all(knownUnknowns %in% n) )
-    allProfiles <- allProfiles[hasKnownUnknowns, , drop=FALSE]
+    hasRequired <- apply(allProfiles, 1, function(n) all(required %in% n))
+    allProfiles <- allProfiles[hasRequired, , drop=FALSE]
   }
 
   if(is.matrix(allProfiles) == FALSE) allProfiles <- t(as.matrix(allProfiles))
@@ -477,6 +476,16 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   return(allEPG)
 }
 
+prod.matrix <- function(x) {
+  # Fast row-wise produce.
+  #
+  # Sadly, this is faster than apply(x, 1, prod)  
+	y=x[,1]
+	for(i in 2:dim(x)[2])
+	y=y*x[,i]
+  return(y)
+}
+
 selective.row.prod <- function(condition, input) {
   # Row-wise product over selected columns or elements.
   #
@@ -512,18 +521,16 @@ selective.row.prod <- function(condition, input) {
   # condition is a matrix
   if(is.matrix(condition)) {  
     # Both are matrices.
-    if(is.matrix(input)) {
-      if(any(dim(condition) != dim(input)))
-        stop("condition and input have different dimensions.") 
-      output = mapply( function(i) prod(input[i, condition[i, ]], na.rm=T),
-                       1:nrow(condition) )
-      return(output)
-    }
+    if(!is.matrix(input)) {
+      if(ncol(condition) != length(input)) 
+        stop("condition does not have as many columns as input has elements.") 
+      # Builds input matrix
+      input = matrix(input, ncol=length(input), nrow=nrow(condition), byrow=T)
+    } else if(any(dim(condition) != dim(input)))
+      stop("condition and input have different dimensions.") 
 
-    # condition is matrix, input is a vector
-    if(ncol(condition) != length(input)) 
-      stop("condition does not have as many columns as input has elements.") 
-    return(apply(condition, 1, function(n) prod(input[n], na.rm=T)))
+    input[!condition] = 1
+    return(prod.matrix(input))
   }
 
   # condition is a vector and input is a matrix.
@@ -532,8 +539,11 @@ selective.row.prod <- function(condition, input) {
       stop("condition does not have as many elements as input has columns.") 
 
     nbAlleles = sum(condition)
-    if(sum(condition) != 1) 
-      return(apply(input[, condition], 1, prod, na.rm=T))
+    if(sum(condition) != 1) {
+      input = input[, condition, drop=FALSE] 
+      input[is.na(input)] = 1 
+      return(prod.matrix(input))
+    }
 
     output = input[, condition]
     output[is.na(output)] = 1
@@ -580,7 +590,10 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
                     function(n) { 
                       result <- knownZero; result[n] = FALSE; result } )
 
-  # nrep: Number of replicates.
+  # Frequencies as a matrix, for fater computing
+  freqMat = matrix(alleleDb[, 1], nrow=nrow(allProfiles),
+                   ncol=length(alleleDb[, 1]), byrow=T)
+  # nrep: Number of replicates. 
   nrep = nrow(cspPresence)
 
   # Prepare heterozygote adjustment.
@@ -637,9 +650,9 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
         # only necessary if drop-in is modelled
         if(doDropin) 
           res = res * selective.row.prod( t(csp & zeroAll),
-                                          (1 - dropout[i]) * alleleDb[, 1] ) *
+                                          (1 - dropout[i]) * freqMat ) *
                       selective.row.prod( t(!csp & !unc & zeroAll),
-                                          1 - (1 - dropout[i]) * alleleDb[, 1] )
+                                          1 - (1 - dropout[i]) * freqMat )
       } # End of if(any(csp)) 
     } # End of loop over replicates.
 
