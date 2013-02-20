@@ -106,7 +106,7 @@ ethnic.database <- function(ethnic, loci=NULL, afreq=NULL) {
   # Then center around mean fragment length
   s1 = sum( sapply(result, function(n) sum(n[, 1] * n[, 2], na.rm=TRUE)) )
   s2 = sum( sapply(result, function(n) sum(n[, 1], na.rm=TRUE)) )
-  for(j in 1:length(result)) result[[j]][,2] <- result[[j]][, 2] - s1/s2
+  for(j in 1:length(result)) result[[j]][, 2] <- result[[j]][, 2] - s1/s2
   return(result)
 }
 
@@ -560,108 +560,3 @@ selective.row.prod <- function(condition, input) {
 }
 
 
-create.likelihood.per.locus <- function(queriedPresence, profPresence,
-                                        cspPresence, uncPresence, missingReps,
-                                        alleleDb, nUnknowns, doDropin) {
-  # Creates a likelyhood function for a given scenario and locus
-  #
-  # A scenario is given by the number of unknown contributors, whether to model
-  # dropin, so on and so forth.
-
-  #############################################################################
-  ##############################  PREPARATION  ################################
-  #############################################################################
-  # All possible sets of alleles from unknown contributors within this
-  # scenario.
-  allProfiles <- possible.profiles(queriedPresence, cspPresence, profPresence,
-                                   missingReps, row.names(alleleDb),
-                                   nUnknowns, doDropin)
-  
-  # FragLengths: lengths of each short tandem repeat for each profile.
-  FragLengths = matrix(alleleDb[allProfiles, 2],
-                       ncol=nrow(allProfiles), byrow=T)
-
-  # Mask for empty alleles in each epg 
-  knownZero = !( colSums(profPresence) > 0 )
-  if(nUnknowns == 0)
-    zeroAll = matrix(knownZero, ncol=nrow(allProfiles), nrow=nrow(alleleDb))
-  else
-    zeroAll = apply(allProfiles, 1, 
-                    function(n) { 
-                      result <- knownZero; result[n] = FALSE; result } )
-
-  # Frequencies as a matrix, for fater computing
-  freqMat = matrix(alleleDb[, 1], nrow=nrow(allProfiles),
-                   ncol=length(alleleDb[, 1]), byrow=T)
-  # nrep: Number of replicates. 
-  nrep = nrow(cspPresence)
-
-  # Prepare heterozygote adjustment.
-  if(nUnknowns > 0) {
-    het <- 1 + (allProfiles[, 2*(1:nUnknowns)-1] <
-                  allProfiles[, 2*(1:nUnknowns)])
-  } else het <- 1 + (allProfiles[, 1] < allProfiles[, 2])
-  if (nUnknowns > 1) het <- apply(het, 1, prod, na.rm=T)
-
-  # Prepare allele fractions 
-  fraction <- matrix(alleleDb[allProfiles, 1], ncol=ncol(allProfiles))
-  fraction <- apply(fraction, 1, prod, na.rm=T)
-
-  #############################################################################
-  ####################  PER LOCUS OBJECTIVE FUNCTION  #########################
-  #############################################################################
-  result.function <- function(rcont, degradation, localAdjustment,
-                              tvedebrink, dropout) {
-    # Likelyhood function for a given scenario and locus
-    #
-    # This function is specific to the scenario for which it was created.
-    # It hides everything except the nuisance parameters over which to
-    # optimize.
-    #
-    # Parameters:
-    #   rcont: relative contribution from each profiled individual in this
-    #          scenario.
-    #   degradation: relative degradation from each profiled individual in this
-    #          scenario.
-    #   localAdjustment: a scalar floating point value.
-    #   tvedebrink: a scalar floating point value.
-    #   dropout: the dropout rate for each replicate.
-    # Returns: A scalar value giving the likelihood for this locus and
-    #          scenario.
-    allEPG <- all.epg.per.locus(rcont, degradation, profPresence,
-                                alleleDb[, 2], FragLengths, allProfiles,
-                                nUnknowns > 0)
-    allEPG = t(allEPG * localAdjustment)^tvedebrink
-
-
-    # res: (Partial) Likelihood per allele.
-    res = array(1, length(fraction))
-    # Loop over replicates.
-    for(i in 1: nrep) {
-      if(!missingReps[i]) {
-        csp = cspPresence[i, ]
-        unc = uncPresence[i, ]
-
-        vDoseDropout = allEPG * dropout[i]
-        vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
-
-        res = res * selective.row.prod(!csp & !unc, vDoseDropout) *
-                    selective.row.prod(csp != 0, 1 - vDoseDropout)
-        # only necessary if drop-in is modelled
-        if(doDropin) 
-          res = res * selective.row.prod( t(csp & zeroAll),
-                                          (1 - dropout[i]) * freqMat ) *
-                      selective.row.prod( t(!csp & !unc & zeroAll),
-                                          1 - (1 - dropout[i]) * freqMat )
-      } # End of if(any(csp)) 
-    } # End of loop over replicates.
-
-    # Figure out likelihood for good and return.
-    return(sum(res * fraction * het))
-  }
-
-  ############################################################################# 
-  ####################  RETURNING OBJECTIVE FUNCTION  #########################
-  ############################################################################# 
-  return(result.function)
-}

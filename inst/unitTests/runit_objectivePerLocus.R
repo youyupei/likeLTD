@@ -1,4 +1,4 @@
-## Test unit 'genetics'
+## Test unit 'objectives per locus'
 library(svUnit)
 
 ###############################################################
@@ -62,7 +62,7 @@ test_TH01.regression.with.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  objective.function <- create.likelihood.per.locus(queriedPresences,
+  objective.function <- create.likelihood.per.locus(queriedPresence,
                                                     profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 2, TRUE)
