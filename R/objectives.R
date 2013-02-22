@@ -198,7 +198,6 @@ penalties <- function(localAdjustment, localAdjPenalty=50, rcont,
     result = result * dnorm(beta, bemn, besd)
   if(!missing(localAdjustment) & !is.null(localAdjustment))
     result = result * penalty.localAdj(localAdjustment, localAdjPenalty)
-  browser()
 
   return(result)
 }
@@ -265,7 +264,7 @@ create.likelihood <- function(admin, nUnknowns=0, doDropin=FALSE, fst=0.02,
 
   likelihood.scalar <- function(...) { 
     result <- vecfunc(...) 
-    prod(result$objectives * result$pens)
+    prod(result$objectives) # * result$penalties)
   }
 
   attributes(likelihood.scalar) <- attributes(vecfunc)
@@ -284,7 +283,7 @@ create.likelihood.log <- function(admin, nUnknowns=0, doDropin=FALSE, fst=0.02,
                                        ethnic=ethnic)
   likelihood.log <- function(...) { 
     result <- vecfunc(...) 
-    prod(result$objectives * result$pens)
+    sum(log(result$objectives)) # + sum(log(result$penalties))
   }
 
   attributes(likelihood.log) <- attributes(vecfunc)
