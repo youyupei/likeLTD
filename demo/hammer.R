@@ -38,7 +38,7 @@ timings <- function(times=10, interTimes=10, nUnknowns=0, doDropin=TRUE) {
   alleles = list()
 
   allTimes = list()
-  objective <- create.likelihood(admin, nUnknowns=0, doDropin=TRUE)
+  objective <- create.likelihood(admin, nUnknowns=nUnknowns, doDropin=doDropin)
   objectives <- attr(objective, "loci")
   for(locus in loci) {
     print(paste("Working on", locus))
@@ -145,3 +145,38 @@ plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0, nUnkno
 # plot_all2d.log(which=c(1,3), nUnknowns=1, x=(1:20/10.0), y=(1:20/10.0)) + 
 #          geom_tile(aes(fill=z))                                         + 
 #          stat_contour()
+  text = "SEXP res;
+          int const nrow = INTEGER(GET_DIM(x))[0];
+          int const ncol = INTEGER(GET_DIM(x))[1];
+          PROTECT(res = allocVector(REALSXP, nrow));
+          double *inptr = &REAL(x)[0];
+          double *outptr = &REAL(res)[0];
+          for(int i=0; i < nrow; ++i, ++inptr, ++outptr) *outptr = *inptr;
+            for(int j=1; j < ncol; ++j) {
+              outptr = &REAL(res)[0];
+              for(int i=0; i < nrow; ++i, ++inptr, ++outptr) *outptr *= *inptr;
+            }
+          UNPROTECT(1);
+          return res;"
+  sig = signature(x="array");
+
+code="SEXP res;
+      int nprotect = 0, nx, ny, nz, x, y;
+      PROTECT(res = Rf_duplicate(a)); nprotect++;
+      nx = INTEGER(GET_DIM(a))[0];
+      ny = INTEGER(GET_DIM(a))[1];
+      nz = INTEGER(GET_DIM(a))[2];
+      double sigma2 = REAL(s)[0] * REAL(s)[0], d2 ;
+      double cx = REAL(centre)[0], cy = REAL(centre)[1], *data, *rdata;
+      for (int im = 0; im < nz; im++) {
+        data = &(REAL(a)[im*nx*ny]); rdata = &(REAL(res)[im*nx*ny]);
+        for (x = 0; x < nx; x++)
+          for (y = 0; y < ny; y++) {
+            d2 = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+            rdata[x + y*nx] = data[x + y*nx] * exp(-d2/sigma2);
+          }
+      }
+      UNPROTECT(nprotect);
+      return res;"
+funx <- cfunction(signature(a="array", s="numeric", centre="numeric"), code)
+funx <- cfunction(signature(x="array"), text)

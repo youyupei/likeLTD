@@ -39,7 +39,7 @@ test_TH01.regression.with.dropin = svTest(function() {
   profPresence = matrix(c(0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
   queriedPresence = NULL
-  uncPresence = matrix(0, nrow=2, ncol=7)
+  uncPresence = matrix(0, nrow=2, ncol=ncol(cspPresence))
   missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
                         0.17109857641686809782, 0.09871071716357775194,
@@ -125,7 +125,7 @@ test_D18.regression.with.dropin = svTest(function() {
                           0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0), nrow=4)
-  uncPresence = matrix(0, nrow=2, ncol=7)
+  uncPresence = matrix(0, nrow=2, ncol=ncol(cspPresence))
   queriedPresence = matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
                              1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=2,)
   missingReps = rep(FALSE, 2)

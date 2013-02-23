@@ -476,15 +476,39 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   return(allEPG)
 }
 
-prod.matrix <- function(x) {
+# Otherwise, fallback.
+prod.matrix.R <- function(x) {
   # Fast row-wise produce.
   #
   # Sadly, this is faster than apply(x, 1, prod)  
-	y=x[,1]
-	for(i in 2:dim(x)[2])
-	y=y*x[,i]
+  y=x[,1]
+  for(i in 2:dim(x)[2])
+  y=y*x[,i]
   return(y)
 }
+# Tries and defines a fast prod.matrix if possible.
+if(require("inline")) {
+  code = "SEXP res;
+          int const nrow = INTEGER(GET_DIM(x))[0];
+          int const ncol = INTEGER(GET_DIM(x))[1];
+          PROTECT(res = allocVector(REALSXP, nrow));
+          double *inptr = REAL(x);
+          double *const outptr_first = REAL(res);
+          double *outptr = outptr_first;
+          // Copy first column into output vector.
+          for(int i=0; i < nrow; ++i, ++inptr, ++outptr)
+            *outptr = (*inptr == NA_INTEGER) ? 1: *inptr;
+          // Perform multiplication with other columns
+          for(int j=1; j < ncol; ++j) {
+            outptr = outptr_first;
+            for(int i=0; i < nrow; ++i, ++inptr, ++outptr)
+              if(*inptr != NA_REAL) *outptr *= *inptr;
+          }
+          UNPROTECT(1);
+          return res;"
+  prod.matrix.C = cfunction(signature(x="array"), code)
+  prod.matrix = prod.matrix.C
+} else { prod.matrix = prod.matrix.R }
 
 selective.row.prod <- function(condition, input) {
   # Row-wise product over selected columns or elements.
