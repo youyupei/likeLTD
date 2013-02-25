@@ -49,6 +49,7 @@ timings <- function(times=10, interTimes=10, nUnknowns=0, doDropin=TRUE) {
                           degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
                           localAdjustment=1,
                           tvedebrink=-4.35,
+                          beta=-4.35,
                           dropout=c(0.175, 0.105) )
     }
     allTimes[[locus]] = callmeNth(newfunc, times=times, interTimes=interTimes)
@@ -83,6 +84,16 @@ args = list(rcont=c(0.923913043478261, 0.565217391304348, 1.000000000000000,
             localAdjustment=1, tvedebrink=-4.35,
             dropout=c(0.175, 0.105), beta=-4.35 )
 
+create.newfuncs <- function(nUnknowns=0, dropin=TRUE) {
+  objectives = create.likelihood.functions(admin, nUnknowns=nUnknowns, doDropin=dropin)
+  args = list(rcont=c(0.923913043478261, 0.565217391304348, 1.000000000000000,
+                      0.543478260869565, 0.108695652173913), 
+              degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
+              localAdjustment=1, tvedebrink=-4.35,
+              dropout=c(0.175, 0.105), beta=-4.35 )
+  sapply(objectives, function(n) { n = eval(n); args = eval(args); 
+                                   function() { do.call(n, args) } }) 
+}
 
 plot_rcont <- function(which=1, x=(1:99)/100.0, nUnknowns=0, doDropin=TRUE, ...) {
   require("ggplot2")

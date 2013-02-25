@@ -61,6 +61,34 @@ impl_objective.dropout.R <- function(res, vDoseDropout, csp, unc) {
   res
 }
 impl_objective.dropout = impl_objective.dropout.R
+if(require("Rcpp")) {
+  code = "NumericVector output = NumericVector(input).size();
+          NumericMatrix const vDose(vDose);
+          LogicalVector const conda(condA);
+          LogicalVector const condb(condB);
+          for(int i=0; i < output.size(); ++i)
+            for(int j=0; j < conda.size(); ++j)
+              if(not std::isnan(vDose(i, j))) {
+                if(conda(j)) output(i, j) *= vDose(i, j);
+                else if(condb(j)) output(i, j) *= 1.0 - vDose(i, j);
+              }
+          return output;"
+  sig = signature(input="vector", vDoseDropout="array", condA="vector",
+                  condB="vector")   
+  .impl_objective.dropout.cxx = cxxfunction(sig, code,
+                                            includes="#include<cmath>",
+                                            plugin="Rcpp", )
+  impl_objective.dropout.cxx <- function(res, vDoseDropout, csp, unc) {
+    if(length(res) != nrow(vDoseDropout))
+      stop("output vector and vDoseDropout have incompatible sizes.")
+    if(length(csp) != ncol(vDoseDropout))
+      stop("csp and vDoseDropout have incompatible sizes.")
+    if(length(unc) != ncol(vDoseDropout))
+      stop("unc and vDoseDropout have incompatible sizes.")
+    .impl_objective.dropout.cxx(res, vDoseDropout, !csp & !unc, csp != 0)
+  }
+  impl_objective.dropout <- impl_objective.dropout.cxx
+}
 if(require("inline")) {
   code = "SEXP result;
           PROTECT(result = Rf_duplicate(input));
@@ -98,6 +126,8 @@ if(require("inline")) {
   }
   impl_objective.dropout <- impl_objective.dropout.C
 }
+impl_objective.dropout <- impl_objective.dropout.C
+impl_objective.dropin <- impl_objective.dropin.C
 
 create.likelihood.per.locus <- function(queriedPresence, profPresence,
                                         cspPresence, uncPresence, missingReps,

@@ -91,44 +91,28 @@ create.original <- function(nUnknowns=1, dropin=FALSE) {
           }, originalEnv )
 
   print("Done computing evaluation functions.")
-  callmeOnce <- function() {
-    evalq({
-            for(j in names(cprofs)) {
-              de.tmp=Calclik.1(de[[j]]$kpdo, depa$do, Drin, de[[j]]$af, de[[j]]$csp,
-                               de[[j]]$unc, nrep, c(depa$locadj[[j]], depa$beta),
-                               de[[j]]$pUall, NU, depa$rcont, 1+depa$deg,
-                               de[[j]]$index, de[[j]]$fragments, de[[j]]$v.index)
-              depa$l[j] <- Adjust.Like(de.tmp, de[[j]]$pUall, de[[j]]$af, NU, rr)
-            }
-            calc.L(depa, dN)
-          }, envir=originalEnv) 
+  callmeOnces = list()
+  for(j in names(originalEnv$cprofs)) {
+    args1 = list(originalEnv$de[[j]]$kpdo, originalEnv$depa$do,
+                 originalEnv$Drin, originalEnv$de[[j]]$af,
+                 originalEnv$de[[j]]$csp, originalEnv$de[[j]]$unc,
+                 originalEnv$nrep,
+                 c(originalEnv$depa$locadj[[j]], originalEnv$depa$beta),
+                 originalEnv$de[[j]]$pUall, originalEnv$NU,
+                 originalEnv$depa$rcont, 1+originalEnv$depa$deg,
+                 originalEnv$de[[j]]$index, originalEnv$de[[j]]$fragments,
+                 originalEnv$de[[j]]$v.index)
+    args2 = list(originalEnv$de[[j]]$pUall,
+                 originalEnv$de[[j]]$af, originalEnv$NU, originalEnv$rr)
+    fuckmelocally <- function(a, b) {
+      a = eval(a)
+      b = eval(b)
+      function() {
+        de.tmp= do.call(originalEnv$Calclik.1, a, envir=originalEnv)
+        do.call(originalEnv$Adjust.Like, append(list(de.tmp), b), envir=originalEnv)
+      }
+    }
+    callmeOnces[[j]] <- fuckmelocally(args1, args2)
   }
-  return(list(env=originalEnv, func=callmeOnce))
-}
-
-callmeNth <- function(what, times=10, interTimes=10) {
-  empty <- function() { return(0) }
-  emptyMean <- mean(replicate(times, system.time(replicate(interTimes, empty()))[3]), trim=0.05)
-  result <- replicate(times, system.time(replicate(interTimes, what()))[3])
-  return(result - emptyMean)
-}
-
-timings <- function(times=10, interTimes=10, nunknown=0, dropin=TRUE) {
-  a <- create.original(nunknown, dropin)
-  loci = names(a$env$cprofs)
-  dropins = rep(a$env$Drin, length(loci))
-  nunknowns = rep(a$env$NU, length(loci))
-  alleles = sapply(loci, function(n) nrow(a$env$de[[n]]$af))
-  matsize = sapply(loci, function(n) nrow(a$env$de[[n]]$pUall))
-  print(c("matsize", matsize))
-  allTimes = sapply(loci, function(n) {
-                      a$env$j <- n
-                      callmeNth(a$func, times=times, interTimes=interTimes) 
-                     }) 
-  allTimes = allTimes / interTimes
-  means = apply(allTimes, 2, mean, na.rm=TRUE)
-  stdevs = apply(allTimes, 2, sd, na.rm=TRUE)
-  return(data.frame(loci=loci, dropin=dropins, unknowns=nunknowns,
-                    alleles=alleles, matsize=matsize, mean=means,
-                    stdev=stdevs))
+  return(callmeOnces)
 }
