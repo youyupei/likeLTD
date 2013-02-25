@@ -391,6 +391,23 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
   return(allProfiles) 
 }
 
+relatedness <- function(nAlleles, nContribs, profiles, ibds) {
+  # Compute relatedness profiles
+
+  relprofile <- list()
+  for(i in 1:2) {
+    condition <- apply(profiles,1,function(n) ibds[i] %in% n[1:2])
+    relprofile[[i]] <- profiles[condition, ]
+    condition <- relprofile[[i]][,2]==ibds[i]
+    relprofile[[i]][condition, 2] <- relprofile[[i]][condition, 1]
+    relprofile[[i]][condition, 1] <- ibds[i]
+  }
+  
+  relprofile[[3]] <- all.profiles.per.locus(nAlleles, nContribs-1)
+  relprofile[[3]] <- cbind(ibds[1], ibds[2], relprofile[[3]])
+  relprofile
+}
+
 known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
                                 profiles) {
   # Creates "electropherogram" vector for a given locus.
