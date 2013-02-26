@@ -38,7 +38,7 @@ test_relatedness <- svTest(function()  {
   if(! "relatedness" %in% ls(.GlobalEnv))
     relatedness = getFromNamespace("relatedness", "likeLTD")
   if(! "all.profiles.per.locus" %in% ls(.GlobalEnv))
-    profiles.per.locus = getFromNamespace("profiles.per.locus", "likeLTD")
+    all.profiles.per.locus = getFromNamespace("all.profiles.per.locus", "likeLTD")
 
   A = all.profiles.per.locus(5, 2)
   result = relatedness(5, 2, A, c(2, 3))

@@ -308,17 +308,14 @@ all.profiles.per.locus = function(nAlleles, nContrib=1) {
   return(allProfiles)
 }
 
-possible.profiles = function(queriedPresence, cspPresence, profPresence,
-                             missingReps, alleleNames, nUnknowns, dropin) {
+possible.profiles = function(cspPresence, profPresence, missingReps,
+                             alleleNames, nUnknowns, dropin) {
   # Profiles of unknown contributors for given locus.
   #
   # Figures out all possible profiles of n contributors, including dependance
   # on doprin.
   #
   # Parameters:
-  #   queriedPresence: A matrix where rows are replicas and columns possible
-  #                    alleles from the database. Elements are the number of
-  #                    times each allele appears in the queried profiles.
   #   cspPresence: Crime Scene Profile for given locus. This should be a matrix
   #             where rows are replicas and contributors, columns are alleles
   #             for the given locus, and the input is TRUE or FALSE and
@@ -361,8 +358,7 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
     # Reduce matrices to a single logical vector
     cspPresence  = doColSums(cspPresence, missingReps)
     profPresence = doColSums(profPresence)
-    queriedPresence = doColSums(queriedPresence)
-    
+
     # required: indices of the alleles in the crime scene which are not in the
     #           known profiles. Indices are for freqLocus rows. In the case of
     #           dropins, then there are no required alleles.
@@ -371,8 +367,7 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
     # Not enough contributors, return empty matrix.
     if(length(required) > 2*nUnknowns)  
       stop("Not enough unknown contributors.")
-    if(nUnknowns == 0) 
-      return(matrix(which(colSums(queriedPresence) > 0), nrow=1))
+    if(nUnknowns == 0) return(matrix(0, nrow=1, ncol=1))
     if(length(required) == 2*nUnknowns) return(matrix(0, 1, 0))
   }
 
@@ -393,6 +388,10 @@ possible.profiles = function(queriedPresence, cspPresence, profPresence,
 
 relatedness <- function(nAlleles, nContribs, profiles, ibds) {
   # Compute relatedness profiles
+  # 
+  # There are three profiles: one where the first allele is the first IBD, one
+  # wher the first alllele is always the second IBD, one where a whole
+  # contributor must be the IBD.
 
   relprofile <- list()
   for(i in 1:2) {
@@ -526,6 +525,7 @@ if(require("inline")) {
   prod.matrix.C = cfunction(signature(x="array"), code)
   prod.matrix = prod.matrix.C
 } else { prod.matrix = prod.matrix.R }
+prod.matrix = prod.matrix.R
 
 selective.row.prod <- function(condition, input) {
   # Row-wise product over selected columns or elements.

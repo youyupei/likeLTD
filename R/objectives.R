@@ -126,12 +126,12 @@ if(require("inline")) {
   }
   impl_objective.dropout <- impl_objective.dropout.C
 }
-impl_objective.dropout <- impl_objective.dropout.C
-impl_objective.dropin <- impl_objective.dropin.C
+impl_objective.dropout <- impl_objective.dropout.R
+impl_objective.dropin <- impl_objective.dropin.R
 
-create.likelihood.per.locus <- function(queriedPresence, profPresence,
-                                        cspPresence, uncPresence, missingReps,
-                                        alleleDb, nUnknowns, doDropin) {
+create.likelihood.per.locus <- function(profPresence, cspPresence, uncPresence,
+                                        missingReps, alleleDb, nUnknowns,
+                                        doDropin) {
   # Creates a likelyhood function for a given scenario and locus
   #
   # A scenario is given by the number of unknown contributors, whether to model
@@ -142,9 +142,8 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
   #############################################################################
   # All possible sets of alleles from unknown contributors within this
   # scenario.
-  allProfiles <- possible.profiles(queriedPresence, cspPresence, profPresence,
-                                   missingReps, row.names(alleleDb),
-                                   nUnknowns, doDropin)
+  allProfiles <- possible.profiles(cspPresence, profPresence, missingReps,
+                                   row.names(alleleDb), nUnknowns, doDropin)
   
   # FragLengths: lengths of each short tandem repeat for each profile.
   FragLengths = matrix(alleleDb[allProfiles, 2],
@@ -233,7 +232,6 @@ create.likelihood.per.locus <- function(queriedPresence, profPresence,
   attr(result.function, "nUnknowns")       <- nUnknowns
   attr(result.function, "doDropin")        <- doDropin
   attr(result.function, "alleleDb")        <- alleleDb
-  attr(result.function, "queriedPresence") <- queriedPresence
   attr(result.function, "profPresence")    <- profPresence
   attr(result.function, "cspPresence")     <- cspPresence
   attr(result.function, "uncPresence")     <- uncPresence
@@ -282,12 +280,9 @@ create.likelihood.functions <- function(admin, nUnknowns=0, doDropin=FALSE,
   profPresence <- mapply(presence.per.locus,
                          knownAlleles[indices, names(alleleDb)], alleleDb)
   indices = 1:(length(genetics$nameQ) * 2)
-  queriedPresence <- mapply(presence.per.locus,
-                            knownAlleles[indices, names(alleleDb)], alleleDb)
   missingReps = lapply(genetics$cprofs, missing.csp.per.locus)
 
   return( mapply(create.likelihood.per.locus, 
-                 queriedPresence,
                  profPresence,
                  cspPresence,
                  uncPresence, 

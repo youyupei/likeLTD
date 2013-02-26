@@ -38,7 +38,6 @@ test_TH01.regression.with.dropin = svTest(function() {
   cspPresence = matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0), nrow=2)
   profPresence = matrix(c(0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
-  queriedPresence = NULL
   uncPresence = matrix(0, nrow=2, ncol=ncol(cspPresence))
   missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
@@ -62,8 +61,7 @@ test_TH01.regression.with.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                    profPresence, cspPresence,
+  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 2, TRUE)
 
@@ -81,7 +79,6 @@ test_TH01.regression.no.dropin = svTest(function() {
   profPresence = matrix(c(0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
   uncPresence = matrix(0, nrow=2, ncol=7)
-  queriedPresence = matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0), nrow=2)
   missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
                         0.17109857641686809782, 0.09871071716357775194,
@@ -104,8 +101,7 @@ test_TH01.regression.no.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                    profPresence, cspPresence,
+  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 2, FALSE)
 
@@ -126,8 +122,6 @@ test_D18.regression.with.dropin = svTest(function() {
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0), nrow=4)
   uncPresence = matrix(0, nrow=2, ncol=ncol(cspPresence))
-  queriedPresence = matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-                             1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=2,)
   missingReps = rep(FALSE, 2)
   alleleDb   = matrix(c( 1.31614289551437e-02, 5.48392873130988e-03,
                          1.51356432984153e-01, 1.23936789327603e-01,
@@ -158,8 +152,7 @@ test_D18.regression.with.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                    profPresence, cspPresence,
+  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 0, TRUE)
 
@@ -170,8 +163,7 @@ test_D18.regression.with.dropin = svTest(function() {
                             0.00216652022387600, 0.00131485405088635)
   checkEquals(do.call(objective.function, arguments), 5.13626195539709e-05)
 
-  objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                    profPresence, cspPresence,
+  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 1, TRUE)
   arguments$degradation = rep(3e-3, 4)
@@ -182,8 +174,7 @@ test_D18.regression.with.dropin = svTest(function() {
                             0.00216652022387600, 0.00131485405088635)
   checkEquals(do.call(objective.function, arguments), 3.77630662967064e-05)
 
-  objective.function <- create.likelihood.per.locus(queriedPresence,
-                                                    profPresence, cspPresence,
+  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
                                                     uncPresence, missingReps,
                                                     alleleDb, 2, TRUE)
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
