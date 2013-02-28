@@ -295,18 +295,18 @@ test_adjust.frequencies <- svTest(function(){
 })
 
 
-test_all.profiles.per.locus <- svTest(function() {
-  if(! "all.profiles.per.locus" %in% ls(.GlobalEnv))
-    all.profiles.per.locus = getFromNamespace("all.profiles.per.locus", "likeLTD")
-  result = all.profiles.per.locus(2)
-  checkEquals(result, matrix(c(1, 1, 2, 1, 2, 2), nrow=3))
+test_all.genotypes.per.locus <- svTest(function() {
+  if(! "all.genotypes.per.locus" %in% ls(.GlobalEnv))
+    all.genotypes.per.locus = getFromNamespace("all.genotypes.per.locus", "likeLTD")
+  result = all.genotypes.per.locus(2)
+  checkEquals(result, t(matrix(c(1, 1, 2, 1, 2, 2), nrow=3)))
   
-  result = all.profiles.per.locus(2, 2)
+  result = all.genotypes.per.locus(2, 2)
   check = matrix( c(1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1,
                     2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2), nrow=9 )
-  checkEquals(result, check)
+  checkEquals(result, t(check))
   
-  result = all.profiles.per.locus(2, 3)
+  result = all.genotypes.per.locus(2, 3)
   check = matrix( c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,
                     2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2,
                     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1,
@@ -316,13 +316,13 @@ test_all.profiles.per.locus <- svTest(function() {
                     1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2,
                     2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1,
                     2, 2), ncol=6 )
-  checkEquals(result, check)
+  checkEquals(result, t(check))
 
-  result = all.profiles.per.locus(3)
+  result = all.genotypes.per.locus(3)
   check = matrix(c(1, 1, 1, 2, 2, 3, 1, 2, 3, 2, 3, 3), ncol=2,)
-  checkEquals(result, check)
+  checkEquals(result, t(check))
   
-  result = all.profiles.per.locus(3, 2)
+  result = all.genotypes.per.locus(3, 2)
   check = matrix(c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2,
                    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1,
                    1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
@@ -331,50 +331,61 @@ test_all.profiles.per.locus <- svTest(function() {
                    2, 3, 1, 1, 1, 2, 2, 3, 1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3,
                    1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3, 1, 2, 3, 2, 3, 3, 1, 2,
                    3, 2, 3, 3), ncol=4) 
-  checkEquals(result, check)
+  checkEquals(result, t(check))
 })
 
-test_possible.profiles <- svTest(function() {
+test_possible.genotypes <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
-  cspPresence = c(TRUE, FALSE, FALSE, TRUE, FALSE)
-  profPresence = c(TRUE, TRUE, TRUE, FALSE, FALSE)
+  cspPresence = matrix(c(TRUE, FALSE, FALSE, TRUE, FALSE), ncol=1)
+  profPresence = matrix(c(TRUE, TRUE, TRUE, FALSE, FALSE), ncol=1)
   missingReps = FALSE
   # Basic trial
-  if(! "possible.profiles" %in% ls(.GlobalEnv))
-    possible.profiles <- getFromNamespace("possible.profiles", "likeLTD")
-  result <- possible.profiles(cspPresence, profPresence,
-                              missingReps, alleleNames, 1, FALSE)
+  if(! "possible.genotypes" %in% ls(.GlobalEnv))
+    possible.genotypes <- getFromNamespace("possible.genotypes", "likeLTD")
+  result <- possible.genotypes(cspPresence, profPresence,
+                               missingReps, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
-  checkTrue(nrow(result) == 5)
+  checkTrue(ncol(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
   checkTrue(all(result[, 1] <= result[, 2]))
 
   # Try with csp matrix.
-  cspPresence = matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE,
-                         FALSE), nrow=2)
-  result <- possible.profiles(cspPresence, profPresence,
-                              missingReps, alleleNames, 1, FALSE)
+  cspPresence = t(matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+                           TRUE, FALSE, FALSE), nrow=2))
+  result <- possible.genotypes(cspPresence, profPresence,
+                               missingReps, alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
-  checkTrue(nrow(result) == 5)
-  for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
-  checkTrue(all(result[, 1] <= result[, 2]))
+  checkTrue(ncol(result) == 5)
+  for(i in 1:ncol(result)) checkTrue(4 %in% result[, i])
+  checkTrue(all(result[1, ] <= result[2, ]))
 
   # Try with too large CSP vs contribs
-  cspPresence = c(TRUE, TRUE, TRUE, TRUE, TRUE)
-  profPresence = c(TRUE, FALSE, FALSE, FALSE, FALSE)
-  checkException( possible.profiles(cspPresence, profPresence,
-                                    missingReps, alleleNames, 1, FALSE) )
+  cspPresence = matrix(c(TRUE, TRUE, TRUE, TRUE, TRUE), ncol=1)
+  profPresence = matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE), ncol=1)
+  checkException( possible.genotypes(cspPresence, profPresence,
+                                     missingReps, alleleNames, 1, FALSE) )
   # Try with exact match
-  result <- possible.profiles(cspPresence, profPresence,
+  result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 2, FALSE)
   checkEquals(result, matrix(0, 1, 0))
 
   # Try with two contributors 
-  profPresence = c(TRUE, TRUE, FALSE, FALSE, FALSE)
-  result <- possible.profiles(cspPresence, profPresence,
+  profPresence = matrix(c(TRUE, TRUE, FALSE, FALSE, FALSE), ncol=1)
+  result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 2, FALSE)
-  for(i in 1:nrow(result)) checkTrue(all(3:5 %in% result[i,]))
-  checkTrue(nrow(result) == 24)
+  checkTrue(ncol(result) == 24)
+  for(i in 1:ncol(result)) checkTrue(all(3:5 %in% result[, i]))
+
+  # Try with non-matrix input.
+  cspPresence = c(TRUE, TRUE, TRUE, TRUE, TRUE)
+  checkException( possible.genotypes(cspPresence, profPresence,
+                                     missingReps, alleleNames, 1, FALSE) )
+  checkException( possible.genotypes(cspPresence, profPresence,
+                                     missingReps, alleleNames, 1, TRUE) )
+  checkException( possible.genotypes(profPresence, cspPresence,
+                                     missingReps, alleleNames, 1, FALSE) )
+  checkException( possible.genotypes(profPresence, cspPresence,
+                                     missingReps, alleleNames, 1, TRUE) )
 })
 
 test_possible.profiles.with.dropin <- svTest(function() {
@@ -384,9 +395,9 @@ test_possible.profiles.with.dropin <- svTest(function() {
   missingReps = NULL
 
   # Basic trial
-  if(! "possible.profiles" %in% ls(.GlobalEnv))
-    possible.profiles <- getFromNamespace("possible.profiles", "likeLTD")
-  result <- possible.profiles(cspPresence, profPresence,
+  if(! "possible.genotypes" %in% ls(.GlobalEnv))
+    possible.genotypes <- getFromNamespace("possible.genotypes", "likeLTD")
+  result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 1, TRUE)
   checkTrue(is.matrix(result))
   checkTrue(nrow(result) == 15)
@@ -394,14 +405,14 @@ test_possible.profiles.with.dropin <- svTest(function() {
   checkEquals(result, combinations(5, 2, rep=TRUE))
 
   # Try with two possible.profiles.
-  result <- possible.profiles(cspPresence, profPresence,
+  result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 2, TRUE)
   checkTrue(nrow(result) == (5*3)^2)
   checkTrue(ncol(result) == 4)
   checkEquals(result, unique(result))
 
   # Try with three possible.profiles.
-  result <- possible.profiles(cspPresence, profPresence,
+  result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 3, TRUE)
   checkTrue(nrow(result) == (5*3)^3)
   checkTrue(ncol(result) == 6)
@@ -410,11 +421,11 @@ test_possible.profiles.with.dropin <- svTest(function() {
 
 test_known.epg.per.locus = svTest(function() {
 
-  profiles =  matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0), nrow=6)
+  profiles = t(matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=6))
   # NA is to make sure we can pass vectors that are too long, e.g. with
   # unprofiled contributors.
   degradation = c(0.001, 0.002, 0.003, NA) 
@@ -434,12 +445,13 @@ test_known.epg.per.locus = svTest(function() {
     known.epg.per.locus <- getFromNamespace("known.epg.per.locus", "likeLTD")
   result <- known.epg.per.locus(relContrib, degradation, database[, 2],
                                 profiles)
-  checkTrue(all(result[!colSums(profiles)] == 0))
-  checkEquals( result[colSums(profiles) > 0][[1]],
+  print(rowSums(profiles))
+  checkTrue(all(result[!rowSums(profiles)] == 0))
+  checkEquals( result[rowSums(profiles) > 0][[1]],
                relContrib[1] * (1.0 + degradation[1])^-database[5, 2])
-  checkEquals( result[colSums(profiles) > 0][[2]], 
+  checkEquals( result[rowSums(profiles) > 0][[2]], 
                relContrib[3] * (1.0 + degradation[3])^-database[7, 2] )
-  checkEquals( result[colSums(profiles) > 0][[3]], 
+  checkEquals( result[rowSums(profiles) > 0][[3]], 
                relContrib[1] * (1.0 + degradation[1])^-database[9, 2] 
                + 2.0 * relContrib[2] * (1.0 + degradation[2])^-database[9, 2] 
                + relContrib[3] * (1.0 + degradation[3])^-database[9, 2]  )

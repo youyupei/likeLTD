@@ -32,7 +32,7 @@ unusual.alleles <- function(afreq, profile) {
   return(rare)
 }
 
-read.csp.profile <- function(path) {
+read.csp.profile.old <- function(path) {
   # Reads profile from path.
   #
   # Args:
@@ -42,7 +42,7 @@ read.csp.profile <- function(path) {
   raw = read.table(path, header=T, colClasses='character', sep=',')
   return(raw[,5:dim(raw)[2]])
 }
-read.ref.profile <- function(path) {
+read.ref.profile.old <- function(path) {
   # Reads profile from path.
   #
   # Makes sure everything is formatted as should be, e.g. removes spaces and
@@ -426,11 +426,15 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
   return(admin)
 }
 
-load.allele.database <- function() {
+load.allele.database <- function(path=NULL) {
   # Frequency table provided in package. 
-  dummyEnv <- new.env()
-  data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
-  return(dummyEnv[['lgc-allele-freqs-wbp']])
+  if(is.null(path)) { # Load default database
+    dummyEnv <- new.env()
+    data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
+    return(dummyEnv[['lgc-allele-freqs-wbp']])
+  }
+  if(!file.exists(path)) stop(paste(path, "does not exist."))
+  read.table(path, sep="\t", header=TRUE)
 }
 
 pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
@@ -450,11 +454,9 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   adj: not sure
   #   fst: not sure.  If NULL and ethnic is 'EA1', then defaults to 0.02,
   #        otherwise to 0.03.
-  if(is.null(admin$databaseFile))
-       afreq   = load.allele.database()
-  else afreq   = read.table(admin$databaseFile, sep="\t", header=T)
-  cspData      = read.csp.profile(admin$mixedFile)
-  refData      = read.ref.profile(admin$refFile)
+  afreq        = load.allele.database(admin$databaseFile)
+  cspData      = read.csp.profile.old(admin$mixedFile)
+  refData      = read.ref.profile.old(admin$refFile)
   cprofs       = internal.representation(cspData)
   QvK <- queried.vs.known(admin$refFile)
   nameQ        = row.names(refData)[QvK]

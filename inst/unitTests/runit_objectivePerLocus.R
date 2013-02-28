@@ -33,6 +33,47 @@ function () {
 }
 
 
+test_empty.alleles = svTest(function() {
+  
+  if(! "all.genotypes.per.locus" %in% ls(.GlobalEnv))
+    all.genotypes.per.locus <- getFromNamespace("all.genotypes.per.locus",
+                                                "likeLTD")
+  if(! "empty.alleles" %in% ls(.GlobalEnv))
+    empty.alleles <- getFromNamespace("empty.alleles", "likeLTD")
+  genotypes = matrix(nrow=4, ncol=0)
+  dropoutProfs = cbind(c(TRUE, FALSE, FALSE, TRUE),
+                       c(FALSE, TRUE, FALSE, FALSE))
+  result = empty.alleles(genotypes, dropoutProfs, 0)
+  checkTrue(is.matrix(result))
+  checkTrue(ncol(result) == 0)
+  checkTrue(nrow(result) == 4)
+  
+  result = empty.alleles(genotypes, dropoutProfs, 1)
+  checkTrue(is.matrix(result))
+  checkTrue(ncol(result) == 0)
+  checkTrue(nrow(result) == 4)
+
+  genotypes = all.genotypes.per.locus(4, 2)
+  result = empty.alleles(genotypes, dropoutProfs, 0)
+  checkTrue(is.matrix(result))
+  checkTrue(ncol(result) == ncol(genotypes))
+  checkTrue(nrow(result) == 4)
+  checkTrue(all(result == c(FALSE, FALSE, TRUE, FALSE)))
+
+  result = empty.alleles(genotypes, dropoutProfs, 1)
+  indices = c(1, 2, 4, 5, 7, 10, 11, 12, 14, 15, 17, 20, 31, 32, 34, 35, 37,
+              40, 41, 42, 44, 45, 47, 50, 61, 62, 64, 65, 67, 70, 91, 92, 94,
+              95, 97, 100)
+  checkTrue(ncol(result) == ncol(genotypes))
+  checkTrue(nrow(result) == 4)
+  checkTrue(all(!result[1, ]))
+  checkTrue(all(!result[2, ]))
+  checkTrue(all(!result[4, ]))
+  checkTrue(all(result[3, indices]))
+  result[3, indices] = FALSE
+  checkTrue(all(!result))
+})
+
 test_TH01.regression.with.dropin = svTest(function() {
   # Case we are going to be looking at.
   cspPresence = matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0), nrow=2)
@@ -180,4 +221,72 @@ test_D18.regression.with.dropin = svTest(function() {
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
                             0.00216652022387600, 0.00131485405088635)
   checkEquals(do.call(objective.function, arguments), 1.3537562256385e-05)
+})
+
+
+test_relatedness.factors <- svTest(function() {
+
+  alleleDb   = matrix(c(1, 0), nrow=14, ncol=2)
+  row.names(alleleDb) = c("10", "11", "12", "13", "14", "14.2", "15", "16",
+                          "17", "18", "19", "20", "21", "22")
+  
+  queriedAlleles = c("11", "21")
+  alleleDb[2, 1] = 2e0
+  alleleDb[13, 1] = 3e0
+  
+  if(! "all.genotypes.per.locus" %in% ls(.GlobalEnv))
+    all.genotypes.per.locus <- getFromNamespace("all.genotypes.per.locus",
+                                                "likeLTD")
+  if(! "relatedness.factors" %in% ls(.GlobalEnv))
+    relatedness.factors <- getFromNamespace("relatedness.factors", "likeLTD")
+
+  genotypes = all.genotypes.per.locus(nrow(alleleDb), 2)
+  # No relatedness
+  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0, 0))
+  checkEquals(result, 1)
+  # First, only one relatedness 
+  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0.9, 0))
+  checkEquals(length(result), ncol(genotypes))
+  na = nrow(alleleDb)
+  nComb = na * (na+1) / 2
+  nCont = 2
+  nTrue = (2*na - 1) * nComb^(nCont-1)
+  checkEquals(sum(abs(result - 1.0 * (1.0 - sum(c(0.9, 0)))) > 1e-8), nTrue)
+  hasFirst = genotypes[1, ] %in% 2 | genotypes[2, ] %in% 2
+  hasSecond = genotypes[1, ] %in% 13 | genotypes[2, ] %in% 13
+  het = genotypes[1, ] == genotypes[2, ]
+
+  r = result[hasFirst & (!hasSecond) & (!het)]
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[2, 1])
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+
+  r = result[hasFirst & (!hasSecond) & het]
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[2, 1])
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+
+  r = result[(!hasFirst) & hasSecond & (!het)]
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[13, 1])
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[13, 1])
+  r = result[(!hasFirst) & hasSecond & het]
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+  
+  r = result[hasFirst & hasSecond]
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[2, 1] 
+                     + 0.9 * 0.5 * 0.5 / alleleDb[13, 1])
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+
+  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0, 0.9))
+  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[2, 1] / alleleDb[13, 1])
+  r = result[hasFirst & hasSecond]
+  checkTrue(all(abs(r - check) < 1e-8))
+  checkTrue(length(abs(r - check) < 1e-8) > 1)
+
+  queriedAlleles = c("2", "2")
 })

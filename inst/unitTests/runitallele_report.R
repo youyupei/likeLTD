@@ -181,9 +181,9 @@ test_read.csp.profile <- svTest(function(){
   path = Reduce(file.path, c("extdata", "hammer", "hammer-CSP.csv"))
   path = system.file(path, package="likeLTD")
   # Now read data.
-  if(! "read.csp.profile" %in% ls(.GlobalEnv))
-    read.csp.profile = getFromNamespace("read.csp.profile", "likeLTD")
-  result = read.csp.profile(path)
+  if(! "read.csp.profile.old" %in% ls(.GlobalEnv))
+    read.csp.profile.old = getFromNamespace("read.csp.profile.old", "likeLTD")
+  result = read.csp.profile.old(path)
   # And check it
   checkEquals(result, csp.data())
 })
@@ -195,9 +195,9 @@ test_read.ref.profile <- svTest(function(){
   path = Reduce(file.path, c("extdata", "hammer", "hammer-reference.csv"))
   path = system.file(path, package="likeLTD")
   # Now read data.
-  if(! "read.ref.profile" %in% ls(.GlobalEnv))
-    read.ref.profile = getFromNamespace("read.ref.profile", "likeLTD")
-  result = read.ref.profile(path)
+  if(! "read.ref.profile.old" %in% ls(.GlobalEnv))
+    read.ref.profile.old = getFromNamespace("read.ref.profile.old", "likeLTD")
+  result = read.ref.profile.old(path)
   checkEquals(result, ref.data())
 })
 

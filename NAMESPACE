@@ -1,3 +1,7 @@
 export(pack.admin.input)
 export(pack.genetics.input)
 export(allele.report)
+export(read.csp.profile)
+export(read.unc.profile)
+export(read.known.profiles)
+export(determine.dropout)
