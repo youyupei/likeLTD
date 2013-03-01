@@ -54,14 +54,12 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
   #
 
   # First add standard bits.
-  if(nUnknowns > 0 || doDropin) n = nrow(genotypes) / 2
-  else n = 0
-  if(n < 1) het = matrix(1, ncol=1, nrow=nrow(alleleDb))
+  if(nUnknowns == 0 & !doDropin) het = matrix(1, ncol=1, nrow=nrow(alleleDb))
   else {
+    n = nrow(genotypes) / 2
     odd = 2*1:n - 1; even = 2*1:n
-    het <- 1 + as.integer(genotypes[odd, , drop=FALSE]
-                          < genotypes[even, , drop=FALSE])
-    if(is.matrix(het)) het <- apply(het, 2, prod)
+    het <- 1 + matrix(genotypes[odd, ] < genotypes[even, ], nrow=length(odd))
+    het <- apply(het, 2, prod)
   }
   fractions <- matrix(alleleDb[genotypes, 1], ncol=ncol(genotypes))
   result <- apply(fractions, 2, prod) * het
@@ -90,10 +88,10 @@ likelihood.constructs.per.locus = function(scenario) {
   factors = genotype.factors(genotypes, scenario$alleleDb, scenario$nUnknowns,
                              scenario$doDropin, scenario$queriedProfile,
                              scenario$relatedness) 
-  freqMat = matrix(scenario$alleleDb[, 1], nrow=nrow(genotypes),
-                   ncol=length(scenario$alleleDb[, 1]), byrow=T)
+  freqMat = matrix(scenario$alleleDb[, 1], ncol=ncol(genotypes),
+                   nrow=nrow(scenario$alleleDb))
   
-  fragLengths = matrix(scenario$alleleDb[genotypes, 2], ncol=col(genotypes))
+  fragLengths = matrix(scenario$alleleDb[genotypes, 2], ncol=ncol(genotypes))
 
   list(cspPresence=cspPresence, dropoutPresence=dropoutPresence,
        uncPresence=uncPresence, missingReps=missingReps,
@@ -131,7 +129,7 @@ create.likelihood.per.locus <- function(scenario) {
     #          scenario.
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
                                 scenario$alleleDb[, 2], cons$fragLengths,
-                                cons$genotypes, scenario$nUnknowns > 0)
+                                cons$genotypes)
     allEPG = (allEPG * localAdjustment)^tvedebrink
 
     # res: (Partial) Likelihood per allele.
@@ -139,15 +137,15 @@ create.likelihood.per.locus <- function(scenario) {
     # Loop over replicates.
     for(i in 1:length(cons$missingReps)) {
       if(!cons$missingReps[i]) {
-        csp = cons$cspPresence[i, ]
-        unc = cons$uncPresence[i, ]
+        csp = cons$cspPresence[, i]
+        unc = cons$uncPresence[, i]
 
         vDoseDropout = allEPG * dropout[i]
         vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
 
         res = dropout.probabilities(res, vDoseDropout, csp, unc)
-        if(doDropin) 
-          res = dropin.probabilities(res, cons$freqMat, csp, unc, zeroAll,
+        if(scenario$doDropin) 
+          res = dropin.probabilities(res, cons$freqMat, csp, unc, cons$zeroAll,
                                      dropin * (1 - dropout[i]) )
       } # End of if(any(csp)) 
     } # End of loop over replicates.

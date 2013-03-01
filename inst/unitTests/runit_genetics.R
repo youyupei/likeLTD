@@ -421,11 +421,9 @@ test_possible.profiles.with.dropin <- svTest(function() {
 
 test_known.epg.per.locus = svTest(function() {
 
-  profiles = t(matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=6))
+  profiles = matrix(c(0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0), ncol=3) > 0
   # NA is to make sure we can pass vectors that are too long, e.g. with
   # unprofiled contributors.
   degradation = c(0.001, 0.002, 0.003, NA) 
@@ -445,7 +443,6 @@ test_known.epg.per.locus = svTest(function() {
     known.epg.per.locus <- getFromNamespace("known.epg.per.locus", "likeLTD")
   result <- known.epg.per.locus(relContrib, degradation, database[, 2],
                                 profiles)
-  print(rowSums(profiles))
   checkTrue(all(result[!rowSums(profiles)] == 0))
   checkEquals( result[rowSums(profiles) > 0][[1]],
                relContrib[1] * (1.0 + degradation[1])^-database[5, 2])
@@ -553,3 +550,101 @@ test_selective.row.prod.vec.vec = svTest(function() {
 
   checkException(selective.row.prod(rep(TRUE, 3), 1:4))
 })
+
+test_selective.col.prod.mat.mat= svTest(function() {
+
+  if(! "selective.col.prod" %in% ls(.GlobalEnv))
+    selective.col.prod <- getFromNamespace("selective.col.prod", "likeLTD")
+  
+  condition = matrix(FALSE, ncol=6, nrow=3)
+  input     = matrix(2, ncol=6, nrow=3)
+
+  # Checks all False
+  checkEquals(selective.col.prod(condition, input), 1)
+
+  # Checks full rows can be unselected.
+  condition = matrix(c(TRUE, FALSE), ncol=6, nrow=3, byrow=TRUE)
+  checkEquals(selective.col.prod(condition, input), rep(c(2^3, 1), 3))
+
+  # Checks more random selection.
+  condition = matrix(c(TRUE, FALSE), ncol=6, nrow=3)
+  checkEquals(selective.col.prod(condition, input), rep(c(4, 2), 3))
+
+  # Check that this is not a matrix-vector selection
+  input[1:2, 5:6] = 3 
+  input[3, 5:6] = 4 
+  input[3, 1:4] = 5
+  checkEquals(selective.col.prod(condition, input), c(10, 2, 10, 2, 12, 3))
+
+  condition = matrix(TRUE, ncol=7, nrow=3)
+  checkException(selective.col.prod(condition, input))
+  condition = matrix(TRUE, ncol=6, nrow=4)
+  checkException(selective.col.prod(condition, input))
+})
+
+test_selective.col.prod.vec.mat= svTest(function() {
+
+  if(! "selective.col.prod" %in% ls(.GlobalEnv))
+    selective.col.prod <- getFromNamespace("selective.col.prod", "likeLTD")
+  
+  condition = rep(FALSE, 3)
+  input     = matrix(2, ncol=6, nrow=3)
+
+  # Checks all False
+  checkEquals(selective.col.prod(condition, input), 1)
+
+  condition = rep(TRUE, 3)
+  checkEquals(selective.col.prod(condition, input), rep(8, 6))
+
+  condition = c(TRUE, FALSE, FALSE)
+  checkEquals(selective.col.prod(condition, input), rep(2, 6))
+
+  condition = c(TRUE, FALSE, TRUE)
+  input[2, ] = 6
+  checkEquals(selective.col.prod(condition, input), rep(4, 6))
+  
+  input[3, ] = 6
+  checkEquals(selective.col.prod(condition, input), rep(12, 6))
+
+  condition = c(TRUE, FALSE, TRUE, TRUE)
+  checkException(selective.col.prod(condition, input))
+})
+
+test_selective.col.prod.mat.vec = svTest(function() {
+
+  if(! "selective.col.prod" %in% ls(.GlobalEnv))
+    selective.col.prod <- getFromNamespace("selective.col.prod", "likeLTD")
+  
+  condition = matrix(FALSE, ncol=6, nrow=3)
+  input     = rep(2, 3)
+
+  # Checks all False
+  checkEquals(selective.col.prod(condition, input), 1)
+
+  # Checks full rows can be unselected.
+  condition = matrix(c(TRUE, FALSE), ncol=6, nrow=3, byrow=TRUE)
+  checkEquals(selective.col.prod(condition, input), rep(c(2^3, 1), 3))
+
+  # Checks more random selection.
+  condition = matrix(c(TRUE, FALSE), ncol=6, nrow=3)
+  checkEquals(selective.col.prod(condition, input), rep(c(4, 2), 3))
+
+  input = 1:3
+  condition = matrix(c(TRUE, FALSE), ncol=6, nrow=3)
+  checkEquals(selective.col.prod(condition, input), rep(c(3, 2), 3))
+
+  checkException(selective.col.prod(condition, 1:4))
+})
+
+test_selective.col.prod.vec.vec = svTest(function() {
+
+  if(! "selective.col.prod" %in% ls(.GlobalEnv))
+    selective.col.prod <- getFromNamespace("selective.col.prod", "likeLTD")
+
+  checkEquals(selective.col.prod(rep(FALSE, 3), rep(2, 3)), 1)
+  checkEquals(selective.col.prod(rep(TRUE, 3), rep(2, 3)), rep(2, 3))
+  checkEquals(selective.col.prod(c(TRUE, FALSE, TRUE), rep(2, 3)), c(2, 1, 2))
+
+  checkException(selective.col.prod(rep(TRUE, 3), 1:4))
+})
+

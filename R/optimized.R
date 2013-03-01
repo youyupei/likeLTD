@@ -1,14 +1,14 @@
-impl_objective.dropin.R <- function(res, freqMat, csp, unc, zeroAll, rate) {
+dropin.probabilities.R <- function(res, freqMat, csp, unc, zeroAll, rate) {
   # Per locus/per replica objective function.
   #
   # Mostly, this separation makes it easier to benchmark different
   # implementation for speed. This particular implementation is the R fallback
   # if inline package is not present.
-  selective.row.prod(t(csp & zeroAll), rate * freqMat)             *
-  selective.row.prod(t(!csp & !unc & zeroAll), 1 - rate * freqMat) *
+  selective.col.prod(csp & zeroAll, rate * freqMat)             *
+  selective.col.prod(!csp & !unc & zeroAll, 1 - rate * freqMat) *
   res
 }
-impl_objective.dropin  = impl_objective.dropin.R
+dropin.probabilities  = dropin.probabilities.R
 if(require("inline")) {
   code = "SEXP result;
           PROTECT(result = Rf_duplicate(input));
@@ -31,8 +31,8 @@ if(require("inline")) {
           return result;"
   sig = signature(input="vector", freqMat="array", condA="vector",
                   condB="vector", dropinRate="real")
-  .impl_objective.dropin.C = cfunction(sig, code)
-  impl_objective.dropin.C <- function(res, freqMat, csp, unc, zeroAll, rate) {
+  .dropin.probabilities.C = cfunction(sig, code)
+  dropin.probabilities.C <- function(res, freqMat, csp, unc, zeroAll, rate) {
     if(length(res) != nrow(freqMat))
       stop("output vector and freqMat have incompatible sizes.")
     if(length(csp) != ncol(freqMat))
@@ -43,23 +43,23 @@ if(require("inline")) {
       stop("unc and zeroAll have incompatible sizes.")
     if(nrow(freqMat) != ncol(zeroAll))
       stop("unc and zeroAll have incompatible sizes.")
-    .impl_objective.dropin.C(res, freqMat, t(!csp & !unc & zeroAll),
-                             t(csp != 0 & zeroAll), rate)
+    .dropin.probabilities.C(res, freqMat, t(!csp & !unc & zeroAll),
+                            t(csp != 0 & zeroAll), rate)
   }
-  impl_objective.dropin <- impl_objective.dropin.C
+  dropin.probabilities <- dropin.probabilities.C
 }
 
-impl_objective.dropout.R <- function(res, vDoseDropout, csp, unc) {
+dropout.probabilities.R <- function(res, vDoseDropout, csp, unc) {
   # Per locus/per replica objective function.
   #
   # Mostly, this separation makes it easier to benchmark different
   # implementation for speed. This particular implementation is the R fallback
   # if inline package is not present.
-  selective.row.prod(!csp & !unc, vDoseDropout)   *
-  selective.row.prod(csp != 0, 1 - vDoseDropout)  *
+  selective.col.prod(!csp & !unc, vDoseDropout)   *
+  selective.col.prod(csp != 0, 1 - vDoseDropout)  *
   res
 }
-impl_objective.dropout = impl_objective.dropout.R
+dropout.probabilities = dropout.probabilities.R
 if(require("Rcpp")) {
   code = "NumericVector output = NumericVector(input).size();
           NumericMatrix const vDose(vDose);
@@ -77,7 +77,7 @@ if(require("Rcpp")) {
   .impl_objective.dropout.cxx = cxxfunction(sig, code,
                                             includes="#include<cmath>",
                                             plugin="Rcpp", )
-  impl_objective.dropout.cxx <- function(res, vDoseDropout, csp, unc) {
+  dropout.probabilities.cxx <- function(res, vDoseDropout, csp, unc) {
     if(length(res) != nrow(vDoseDropout))
       stop("output vector and vDoseDropout have incompatible sizes.")
     if(length(csp) != ncol(vDoseDropout))
@@ -86,7 +86,7 @@ if(require("Rcpp")) {
       stop("unc and vDoseDropout have incompatible sizes.")
     .impl_objective.dropout.cxx(res, vDoseDropout, !csp & !unc, csp != 0)
   }
-  impl_objective.dropout <- impl_objective.dropout.cxx
+  dropout.probabilities <- dropout.probabilities.cxx
 }
 if(require("inline")) {
   code = "SEXP result;
@@ -113,17 +113,17 @@ if(require("inline")) {
           return result;"
   sig = signature(input="vector", vDoseDropout="array", condA="vector",
                   condB="vector")
-  .impl_objective.dropout.C = cfunction(sig, code)
-  impl_objective.dropout.C <- function(res, vDoseDropout, csp, unc) {
+  .dropout.probabilities.C = cfunction(sig, code)
+  dropout.probabilities.C <- function(res, vDoseDropout, csp, unc) {
     if(length(res) != nrow(vDoseDropout))
       stop("output vector and vDoseDropout have incompatible sizes.")
     if(length(csp) != ncol(vDoseDropout))
       stop("csp and vDoseDropout have incompatible sizes.")
     if(length(unc) != ncol(vDoseDropout))
       stop("unc and vDoseDropout have incompatible sizes.")
-    .impl_objective.dropout.C(res, vDoseDropout, !csp & !unc, csp != 0)
+    .dropout.probabilities.C(res, vDoseDropout, !csp & !unc, csp != 0)
   }
-  impl_objective.dropout <- impl_objective.dropout.C
+  dropout.probabilities <- dropout.probabilities.C
 }
-impl_objective.dropout <- impl_objective.dropout.R
-impl_objective.dropin <- impl_objective.dropin.R
+dropout.probabilities <- dropout.probabilities.R
+dropin.probabilities <- dropin.probabilities.R

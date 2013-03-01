@@ -413,13 +413,13 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
   #          candidate CSP.
 
   indices = which(profiles > 0) - 1
-  strands = trunc(indices / nrow(profiles)) + 1
-  indivs  = trunc((strands - 1) / 2) + 1
+  indivs = trunc(indices / nrow(profiles)) + 1
   alleles = indices %% nrow(profiles) + 1
-  doses = mapply( function(d, r, L) r*(1.0 + d)^{-L}, 
+  doses = mapply( function(d, r, L, het) het * r * (1.0 + d)^{-L}, 
                   degradation[indivs], 
                   relContrib[indivs], 
-                  fragmentLengths[alleles] )
+                  fragmentLengths[alleles],
+                  rep(3 - colSums(profiles), colSums(profiles)) )
   result = array(0.0, nrow(profiles))
   for(i in 1:length(alleles)) 
     result[alleles[i]] = result[alleles[i]] + doses[i]
@@ -427,7 +427,7 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
 }
 
 all.epg.per.locus <- function(relContrib, degradation, profPresence,
-                              knownFragLengths, FragLengths, genotypes) {
+                              knownFragLengths, fragLengths, genotypes) {
   # Creates "electropherogram" for each possible set of unknown contributors.
   #
   # Parameters:
@@ -438,7 +438,7 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   #   profPresence: Presence matrix for known profiles.
   #   knownFragLengths: matrix with fragment lengths for each allele in each
   #                     known profile.
-  #   FragLengths: matrix with fragment lengths for each allele each computed
+  #   fragLengths: matrix with fragment lengths for each allele each computed
   #                profile.
   #   genotypes: matrix with all possible genotypes. 
   # Returns: A vector with an element per allele. Each element is zero if is
@@ -454,14 +454,14 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   # At point of creation, contains only component from known profiles.
   allEPG = matrix(knownEPG, ncol=ncol(genotypes), nrow=length(knownEPG)) 
   # Add into allEPG the components from unknown contributors.
-  nUnknowns = row(genotypes)
+  nUnknowns = nrow(genotypes)
   if(nUnknowns) {
     # v.index: index matrix to access alleles across possible agreggate
     # profiles. 
     v.index = 0:(ncol(genotypes)-1) * length(knownFragLengths)
-    indices = nrow(profPresence)/2 + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
+    indices = ncol(profPresence) + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
     unknownDoses = relContrib[indices] *
-                   (1.0 + degradation[indices])^-FragLengths
+                   (1.0 + degradation[indices])^-fragLengths
     # Perform sum over each DNA strand of each unknown contributor.
     for(u in 1:nUnknowns){
       indices = genotypes[u, ] + v.index
@@ -471,9 +471,9 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   return(allEPG)
 }
 
-# Otherwise, fallback.
+# Defines prod.matrix from R.
 prod.matrix.R <- function(x) {
-  # Fast row-wise produce.
+  # Fast row-wise product
   #
   # Sadly, this is faster than apply(x, 1, prod)  
   y=x[,1]
@@ -566,6 +566,113 @@ selective.row.prod <- function(condition, input) {
     }
 
     output = input[, condition]
+    output[is.na(output)] = 1
+    return(output)
+  }
+
+  # condition and input are vectors
+  if(length(input) != length(condition))
+    stop("condition does not have as many elements as input.") 
+  output = input
+  output[!condition] = 1.0
+  output[is.na(output)] = 1.0
+  return(output)
+}
+
+
+# Defines prod.matrix from R.
+prod.matrix.col.R <- function(x) {
+  # Fast column-wise product.
+  #
+  # Sadly, this is faster than apply(x, 1, prod)  
+  y=x[1, ]
+  for(i in 2:nrow(x))
+  y=y*x[i, ]
+  return(y)
+}
+# Tries and defines a fast prod.matrix if possible.
+if(require("inline")) {
+  code = "SEXP res;
+          int const nrow = INTEGER(GET_DIM(x))[0];
+          int const ncol = INTEGER(GET_DIM(x))[1];
+          PROTECT(res = allocVector(REALSXP, ncol));
+          double *inptr = REAL(x);
+          double *const outptr_first = REAL(res);
+          double *outptr = outptr_first;
+          // Perform multiplication with other columns
+          for(int j=1; j < ncol; ++j, ++outptr) {
+            *outptr = *inptr; ++inptr;
+            if(*outptr == NA_REAL) *outptr = 1.0;
+            for(int i=1; i < nrow; ++i, ++inptr)
+              if(*inptr != NA_REAL) *outptr *= *inptr;
+          }
+          UNPROTECT(1);
+          return res;"
+  prod.matrix.col.C = cfunction(signature(x="array"), code)
+  prod.matrix.col = prod.matrix.col.C
+} else { prod.matrix.col = prod.matrix.col.R }
+prod.matrix.col = prod.matrix.col.R
+
+selective.col.prod <- function(condition, input) {
+  # Row-wise product over selected columns or elements.
+  #
+  # If all(condition == FALSE), returns 1. Otherwise does one of the following.
+  #
+  # - If condition and input matrices: 
+  #   Performs column-wise multiplication of input elements, ignoring those
+  #   which are *not* selected by the condition matrix.
+  # - If condition is a matrix and input a vector: 
+  #   Equivalent to creating a matrix whith the same dimensions as condition
+  #   from the input, where row ``i`` is ``input[condition[i, ]]``, then apply
+  #   product.
+  # - If condition is a vector and input is a matrix: 
+  #   Performs column-wise multiplication of selected input columns only.
+  # - If condition and input are vectors:
+  #   Sets elements in input which are FALSE to 1, and returns it.
+  # 
+  # Row-wise multiplication means column 1 times column 2 times... e.g. along
+  # rows. 
+  #
+  # Parameters:
+  #   condition: a logical vector or a logical matrix. See above.
+  #   input: input matrix with data for which to perform calculation.
+  # Return: 
+  #   - if condition is always FALSE, returns the scalar 1.0
+  #   - otherwise a vector with the same length as there are rows in input
+  # 
+  # Note: Really should be done through R's method thingie...
+  #       Maybe once I've read up on it.
+
+  if(!any(condition)) return(1)
+
+  # condition is a matrix
+  if(is.matrix(condition)) {  
+    # but input is a vector. Then build a matrix from condition and input.
+    if(!is.matrix(input)) {
+      if(nrow(condition) != length(input)) 
+        stop("condition does not have as many columns as input has elements.") 
+      # Builds input matrix
+      input = matrix(input, nrow=length(input), ncol=ncol(condition))
+    } else if(any(dim(condition) != dim(input)))
+      stop("condition and input have different dimensions.") 
+
+    input[!condition] = 1
+    return(prod.matrix.col(input))
+  }
+
+  # condition is a vector and input is a matrix.
+  if(is.matrix(input)) {
+    if(nrow(input) != length(condition))
+      stop("condition does not have as many elements as input has columns.") 
+
+    nbAlleles = sum(condition)
+    if(nbAlleles != 1) {
+      input = input[condition, , drop=FALSE] 
+      input[is.na(input)] = 1 
+      return(prod.matrix.col(input))
+    }
+
+    output = input[condition, ]
     output[is.na(output)] = 1
     return(output)
   }

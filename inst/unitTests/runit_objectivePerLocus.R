@@ -76,24 +76,27 @@ test_empty.alleles = svTest(function() {
 
 test_TH01.regression.with.dropin = svTest(function() {
   # Case we are going to be looking at.
-  cspPresence = matrix(c(0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0), nrow=2)
-  profPresence = matrix(c(0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0), nrow=4)
-  uncPresence = matrix(0, nrow=2, ncol=ncol(cspPresence))
-  missingReps = rep(FALSE, 2)
-  alleleDb   = matrix(c( 0.00109678574626197504, 0.23251857820753871198,
-                        0.17109857641686809782, 0.09871071716357775194,
-                        0.15122213268869189040, 0.33767570955322767645,
-                        0.00767750022383382504, -39.94130434782607608213,
-                        -35.94130434782607608213, -31.94130434782607608213,
-                        -27.94130434782607608213, -23.94130434782607608213,
-                        -20.94130434782607608213, -19.94130434782607608213),
-                      ncol=2)
-  row.names(alleleDb) = c("5", "6", "7", "8", "9", "9.3", "10")
-
+  datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
+  args = list(
+    databaseFile = NULL,
+    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    refFile      = file.path(datapath, 'hammer-reference.csv'),
+    nUnknowns    = 1,
+    doDropin     = TRUE,
+    ethnic       = "EA1",
+    adj          = 1.0,
+    fst          = 0.02,
+    relatedness  = c(0.5, 0)
+  )
+  scenario = do.call(prosecution.scenario, args)
+  if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
+    transform.to.locus.centric <-
+      getFromNamespace("transform.to.locus.centric", "likeLTD")
+  scenarioTH01 = transform.to.locus.centric(scenario)$TH01
+  
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
-                           1.000000000000000, 0.543478260869565,
-                           0.108695652173913), 
+                           1.000000000000000, 0.543478260869565),
+                   dropin = 1e0, #0.108695652173913,
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
                    localAdjustment=1,
                    tvedebrink=-4.35,
@@ -102,16 +105,16 @@ test_TH01.regression.with.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  objective.function <- create.likelihood.per.locus(profPresence, cspPresence,
-                                                    uncPresence, missingReps,
-                                                    alleleDb, 2, TRUE)
+  scenarioTH01$nUnknowns = 2
+  scenarioTH01$doDropin = TRUE
+  objective.function <- create.likelihood.per.locus(scenarioTH01)
 
   checkEquals(do.call(objective.function, arguments), 0.0204764693571788)
-  arguments$degradation = rep(2e-2, 4)
-  checkEquals(do.call(objective.function, arguments), 0.0017054449886482)
-  arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
-                            0.00216652022387600, 0.00131485405088635)
-  checkEquals(do.call(objective.function, arguments), 0.0147496568283615)
+# arguments$degradation = rep(2e-2, 4)
+# checkEquals(do.call(objective.function, arguments), 0.0017054449886482)
+# arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
+#                           0.00216652022387600, 0.00131485405088635)
+# checkEquals(do.call(objective.function, arguments), 0.0147496568283615)
 })
 
 test_TH01.regression.no.dropin = svTest(function() {

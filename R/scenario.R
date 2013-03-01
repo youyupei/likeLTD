@@ -150,8 +150,6 @@ agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
   # prosection. 
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  if(is.null(admin$databaseFile)) alleleDb = load.allele.database()
-  else alleleDb = read.table(admin$databaseFile, sep="\t", header=T)
   alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Figure out which profiles show dropout.
