@@ -35,26 +35,24 @@ function () {
 
 test_regression <- svTest(function() {
   # Case we are going to be looking at.
-  caseName = 'hammer'
-  packagepath = system.file(file.path('extdata', caseName), package="likeLTD")
-  # Construct input: frequency file.
-  databaseFile = NULL #file.path(datapath, 'lgc-allele-freqs-wbp.txt')
-  # Construct input: crime scene profile
-  mixedFile = file.path(packagepath, 'hammer-CSP.csv')
-  # Construct input: reference profiles
-  refFile = file.path(packagepath, 'hammer-reference.csv')
-  # Construct input: output path in the R temp directory for now
+  datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
+  args = list(
+    databaseFile = NULL,
+    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    refFile      = file.path(datapath, 'hammer-reference.csv'),
+    nUnknowns    = 0,
+    doDropin     = TRUE,
+    ethnic       = "EA1",
+    adj          = 1.0,
+    fst          = 0.02,
+    relatedness  = c(0.0, 0)
+  )
+  if(! "defense.scenario" %in% ls(.GlobalEnv))
+    defense.scenario <- getFromNamespace("defense.scenario", "likeLTD")
+  scenario = do.call(defense.scenario, args)
+  scenario$nUnknowns = 0
 
-  # Construct list of all administrative input
-  admin <- pack.admin.input( caseName=caseName,
-                             databaseFile=databaseFile,
-                             mixedFile=mixedFile,
-                             refFile=refFile )
-
-  if(! "create.likelihood.vectors" %in% ls(.GlobalEnv))
-    create.likelihood.vectors <-
-      getFromNamespace("create.likelihood.vectors", "likeLTD")
-  likelihood <- create.likelihood.vectors(admin, nUnknowns=0, doDropin=TRUE)
+  likelihood <- create.likelihood.vectors(scenario)
   objectives = c(3.10250372325746e-04, 1.17224578453062e-02,
                  4.76863464507366e-05, 4.29822197384531e-06,
                  1.76350988087800e-03, 1.43444739873622e-08,
@@ -69,10 +67,9 @@ test_regression <- svTest(function() {
 
   check = list(objectives=objectives, penalties=penalties)
 
-  arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
-                           1.000000000000000, 0.543478260869565,
-                           0.108695652173913), 
-                   degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
+  arguments = list(rcont=c(0.923913043478261, 0.565217391304348),
+                   dropin = 1.0,
+                   degradation=rep(3e-3, 2),
                    localAdjustment=1,
                    tvedebrink=-4.35, beta=-4.35,
                    dropout=c(0.175, 0.105) )

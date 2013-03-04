@@ -61,8 +61,8 @@ test_determine.dropout <- svTest(function() {
   checkTrue(names(result) == names(check))
 
   # construct fake matrix with one replicate containing alleles from 1 and 2.
-  other = mapply(union, knownProfiles[2, colnames(cspProfile), drop=F],
-                 knownProfiles[1, colnames(cspProfile), drop=F])
+  other = mapply(union, knownProfiles[2, colnames(cspProfile), drop=FALSE],
+                 knownProfiles[1, colnames(cspProfile), drop=FALSE])
   other = matrix(other, nrow=1)
   colnames(other) = colnames(cspProfile)
   result = determine.dropout(knownProfiles, other)
@@ -72,8 +72,8 @@ test_determine.dropout <- svTest(function() {
 
   # construct fake matrix with one replicate containing alleles from 1 and 2
   # and another replicate containing alleles from 1 and 3.
-  other2 = mapply(union, knownProfiles[3, colnames(cspProfile), drop=F],
-                  knownProfiles[1, colnames(cspProfile), drop=F])
+  other2 = mapply(union, knownProfiles[3, colnames(cspProfile), drop=FALSE],
+                  knownProfiles[1, colnames(cspProfile), drop=FALSE])
   other = rbind(other, other2)
   result = determine.dropout(knownProfiles, other)
   check = list("Suspect"=FALSE, "Victim 1"=TRUE, "Victim 2"=TRUE)

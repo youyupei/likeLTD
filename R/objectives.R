@@ -74,10 +74,17 @@ likelihood.constructs.per.locus = function(scenario) {
   #   scenario: A scenario, for instance one returned by
   #             prosecution.scenario(...) or defense.scenario(...)
   alleles = rownames(scenario$alleleDb)
+  if(is.null(alleles)) stop("Could not figure out alleles names.")
   alleles.vector = function(n) alleles %in% unlist(n)
-  cspPresence = apply(scenario$cspProfile, 1, alleles.vector)
+  cspPresence     = apply(scenario$cspProfile, 1, alleles.vector)
   dropoutPresence = apply(scenario$dropoutProfs, 1, alleles.vector)
-  uncPresence = apply(scenario$uncProf, 1, alleles.vector)
+  uncPresence     = apply(scenario$uncProf, 1, alleles.vector)
+  if(!is.matrix(cspPresence))
+    cspPresence = matrix(nrow=0, ncol=length(alleles))
+  if(!is.matrix(dropoutPresence))
+    dropoutPresence = matrix(nrow=0, ncol=length(alleles))
+  if(!is.matrix(uncPresence))
+    uncPresence = matrix(nrow=0, ncol=length(alleles))
 
   missingReps = apply(scenario$cspProfile, 1, is.na)
 
@@ -116,10 +123,10 @@ create.likelihood.per.locus <- function(scenario) {
     # optimize.
     #
     # Parameters:
-    #   rcont: relative contribution from each profiled individual in this
-    #          scenario.
+    #   rcont: relative contribution from each profiled individual and unknown
+    #          contributor in this scenario.
     #   degradation: relative degradation from each profiled individual in this
-    #          scenario.
+    #                scenario.
     #   localAdjustment: a scalar floating point value.
     #   tvedebrink: a scalar floating point value.
     #   dropout: the dropout rate for each replicate.
@@ -127,9 +134,18 @@ create.likelihood.per.locus <- function(scenario) {
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          scenario.
+    if(length(rcont) != scenario$nUnknowns + ncol(cons$dropoutPresence))
+      stop(sprintf("rcont should be %d long.",
+                   scenario$nUnknowns + ncol(cons$dropoutPresence)))
+    if(length(degradation) != scenario$nUnknowns + ncol(cons$dropoutPresence))
+      stop(sprintf("degradation should be %d long.",
+                   scenario$nUnknowns + ncol(cons$dropoutPresence)))
+    if(length(dropout) != length(cons$missingReps))
+      stop(sprintf("dropout should be %d long.", ncol(cons$dropoutPresence)))
+
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
                                 scenario$alleleDb[, 2], cons$fragLengths,
-                                cons$genotypes)
+                                cons$genotypes, scenario$nUnknowns > 0)
     allEPG = (allEPG * localAdjustment)^tvedebrink
 
     # res: (Partial) Likelihood per allele.
@@ -209,14 +225,14 @@ create.likelihood.vectors <- function(scenario) {
                      tvedebrink=tvedebrink, dropout=dropout,
                      dropinPenalty=dropinPenalty,
                      degradationPenalty=degradationPenalty, bemn=bemn,
-                     besd=besd)
+                     besd=besd, dropin=dropin)
     callme <- function(objective, adj) {
       args = append(arguments, list(localAdjustment=adj))
       do.call(objective, args)
     }
     if(length(localAdjustment) == 1)
-      localAdjustment = rep(localAdjustment, length(function.array))
-    objectives = mapply(callme, function.array, localAdjustment)
+      localAdjustment = rep(localAdjustment, length(functions))
+    objectives = mapply(callme, functions, localAdjustment)
     arguments = append(arguments, list(localAdjustment=localAdjustment))
     arguments = append(arguments, list(...))
     pens <- do.call(penalties, arguments)

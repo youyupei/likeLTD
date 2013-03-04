@@ -427,7 +427,8 @@ known.epg.per.locus <- function(relContrib, degradation, fragmentLengths,
 }
 
 all.epg.per.locus <- function(relContrib, degradation, profPresence,
-                              knownFragLengths, fragLengths, genotypes) {
+                              knownFragLengths, fragLengths, genotypes,
+                              addProfiles) {
   # Creates "electropherogram" for each possible set of unknown contributors.
   #
   # Parameters:
@@ -454,8 +455,8 @@ all.epg.per.locus <- function(relContrib, degradation, profPresence,
   # At point of creation, contains only component from known profiles.
   allEPG = matrix(knownEPG, ncol=ncol(genotypes), nrow=length(knownEPG)) 
   # Add into allEPG the components from unknown contributors.
-  nUnknowns = nrow(genotypes)
-  if(nUnknowns) {
+  if(addProfiles) {
+    nUnknowns = nrow(genotypes)
     # v.index: index matrix to access alleles across possible agreggate
     # profiles. 
     v.index = 0:(ncol(genotypes)-1) * length(knownFragLengths)

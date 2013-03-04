@@ -390,33 +390,33 @@ test_possible.genotypes <- svTest(function() {
 
 test_possible.profiles.with.dropin <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
-  cspPresence = NULL
-  profPresence = NULL
-  missingReps = NULL
+  cspPresence = matrix(ncol=0, nrow=length(alleleNames))
+  profPresence = matrix(ncol=0, nrow=length(alleleNames))
+  missingReps = c()
 
   # Basic trial
   if(! "possible.genotypes" %in% ls(.GlobalEnv))
     possible.genotypes <- getFromNamespace("possible.genotypes", "likeLTD")
   result <- possible.genotypes(cspPresence, profPresence,
-                              missingReps, alleleNames, 1, TRUE)
+                               missingReps, alleleNames, 1, TRUE)
   checkTrue(is.matrix(result))
-  checkTrue(nrow(result) == 15)
-  checkTrue(ncol(result) == 2)
-  checkEquals(result, combinations(5, 2, rep=TRUE))
+  checkTrue(ncol(result) == 15)
+  checkTrue(nrow(result) == 2)
+  checkEquals(result, t(combinations(5, 2, rep=TRUE)))
 
   # Try with two possible.profiles.
   result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 2, TRUE)
-  checkTrue(nrow(result) == (5*3)^2)
-  checkTrue(ncol(result) == 4)
-  checkEquals(result, unique(result))
+  checkTrue(ncol(result) == (5*3)^2)
+  checkTrue(nrow(result) == 4)
+  checkEquals(t(result), unique(t(result)))
 
   # Try with three possible.profiles.
   result <- possible.genotypes(cspPresence, profPresence,
                               missingReps, alleleNames, 3, TRUE)
-  checkTrue(nrow(result) == (5*3)^3)
-  checkTrue(ncol(result) == 6)
-  checkEquals(result, unique(result))
+  checkTrue(ncol(result) == (5*3)^3)
+  checkTrue(nrow(result) == 6)
+  checkEquals(t(result), unique(t(result)))
 })
 
 test_known.epg.per.locus = svTest(function() {
