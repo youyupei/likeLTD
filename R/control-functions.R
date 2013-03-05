@@ -171,7 +171,8 @@ mfunpr <<- 1:2; if(Nkdo>0) mfunpr <<- c(mfunpr,2+2*Nknd+(1:(2*Nkdo)))
 propose.new = function(nupa,depa,itr,rcontupsd=0.01,degupsd=0.001,doupsd=0.01){
  
 print(paste('currently processing',itr,'th iteration'))
-shrink = (1-1/niter)^itr # reduce SD of parameter updates as SA algorithm progresses
+#shrink = (1-1/niter)^itr # reduce SD of parameter updates as SA algorithm progresses
+shrink = shrink*(1-1/niter) 
 
 # propose updates for numerator parameters
  	nupa$rcont = abs(rnorm(nN,nupa$rcont,shrink*rcontupsd)); if(!Drin) nupa$rcont[nN]=0 # new rcont values must be positive and final value must be zero if Drin=F
@@ -215,15 +216,7 @@ return(list(nupa=nupa,depa=depa))}
 calc.L = function(either.pa,either.N,lap=50,Drinpen=2,degpen=50,bemn=-4.35,besd=0.38){
 # CHANGE: Mistake in L?
 	#L = prod(either.pa$l*dgamma(either.pa$locadj,lap,lap))*exp(-Drinpen*nupa$rcont[either.N])*exp(-degpen*sum(either.pa$deg))
-	L = prod(either.pa$l*dgamma(either.pa$locadj,lap,lap)) *
-      exp( -Drinpen*either.pa$rcont[either.N] 
-           -degpen*sum(either.pa$deg) ) *
-      dnorm(either.pa$beta,bemn,besd)
-	s = dgamma(either.pa$locadj,lap,lap) *
-      exp( -Drinpen*either.pa$rcont[either.N] 
-           -degpen*sum(either.pa$deg) ) *
-      dnorm(either.pa$beta,bemn,besd)
-  browser()
+	L = prod(either.pa$l*dgamma(either.pa$locadj,lap,lap))*exp(-Drinpen*either.pa$rcont[either.N]-degpen*sum(either.pa$deg))*dnorm(either.pa$beta,bemn,besd)
 
 
 	return(L)}
@@ -257,24 +250,21 @@ for(i in 1:2) if(sum(rownames(acbp)==Qgen[i])==0) {acbp = rbind(c(1,0),acbp); ro
 nrep = length(call)
 CSP = matrix(0,nrep,nrow(acbp)) # matrix of indicators of CSP alleles, 1 row per replicate
 unc = matrix(0,nrep,nrow(acbp)) # matrix of indicators of uncertain alleles, 1 row per replicate
-for(z in 1:nrep) 
-  if(length(call[[z]])>1){ # this condition checks that the replicate is not missing at the locus
-		if(length(setdiff(kpnd,call[[z]][[1]])) != 0) {print(paste("Error: non-dropout allele not observed in CSP; CSP = ",call[[z]][[1]]," non-dropout alleles = ",kpnd)); return(NULL)} # check if there's a contributor wrongly labelled as non-dropout
-		tmp = setdiff(call[[z]][[1]],kpnd) # CSP alleles not attributable to profiled non-dropout contributors.
-		if(length(tmp) > 0 && tmp != "")
-      for(i in 1:length(tmp)){
-			  if(sum(rownames(acbp) == tmp[i]) == 0) {  # if CSP allele is not in database, insert it with count 1 and fragment length 0
-				  CSP = cbind(rep(0,nrep),CSP); unc = cbind(rep(0,nrep),unc); acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = tmp[i]
-				}
-			  CSP[z,] = CSP[z,] + (rownames(acbp) == tmp[i]) # encode CSP alleles
+for(z in 1:nrep) if(length(call[[z]])>1){ # this condition checks that the replicate is not missing at the locus
+	if(length(setdiff(kpnd,call[[z]][[1]])) != 0) {print(paste("Error: non-dropout allele not observed in CSP; CSP = ",call[[z]][[1]]," non-dropout alleles = ",kpnd)); return(NULL)} # check if there's a contributor wrongly labelled as non-dropout
+	tmp = setdiff(call[[z]][[1]],kpnd) # CSP alleles not attributable to profiled non-dropout contributors.
+	if(length(tmp) && tmp != "") for(i in 1:length(tmp)){
+		if(sum(rownames(acbp) == tmp[i]) == 0) {  # if CSP allele is not in database, insert it with count 1 and fragment length 0
+			CSP = cbind(rep(0,nrep),CSP); unc = cbind(rep(0,nrep),unc); acbp = rbind(c(1,0),acbp); rownames(acbp)[1] = tmp[i]
 			}
-		if(length(kpnd)) 
-      for(i in 1:length(kpnd)) unc[z,] = unc[z,] + (rownames(acbp) == kpnd[i]) # non-dropout alleles are coded as uncertain because they can mask the allele of an unprofiled contributor
-		tmp = call[[z]][[2]]
-		if(length(tmp)) 
-      for(i in 1:length(tmp)) unc[z,] = unc[z,] + (rownames(acbp) == tmp[i]) # uncertain alleles from input file
-  } else CSP[z,1] = 999 # flags missing replicate 
-if(sum(CSP*unc)) {stop(paste("Error: an allele is both uncertain and in CSP; call = ",call)); return(NULL)}
+		CSP[z,] = CSP[z,] + (rownames(acbp) == tmp[i]) # encode CSP alleles
+		}
+	if(length(kpnd)) for(i in 1:length(kpnd)) unc[z,] = unc[z,] + (rownames(acbp) == kpnd[i]) # non-dropout alleles are coded as uncertain because they can mask the allele of an unprofiled contributor
+	tmp = call[[z]][[2]]
+	if(length(tmp)) for(i in 1:length(tmp)) unc[z,] = unc[z,] + (rownames(acbp) == tmp[i]) # uncertain alleles from input file
+	} 
+else CSP[z,1] = 999 # flags missing replicate 
+if(sum(CSP*unc)) {print(paste("Error: an allele is both uncertain and in CSP; call = ",call)); return(NULL)}
 	
 # The sampling adjustment, double sampling adjustment for homozygotes
 acbp[Qgen,1] = acbp[Qgen,1]+adj*(1+(Qgen[1]==Qgen[2])); acbp[,1] = acbp[,1]/sum(acbp[,1])  
@@ -306,83 +296,190 @@ return(list(csp=CSP,unc=unc,af=acbp))}
 #	fragments: matrix of fragment lengths across all permutations
 #	v.index: Internal abstraction required to index specific elements in tprof matrix.
 
-calc.fixed = function(Nkdo,Nunp,afbp,known.alleles,CSP,DI,Qcont){
-
+calc.fixed = function(Nkdo,Nunp,afbp,known.alleles,CSP,REL,Qcont,DI){
 	# generates kpdo
 	Qgen=known.alleles[1:2]
-	if(Qcont==0)kpdo=known.alleles[-(1:2)] # defence case. Excludes Qs alleles.
-	if(Qcont==1)kpdo=known.alleles # prosecution case. Includes Qs alleles.
+	kpdo=known.alleles[-(1:2)] 
 	if(Qcont==2)kpdo=c(known.alleles[-(1:2)],Qgen) # if Q is contributor subject to dropout, put those alleles last in kpdo 
 
 	# generates presence/absence of known alleles
 	presence = rep(0,nrow(afbp)) 
 	if(length(kpdo)) for(u in 1:length(kpdo))presence = presence + (rownames(afbp)==kpdo[u])
 
-if(Nunp>0) {
+if(Nunp>0) 
+	{
 	# generates pUall
 	if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP # T for alleles that occur in CSP at least once
 
-	if (DI==0) {
+	if (DI==0) 
+		{
 		Ureq = which((CSPset * (presence == 0)) > 0)  # identify alleles in CSP but not in kpdo, so must come from the U or X
 		nUx =  2*Nunp - length(Ureq)
-  } else {nUx <- 2*Nunp}
-	if(nUx < 0) {
-      stop("Not enough unknown contributors.")
-    return(0)
-  } else if(nUx > 0) {
-    Ux = combinations(nrow(afbp),nUx,rep=T)
-  } else {Ux = matrix(0,1,0)} 
-		pUall.end <- matrix(data=c(rep(0, times=2*Nunp)),ncol=2*Nunp)
-		for(j in 1:nrow(Ux)){  # all possible allocations of required + random alleles to the unprofileds
-			if (DI==0){pUall =
+		} 
+	else 
+		{
+		nUx <- 2*Nunp
+		}
+	if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
+	pUall.end <- matrix(data=c(rep(0, times=2*Nunp)),ncol=2*Nunp)
+	for(j in 1:nrow(Ux))
+		{  # all possible allocations of required + random alleles to the unprofileds
+		if (DI==0)
+			{
+			pUall =
 				if(length(unique(c(Ureq,Ux[j,])))==(2*Nunp)) {permutations(2*Nunp,2*Nunp,c(Ureq,Ux[j,]),set=F)} else {unique(permutations(2*Nunp,2*Nunp,c(Ureq,Ux[j,]),set=F))}
-				}
-			else {pUall = 
-				if(length(unique(Ux[j,]))==(2*Nunp)) {permutations(2*Nunp,2*Nunp,Ux[j,],set=F)}else {unique(permutations(2*Nunp,2*Nunp,Ux[j,],set=F))} 
-				}
-			
-			pUall = pUall[which(apply(pUall[,2*(1:Nunp)-1,drop=F]<=pUall[,2*(1:Nunp),drop=F],1,prod)>0),,drop=F]
-			pUall.end <- rbind(pUall.end,pUall)
 			}
-	pUall <- pUall.end[-1,]
-} 
+		else 
+			{
+			pUall = 
+				if(length(unique(Ux[j,]))==(2*Nunp)) {permutations(2*Nunp,2*Nunp,Ux[j,],set=F)}else {unique(permutations(2*Nunp,2*Nunp,Ux[j,],set=F))} 
+			}
+			
+		pUall = pUall[which(apply(pUall[,2*(1:Nunp)-1,drop=F]<=pUall[,2*(1:Nunp),drop=F],1,prod)>0),,drop=F]
+		pUall.end <- rbind(pUall.end,pUall)
+		}
+	pUall.unrel <- pUall.end[-1,]
+	} 
 
 
-if(Nunp==0) {
-	if(DI==0) {
+if(Nunp==0) 
+	{
+	if(DI==0) 
+		{
 		ind=c(1,1)
 		if(nrep>1) CSPset = colSums(CSP[CSP[,1]<999,])>0  else CSPset = CSP
 		presenceQ = rep(0,nrow(afbp)) 
 		for(u in 0:1) {presenceQ = presenceQ + (rownames(afbp)==kpdo[length(kpdo)-u])}
-		pUall <- which(presenceQ>0)   # If no unknowns set pUall to genotype of Q
+		pUall.unrel <- which(presenceQ>0)   # If no unknowns set pUall to genotype of Q
 		} 
 
-	if(DI!=0) {
+	if(DI!=0) 
+		{
 		ind=c(1,1)
 		nUx <- 2
 		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else {Ux = matrix(0,1,0)} 
 		pUall.end <- matrix(data=c(rep(0, times=length(ind))),ncol=length(ind))
-		for(j in 1:nrow(Ux)){ 
-			pUall = if(length(unique(Ux[j,]))==(length(ind))) {permutations(length(ind),length(ind),Ux[j,],set=F)}else {unique(permutations(length(ind),length(ind),Ux[j,],set=F))} 
+		for(j in 1:nrow(Ux))
+			{ 
+			pUall = if(length(unique(Ux[j,]))==(length(ind))) {permutations(length(ind),length(ind),Ux[j,],set=F)} else {unique(permutations(length(ind),length(ind),Ux[j,],set=F))} 
 			pUall = pUall[which(apply(pUall[,1,drop=F]<=pUall[,2,drop=F],1,prod)>0),,drop=F]
 			pUall.end <- rbind(pUall.end,pUall)
 			}
-		pUall <- pUall.end[-1,]
+		pUall.unrel <- pUall.end[-1,]
 		}
 	}
 
+# Generates pUall for related individuals
+# Produces a list, pUall.rel, with 3 entries. First two are IBD=1, Third is IBD=2
+if(!Qcont) 
+	{
+	if((REL[1]>0)|(REL[2]>0)) {
+# IBD = 1, loop over both possibilities of IBD allele
+		for(i in 1:2){
+			Qi = which(rownames(afbp)==Qgen[i])
+			if(DI==0) 
+				{
+				Ureqq = setdiff(Ureq,Qi)
+				nUx =  2*Nunp - 1 - length(Ureqq)  # the - 1 is because of the ibd allele
+				} 
+			else 
+				{
+				nUx = 2*Nunp - 1
+				}
+			if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else Ux = matrix(0,1,0) 
+			pUall.tmp <- matrix(data=rep(0,times=2*Nunp),ncol=2*Nunp)
+			for(j in 1:nrow(Ux))
+				{
+# Try next line with Ureq and Ureqq
+				if(DI==0) 
+					{
+					pUall = if(length(unique(c(Ureqq,Ux[j,])))==(2*Nunp-1)) cbind(Qi,permutations(2*Nunp-1,2*Nunp-1,c(Ureqq,Ux[j,]),set=F)) else cbind(Qi,unique(permutations(2*Nunp-1,2*Nunp-1,c(Ureqq,Ux[j,]),set=F)))  # all allocations of 2*Nunp-1 alelles
+					} 
+				else 
+					{
+					pUall = if(length(unique(c(Ux[j,])))==(2*Nunp-1)) cbind(Qi,permutations(2*Nunp-1,2*Nunp-1,c(Ux[j,]),set=F)) else cbind(Qi,unique(permutations(2*Nunp-1,2*Nunp-1,c(Ux[j,]),set=F)))
+					}
+				pUall = pUall[which(apply(pUall[,2*(2:Nunp)-1,drop=F]<=pUall[,2*(2:Nunp),drop=F],1,prod)>0),,drop=F]
+				pUall.tmp <- rbind(pUall.tmp, pUall)
+				}
+			pUall.tmp <- pUall.tmp[-1,]
+			if(i==1) pUall.rel <- list(pUall.tmp)
+			else pUall.rel <- append(pUall.rel, list(pUall.tmp))
+			}
+# IBD = 2
+		Q1 = which(rownames(afbp)==Qgen[1]); Q2 = which(rownames(afbp)==Qgen[2])
+		if(DI==0) 
+			{
+			Ureqq = setdiff(Ureq,c(Q1,Q2))
+			nUx =  2*Nunp - 2 - length(Ureqq)  # the - 2 is because of the ibd alleles
+			} 
+		else 
+			{
+			nUx = 2*Nunp - 2
+			}
+		if(nUx < 0) {return(0)} else if(nUx > 0) {Ux = combinations(nrow(afbp),nUx,rep=T)} else Ux = matrix(0,1,0) 
+		pUall.tmp <- matrix(data=rep(0,times=2*Nunp),ncol=2*Nunp)
+		for(j in 1:nrow(Ux))
+			{
+			if(DI==0)
+				{
+				if((length(unique(c(Ureqq,Ux[j,])))>1)&(length(c(Ureqq,Ux[j,]))!=1)) 
+					{
+					pUall = if(length(unique(c(Ureqq,Ux[j,])))==(2*Nunp-2)) cbind(Q1,Q2,permutations(2*Nunp-2,2*Nunp-2,c(Ureqq,Ux[j,]),set=F)) else cbind(Q1,Q2,unique(permutations(2*Nunp-2,2*Nunp-2,c(Ureqq,Ux[j,]),set=F)))  # all allocations of 2*Nunp-1 alelles
+					}
+				else pUall = matrix(data=c(Q1,Q2,c(Ureqq,Ux[j,])),ncol=2*Nunp)
+				}
+			else
+				{
+				if((length(unique(c(Ux[j,])))>1)&(length(c(Ux[j,]))!=1)) 
+					{
+					pUall = if(length(unique(c(Ux[j,])))==(2*Nunp-2)) cbind(Q1,Q2,permutations(2*Nunp-2,2*Nunp-2,c(Ux[j,]),set=F)) else cbind(Q1,Q2,unique(permutations(2*Nunp-2,2*Nunp-2,c(Ux[j,]),set=F)))  # all allocations of 2*Nunp-1 alelles
+					}
+				else pUall = matrix(data=c(Q1,Q2,c(Ux[j,])),ncol=2*Nunp)
+				}
+			pUall = pUall[which(apply(pUall[,2*(2:Nunp)-1,drop=F]<=pUall[,2*(2:Nunp),drop=F],1,prod)>0),,drop=F]
+			pUall.tmp <- rbind(pUall.tmp, pUall)
+			}
+		pUall.tmp <- pUall.tmp[-1,]
+		if(!is.matrix(pUall.tmp)) pUall.tmp <- t(as.matrix(pUall.tmp))
+		pUall.rel <- append(pUall.rel, list(pUall.tmp))
+		}
+	}
 
+pUall <- pUall.unrel
 # CHANGE: edit pUall
 if(is.matrix(pUall)==FALSE) pUall <- t(as.matrix(pUall))
 
-	# generates other fixed values
-	N = dim(pUall)[1] # number of genotypes 
-	fragments = t(matrix(afbp[pUall,2],nrow=N))
-	v.index = (0:(N-1))*nrow(afbp)
-	if(Nunp>0) index = (length(kpdo)/2) + rep((1:Nunp),rep(2,Nunp))  else index = (length(kpdo)/2) + ind
+# generates other fixed values
+N = dim(pUall)[1] # number of genotypes 
+fragments = t(matrix(afbp[pUall,2],nrow=N))
+v.index = (0:(N-1))*nrow(afbp)
+if(Nunp>0) index = (length(kpdo)/2) + rep((1:Nunp),rep(2,Nunp))  else index = (length(kpdo)/2) + ind
 
 
-return(list(kpdo=kpdo,pUall=pUall,index=index,fragments=fragments,v.index=v.index))}
+# Generates additional fixed values for when relatedness is taken into account
+if(exists("pUall.rel")) 
+	{
+	for(i in 1:3) 
+		{
+		N = dim(pUall.rel[[i]])[1] # number of genotypes 
+		if(i==1) fragments.rel = list(t(matrix(afbp[pUall.rel[[i]],2],nrow=N)))
+		else fragments.rel = append(fragments.rel, list(t(matrix(afbp[pUall.rel[[i]],2],nrow=N))))
+		if(i==1) v.index.rel = list((0:(N-1))*nrow(afbp))
+		else v.index.rel = append(v.index.rel, list((0:(N-1))*nrow(afbp)))
+		}
+	}
+
+# Return different values depending on if relatedness is being modelled or not
+if(exists("pUall.rel"))
+	{
+	return(list(kpdo=kpdo,pUall=pUall,index=index,fragments=fragments,v.index=v.index,pUall.rel=pUall.rel, fragments.rel=fragments.rel, v.index.rel=v.index.rel))
+	}
+if(!exists("pUall.rel"))
+	{
+	return(list(kpdo=kpdo,pUall=pUall.unrel,index=index,fragments=fragments,v.index=v.index))
+	}
+}
 #-----------------------------------------
 
 #-----------------------------------------
@@ -426,7 +523,8 @@ return(y)}
 # returns the likelihood
 
 Calclik.1 = function(kpdo,DO,DI,afbp,CSP,unc,nrep,BB,pUall,Nunp,rcont,deg,index,fragments,v.index){
-
+# matrix adjustment seems to be necessary for pUall.rel
+if(!is.matrix(pUall)) pUall <- t(as.matrix(pUall))
 
 # Generates hyptadinit and tprof (a matrix of identical hyptadinits) for the known doses 
 hyptadinit=rep(0,nrow(afbp))
@@ -443,6 +541,7 @@ for(u in 1:(2*Nunp)){ # for each contributor (2 alleles each).Loop required to s
 	tprof[pUall[,u]+ v.index] = tprof[pUall[,u]+ v.index] + tmp[u,]
 	}
 }
+
 
 N = dim(tprof)[2] # size of array 
 zero = !tprof # used in index.4 and index.5, avoids redundancy 
@@ -499,17 +598,47 @@ return(term.1)}
 #	afbp: allele fractions and allele lengths. Use nu[[j]]$af from calc.fixed().
 #	Nunp: Number of unprofiled contributors. Use NU for pros and NU+1 for defence, set in GUI.
 #	rel: Relatedness coefficient. Set in wrapper as rr
+#	flag: indicates which relatedness we are looking at. 0 = not related. 1 = 1 alleled IBD. 2 = 2 alleles IBD.
 
 # Returns the adjusted final likelihood
 
-Adjust.Like <- function(like.array,pUall,afbp,Nunp,rel) {
-	if(Nunp>0) het <- 1+(pUall[,2*(1:Nunp)-1]<pUall[,2*(1:Nunp)]) # homozygocity adjustment
-	else het <- 1+(pUall[,1]<pUall[,2])
-	if (Nunp>1) het <- prod.matrix(het) # multiple homozygocity adjustments if Nunp=3
-	fraction <- matrix(data=afbp[pUall[,],1], ncol=ncol(pUall)) # set allele frequencies
-	fraction <- prod.matrix(fraction) # allele frequency adjustment
-	endlike <- like.array*fraction*het # apply adjustments to likelihoods
-	# endlike <- endlike * rel[1]/2 # adjust for relatedness
+Adjust.Like <- function(like.array,pUall,afbp,Nunp,rel,flag=0) {
+# matrix adjustment seems to be necessary for pUall.rel
+if(!is.matrix(pUall)) pUall <- t(as.matrix(pUall))
+# Flag relates to IBD. Flag = 0 is no relatedness. Flag = 1 is one allele IBD. Flag = 2 is 2 alleles IBD
+	if(flag == 0) {
+		if(Nunp>0) het <- 1+(pUall[,2*(1:Nunp)-1]<pUall[,2*(1:Nunp)]) # homozygocity adjustment
+		else het <- 1+(pUall[,1]<pUall[,2])
+		if(Nunp>1) {
+			if(dim(pUall)[1]!=1) het <- prod.matrix(het)
+			else het <- prod(het)
+			}
+		fraction <- matrix(data=afbp[pUall[,],1], ncol=ncol(pUall)) # set allele frequencies
+		fraction <- prod.matrix(fraction) # allele frequency adjustment
+		endlike <- like.array*fraction*het # apply adjustments to likelihoods
+		}
+	if(flag == 1) {
+		het <- 1+(pUall[,2*(2:Nunp)-1]<pUall[,2*(2:Nunp)]) # homozygocity adjustment
+		if(Nunp>2) {
+			if(dim(pUall)[1]!=1) het <- prod.matrix(het)
+			else het <- prod(het)
+			}
+		fraction <- matrix(data=afbp[pUall[,-1],1], ncol=ncol(pUall)-1) # set allele frequencies
+		fraction <- prod.matrix(fraction) # allele frequency adjustment
+		endlike <- like.array*fraction*het # apply adjustments to likelihoods
+		endlike <- endlike * rel[1]/2
+		}
+	if(flag == 2) {
+		het <- 1+(pUall[,2*(2:Nunp)-1]<pUall[,2*(2:Nunp)]) # homozygocity adjustment
+		if(Nunp>2) {
+			if(dim(pUall)[1]!=1) het <- prod.matrix(het)
+			else het <- prod(het)
+			}
+		fraction <- matrix(data=afbp[pUall[,-(1:2)],1], ncol=ncol(pUall)-2) # set allele frequencies
+		fraction <- prod.matrix(fraction) # allele frequency adjustment
+		endlike <- like.array*fraction*het # apply adjustments to likelihoods
+		endlike <- endlike * rel[2]
+		}
 	like <- sum(endlike)
 	return(like)
 	}

@@ -106,7 +106,7 @@ likelihood.constructs.per.locus = function(scenario) {
        freqMat=freqMat, fragLengths=fragLengths)
 }
 
-create.likelihood.per.locus <- function(scenario) {
+create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
   # Creates a likelyhood function for a given scenario and locus
   #
   # A scenario is given by the number of unknown contributors, whether to model
@@ -170,7 +170,10 @@ create.likelihood.per.locus <- function(scenario) {
     return(sum(res * cons$factors))
   }
 
-  attr(result.function, "scenario") <- scenario
+  if(addAttr) {
+    attr(result.function, "scenario") <- scenario
+    attr(result.function, "constructs") <- cons
+  }
   result.function
 }
 
@@ -211,15 +214,25 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   return(result)
 }
 
-create.likelihood.vectors <- function(scenario, doSave=FALSE) {
+create.likelihood.vectors <- function(scenario, addAttr=FALSE) {
   # Creates a likelihood function from the input scenario.
   #
   # Likelihood function returns a list with two objects: an array of likelihood
   # per locus, an array of penalties per locus.
+  #
   # .. seealso:: create.likelihood, create.likelihood.log
+  #
+  # Parameters
+  #   scenario: A list containing all the items necessary to building the
+  #             objective function. It is likely the result of a call to
+  #             defense.scenario or prosecution.scenario.
+  #   addAttr: If TRUE, adds some attribute to the objective function.
+  #            This is mostly for debug purposes. It makes it easier to known
+  #            what parameters were use to build the objective function.
 
   locusCentric = transform.to.locus.centric(scenario)
-  functions <- mapply(create.likelihood.per.locus, locusCentric)
+  functions <- mapply(create.likelihood.per.locus, locusCentric,
+                      MoreArgs=list(addAttr=addAttr))
 
   likelihood.vectors <- function(rcont, degradation, localAdjustment,
                                  tvedebrink, dropout, dropin,
@@ -244,7 +257,7 @@ create.likelihood.vectors <- function(scenario, doSave=FALSE) {
     pens <- do.call(penalties, arguments)
     list(objectives=objectives, penalties=pens)
   }
-  if(doSave) {
+  if(addAttr) {
     attr(likelihood.vectors, "scenario") <- scenario
     attr(likelihood.vectors, "functions") <- functions
   }
@@ -252,12 +265,12 @@ create.likelihood.vectors <- function(scenario, doSave=FALSE) {
 }
 
 
-create.likelihood <- function(scenario) {
+create.likelihood <- function(scenario, addAttr=FALSE) {
   # Creates a likelihood function from the input scenario.
   #
   # .. seealso:: create.likelihood.vectors, create.likelihood.log
 
-  vecfunc <- create.likelihood.vectors(scenario)
+  vecfunc <- create.likelihood.vectors(scenario, addAttr)
 
   likelihood.scalar <- function(...) { 
     result <- vecfunc(...) 
@@ -268,13 +281,13 @@ create.likelihood <- function(scenario) {
   return(likelihood.scalar)
 }
 
-create.likelihood.log <- function(scenario) {
+create.likelihood.log <- function(scenario, addAttr=FALSE) {
   # Creates a likelihood function from the input scenario.
   #
   # .. seealso::
   #   
   #   create.likelihood, create.likelihood.vectors
-  vecfunc <- create.likelihood.vectors(scenario)
+  vecfunc <- create.likelihood.vectors(scenario, addAttr)
   likelihood.log <- function(...) { 
     result <- vecfunc(...) 
     sum(log(result$objectives)) # + sum(log(result$penalties))

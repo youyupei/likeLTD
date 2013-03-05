@@ -264,36 +264,34 @@ test_relatedness.factors <- svTest(function() {
   het = genotypes[1, ] == genotypes[2, ]
 
   r = result[hasFirst & (!hasSecond) & (!het)]
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[2, 1])
+  check = 1e0 - 0.9  + 0.9 * 0.5 * 0.5 / alleleDb[2, 1]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
 
   r = result[hasFirst & (!hasSecond) & het]
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[2, 1])
+  check = 1e0 - 0.9 + 0.9 * 0.5 / alleleDb[2, 1]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
 
   r = result[(!hasFirst) & hasSecond & (!het)]
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[13, 1])
+  check = 1e0 - 0.9 + 0.9 * 0.5 * 0.5 / alleleDb[13, 1]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
 
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[13, 1])
+  check = 1e0 - 0.9 + 0.9 * 0.5 / alleleDb[13, 1]
   r = result[(!hasFirst) & hasSecond & het]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
   
   r = result[hasFirst & hasSecond]
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 * 0.5 / alleleDb[2, 1] 
-                     + 0.9 * 0.5 * 0.5 / alleleDb[13, 1])
+  check = 1e0 - 0.9 + 0.9 * 0.5 * 0.5 / alleleDb[2, 1] +
+                      0.9 * 0.5 * 0.5 / alleleDb[13, 1]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
 
   result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0, 0.9))
-  check = (1-0.9) * (1e0 + 0.9 * 0.5 / alleleDb[2, 1] / alleleDb[13, 1])
+  check = 1e0 - 0.9 + 0.9 * 0.5 / alleleDb[2, 1] / alleleDb[13, 1]
   r = result[hasFirst & hasSecond]
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
-
-  queriedAlleles = c("2", "2")
 })
