@@ -24,7 +24,7 @@ relatedness.factors <- function(genotypes, alleleDb, queriedProfile,
   indices = c(which(rownames(alleleDb) %in% queriedProfile[[1]]), 
               which(rownames(alleleDb) %in% queriedProfile[[2]]) )
   defactored = function(n) {
-    result = 1e0
+    result = 1.0 - sum(relatedness)
     hasFirst = n %in% indices[[1]]
     hasSecond = n %in% indices[[2]]
     if(any(hasFirst)) {
@@ -45,7 +45,7 @@ relatedness.factors <- function(genotypes, alleleDb, queriedProfile,
     }
     return(result)
   }
-  apply(genotypes[1:2, ], 2, defactored) * (1e0 - sum(relatedness))
+  apply(genotypes[1:2, ], 2, defactored) 
 }
 
 genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
@@ -193,19 +193,25 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   #
   #  >>> sum( -log(likelihood) - log(penalties(...)))
   result = 1
+  # Normalizes by number of loci so product of penalties same as in old code.
+  # Some penalties are per locus and other for all locus. Hence this bit of run
+  # around.
+  normalization = 1.0 / max(length(localAdjustment), 1)
+
   if(!missing(rcont) & !is.null(rcont))
-    result = result * exp(-dropin * dropinPenalty)
+    result = result * exp(-dropin * dropinPenalty * normalization)
   if(!missing(degradation) & !is.null(degradation))
-    result = result * exp(-sum(degradation) * degradationPenalty)
+    result = result * exp(-sum(degradation) * degradationPenalty 
+                           * normalization )
   if(!missing(tvedebrink) & !is.null(tvedebrink))
-    result = result * dnorm(tvedebrink, bemn, besd)
+    result = result * dnorm(tvedebrink, bemn, besd) ^ normalization
   if(!missing(localAdjustment) & !is.null(localAdjustment))
     result = result * dgamma(localAdjustment, localAdjPenalty, localAdjPenalty)
 
   return(result)
 }
 
-create.likelihood.vectors <- function(scenario) {
+create.likelihood.vectors <- function(scenario, doSave=FALSE) {
   # Creates a likelihood function from the input scenario.
   #
   # Likelihood function returns a list with two objects: an array of likelihood
@@ -238,7 +244,10 @@ create.likelihood.vectors <- function(scenario) {
     pens <- do.call(penalties, arguments)
     list(objectives=objectives, penalties=pens)
   }
-  attr(likelihood.vectors, "scenario") <- scenario
+  if(doSave) {
+    attr(likelihood.vectors, "scenario") <- scenario
+    attr(likelihood.vectors, "functions") <- functions
+  }
   return(likelihood.vectors)
 }
 

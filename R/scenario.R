@@ -191,6 +191,7 @@ prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, 
 
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns
+  result[["relatedness"]] = c(0, 0)
   result
 }
 
