@@ -159,7 +159,7 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
         vDoseDropout = allEPG * dropout[i]
         vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
 
-        res = dropout.probabilities(res, vDoseDropout, csp, unc)
+        res = dropout.probabilities(res, vDoseDropout, csp, unc, cons$zeroAll)
         if(scenario$doDropin) 
           res = dropin.probabilities(res, cons$freqMat, csp, unc, cons$zeroAll,
                                      dropin * (1 - dropout[i]) )

@@ -49,7 +49,7 @@ if(require("inline")) {
   dropin.probabilities <- dropin.probabilities.C
 }
 
-dropout.probabilities.R <- function(res, vDoseDropout, csp, unc) {
+dropout.probabilities.R <- function(res, vDoseDropout, csp, unc, ...) {
   # Per locus/per replica objective function.
   #
   # Mostly, this separation makes it easier to benchmark different
@@ -60,70 +60,45 @@ dropout.probabilities.R <- function(res, vDoseDropout, csp, unc) {
   res
 }
 dropout.probabilities = dropout.probabilities.R
-if(require("Rcpp")) {
-  code = "NumericVector output = NumericVector(input).size();
-          NumericMatrix const vDose(vDose);
-          LogicalVector const conda(condA);
-          LogicalVector const condb(condB);
-          for(int i=0; i < output.size(); ++i)
-            for(int j=0; j < conda.size(); ++j)
-              if(not std::isnan(vDose(i, j))) {
-                if(conda(j)) output(i, j) *= vDose(i, j);
-                else if(condb(j)) output(i, j) *= 1.0 - vDose(i, j);
-              }
-          return output;"
-  sig = signature(input="vector", vDoseDropout="array", condA="vector",
-                  condB="vector")   
-  .impl_objective.dropout.cxx = cxxfunction(sig, code,
-                                            includes="#include<cmath>",
-                                            plugin="Rcpp", )
-  dropout.probabilities.cxx <- function(res, vDoseDropout, csp, unc) {
-    if(length(res) != nrow(vDoseDropout))
-      stop("output vector and vDoseDropout have incompatible sizes.")
-    if(length(csp) != ncol(vDoseDropout))
-      stop("csp and vDoseDropout have incompatible sizes.")
-    if(length(unc) != ncol(vDoseDropout))
-      stop("unc and vDoseDropout have incompatible sizes.")
-    .impl_objective.dropout.cxx(res, vDoseDropout, !csp & !unc, csp != 0)
-  }
-  dropout.probabilities <- dropout.probabilities.cxx
-}
 if(require("inline")) {
-  code = "SEXP result;
-          PROTECT(result = Rf_duplicate(input));
-          int const nrow = INTEGER(GET_DIM(vDoseDropout))[0];
+  code = "int const nrow = INTEGER(GET_DIM(vDoseDropout))[0];
           int const ncol = INTEGER(GET_DIM(vDoseDropout))[1];
-          int *condA_ptr = LOGICAL(condA);
-          int *condB_ptr = LOGICAL(condB);
-          double * vdose_ptr = REAL(vDoseDropout);
-          double *const outptr_first = REAL(result);
+          int * const condA_first = LOGICAL(condA);
+          int * const condB_first = LOGICAL(condB);
+          int * const condA_end = condA_first + nrow;
+          int *zero_ptr = LOGICAL(zeroAll);
+          double *vdose_ptr = REAL(vDoseDropout);
+          double *out_ptr = REAL(input);
           // Perform same operation for each column
-           for(int j=0; j < ncol; ++j, ++condA_ptr, ++condB_ptr) 
-             if(*condA_ptr or condB_ptr) {
-               double *outptr = outptr_first;
-               if(*condA_ptr) {
-                 for(int i=0; i < nrow; ++i, ++vdose_ptr, ++outptr)
-                   if(not isnan(*vdose_ptr)) *outptr *= *vdose_ptr;
-               } else { // If we are here, condB_ptr is true.
-                 for(int i=0; i < nrow; ++i, ++vdose_ptr, ++outptr)
-                   if(not isnan(*vdose_ptr)) *outptr *= 1.0 - *vdose_ptr;
-               } 
-             }
-          UNPROTECT(1);
-          return result;"
+          for(int j=0; j < ncol; ++j, ++out_ptr) 
+          {
+            int * condA_ptr = condA_first;
+            int * condB_ptr = condB_first;
+            for(; condA_ptr != condA_end;
+                ++vdose_ptr, ++condA_ptr, ++condB_ptr, ++zero_ptr)
+            {
+              if(*zero_ptr) continue;
+              if(*condA_ptr) *out_ptr *= *vdose_ptr;
+              else if(*condB_ptr) *out_ptr *= 1.0 - *vdose_ptr;
+            }
+          }
+          return R_NilValue;"
   sig = signature(input="vector", vDoseDropout="array", condA="vector",
-                  condB="vector")
+                  condB="vector", zeroAll="array")
   .dropout.probabilities.C = cfunction(sig, code)
-  dropout.probabilities.C <- function(res, vDoseDropout, csp, unc) {
-    if(length(res) != nrow(vDoseDropout))
+  dropout.probabilities.C <- function(res, vDoseDropout, csp, unc, zeroAll) {
+    if(length(res) != ncol(vDoseDropout))
       stop("output vector and vDoseDropout have incompatible sizes.")
-    if(length(csp) != ncol(vDoseDropout))
+    if(length(csp) != nrow(vDoseDropout))
       stop("csp and vDoseDropout have incompatible sizes.")
-    if(length(unc) != ncol(vDoseDropout))
+    if(length(unc) != nrow(vDoseDropout))
       stop("unc and vDoseDropout have incompatible sizes.")
-    .dropout.probabilities.C(res, vDoseDropout, !csp & !unc, csp != 0)
+    if(any(dim(vDoseDropout) != dim(zeroAll)))
+      stop("expected vDoseDropout and zeroAll to match.")
+    .dropout.probabilities.C(res, vDoseDropout, !csp & !unc, csp != 0, zeroAll)
+    res
   }
   dropout.probabilities <- dropout.probabilities.C
 }
-dropout.probabilities <- dropout.probabilities.R
+dropout.probabilities <- dropout.probabilities.C
 dropin.probabilities <- dropin.probabilities.R
