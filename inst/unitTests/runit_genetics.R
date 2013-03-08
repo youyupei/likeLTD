@@ -318,8 +318,8 @@ test_selective.col.prod.mat.mat= svTest(function() {
   checkEquals(selective.col.prod(condition, input), rep(c(4, 2), 3))
 
   # Check that this is not a matrix-vector selection
-  input[1:2, 5:6] = 3 
-  input[3, 5:6] = 4 
+  input[1:2, 5:6] = 3
+  input[3, 5:6] = 4
   input[3, 1:4] = 5
   checkEquals(selective.col.prod(condition, input), c(10, 2, 10, 2, 12, 3))
 
