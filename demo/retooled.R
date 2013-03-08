@@ -12,12 +12,12 @@ args = list(
   databaseFile = NULL,
   mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
   refFile      = file.path(datapath, 'hammer-reference.csv'),
-  nUnknowns    = 0,
+  nUnknowns    = 1,
   doDropin     = TRUE,
   ethnic       = "EA1",
   adj          = 1.0,
   fst          = 0.02,
-  relatedness  = c(1, 1)/4
+  relatedness  = c(0, 0)/4
 )
 
 
@@ -29,16 +29,17 @@ defenseScenario     = do.call(defense.scenario, args)
 # prosecutionObjective = create.likelihood.vectors(prosecutionScenario, TRUE)
 defenseObjective     = create.likelihood.vectors(defenseScenario, TRUE)
 
-arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0, 
+arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                          0.543478260869565),
                  dropin = 0.1,
-                 degradation=rep(3e-3, 4),
+                 degradation=rep(1e-3, 4),
                  localAdjustment=1,
                  tvedebrink=-4.35,
                  dropout=c(0.175, 0.105) )
-arguments$rcont = arguments$rcont[1:(3+args$nUnknowns)]
+arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
 arguments$degradation = rep(3e-3, 3+args$nUnknowns)
 objective <- create.likelihood.vectors(defenseScenario, TRUE)
+
 # funcs <- attr(objective, "functions") 
 # a <- do.call(objective, arguments)
 
@@ -67,14 +68,6 @@ modify.args = function(index, newvalue, args) {
   }
   return(args)
 }
-
-# args = list(rcont=c(0.923913043478261, 0.565217391304348, 1.000000000000000,
-#                     0.543478260869565, 0.108695652173913), 
-#             dropin = 0.543478260869565, 
-#             degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-#             localAdjustment=1, tvedebrink=-4.35,
-#             dropout=c(0.175, 0.105), beta=-4.35 )
-
 
 plot_all.log <- function(which=1, x=(1:99)/100.0) {
   require("ggplot2")
@@ -110,3 +103,13 @@ plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0) {
   amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))), z=c(result))
   return(ggplot(amap, aes(x, y, z=z)))
 }
+arguments$degradation = log10(arguments$degradation)
+optimizeme = fixed.params(objective, arguments, zero=1e-12)
+
+library(stats)
+res <- optim( optimizeme$args, optimizeme$objective, 
+              method="L-BFGS-B",
+              upper=optimizeme$upper.bounds,
+              lower=optimizeme$lower.bounds,
+              hessian=FALSE,
+              control=list(fnscale=-1, factr=1e12) )

@@ -163,7 +163,7 @@ possible.genotypes = function(cspPresence, profPresence, missingReps,
 }
 
 known.epg.per.locus <- function(rcont, degradation, fragmentLengths,
-                                profiles) {
+                                dropoutPresence) {
   # Creates "electropherogram" vector for a given locus.
   #
   # In practice, the "electropherogram" is a vector giving the dose for each
@@ -174,29 +174,26 @@ known.epg.per.locus <- function(rcont, degradation, fragmentLengths,
   #          of the same length as the number of individuals in the profile.
   #   degradation: degradation of the DNA from each individual. 
   #   fragmentLengths: The str lengths for a given locus.
-  #   profiles: A matrix of m by (2n), where is the number of individuals in
-  #             the profile, m is the number of alleles in the frequency table,
-  #             and each element indicate the presence or absence of that
-  #             particular allele in the makeup of each individual.
+  #   dropoutPresence: Presence matrix for known profiles with dropout.
   # Returns: A vector with an element per allele. Each element is zero if is
   #          not within the known profile, or it is its dose within the
   #          candidate CSP.
 
-  indices = which(profiles > 0) - 1
-  indivs = trunc(indices / nrow(profiles)) + 1
-  alleles = indices %% nrow(profiles) + 1
+  indices = which(dropoutPresence > 0) - 1
+  indivs = trunc(indices / nrow(dropoutPresence)) + 1
+  alleles = indices %% nrow(dropoutPresence) + 1
   doses = mapply( function(d, r, L, het) het * r * (1.0 + d)^{-L}, 
                   degradation[indivs], 
                   rcont[indivs], 
                   fragmentLengths[alleles],
-                  rep(3 - colSums(profiles), colSums(profiles)) )
-  result = array(0.0, nrow(profiles))
+                  rep(3 - colSums(dropoutPresence), colSums(dropoutPresence)) )
+  result = array(0.0, nrow(dropoutPresence))
   for(i in 1:length(alleles)) 
     result[alleles[i]] = result[alleles[i]] + doses[i]
   return(result)
 }
 
-all.epg.per.locus <- function(rcont, degradation, profPresence,
+all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
                               knownFragLengths, fragLengths, genotypes,
                               addProfiles) {
   # Creates "electropherogram" for each possible set of unknown contributors.
@@ -205,7 +202,7 @@ all.epg.per.locus <- function(rcont, degradation, profPresence,
   #   rcont: relative contributions from each individual. It should be vector
   #          of the same length as the number of individuals in the profile.
   #   degradation: degradation of the DNA from each individual. 
-  #   profPresence: Presence matrix for known profiles.
+  #   dropoutPresence: Presence matrix for known profiles with dropout.
   #   knownFragLengths: matrix with fragment lengths for each allele in each
   #                     known profile.
   #   fragLengths: matrix with fragment lengths for each allele each computed
@@ -217,7 +214,7 @@ all.epg.per.locus <- function(rcont, degradation, profPresence,
 
   # "electropherogram" from known profiles
   knownEPG <- known.epg.per.locus(rcont, degradation, knownFragLengths,
-                                  profPresence)
+                                  dropoutPresence)
 
   # allEPG: for each set of unknown contributors, total EPG of known and
   #         unknowns.
@@ -229,7 +226,7 @@ all.epg.per.locus <- function(rcont, degradation, profPresence,
     # v.index: index matrix to access alleles across possible agreggate
     # profiles. 
     v.index = 0:(ncol(genotypes)-1) * length(knownFragLengths)
-    indices = ncol(profPresence) + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
+    indices = ncol(dropoutPresence) + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
     unknownDoses = rcont[indices] * (1.0 + degradation[indices])^-fragLengths
     # Perform sum over each DNA strand of each unknown contributor.
     for(u in 1:nUnknowns){

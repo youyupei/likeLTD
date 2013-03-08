@@ -127,7 +127,9 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
     #
     # Parameters:
     #   rcont: relative contribution from each profiled individual and unknown
-    #          contributor in this scenario.
+    #          contributor in this scenario. If it is one less than that, then
+    #          rcont is prefixed with a 1. This means that the contribution is
+    #          given relative to the first profiled individual.
     #   degradation: relative degradation from each profiled individual in this
     #                scenario.
     #   localAdjustment: a scalar floating point value.
@@ -137,6 +139,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          scenario.
+    if(length(rcont) + 1 == scenario$nUnknowns + ncol(cons$dropoutPresence)) 
+      rcont = c(1, rcont)
     if(length(rcont) != scenario$nUnknowns + ncol(cons$dropoutPresence))
       stop(sprintf("rcont should be %d long.",
                    scenario$nUnknowns + ncol(cons$dropoutPresence)))
@@ -145,6 +149,15 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
                    scenario$nUnknowns + ncol(cons$dropoutPresence)))
     if(length(dropout) != length(cons$missingReps))
       stop(sprintf("dropout should be %d long.", ncol(cons$dropoutPresence)))
+    if(any(rcont < 0)) stop("found negative relative contribution.")
+    if(any(degradation < 0)) stop("found negative degradation parameter.")
+    if(scenario$doDropin && dropin < 0) 
+      stop("Dropin rate should be between 0 and 1 (included).")
+    if(tvedebrink >= 0)
+      stop("Tvedebrink parameter cannot be positive or null.")
+    if(any(dropout < 0) || any(dropout > 1)) 
+      stop("Dropout rates must be between 0 and 1 (included).")
+    if(localAdjustment < 0) stop("localAdjustment must be positive.")
 
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
                                 scenario$alleleDb[, 2], cons$fragLengths,
@@ -215,7 +228,18 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   return(result)
 }
 
-create.likelihood.vectors <- function(scenario, addAttr=FALSE) {
+add.args.to.scenario(scenario, ...) {
+  # Updates scenario with input arguments.
+
+  args = list(...)
+  argnames = intersect(names(scenario), names(args))
+  if(length(argnames)) scenario[argnames] = args[argnames]
+  argnames = setdiff(names(args), names(scenario))
+  if(length(argnames)) scenario = append(scenario, args[argnames])
+  scenario
+}
+
+create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {
   # Creates a likelihood function from the input scenario.
   #
   # Likelihood function returns a list with two objects: an array of likelihood
@@ -230,7 +254,11 @@ create.likelihood.vectors <- function(scenario, addAttr=FALSE) {
   #   addAttr: If TRUE, adds some attribute to the objective function.
   #            This is mostly for debug purposes. It makes it easier to known
   #            what parameters were use to build the objective function.
+  #   ...: Extra named arguments are added to or replace values in scenario.
+  #        This makes it easier to play with different scenarios. Best you know
+  #        what you are doing.
 
+  scenario = add.args.to.scenario(scenario, ...)
   locusCentric = transform.to.locus.centric(scenario)
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
@@ -266,12 +294,12 @@ create.likelihood.vectors <- function(scenario, addAttr=FALSE) {
 }
 
 
-create.likelihood <- function(scenario, addAttr=FALSE) {
+create.likelihood <- function(scenario, addAttr=FALSE, ...) {
   # Creates a likelihood function from the input scenario.
   #
   # .. seealso:: create.likelihood.vectors, create.likelihood.log
 
-  vecfunc <- create.likelihood.vectors(scenario, addAttr)
+  vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
 
   likelihood.scalar <- function(...) { 
     result <- vecfunc(...) 
@@ -282,16 +310,16 @@ create.likelihood <- function(scenario, addAttr=FALSE) {
   return(likelihood.scalar)
 }
 
-create.likelihood.log <- function(scenario, addAttr=FALSE) {
+create.likelihood.log <- function(scenario, addAttr=FALSE, ...) {
   # Creates a likelihood function from the input scenario.
   #
   # .. seealso::
   #   
   #   create.likelihood, create.likelihood.vectors
-  vecfunc <- create.likelihood.vectors(scenario, addAttr)
+  vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
   likelihood.log <- function(...) { 
     result <- vecfunc(...) 
-    sum(log(result$objectives)) # + sum(log(result$penalties))
+    sum(log(result$objectives)) + sum(log(result$penalties))
   }
   attributes(likelihood.log) <- attributes(vecfunc)
   return(likelihood.log)
