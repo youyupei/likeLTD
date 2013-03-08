@@ -18,7 +18,7 @@ ethnic.database <- function(ethnic, loci=NULL, afreq=NULL) {
 
   # Function which recreates the input for a single locus.
   # Input of a locus consists of one row per allele type.
-  # Also filters out alleles with 0 frequencies 
+  # Also filters out alleles with 0 frequencies.
   filter.locus <- function(n) {
     locus <- afreq[afreq$Marker == n, ]
     result <- matrix(c(locus[[ethnic]], locus[["BP"]]), , 2)
@@ -72,7 +72,7 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
                 fst=fst))
 }
 
-all.genotypes.per.locus = function(nAlleles, nContrib=1) {
+all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
   # All possible agreggate profiles for a given locus.
   #
   # Computes all possible combined profiles from n contributors.
@@ -83,6 +83,7 @@ all.genotypes.per.locus = function(nAlleles, nContrib=1) {
   #   nAlleles: number of alleles. 
   #   nContrib: number of unprofiled contributors.
   
+  if(nContrib == 0 || nAlleles == 0) return(matrix(nrow=0, ncol=0))
   # All possible genotypes for a single contributor.
   singleContributor = t(combinations(nAlleles, 2, repeats.allowed=T))
   if(nContrib == 1) return(singleContributor)
@@ -99,6 +100,8 @@ all.genotypes.per.locus = function(nAlleles, nContrib=1) {
                  perms=nContribPerms) 
   do.call(rbind, rows)
 }
+all.genotypes.per.locus = all.genotypes.per.locus.R
+# if(!require("inline")) all.genotypes.per.locus = all.genotypes.per.locus.R
 
 possible.genotypes = function(cspPresence, profPresence, missingReps,
                               alleleNames, nUnknowns, dropin) {
@@ -136,12 +139,12 @@ possible.genotypes = function(cspPresence, profPresence, missingReps,
 
   # Compute all genotype permutations. 
   genotypes = all.genotypes.per.locus(length(alleleNames), nUnknowns)
-  if(dropin) return(genotypes) # Dropin case: can return immediately.
+  if(dropin) return(genotypes) # Dropin case: can return immediately.
 
   # Case without dropin: check that there are enough unknown contributors to
   # account for the alleles in the CSP that are not in the known profile.
   # Might be able to return early here also.
-  # Reduce matrices to a single logical vector
+  # Reduce matrices to a single logical vector
   cspPresence  = rowSums(cspPresence[, c(!missingReps), drop=FALSE]) > 0
   profPresence = rowSums(profPresence) > 0
 
@@ -237,38 +240,16 @@ all.epg.per.locus <- function(rcont, degradation, profPresence,
   return(allEPG)
 }
 
-# Defines prod.matrix from R.
-prod.matrix.col.R <- function(x) {
+# Defines prod.matrix from R.
+prod.matrix.col <- function(x) {
   # Fast column-wise product.
   #
-  # Sadly, this is faster than apply(x, 1, prod)  
+  # Sadly, this is faster than apply(x, 1, prod)
   y=x[1, ]
   for(i in 2:nrow(x))
   y=y*x[i, ]
   return(y)
 }
-# Tries and defines a fast prod.matrix if possible.
-if(require("inline")) {
-  code = "SEXP res;
-          int const nrow = INTEGER(GET_DIM(x))[0];
-          int const ncol = INTEGER(GET_DIM(x))[1];
-          PROTECT(res = allocVector(REALSXP, ncol));
-          double *inptr = REAL(x);
-          double *const outptr_first = REAL(res);
-          double *outptr = outptr_first;
-          // Perform multiplication with other columns
-          for(int j=1; j < ncol; ++j, ++outptr) {
-            *outptr = *inptr; ++inptr;
-            if(*outptr == NA_REAL) *outptr = 1.0;
-            for(int i=1; i < nrow; ++i, ++inptr)
-              if(*inptr != NA_REAL) *outptr *= *inptr;
-          }
-          UNPROTECT(1);
-          return res;"
-  prod.matrix.col.C = cfunction(signature(x="array"), code)
-  prod.matrix.col = prod.matrix.col.C
-} else { prod.matrix.col = prod.matrix.col.R }
-prod.matrix.col = prod.matrix.col.R
 
 selective.col.prod <- function(condition, input) {
   # Row-wise product over selected columns or elements.
@@ -308,7 +289,7 @@ selective.col.prod <- function(condition, input) {
     if(!is.matrix(input)) {
       if(nrow(condition) != length(input)) 
         stop("condition does not have as many columns as input has elements.") 
-      # Builds input matrix
+      # Builds input matrix
       input = matrix(input, nrow=length(input), ncol=ncol(condition))
     } else if(any(dim(condition) != dim(input)))
       stop("condition and input have different dimensions.") 
@@ -342,5 +323,4 @@ selective.col.prod <- function(condition, input) {
   output[is.na(output)] = 1.0
   return(output)
 }
-
 

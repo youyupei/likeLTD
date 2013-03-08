@@ -1,5 +1,5 @@
 empty.alleles = function(genotypes, dropoutPresence, nUnknowns) {
-  # Mask over genotype matrix indicating empty/null elements.
+  # Mask over genotype matrix indicating empty/null elements.
   #
   # Parameters:
   #   genotypes: Matrix of indices into dosage matrix.
@@ -53,7 +53,7 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
   # Fraction cum heterozygote factors.
   #
 
-  # First add standard bits.
+  # First add standard bits.
   if(nUnknowns == 0 & !doDropin) het = matrix(1, ncol=1, nrow=nrow(alleleDb))
   else {
     n = nrow(genotypes) / 2
@@ -100,6 +100,7 @@ likelihood.constructs.per.locus = function(scenario) {
   
   fragLengths = matrix(scenario$alleleDb[genotypes, 2], ncol=ncol(genotypes))
 
+
   list(cspPresence=cspPresence, dropoutPresence=dropoutPresence,
        uncPresence=uncPresence, missingReps=missingReps,
        genotypes=genotypes, zeroAll=zeroAll, factors=factors,
@@ -113,6 +114,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
   # dropin, so on and so forth.
 
   cons = likelihood.constructs.per.locus(scenario)
+  doR = !is.null(scenario$doR) && scenario$doR == TRUE
+  probabilities = probabilities.function(scenario, cons, doR=doR)
 
   result.function <- function(rcont, degradation, localAdjustment,
                               tvedebrink, dropout, dropin, ...) {
@@ -159,10 +162,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
         vDoseDropout = allEPG * dropout[i]
         vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
 
-        res = dropout.probabilities(res, vDoseDropout, csp, unc, cons$zeroAll)
-        if(scenario$doDropin) 
-          res = dropin.probabilities(res, cons$freqMat, csp, unc, cons$zeroAll,
-                                     dropin * (1 - dropout[i]) )
+        res <- probabilities(res, vDoseDropout, csp, unc,
+                             dropin * (1 - dropout[i]))
       } # End of if(any(csp)) 
     } # End of loop over replicates.
 
@@ -185,7 +186,7 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   # Penalties to apply to the likelihood.
   #
   # The return can be a scalar (no localAdj argument) or a vector (localAdj
-  # argument). They can be applied to the likelihood as:
+  # argument). They can be applied to the likelihood as:
   #
   #   >>> prod(likelihood * penalties(...))
   #
@@ -196,7 +197,7 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   #
   #  >>> sum( -log(likelihood) - log(penalties(...)))
   result = 1
-  # Normalizes by number of loci so product of penalties same as in old code.
+  # Normalizes by number of loci so product of penalties same as in old code.
   # Some penalties are per locus and other for all locus. Hence this bit of run
   # around.
   normalization = 1.0 / max(length(localAdjustment), 1)

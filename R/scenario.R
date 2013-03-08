@@ -29,10 +29,10 @@ read.unc.profile = function(path) {
 read.known.profiles = function(path) {
   # Reads known profiles from file.
   #
-  # Returns a matrix where each person is a given row. The column labeled
-  # "queried" indicates whether that individual is queried or not. Other
-  # columns are loci. Each element in a loci is a vector of two strings naming
-  # the allele of the individual.
+  # Returns a matrix where each person is a given row. The column labeled
+  # "queried" indicates whether that individual is queried or not. Other
+  # columns are loci. Each element in a loci is a vector of two strings naming
+  # the allele of the individual.
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profiles = read.table(path, header=T, colClasses='character', row.names=1,
                         sep=',', quote = "\"")
@@ -44,19 +44,19 @@ read.known.profiles = function(path) {
 }
 
 determine.dropout = function(knownProfiles, cspProfile) {
-  # Adds dropout column to known profiles.
+  # Adds dropout column to known profiles.
   #
   # An individual is subject to doprout if the individual's allele at one or
   # more locus is not in the crime-scene profile.
   #
-  # Parameters:
+  # Parameters:
   #   knownProfiles: A matrix containing the known profiles. 
   #   cspProfile: The crime scene profile.
   # Returns: 
-  #   A list with one element per individual. Each is True if that individual
-  #   is subject to dropout.
+  #   A list with one element per individual. Each is True if that individual
+  #   is subject to dropout.
   
-  # Alleles present in any replicate of the csp per locus.
+  # Alleles present in any replicate of the csp per locus.
   per.indiv = function(indiv) {
     per.locus = function(locus) {
       all(sapply(cspProfile[, locus], function(n) indiv[[locus]] %in% n))
@@ -67,7 +67,7 @@ determine.dropout = function(knownProfiles, cspProfile) {
 }
 
 masking.and.uncertain.profile = function(uncProfile, maskingProfiles) {
-  # Adds masking profiles to each replicate of uncertain alleles.
+  # Adds masking profiles to each replicate of uncertain alleles.
   # 
   # Masking and uncertain alleles are somehow treated the same.
   if(length(maskingProfiles) == 0) return(uncProfile)
@@ -80,12 +80,12 @@ masking.and.uncertain.profile = function(uncProfile, maskingProfiles) {
 }
 
 missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
-  # Adds missing alleles to database
+  # Adds missing alleles to database
   #
-  # There may be alleles in the crime-scene profile, in the queried individual,
-  # or in the individuals subject to dropout, which are not present in the
-  # database. Theses alleles are added into the database with count 1 and
-  # fragment length 0.
+  # There may be alleles in the crime-scene profile, in the queried individual,
+  # or in the individuals subject to dropout, which are not present in the
+  # database. Theses alleles are added into the database with count 1 and
+  # fragment length 0.
   if(!is.matrix(cspProfile)) stop("input should be a matrix.")
   if(is.null(colnames(cspProfile)))
     stop("input matrix does not have column names.")
@@ -96,10 +96,10 @@ missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
     cspAlleles = unique(unlist(cspProfile[, locus]))
     dropAlleles = unique(unlist(noDropoutProfiles[, locus]))
     missingAlleles = setdiff(cspAlleles, union(dbAlleles, dropAlleles))
-    # At this point, some of the missingAlleles might just be saying move
-    # along, nothing to see.
+    # At this point, some of the missingAlleles might just be saying move
+    # along, nothing to see.
     missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
-    # Now add new rows to database. 
+    # Now add new rows to database. 
     if(length(missingAlleles)) {
       newrows = matrix(c(1, 0), nrow=length(missingAlleles), byrow=T)
       rownames(newrows) = missingAlleles
@@ -111,18 +111,18 @@ missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
 
 transform.to.locus.centric = function(scenario) {
   # Transform scenarios to locus centric modes.
-  # 
-  # This means we reorganise the data to be in lists of the loci.
+  # 
+  # This means we reorganise the data to be in lists of the loci.
   result = list()
   for(locus in colnames(scenario$cspProfile)) {
-    # Value of the resulting list for a given locus 
+    # Value of the resulting list for a given locus 
     locusValue = list()
     # Loop over all items in original list.
     for(key in names(scenario)) {
       value = scenario[[key]]
       # If a matrix and locus is either in rows or columns, then add only locus
-      # part of the matrix. 
-      # If a list, then add only the locus specific part of the list.
+      # part of the matrix. 
+      # If a list, then add only the locus specific part of the list.
       if(is.matrix(value)) {
         if(locus %in% colnames(value)) 
           locusValue[[key]] = value[, locus, drop=FALSE]
@@ -131,10 +131,10 @@ transform.to.locus.centric = function(scenario) {
       } else if(is.list(value) && (locus %in% names(value))) 
         locusValue[[key]] = value[[locus]]
       # If has not been added yet, then not locus dependent, and add it as a
-      # whole. 
+      # whole. 
       if(!key %in% names(locusValue)) locusValue[[key]] = value 
     }
-    # Only locus to result if not empty.
+    # Only locus to result if not empty.
     if(length(locusValue) > 0) result[[locus]] = locusValue
   }
   result
@@ -144,12 +144,12 @@ transform.to.locus.centric = function(scenario) {
 agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
                               queriedProfile, alleleDb, ethnic='EA1', adj=1e0,
                               fst=0.02) {
-  # Helper function to figure out the input of most scenarios.
+  # Helper function to figure out the input of most scenarios.
   #
   # Basically, this groups operations that are done the same by defense and
-  # prosection. 
+  # prosection. 
 
-  # Read database and filter it down to requisite ethnicity and locus. 
+  # Read database and filter it down to requisite ethnicity and locus. 
   alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Figure out which profiles show dropout.
@@ -167,7 +167,7 @@ agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
                                  queriedProfile[1, colnames(cspProfile)],
                                  adj=adj, fst=fst )
 
-  # Construct all profiles as arrays of  
+  # Construct all profiles as arrays of  
   list(cspProfile=cspProfile, uncProf=uncProf, dropoutProfs=dropoutProfs,
        alleleDb=alleleDb,
        queriedProfile=queriedProfile[1, colnames(cspProfile)])
@@ -175,7 +175,7 @@ agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
 
 prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, adj=1e0,
                                  fst=0.02, databaseFile=NULL, ...) {
-  # Creates prosecution scenario.
+  # Creates prosecution scenario.
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
   uncProfile = read.unc.profile(mixedFile)
@@ -197,7 +197,7 @@ prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, 
 
 defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                              adj=1e0, fst=0.02, databaseFile=NULL, ...) {
-  # Creates defense scenario.
+  # Creates defense scenario.
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
   uncProfile = read.unc.profile(mixedFile)
