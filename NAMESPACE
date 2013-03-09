@@ -1,3 +1,5 @@
+useDynLib(likeLTD, .all.genotypes.per.locus.C = allGenotypesPerLocus)
+export(.all.genotypes.per.locus.C)
 export(pack.admin.input)
 export(pack.genetics.input)
 export(allele.report)

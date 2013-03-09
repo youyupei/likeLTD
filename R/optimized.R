@@ -234,3 +234,14 @@ probabilities.function <- function(scenario, cons, doR=FALSE) {
 #   }
 #   all.genotypes.per.locus = all.genotypes.per.locus.C
 # }
+
+all.genotypes.per.locus.C <- function(nAlleles, nContrib=1) {
+  if(nAlleles < 0) stop("Negative or null number of alleles.")
+  if(nContrib < 0) stop("Negative number of contributors.")
+  if(nContrib == 0 || nAlleles == 0) return(matrix(nrow=0, ncol=0))
+  nContrib = as.integer(nContrib)
+  a = t(combinations(nAlleles, 2, repeats.allowed=TRUE))
+  if(is.null(nContrib) || is.null(a)) stop("something went very wrong.")
+  .Call(.all.genotypes.per.locus.C, nContrib, a, PACKAGE="likeLTD")
+}
+all.genotypes.per.locus = all.genotypes.per.locus.C
