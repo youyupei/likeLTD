@@ -218,3 +218,15 @@ defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   result[["nUnknowns"]] = nUnknowns + 1
   result
 }
+
+
+add.args.to.scenario <- function(scenario, ...) {
+  # Updates scenario with input arguments.
+
+  args = list(...)
+  argnames = intersect(names(scenario), names(args))
+  if(length(argnames)) scenario[argnames] = args[argnames]
+  argnames = setdiff(names(args), names(scenario))
+  if(length(argnames)) scenario = append(scenario, args[argnames])
+  scenario
+}

@@ -111,3 +111,14 @@ test_missing.alleles <- svTest(function() {
   checkTrue("9" %in% rownames(result$D2))
   checkEquals(result$D2["9", ], c(1, 0))
 })
+
+
+test_add.args.to.scenario <- svTest(function() {
+
+  start = list(a="hello", b="world")
+  if(! "add.args.to.scenario" %in% ls(.GlobalEnv))
+    add.args.to.scenario <- getFromNamespace("add.args.to.scenario", "likeLTD")
+  result = add.args.to.scenario(start, c=5, a=2)
+  
+  checkEquals(result, list(a=2, b="world", c=5))
+})

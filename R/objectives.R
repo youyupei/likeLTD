@@ -194,8 +194,7 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
 
 penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
                       dropin, localAdjPenalty=50, dropinPenalty=2,
-                      degradationPenalty=50, bemn=-4.35, besd=0.38, ...)
-{
+                      degradationPenalty=50, bemn=-4.35, besd=0.38, ...) {
   # Penalties to apply to the likelihood.
   #
   # The return can be a scalar (no localAdj argument) or a vector (localAdj
@@ -226,17 +225,6 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
     result = result * dgamma(localAdjustment, localAdjPenalty, localAdjPenalty)
 
   return(result)
-}
-
-add.args.to.scenario(scenario, ...) {
-  # Updates scenario with input arguments.
-
-  args = list(...)
-  argnames = intersect(names(scenario), names(args))
-  if(length(argnames)) scenario[argnames] = args[argnames]
-  argnames = setdiff(names(args), names(scenario))
-  if(length(argnames)) scenario = append(scenario, args[argnames])
-  scenario
 }
 
 create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {

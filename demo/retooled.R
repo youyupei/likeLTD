@@ -1,10 +1,13 @@
 # Case we are going to be looking at.
 library(gtools)
-source('R/genetics.R')
-source('R/allele_report.R')
-source('R/optimized.R')
-source('R/scenario.R')
-source('R/objectives.R')
+library(microbenchmark)
+library(stats)
+# source('R/genetics.R')
+# source('R/allele_report.R')
+# source('R/optimized.R')
+# source('R/scenario.R')
+# source('R/objectives.R')
+source('R/maximize.R')
 caseName = 'hammer'
 datapath = file.path(file.path('inst', 'extdata'), caseName)
 
@@ -22,12 +25,16 @@ args = list(
 
 
 # Create scenarios for defense and prosecution.
-# prosecutionScenario = do.call(prosecution.scenario, args)
-defenseScenario     = do.call(defense.scenario, args)
+prosecutionScenario = do.call(prosecution.scenario, args)
+# defenseScenario     = do.call(defense.scenario, args)
 
-# Create objective functions for defense and prosecution.
-# prosecutionObjective = create.likelihood.vectors(prosecutionScenario, TRUE)
-defenseObjective     = create.likelihood.vectors(defenseScenario, TRUE)
+pOpti0 = optimization.params(prosecutionScenario, nUnknowns=0, doDropin=TRUE)
+pOpti1 = optimization.params(prosecutionScenario, nUnknowns=1, doDropin=TRUE)
+pOpti2 = optimization.params(prosecutionScenario, nUnknowns=2, doDropin=TRUE)
+
+# # Create objective functions for defense and prosecution.
+# # prosecutionObjective = create.likelihood.vectors(prosecutionScenario, TRUE)
+# defenseObjective     = create.likelihood.vectors(defenseScenario, TRUE)
 
 arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                          0.543478260869565),
@@ -36,15 +43,13 @@ arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                  localAdjustment=1,
                  tvedebrink=-4.35,
                  dropout=c(0.175, 0.105) )
-arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
-arguments$degradation = rep(3e-3, 3+args$nUnknowns)
-objective <- create.likelihood.vectors(defenseScenario, TRUE)
+# arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
+# arguments$degradation = rep(3e-3, 3+args$nUnknowns)
+# objective <- create.likelihood.vectors(defenseScenario, TRUE)
 
 # funcs <- attr(objective, "functions") 
 # a <- do.call(objective, arguments)
 
-library('microbenchmark')
-functions = attr(objective, "functions")
 # bench <- microbenchmark( D3=do.call(functions$D3, arguments), 
 #                          vWA=do.call(functions$vWA, arguments), 
 #                          D16=do.call(functions$D16, arguments), 
@@ -103,13 +108,13 @@ plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0) {
   amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))), z=c(result))
   return(ggplot(amap, aes(x, y, z=z)))
 }
-arguments$degradation = log10(arguments$degradation)
-optimizeme = fixed.params(objective, arguments, zero=1e-12)
 
-library(stats)
-res <- optim( optimizeme$args, optimizeme$objective, 
-              method="L-BFGS-B",
-              upper=optimizeme$upper.bounds,
-              lower=optimizeme$lower.bounds,
-              hessian=FALSE,
-              control=list(fnscale=-1, factr=1e12) )
+# arguments$degradation = log10(arguments$degradation)
+# optimizeme = fixed.params(objective, arguments, zero=1e-12)
+
+# res <- optim( optimizeme$args, optimizeme$objective, 
+#               method="L-BFGS-B",
+#               upper=optimizeme$upper.bounds,
+#               lower=optimizeme$lower.bounds,
+#               hessian=FALSE,
+#               control=list(fnscale=-1, factr=1e12) )
