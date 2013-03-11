@@ -32,6 +32,7 @@ prosecutionScenario = do.call(prosecution.scenario, args)
 pOpti0 = optimization.params(prosecutionScenario, nUnknowns=0, doDropin=TRUE)
 pOpti1 = optimization.params(prosecutionScenario, nUnknowns=1, doDropin=TRUE)
 pOpti2 = optimization.params(prosecutionScenario, nUnknowns=2, doDropin=TRUE)
+# pOpti3 = optimization.params(prosecutionScenario, nUnknowns=3, doDropin=TRUE)
 
 # # Create objective functions for defense and prosecution.
 # # prosecutionObjective = create.likelihood.vectors(prosecutionScenario, TRUE)

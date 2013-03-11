@@ -95,16 +95,11 @@ likelihood.constructs.per.locus = function(scenario) {
   factors = genotype.factors(genotypes, scenario$alleleDb, scenario$nUnknowns,
                              scenario$doDropin, scenario$queriedProfile,
                              scenario$relatedness) 
-  freqMat = matrix(scenario$alleleDb[, 1], ncol=ncol(genotypes),
-                   nrow=nrow(scenario$alleleDb))
-  
-  fragLengths = matrix(scenario$alleleDb[genotypes, 2], ncol=ncol(genotypes))
-
 
   list(cspPresence=cspPresence, dropoutPresence=dropoutPresence,
        uncPresence=uncPresence, missingReps=missingReps,
        genotypes=genotypes, zeroAll=zeroAll, factors=factors,
-       freqMat=freqMat, fragLengths=fragLengths)
+       freqMat=scenario$alleleDb[, 1])
 }
 
 create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
@@ -160,8 +155,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
     if(localAdjustment < 0) stop("localAdjustment must be positive.")
 
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
-                                scenario$alleleDb[, 2], cons$fragLengths,
-                                cons$genotypes, scenario$nUnknowns > 0)
+                                scenario$alleleDb[, 2], cons$genotypes,
+                                scenario$nUnknowns > 0)
     allEPG = (allEPG * localAdjustment)^tvedebrink
 
     # res: (Partial) Likelihood per allele.

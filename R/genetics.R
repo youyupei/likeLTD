@@ -195,8 +195,7 @@ known.epg.per.locus <- function(rcont, degradation, fragmentLengths,
 }
 
 all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
-                              knownFragLengths, fragLengths, genotypes,
-                              addProfiles) {
+                              knownFragLengths, genotypes, addProfiles) {
   # Creates "electropherogram" for each compatible set of unknown contributors.
   #
   # Parameters:
@@ -228,7 +227,8 @@ all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
     indices = ncol(dropoutPresence) + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
     unknownDoses = matrix(ncol=length(indices), nrow=length(knownFragLengths))
     for(i in 1:ncol(unknownDoses))
-      unknownDoses[, i] = rcont[indices[i]] * (1.0 + degradation[indices[i]])^-knownFragLengths
+      unknownDoses[, i] = rcont[indices[i]] * 
+                          (1.0 + degradation[indices[i]])^-knownFragLengths
 
     # The following loop is done in C. 
     #   for(j in 1:ncol(genotypes)) {
