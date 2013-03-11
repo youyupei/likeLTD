@@ -44,3 +44,51 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
   UNPROTECT(1);
   return result;
 }
+
+SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
+{
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
+  int const nrow      = INTEGER(GET_DIM(allEPG))[0];
+  int const ncol      = INTEGER(GET_DIM(allEPG))[1];
+  int const nUnknowns = INTEGER(GET_DIM(genotypes))[0];
+  if(ncol != INTEGER(GET_DIM(genotypes))[1]) 
+  {
+    error("Second dimension of allEPG and genotypes do not match.");
+    return R_NilValue;
+  }
+  if(INTEGER(GET_DIM(doses))[1] != nUnknowns) 
+  {
+    error("Second dimension of doses does not match genotypes.");
+    return R_NilValue;
+  }
+  if(nrow != INTEGER(GET_DIM(doses))[0]) 
+  {
+    error("First dimension of allEPG and doses do not match.");
+    return R_NilValue;
+  }
+
+  double       * const epg_ptr    = REAL(allEPG);
+  int const    * const geno_first = INTEGER(genotypes);
+  double const * const doses_ptr  = REAL(doses);
+  if(nrow and ncol)
+  {
+#   pragma omp parallel for
+    for(int j=0; j < ncol; ++j)
+    {
+      int const column = j * nrow;
+      int const * geno_ptr = geno_first + j * nUnknowns;
+      for(int u=0, v=0; u < nUnknowns; ++u, ++geno_ptr, v += nrow) 
+      {
+        int const index = *geno_ptr - 1;
+        *(epg_ptr + column + index) += *(doses_ptr + index + v);
+      } // loop over unknown contributors.
+    } // loop over space of compatible genotypes
+  }
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+  return R_NilValue;
+}

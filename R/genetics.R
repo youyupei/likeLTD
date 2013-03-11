@@ -74,9 +74,9 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
 }
 
 all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
-  # All possible agreggate profiles for a given locus.
+  # All compatible agreggate profiles for a given locus.
   #
-  # Computes all possible combined profiles from n contributors.
+  # Computes all compatible combined profiles from n contributors.
   # This is a permutation on combinations: it grows way too fast as
   # :math:`N=[0.5*nAlleles*(nAlleles+1)]^{nContrib}`.
   # 
@@ -85,11 +85,11 @@ all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
   #   nContrib: number of unprofiled contributors.
   
   if(nContrib == 0 || nAlleles == 0) return(matrix(nrow=0, ncol=0))
-  # All possible genotypes for a single contributor.
+  # All compatible genotypes for a single contributor.
   singleContributor = t(combinations(nAlleles, 2, repeats.allowed=T))
   if(nContrib == 1) return(singleContributor)
   
-  # All possible permutations of "nContrib" contributors.
+  # All compatible permutations of "nContrib" contributors.
   nContribPerms = permutations(ncol(singleContributor), nContrib,
                                repeats.allowed=T)
   # The next two lines create a matrix where the first two columns is
@@ -104,11 +104,11 @@ all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
 all.genotypes.per.locus = all.genotypes.per.locus.R
 # if(!require("inline")) all.genotypes.per.locus = all.genotypes.per.locus.R
 
-possible.genotypes = function(cspPresence, profPresence, missingReps,
-                              alleleNames, nUnknowns, dropin) {
+compatible.genotypes = function(cspPresence, profPresence, missingReps,
+                                alleleNames, nUnknowns, dropin) {
   # Profiles of unknown contributors for given locus.
   #
-  # Figures out all possible profiles of n contributors, including dependance
+  # Figures out all compatible profiles of n contributors, including dependance
   # on doprin.
   #
   # Parameters:
@@ -197,7 +197,7 @@ known.epg.per.locus <- function(rcont, degradation, fragmentLengths,
 all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
                               knownFragLengths, fragLengths, genotypes,
                               addProfiles) {
-  # Creates "electropherogram" for each possible set of unknown contributors.
+  # Creates "electropherogram" for each compatible set of unknown contributors.
   #
   # Parameters:
   #   rcont: relative contributions from each individual. It should be vector
@@ -208,7 +208,7 @@ all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
   #                     known profile.
   #   fragLengths: matrix with fragment lengths for each allele each computed
   #                profile.
-  #   genotypes: matrix with all possible genotypes. 
+  #   genotypes: matrix with all compatible genotypes. 
   # Returns: A vector with an element per allele. Each element is zero if is
   #          not within the known profile, or it is its dose within the
   #          candidate CSP.
@@ -230,12 +230,14 @@ all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
     for(i in 1:ncol(unknownDoses))
       unknownDoses[, i] = rcont[indices[i]] * (1.0 + degradation[indices[i]])^-knownFragLengths
 
-    for(j in 1:ncol(genotypes)) {
-      for(u in 1:nUnknowns) {
-        index = genotypes[u, j]
-        allEPG[index, j] = allEPG[index, j]  + unknownDoses[index, u]
-      }
-    }
+    # The following loop is done in C. 
+    #   for(j in 1:ncol(genotypes)) {
+    #     for(u in 1:nUnknowns) {
+    #       index = genotypes[u, j]
+    #       allEPG[index, j] = allEPG[index, j]  + unknownDoses[index, u]
+    #     }
+    #   }
+    .Call(.cpp.addProfilesToEPG, allEPG, genotypes, unknownDoses, PACKAGE="likeLTD")
   }
   return(allEPG)
 }

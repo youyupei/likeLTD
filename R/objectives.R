@@ -88,7 +88,7 @@ likelihood.constructs.per.locus = function(scenario) {
 
   missingReps = apply(scenario$cspProfile, 1, is.na)
 
-  genotypes <- possible.genotypes(cspPresence, dropoutPresence, missingReps,
+  genotypes <- compatible.genotypes(cspPresence, dropoutPresence, missingReps,
                                   alleles, scenario$nUnknowns,
                                   scenario$doDropin)
   zeroAll = empty.alleles(genotypes, dropoutPresence, scenario$nUnknowns) 

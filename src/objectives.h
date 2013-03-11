@@ -3,7 +3,9 @@
 
 #include <R.h>
 #include <Rdefines.h>
+#ifdef __cplusplus
 extern "C" {
+#endif
   //! Computes probabilities with dropout only.
   SEXP probabilitiesNoDropin(SEXP res, SEXP vDoseDropout, SEXP condA, 
                              SEXP condB, SEXP zeroAll);
@@ -12,5 +14,7 @@ extern "C" {
   SEXP probabilitiesWithDropin(SEXP res, SEXP vDoseDropout,
                                SEXP condA, SEXP condB, SEXP zeroAll, 
                                SEXP freqMat, SEXP rate);
+#ifdef __cplusplus
 }
+#endif
 #endif

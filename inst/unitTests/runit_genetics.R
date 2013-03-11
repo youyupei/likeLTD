@@ -178,16 +178,16 @@ test_all.genotypes.per.locus <- svTest(function() {
   checkEquals(result, t(check))
 })
 
-test_possible.genotypes <- svTest(function() {
+test_compatible.genotypes <- svTest(function() {
   alleleNames = c("one", "two", "three", "four", "five")
   cspPresence = matrix(c(TRUE, FALSE, FALSE, TRUE, FALSE), ncol=1)
   profPresence = matrix(c(TRUE, TRUE, TRUE, FALSE, FALSE), ncol=1)
   missingReps = FALSE
   # Basic trial
-  if(! "possible.genotypes" %in% ls(.GlobalEnv))
-    possible.genotypes <- getFromNamespace("possible.genotypes", "likeLTD")
-  result <- possible.genotypes(cspPresence, profPresence,
-                               missingReps, alleleNames, 1, FALSE)
+  if(! "compatible.genotypes" %in% ls(.GlobalEnv))
+    compatible.genotypes <- getFromNamespace("compatible.genotypes", "likeLTD")
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(ncol(result) == 5)
   for(i in 1:nrow(result)) checkTrue(4 %in% result[i,])
@@ -196,8 +196,8 @@ test_possible.genotypes <- svTest(function() {
   # Try with csp matrix.
   cspPresence = t(matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
                            TRUE, FALSE, FALSE), nrow=2))
-  result <- possible.genotypes(cspPresence, profPresence,
-                               missingReps, alleleNames, 1, FALSE)
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 1, FALSE)
   checkTrue(is.matrix(result))
   checkTrue(ncol(result) == 5)
   for(i in 1:ncol(result)) checkTrue(4 %in% result[, i])
@@ -206,30 +206,30 @@ test_possible.genotypes <- svTest(function() {
   # Try with too large CSP vs contribs
   cspPresence = matrix(c(TRUE, TRUE, TRUE, TRUE, TRUE), ncol=1)
   profPresence = matrix(c(TRUE, FALSE, FALSE, FALSE, FALSE), ncol=1)
-  checkException( possible.genotypes(cspPresence, profPresence,
-                                     missingReps, alleleNames, 1, FALSE) )
+  checkException( compatible.genotypes(cspPresence, profPresence, missingReps,
+                                       alleleNames, 1, FALSE) )
   # Try with exact match
-  result <- possible.genotypes(cspPresence, profPresence,
-                              missingReps, alleleNames, 2, FALSE)
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 2, FALSE)
   checkEquals(result, matrix(0, 1, 0))
 
   # Try with two contributors 
   profPresence = matrix(c(TRUE, TRUE, FALSE, FALSE, FALSE), ncol=1)
-  result <- possible.genotypes(cspPresence, profPresence,
-                              missingReps, alleleNames, 2, FALSE)
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 2, FALSE)
   checkTrue(ncol(result) == 24)
   for(i in 1:ncol(result)) checkTrue(all(3:5 %in% result[, i]))
 
   # Try with non-matrix input.
   cspPresence = c(TRUE, TRUE, TRUE, TRUE, TRUE)
-  checkException( possible.genotypes(cspPresence, profPresence,
-                                     missingReps, alleleNames, 1, FALSE) )
-  checkException( possible.genotypes(cspPresence, profPresence,
-                                     missingReps, alleleNames, 1, TRUE) )
-  checkException( possible.genotypes(profPresence, cspPresence,
-                                     missingReps, alleleNames, 1, FALSE) )
-  checkException( possible.genotypes(profPresence, cspPresence,
-                                     missingReps, alleleNames, 1, TRUE) )
+  checkException( compatible.genotypes(cspPresence, profPresence, missingReps,
+                                       alleleNames, 1, FALSE) )
+  checkException( compatible.genotypes(cspPresence, profPresence, missingReps,
+                                       alleleNames, 1, TRUE) )
+  checkException( compatible.genotypes(profPresence, cspPresence, missingReps,
+                                       alleleNames, 1, FALSE) )
+  checkException( compatible.genotypes(profPresence, cspPresence, missingReps,
+                                       alleleNames, 1, TRUE) )
 })
 
 test_possible.profiles.with.dropin <- svTest(function() {
@@ -239,25 +239,25 @@ test_possible.profiles.with.dropin <- svTest(function() {
   missingReps = c()
 
   # Basic trial
-  if(! "possible.genotypes" %in% ls(.GlobalEnv))
-    possible.genotypes <- getFromNamespace("possible.genotypes", "likeLTD")
-  result <- possible.genotypes(cspPresence, profPresence,
-                               missingReps, alleleNames, 1, TRUE)
+  if(! "compatible.genotypes" %in% ls(.GlobalEnv))
+    compatible.genotypes <- getFromNamespace("compatible.genotypes", "likeLTD")
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 1, TRUE)
   checkTrue(is.matrix(result))
   checkTrue(ncol(result) == 15)
   checkTrue(nrow(result) == 2)
   checkEquals(result, t(combinations(5, 2, rep=TRUE)))
 
   # Try with two possible.profiles.
-  result <- possible.genotypes(cspPresence, profPresence,
-                              missingReps, alleleNames, 2, TRUE)
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 2, TRUE)
   checkTrue(ncol(result) == (5*3)^2)
   checkTrue(nrow(result) == 4)
   checkEquals(t(result), unique(t(result)))
 
   # Try with three possible.profiles.
-  result <- possible.genotypes(cspPresence, profPresence,
-                              missingReps, alleleNames, 3, TRUE)
+  result <- compatible.genotypes(cspPresence, profPresence, missingReps,
+                                 alleleNames, 3, TRUE)
   checkTrue(ncol(result) == (5*3)^3)
   checkTrue(nrow(result) == 6)
   checkEquals(t(result), unique(t(result)))
