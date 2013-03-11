@@ -1,5 +1,6 @@
 #include "objectives.h"
 
+#include <cmath>
 #include <R_ext/Error.h>
 
 #ifdef _OPENMP
@@ -92,3 +93,77 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
 
   return input;
 }
+
+// Computes adjustment + exponential. 
+SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
+                          SEXP tvedebrink)
+{
+  # ifdef _OPENMP
+      uintptr_t const oldstack = R_CStackLimit;
+      R_CStackLimit = (uintptr_t) - 1;
+  # endif
+  int const nrow = INTEGER(GET_DIM(allEPG))[0];
+  int const ncol = INTEGER(GET_DIM(allEPG))[1];
+  if(nrow != INTEGER(GET_DIM(zeroAll))[0]) {
+    error("First dimension of allEPG and zeroAll do not match.");
+    return R_NilValue;
+  }
+  if(ncol != INTEGER(GET_DIM(zeroAll))[1]) {
+    error("Second dimension of allEPG and zeroAll do not match.");
+    return R_NilValue;
+  }
+  double      const adjust   = *REAL(localAdjustment);
+  double      const tvede    = *REAL(tvedebrink);
+  int const * const zero_ptr = LOGICAL(zeroAll);
+  double    * const epg_ptr  = REAL(allEPG);
+
+# pragma omp parallel for 
+  for(int j=0; j < ncol*nrow; ++j) 
+    if(not *(zero_ptr +j))
+      *(epg_ptr + j) = std::pow(adjust * (*(epg_ptr + j)), tvede);
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+
+  return R_NilValue;
+}
+
+// Computes faction allEPG * dropout / (allEPG + 1 - dropout)
+SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
+{
+  # ifdef _OPENMP
+      uintptr_t const oldstack = R_CStackLimit;
+      R_CStackLimit = (uintptr_t) - 1;
+  # endif
+  int const nrow = INTEGER(GET_DIM(allEPG))[0];
+  int const ncol = INTEGER(GET_DIM(allEPG))[1];
+  if(nrow != INTEGER(GET_DIM(zeroAll))[0]) {
+    error("First dimension of allEPG and zeroAll do not match.");
+    return R_NilValue;
+  }
+  if(ncol != INTEGER(GET_DIM(zeroAll))[1]) {
+    error("Second dimension of allEPG and zeroAll do not match.");
+    return R_NilValue;
+  }
+
+  SEXP result;
+  PROTECT(result = allocMatrix(REALSXP, nrow, ncol));
+  double         const rate     = *REAL(dropout);
+  int const *    const zero_ptr = LOGICAL(zeroAll);
+  double const * const epg_ptr  = REAL(allEPG);
+  double       * const out_ptr  = REAL(result);
+
+# pragma omp parallel for 
+  for(int j=0; j < ncol*nrow; ++j) 
+    if(not *(zero_ptr +j))
+      *(out_ptr + j) = *(epg_ptr + j) * rate 
+                       / (rate * (*(epg_ptr + j)  - 1e0) + 1.e0);
+
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+  UNPROTECT(1);
+
+  return result;
+}
+

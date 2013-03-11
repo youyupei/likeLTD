@@ -157,7 +157,11 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
                                 scenario$alleleDb[, 2], cons$genotypes,
                                 scenario$nUnknowns > 0)
-    allEPG = (allEPG * localAdjustment)^tvedebrink
+    # Goes to C to do exponentiation. This is quite expensive an operation.
+    # allEPG = (allEPG * localAdjustment)^tvedebrink
+    # Nothing is returned by this function. Works directly on allEPG. 
+    .Call(.cpp.tvedebrinkAdjustment, allEPG, cons$zeroAll, localAdjustment,
+          tvedebrink, PACKAGE="likeLTD")
 
     # res: (Partial) Likelihood per allele.
     res = array(1, length(cons$factors))
@@ -167,8 +171,11 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
         csp = cons$cspPresence[, i]
         unc = cons$uncPresence[, i]
 
-        vDoseDropout = allEPG * dropout[i]
-        vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
+        # Goes to C to do fraction. Avoids intermediate step.
+        # vDoseDropout = allEPG * dropout[i]
+        # vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
+        vDoseDropout <- .Call(.cpp.fraction, allEPG, cons$zeroAll, dropout[[i]],
+                              PACKAGE="likeLTD")
 
         res <- probabilities(res, vDoseDropout, csp, unc,
                              dropin * (1 - dropout[i]))
