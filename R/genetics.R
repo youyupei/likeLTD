@@ -60,7 +60,8 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
 
     # Applies operations to a single locus.
     homozygote <- as.integer(queriedLocus[1] == queriedLocus[2])
-    alleleDbLocus[queriedLocus, 1] <- alleleDbLocus[queriedLocus, 1] + adj * (1 + homozygote)
+    alleleDbLocus[queriedLocus, 1] <- 
+      alleleDbLocus[queriedLocus, 1] + adj * (1 + homozygote)
     #  shared ancestry adjustements.
     alleleDbLocus[, 1] <-
       alleleDbLocus[, 1] / sum(alleleDbLocus[, 1]) * (1 - fst) / (1 + fst) 
@@ -222,16 +223,18 @@ all.epg.per.locus <- function(rcont, degradation, dropoutPresence,
   allEPG = matrix(knownEPG, ncol=ncol(genotypes), nrow=length(knownEPG)) 
   # Add into allEPG the components from unknown contributors.
   if(addProfiles) {
+    # construct matrices with unknown doses
     nUnknowns = nrow(genotypes)
-    # v.index: index matrix to access alleles across possible agreggate
-    # profiles. 
-    v.index = 0:(ncol(genotypes)-1) * length(knownFragLengths)
     indices = ncol(dropoutPresence) + rep(1:(nUnknowns/2), rep(2, nUnknowns/2))
-    unknownDoses = rcont[indices] * (1.0 + degradation[indices])^-fragLengths
-    # Perform sum over each DNA strand of each unknown contributor.
-    for(u in 1:nUnknowns){
-      indices = genotypes[u, ] + v.index
-      allEPG[indices] = allEPG[indices]  + unknownDoses[u, ]
+    unknownDoses = matrix(ncol=length(indices), nrow=length(knownFragLengths))
+    for(i in 1:ncol(unknownDoses))
+      unknownDoses[, i] = rcont[indices[i]] * (1.0 + degradation[indices[i]])^-knownFragLengths
+
+    for(j in 1:ncol(genotypes)) {
+      for(u in 1:nUnknowns) {
+        index = genotypes[u, j]
+        allEPG[index, j] = allEPG[index, j]  + unknownDoses[index, u]
+      }
     }
   }
   return(allEPG)
