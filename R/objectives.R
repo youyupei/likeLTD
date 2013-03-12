@@ -160,6 +160,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
                                 scenario$alleleDb[, 2], cons$genotypes,
                                 scenario$nUnknowns > 0)
     # Goes to C to do exponentiation. This is quite expensive an operation.
+    # Doing it in C is only interesting for larger matrices and when compiled
+    # with OpenMP. 
     # allEPG = (allEPG * localAdjustment)^tvedebrink
     # Nothing is returned by this function. Works directly on allEPG. 
     .Call(.cpp.tvedebrinkAdjustment, allEPG, cons$zeroAll, localAdjustment,
@@ -174,6 +176,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
         unc = cons$uncPresence[, i]
 
         # Goes to C to do fraction. Avoids intermediate step.
+        # For smaller matrices, the C code seems a bit slower. For larger
+        # matrices, it can be twice as fast. 
         # vDoseDropout = allEPG * dropout[i]
         # vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
         vDoseDropout <- .Call(.cpp.fraction, allEPG, cons$zeroAll, dropout[[i]],
