@@ -152,6 +152,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
       stop("Tvedebrink parameter cannot be positive or null.")
     if(any(dropout < 0) || any(dropout > 1)) 
       stop("Dropout rates must be between 0 and 1 (included).")
+    if(length(localAdjustment) != 1)
+      stop("localAdjustment should be a scaler")
     if(localAdjustment < 0) stop("localAdjustment must be positive.")
 
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,

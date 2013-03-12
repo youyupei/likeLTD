@@ -27,11 +27,11 @@ args = list(
 
 # Create scenarios for defense and prosecution.
 prosecutionScenario = do.call(prosecution.scenario, args)
-# defenseScenario     = do.call(defense.scenario, args)
+defenseScenario     = do.call(defense.scenario, args)
 
-pOpti0 = optimization.params(prosecutionScenario, nUnknowns=0, doDropin=TRUE)
-pOpti1 = optimization.params(prosecutionScenario, nUnknowns=1, doDropin=TRUE)
-pOpti2 = optimization.params(prosecutionScenario, nUnknowns=2, doDropin=TRUE)
+# pOpt#0 = optimization.params(prosecutionScenario, nUnknowns=0, doDropin=TRUE)
+# pOpti1 = optimization.params(prosecutionScenario, nUnknowns=1, doDropin=TRUE)
+# pOpti2 = optimization.params(prosecutionScenario, nUnknowns=2, doDropin=TRUE)
 # pOpti3 = optimization.params(prosecutionScenario, nUnknowns=3, doDropin=TRUE)
 
 # # Create objective functions for defense and prosecution.
@@ -45,23 +45,24 @@ arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                  localAdjustment=1,
                  tvedebrink=-4.35,
                  dropout=c(0.175, 0.105) )
-# arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
-# arguments$degradation = rep(3e-3, 3+args$nUnknowns)
-# objective <- create.likelihood.vectors(defenseScenario, TRUE)
+arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
+arguments$degradation = rep(3e-3, 3+args$nUnknowns)
+objective <- create.likelihood.vectors(defenseScenario, TRUE)
 
-# funcs <- attr(objective, "functions") 
+funcs <- attr(objective, "functions") 
 # a <- do.call(objective, arguments)
 
-# bench <- microbenchmark( D3=do.call(functions$D3, arguments), 
-#                          vWA=do.call(functions$vWA, arguments), 
-#                          D16=do.call(functions$D16, arguments), 
-#                          D2=do.call(functions$D2, arguments), 
-#                          D8=do.call(functions$D8, arguments), 
-#                          D21=do.call(functions$D21, arguments), 
-#                          D18=do.call(functions$D18, arguments), 
-#                          D19=do.call(functions$D19, arguments), 
-#                          TH01=do.call(functions$TH01, arguments), 
-#                          FGA=do.call(functions$FGA, arguments) )
+bench <- microbenchmark( D3=do.call(funcs$D3, arguments), 
+                         vWA=do.call(funcs$vWA, arguments), 
+                         D16=do.call(funcs$D16, arguments), 
+                         D2=do.call(funcs$D2, arguments), 
+                         D8=do.call(funcs$D8, arguments), 
+                         D21=do.call(funcs$D21, arguments), 
+                         D18=do.call(funcs$D18, arguments), 
+                         D19=do.call(funcs$D19, arguments), 
+                         TH01=do.call(funcs$TH01, arguments), 
+                         FGA=do.call(funcs$FGA, arguments) )
+print(bench)
 # if (require("ggplot2")) {
 #   plt <- ggplot2::qplot(y=time, data=bench, colour=expr)
 #   plt <- plt + ggplot2::scale_y_log10()

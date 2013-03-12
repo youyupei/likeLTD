@@ -25,12 +25,13 @@ estimates <- function(indiv, csp) {
   meanrep
 }
 
-initial.arguments <- function(scenario) {
+initial.arguments <- function(scenario, ...) {
   # Best(?) guess for initial arguments. 
   #
   # Parameters: 
   #    scenario: Scenario for which to guess nuisance paramters. 
 
+  scenario = add.args.to.scenario(scenario, ...)
   # -1 because relative to first.
   nrcont          = nrow(scenario$dropoutProfs) + scenario$nUnknowns - 1
   rcont           = rep(1, nrcont)

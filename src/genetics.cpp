@@ -26,15 +26,19 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
     int * const ptr = INTEGER(result);
     int * const combptr = INTEGER(comb);
     
-#   pragma omp parallel private(ncol) for
-    for(int j=0; j < ncol; ++j)
+#   pragma omp parallel
+#   pragma threadprivate(ncol) copyin(ncol)
     {
-      int const out_index = j * nrow;
-      for(int i=nb-1, u=j; i >= 0; --i, u /= ncomb)
+#     pragma omp for
+      for(int j=0; j < ncol; ++j)
       {
-        int const in_index = (u % ncomb) << 1;
-        *(ptr + out_index + i * 2) = *(combptr + in_index);
-        *(ptr + out_index + i * 2 + 1) = *(combptr + in_index + 1);
+        int const out_index = j * nrow;
+        for(int i=nb-1, u=j; i >= 0; --i, u /= ncomb)
+        {
+          int const in_index = (u % ncomb) << 1;
+          *(ptr + out_index + i * 2) = *(combptr + in_index);
+          *(ptr + out_index + i * 2 + 1) = *(combptr + in_index + 1);
+        }
       }
     }
   }

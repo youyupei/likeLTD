@@ -1,6 +1,7 @@
 #include <R_ext/Rdynload.h>
 #include "genetics.h"
 #include "objectives.h"
+#include "openmp.h"
 
 R_CallMethodDef callMethods[]  = {
        {"allGenotypesPerLocus", (DL_FUNC) &allGenotypesPerLocus, 2},
@@ -9,6 +10,7 @@ R_CallMethodDef callMethods[]  = {
        {"probabilitiesNoDropin", (DL_FUNC) &probabilitiesNoDropin, 5},
        {"tvedebrinkAdjustment", (DL_FUNC) &tvedebrinkAdjustment, 4},
        {"fraction", (DL_FUNC) &fraction, 3},
+       {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {NULL, NULL, 0}
 };
 

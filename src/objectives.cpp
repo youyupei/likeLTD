@@ -98,12 +98,13 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
 SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
                           SEXP tvedebrink)
 {
-  # ifdef _OPENMP
-      uintptr_t const oldstack = R_CStackLimit;
-      R_CStackLimit = (uintptr_t) - 1;
-  # endif
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
   int const nrow = INTEGER(GET_DIM(allEPG))[0];
   int const ncol = INTEGER(GET_DIM(allEPG))[1];
+  int const matsize = nrow * ncol;
   if(nrow != INTEGER(GET_DIM(zeroAll))[0]) {
     error("First dimension of allEPG and zeroAll do not match.");
     return R_NilValue;
@@ -118,9 +119,10 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment,
   double    * const epg_ptr  = REAL(allEPG);
 
 # pragma omp parallel for 
-  for(int j=0; j < ncol*nrow; ++j) 
+  for(int j=0; j < matsize; ++j) 
     if(not *(zero_ptr +j))
-      *(epg_ptr + j) = std::pow(adjust * (*(epg_ptr + j)), tvede);
+      *(epg_ptr + j) =  std::pow(adjust * (*(epg_ptr + j)), tvede);
+
 # ifdef _OPENMP
     R_CStackLimit = oldstack;
 # endif
@@ -131,10 +133,10 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment,
 // Computes faction allEPG * dropout / (allEPG + 1 - dropout)
 SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
 {
-  # ifdef _OPENMP
-      uintptr_t const oldstack = R_CStackLimit;
-      R_CStackLimit = (uintptr_t) - 1;
-  # endif
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
   int const nrow = INTEGER(GET_DIM(allEPG))[0];
   int const ncol = INTEGER(GET_DIM(allEPG))[1];
   if(nrow != INTEGER(GET_DIM(zeroAll))[0]) {
