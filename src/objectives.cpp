@@ -1,6 +1,7 @@
 #include "objectives.h"
 
 #include <cmath>
+#include <string>
 #include <R_ext/Error.h>
 
 #ifdef _OPENMP
@@ -209,3 +210,43 @@ SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
   return result;
 }
 
+
+SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
+{
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
+  int const nrow = INTEGER(GET_DIM(genotypes))[0];
+  int const ncol = INTEGER(GET_DIM(genotypes))[1];
+  int const nAlleles = LENGTH(knownZero);
+  if(nrow % 2 != 0) {
+    error("Expected first dimension of genotypes to be even.");
+    return R_NilValue;
+  }
+  int const nUnknowns = nrow >> 1;
+
+  SEXP result;
+  PROTECT(result = allocMatrix(LGLSXP, nAlleles, ncol));
+  int const * const geno_ptr      = INTEGER(genotypes);
+  int const * const known_ptr     = LOGICAL(knownZero);
+  int const * const known_ptr_end = known_ptr + nAlleles;
+  int       * const out_ptr       = LOGICAL(result);
+  int const cpysize = sizeof(int) * nAlleles;
+
+# pragma omp for
+  for(int j=0; j < ncol; ++j)
+  {
+    int const v = j * nAlleles;
+    memcpy((void*) (out_ptr + v), (void*) known_ptr, cpysize);
+    for(int i=j*nrow; i < (j + 1) * nrow; ++i)
+      *(out_ptr + v + *(geno_ptr + i) - 1) = 0;
+  }
+
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+  UNPROTECT(1);
+
+  return result;
+}

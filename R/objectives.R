@@ -10,8 +10,10 @@ empty.alleles = function(genotypes, dropoutPresence, nUnknowns) {
   knownZero = rowSums(dropoutPresence) == 0
   if(nUnknowns == 0) 
     return(matrix(knownZero, nrow=length(knownZero), ncol=ncol(genotypes)))
-  iota = 1:length(knownZero)
-  apply(genotypes, 2, function(n) (!iota %in% n) & knownZero) 
+  # Performs following call in C:
+  # iota = 1:length(knownZero)
+  # apply(genotypes, 2, function(n) (!iota %in% n) & knownZero) 
+  .Call(.cpp.emptyAlleles, genotypes, knownZero, PACKAGE="likeLTD")
 }
 
 relatedness.factors <- function(genotypes, alleleDb, queriedProfile,

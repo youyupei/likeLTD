@@ -20,10 +20,14 @@ extern "C" {
   SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
                             SEXP tvedebrink);
 
-  // \brief Computes faction allEPG * dropout / (allEPG + 1 - dropout)
-  // \details Does the above operation only for zeroAll == false. 
-  //          Returns the result of the operation in new matrix.
+  //! \brief Computes faction allEPG * dropout / (allEPG + 1 - dropout)
+  //! \details Does the above operation only for zeroAll == false. 
+  //!          Returns the result of the operation in new matrix.
   SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout);
+
+  //! \brief computes matrix indicating allele presence. 
+  //! \details returns allZeros
+  SEXP emptyAlleles(SEXP genotypes, SEXP knownZero);
 #ifdef __cplusplus
 }
 #endif
