@@ -242,15 +242,6 @@ SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
   for(int j=0; j < ncol; ++j)
   {
     int const * i_geno = geno_ptr + j*nrow;
-#   ifndef NDEBUG
-      for(int i=0; i < nrow; ++i, ++i_geno)
-        if(*i_geno - 1 >= nAlleles) {
-          UNPROTECT(1);
-          stop("Genotype value is larger than size of allele fractions.");
-          return R_NilValue;
-        }
-      i_geno = geno_ptr + j*nrow;
-#   endif
     // compute heterozygote factor.
     int n = 1;
     for(int i=0; i < nrow; i += 2, i_geno += 2)
