@@ -33,6 +33,21 @@ extern "C" {
   //! \details The value of genotypes should never exceed the size of
   //! fractions, otherwise we'll get a segfault. To expensive to check though. 
   SEXP fractionsAndHet(SEXP genotypes, SEXP fractions);
+
+  //! \brief factors in relatedness.
+  //! \details There are only four possible factors corresponding to four
+  //!          possible scenarios: 
+  //!            
+  //!            (i) neither queried alleles are present.
+  //!            (ii) first queried allele is in first unknown contributor, 
+  //!            (iii) second queried allele is in first unknown contributor,
+  //!            (iv) both queried alleles are in first unknown contributor,
+  //!
+  //!          These four factors are determined for and applied to each entry
+  //!          in inout.
+  //! \return NULL value. inout is both input and output.
+  SEXP relatednessFactors(SEXP inout, SEXP relatednessR, SEXP genotypes,
+                          SEXP queriedR, SEXP frequenciesR);
 #ifdef __cplusplus
 }
 #endif

@@ -270,3 +270,89 @@ SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
 
   return result;
 }
+
+// Computes relatedness factors and multiplies to inout.
+SEXP relatednessFactors(SEXP inout, SEXP relatednessR, SEXP genotypes, 
+                        SEXP queriedR, SEXP frequenciesR)
+{
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
+  int const nrow = INTEGER(GET_DIM(genotypes))[0];
+  int const ncol = INTEGER(GET_DIM(genotypes))[1];
+  if(nrow % 2 != 0) {
+    error("Expected first dimension of genotypes to be even.");
+    return R_NilValue;
+  }
+  if(nrow < 2) {
+    error("Expected first dimension of genotypes to be at least 2.");
+    return R_NilValue;
+  }
+  if(ncol != LENGTH(inout)) {
+    error("Expected first dimension of genotypes and length of inout to "
+          "match.");
+    return R_NilValue;
+  }
+  if(LENGTH(queriedR) != 2) {
+    error("Expected queried to be an integer with two elements.");
+    return R_NilValue;
+  }
+  if(LENGTH(relatednessR) != 2) {
+    error("Expected relatednessR to be a double with two elements.");
+    return R_NilValue;
+  }
+  if(LENGTH(frequenciesR) != 2) {
+    error("Expected relatednessR to be a double with two elements.");
+    return R_NilValue;
+  }
+
+  // Translate input constants to C.
+  double const relatedness[2] = { REAL(relatednessR)[0],   
+                                  REAL(relatednessR)[1]  }; 
+  double const frequencies[2] = { REAL(frequenciesR)[0],   
+                                  REAL(frequenciesR)[1]  }; 
+  int const queried[2] = { INTEGER(queriedR)[0], INTEGER(queriedR)[1]  }; 
+
+  // The following builds up the factors which will modify the inout vector. 
+  // There are only four possible factors corresponding to four possible
+  // scenarios: (i) neither queried alleles are present.
+  //            (ii) first queried allele is in first unknown contributor, 
+  //            (iii) second queried allele is in first unknown contributor,
+  //            (iv) both queried alleles are in first unknown contributor,
+  // The final part of  the factors depends on whether that particular genotype
+  // is homozygote or not. This is checked within the loop.
+  double const factor0 = 1e0 - relatedness[0] - relatedness[1];
+  double const factors[3] = { 0.5 * relatedness[0] / frequencies[0],
+                              0.5 * relatedness[0] / frequencies[1], 
+                              relatedness[1] / frequencies[0]
+                                             / frequencies[1] };
+  // define pointers to input/output arrays.
+  int const * const geno_ptr    = INTEGER(genotypes);
+  double       * const out_ptr  = REAL(inout);
+
+  // Finally loop.
+# pragma omp for
+  for(int j=0; j < ncol; ++j)
+  {
+    int const *i_geno = geno_ptr + j*nrow; 
+
+    bool const first  = i_geno[0] == queried[0] or i_geno[1] == queried[0];
+    bool const second = i_geno[0] == queried[1] or i_geno[1] == queried[1];
+    bool const is_homozygote = i_geno[0] == i_geno[1];
+
+    double result = factor0;
+    if(first)  result += is_homozygote ? factors[0]: factors[0] * 0.5;
+    if(second) result += is_homozygote ? factors[1]: factors[1] * 0.5;
+    if(first and second)
+      result += is_homozygote ? factors[2]: factors[2] * 0.5;
+
+    out_ptr[j] *= result;
+  }
+
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+
+  return R_NilValue;
+}

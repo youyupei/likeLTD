@@ -13,41 +13,49 @@ empty.alleles = function(genotypes, dropoutPresence, nUnknowns) {
   # Performs following call in C:
   # iota = 1:length(knownZero)
   # apply(genotypes, 2, function(n) (!iota %in% n) & knownZero) 
+  # A new object is returned. 
   .Call(.cpp.emptyAlleles, genotypes, knownZero, PACKAGE="likeLTD")
 }
 
-relatedness.factors <- function(genotypes, alleleDb, queriedProfile,
+relatedness.factors <- function(input, genotypes, alleleDb, queriedProfile,
                                 relatedness=c(0, 0)) {
   # Creates relatedness factor 
-  # 
-  # Parameters:
-  #  genotypes: 
-  if(all(abs(relatedness) < 1e-8)) return(1)
-  indices = c(which(rownames(alleleDb) %in% queriedProfile[[1]]), 
-              which(rownames(alleleDb) %in% queriedProfile[[2]]) )
-  defactored = function(n) {
-    result = 1.0 - sum(relatedness)
-    hasFirst = n %in% indices[[1]]
-    hasSecond = n %in% indices[[2]]
-    if(any(hasFirst)) {
-      factor = relatedness[[1]] * 0.5 / alleleDb[indices[[1]], 1]
-      if(!all(hasFirst)) factor = factor * 0.5
-      result = result + factor
-    }
-    if(any(hasSecond)) {
-      factor = relatedness[[1]] * 0.5 / alleleDb[indices[[2]], 1]
-      if(!all(hasSecond)) factor = factor * 0.5
-      result = result + factor
-    }
-    if(any(hasFirst) & any(hasSecond)) {
-      factor = relatedness[[2]] / alleleDb[indices[[1]], 1] /
-               alleleDb[indices[[2]], 1] 
-      if(indices[[1]] != indices[[2]]) factor = factor * 0.5
-      result = result + factor
-    }
-    return(result)
+  #
+  # The relatedness factor takes into account the ancestry of the queried
+  # subject and modifies allele frequencies accordingly.
+
+  if(any(abs(relatedness) > 1e-8)) {
+    indices = c(which(rownames(alleleDb) %in% queriedProfile[[1]]), 
+                which(rownames(alleleDb) %in% queriedProfile[[2]]) )
+    frequencies = alleleDb[indices, 1]
+    
+    .Call(.cpp.relatednessFactors, input, relatedness, genotypes, indices,
+          frequencies, PACKAGE="likeLTD")
   }
-  apply(genotypes[1:2, ], 2, defactored) 
+  input 
+  # defactored = function(n) {
+  #   result = 1.0 - sum(relatedness)
+  #   hasFirst = n %in% indices[[1]]
+  #   hasSecond = n %in% indices[[2]]
+  #   if(any(hasFirst)) {
+  #     factor = relatedness[[1]] * 0.5 / alleleDb[indices[[1]], 1]
+  #     if(!all(hasFirst)) factor = factor * 0.5
+  #     result = result + factor
+  #   }
+  #   if(any(hasSecond)) {
+  #     factor = relatedness[[1]] * 0.5 / alleleDb[indices[[2]], 1]
+  #     if(!all(hasSecond)) factor = factor * 0.5
+  #     result = result + factor
+  #   }
+  #   if(any(hasFirst) & any(hasSecond)) {
+  #     factor = relatedness[[2]] / alleleDb[indices[[1]], 1] /
+  #              alleleDb[indices[[2]], 1] 
+  #     if(indices[[1]] != indices[[2]]) factor = factor * 0.5
+  #     result = result + factor
+  #   }
+  #   return(result)
+  # }
+  # apply(genotypes[1:2, ], 2, defactored) 
 }
 
 genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
@@ -71,8 +79,8 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
     result <- .Call(.cpp.fractionsAndHet, genotypes, alleleDb[, 1],
                     PACKAGE="likeLTD")
   }
-  result * relatedness.factors(genotypes, alleleDb, queriedProfile,
-                               relatedness)
+
+  relatedness.factors(result, genotypes, alleleDb, queriedProfile, relatedness)
 }
 
 likelihood.constructs.per.locus = function(scenario) {

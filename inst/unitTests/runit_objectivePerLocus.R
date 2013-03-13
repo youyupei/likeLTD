@@ -249,16 +249,21 @@ test_relatedness.factors <- svTest(function() {
 
   genotypes = all.genotypes.per.locus(nrow(alleleDb), 2)
   # No relatedness
-  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0, 0))
-  checkEquals(result, 1)
+  result = array(1.0, ncol(genotypes))
+  result = relatedness.factors(result, genotypes, alleleDb, queriedAlleles,
+                               c(0, 0))
+  checkEquals(result, array(1.0, ncol(genotypes)))
   # First, only one relatedness 
-  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0.9, 0))
+  result = array(1.0, ncol(genotypes))
+  result = relatedness.factors(result, genotypes, alleleDb, queriedAlleles,
+                               c(0.9, 0))
   checkEquals(length(result), ncol(genotypes))
   na = nrow(alleleDb)
   nComb = na * (na+1) / 2
   nCont = 2
   nTrue = (2*na - 1) * nComb^(nCont-1)
   checkEquals(sum(abs(result - 1.0 * (1.0 - sum(c(0.9, 0)))) > 1e-8), nTrue)
+
   hasFirst = genotypes[1, ] %in% 2 | genotypes[2, ] %in% 2
   hasSecond = genotypes[1, ] %in% 13 | genotypes[2, ] %in% 13
   het = genotypes[1, ] == genotypes[2, ]
@@ -289,7 +294,9 @@ test_relatedness.factors <- svTest(function() {
   checkTrue(all(abs(r - check) < 1e-8))
   checkTrue(length(abs(r - check) < 1e-8) > 1)
 
-  result = relatedness.factors(genotypes, alleleDb, queriedAlleles, c(0, 0.9))
+  result = array(1.0, ncol(genotypes))
+  result = relatedness.factors(result, genotypes, alleleDb, queriedAlleles,
+                               c(0, 0.9))
   check = 1e0 - 0.9 + 0.9 * 0.5 / alleleDb[2, 1] / alleleDb[13, 1]
   r = result[hasFirst & hasSecond]
   checkTrue(all(abs(r - check) < 1e-8))

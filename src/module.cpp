@@ -12,6 +12,7 @@ R_CallMethodDef callMethods[]  = {
        {"doseFraction", (DL_FUNC) &doseFraction, 3},
        {"emptyAlleles", (DL_FUNC) &emptyAlleles, 2},
        {"fractionsAndHet", (DL_FUNC) &fractionsAndHet, 2},
+       {"relatednessFactors", (DL_FUNC) &relatednessFactors, 5},
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {NULL, NULL, 0}
 };
