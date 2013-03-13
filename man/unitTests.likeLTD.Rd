@@ -13,7 +13,7 @@ in package sources).
 \examples{
 if (require(svUnit)) {
 clearLog()
-runTest(svSuite("package:likeLTD"), "likeLTD")
+runTest(svSuite("package:likeLTD"))
 ## Possibly run other tests here...
 errorLog()
 }
