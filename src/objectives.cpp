@@ -95,41 +95,6 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
   return input;
 }
 
-inline double fastPow(double a, double b) {
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  return u.d;
-}
-
-// should be much more precise with large b
-inline double fastPrecisePow(double a, double b) {
-  // calculate approximation with fraction of the exponent
-  int e = (int) b;
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
- 
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
- 
-  return r * u.d;
-}
-
 // Computes adjustment + exponential. 
 SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
                           SEXP tvedebrink)
@@ -170,7 +135,7 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment,
 
 
 // Computes faction allEPG * dropout / (allEPG + 1 - dropout)
-SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
+SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
 {
 # ifdef _OPENMP
     uintptr_t const oldstack = R_CStackLimit;
@@ -210,7 +175,7 @@ SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
   return result;
 }
 
-
+// Computes matrix indicating presence/absence of alleles.
 SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
 {
 # ifdef _OPENMP
@@ -228,10 +193,9 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
 
   SEXP result;
   PROTECT(result = allocMatrix(LGLSXP, nAlleles, ncol));
-  int const * const geno_ptr      = INTEGER(genotypes);
-  int const * const known_ptr     = LOGICAL(knownZero);
-  int const * const known_ptr_end = known_ptr + nAlleles;
-  int       * const out_ptr       = LOGICAL(result);
+  int const * const geno_ptr  = INTEGER(genotypes);
+  int const * const known_ptr = LOGICAL(knownZero);
+  int       * const out_ptr   = LOGICAL(result);
   int const cpysize = sizeof(int) * nAlleles;
 
 # pragma omp for
@@ -241,6 +205,62 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
     memcpy((void*) (out_ptr + v), (void*) known_ptr, cpysize);
     for(int i=j*nrow; i < (j + 1) * nrow; ++i)
       *(out_ptr + v + *(geno_ptr + i) - 1) = 0;
+  }
+
+# ifdef _OPENMP
+    R_CStackLimit = oldstack;
+# endif
+  UNPROTECT(1);
+
+  return result;
+}
+
+//! Computes allele fractions.
+SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
+{
+# ifdef _OPENMP
+    uintptr_t const oldstack = R_CStackLimit;
+    R_CStackLimit = (uintptr_t) - 1;
+# endif
+  int const nrow = INTEGER(GET_DIM(genotypes))[0];
+  int const ncol = INTEGER(GET_DIM(genotypes))[1];
+  int const nAlleles = LENGTH(fractions);
+  if(nrow % 2 != 0) {
+    error("Expected first dimension of genotypes to be even.");
+    return R_NilValue;
+  }
+  int const nUnknowns = nrow >> 1;
+
+  SEXP result;
+  PROTECT(result = allocVector(REALSXP, ncol));
+
+  int const * const geno_ptr    = INTEGER(genotypes);
+  double const * const frac_ptr = REAL(fractions);
+  double       * const out_ptr  = REAL(result);
+
+# pragma omp for
+  for(int j=0; j < ncol; ++j)
+  {
+    int const * i_geno = geno_ptr + j*nrow;
+#   ifndef NDEBUG
+      for(int i=0; i < nrow; ++i, ++i_geno)
+        if(*i_geno - 1 >= nAlleles) {
+          UNPROTECT(1);
+          stop("Genotype value is larger than size of allele fractions.");
+          return R_NilValue;
+        }
+      i_geno = geno_ptr + j*nrow;
+#   endif
+    // compute heterozygote factor.
+    int n = 1;
+    for(int i=0; i < nrow; i += 2, i_geno += 2)
+      if(*i_geno < *(i_geno + 1)) n *= 2; 
+
+    // compute allele fraction factor.
+    i_geno = geno_ptr + j*nrow;
+    *(out_ptr + j) = double(n);
+    for(int i=0; i < nrow; ++i, ++i_geno)
+      *(out_ptr + j) *= *(frac_ptr + *i_geno - 1);
   }
 
 # ifdef _OPENMP

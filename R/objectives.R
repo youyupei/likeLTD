@@ -55,16 +55,22 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
   # Fraction cum heterozygote factors.
   #
 
-  # First add standard bits.
-  if(nUnknowns == 0 & !doDropin) het = matrix(1, ncol=1, nrow=nrow(alleleDb))
-  else {
-    n = nrow(genotypes) / 2
-    odd = 2*1:n - 1; even = 2*1:n
-    het <- 1 + matrix(genotypes[odd, ] < genotypes[even, ], nrow=length(odd))
-    het <- apply(het, 2, prod)
+  if(nUnknowns == 0 & !doDropin) {
+    het = matrix(1, ncol=1, nrow=nrow(alleleDb))
+    fractions <- matrix(alleleDb[genotypes, 1], ncol=ncol(genotypes))
+    result <- apply(fractions, 2, prod) * het
   }
-  fractions <- matrix(alleleDb[genotypes, 1], ncol=ncol(genotypes))
-  result <- apply(fractions, 2, prod) * het
+  else {
+    # The following is performed directly in C. 
+    # n = nrow(genotypes) / 2
+    # odd = 2*1:n - 1; even = 2*1:n
+    # het <- 1 + matrix(genotypes[odd, ] < genotypes[even, ], nrow=length(odd))
+    # het <- apply(het, 2, prod)
+    # fractions <- matrix(alleleDb[genotypes, 1], ncol=ncol(genotypes))
+    # result <- apply(fractions, 2, prod) * het
+    result <- .Call(.cpp.fractionsAndHet, genotypes, alleleDb[, 1],
+                    PACKAGE="likeLTD")
+  }
   result * relatedness.factors(genotypes, alleleDb, queriedProfile,
                                relatedness)
 }
@@ -182,7 +188,7 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
         # matrices, it can be twice as fast. 
         # vDoseDropout = allEPG * dropout[i]
         # vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
-        vDoseDropout <- .Call(.cpp.fraction, allEPG, cons$zeroAll, dropout[[i]],
+        vDoseDropout <- .Call(.cpp.doseFraction, allEPG, cons$zeroAll, dropout[[i]],
                               PACKAGE="likeLTD")
 
         res <- probabilities(res, vDoseDropout, csp, unc,

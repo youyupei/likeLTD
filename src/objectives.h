@@ -23,11 +23,16 @@ extern "C" {
   //! \brief Computes faction allEPG * dropout / (allEPG + 1 - dropout)
   //! \details Does the above operation only for zeroAll == false. 
   //!          Returns the result of the operation in new matrix.
-  SEXP fraction(SEXP allEPG, SEXP zeroAll, SEXP dropout);
+  SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout);
 
   //! \brief computes matrix indicating allele presence. 
   //! \details returns allZeros
   SEXP emptyAlleles(SEXP genotypes, SEXP knownZero);
+ 
+  //! \brief Computes allele and heterozygote factors.
+  //! \details The value of genotypes should never exceed the size of
+  //! fractions, otherwise we'll get a segfault. To expensive to check though. 
+  SEXP fractionsAndHet(SEXP genotypes, SEXP fractions);
 #ifdef __cplusplus
 }
 #endif

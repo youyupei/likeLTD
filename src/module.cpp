@@ -9,8 +9,9 @@ R_CallMethodDef callMethods[]  = {
        {"probabilitiesWithDropin", (DL_FUNC) &probabilitiesWithDropin, 7},
        {"probabilitiesNoDropin", (DL_FUNC) &probabilitiesNoDropin, 5},
        {"tvedebrinkAdjustment", (DL_FUNC) &tvedebrinkAdjustment, 4},
-       {"fraction", (DL_FUNC) &fraction, 3},
+       {"doseFraction", (DL_FUNC) &doseFraction, 3},
        {"emptyAlleles", (DL_FUNC) &emptyAlleles, 2},
+       {"fractionsAndHet", (DL_FUNC) &fractionsAndHet, 2},
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {NULL, NULL, 0}
 };
