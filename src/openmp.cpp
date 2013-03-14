@@ -20,7 +20,7 @@ SEXP nbthreads()
   SEXP result;
   PROTECT(result = allocVector(REALSXP, 1));
   double *__result = REAL(result);
-# ifdef OPENMP_STACK
+# ifdef _OPENMP
     *__result = omp_get_max_threads(); 
 # else
     *__result = 0;
