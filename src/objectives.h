@@ -1,6 +1,8 @@
 #ifndef LIKELTD_OBJECTIVES_H
 #define LIKELTD_OBJECTIVES_H
 
+#include "config.h"
+
 #include <R.h>
 #include <Rdefines.h>
 #ifdef __cplusplus

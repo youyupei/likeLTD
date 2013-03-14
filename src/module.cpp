@@ -1,3 +1,4 @@
+#include "config.h"
 #include <R_ext/Rdynload.h>
 #include "genetics.h"
 #include "objectives.h"

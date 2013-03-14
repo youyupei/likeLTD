@@ -1,6 +1,8 @@
 #ifndef LIKELTD_OPENMP_H
 #define LIKELTD_OPENMP_H
 
+#include "config.h"
+
 #include <R.h>
 #include <Rdefines.h>
 

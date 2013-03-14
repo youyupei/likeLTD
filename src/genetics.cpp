@@ -1,16 +1,19 @@
+#include "config.h"
 #include "genetics.h"
 
 #include <R_ext/Error.h>
 
 #ifdef _OPENMP
 #  include <omp.h>
-#  define CSTACK_DEFNS 7
-#  include <Rinterface.h>
+#  ifdef OPENMP_STACK
+#    define CSTACK_DEFNS 7
+#    include <Rinterface.h>
+#  endif
 #endif
 
 SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
 {
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     uintptr_t const oldstack = R_CStackLimit;
     R_CStackLimit = (uintptr_t) - 1;
 # endif
@@ -42,7 +45,7 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
       }
     }
   }
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
@@ -51,7 +54,7 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
 
 SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
 {
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     uintptr_t const oldstack = R_CStackLimit;
     R_CStackLimit = (uintptr_t) - 1;
 # endif
@@ -91,7 +94,7 @@ SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
       } // loop over unknown contributors.
     } // loop over space of compatible genotypes
   }
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     R_CStackLimit = oldstack;
 # endif
   return R_NilValue;

@@ -1,29 +1,32 @@
+#include "config.h"
 #include "openmp.h"
 
 #include <R_ext/Error.h>
 
 #ifdef _OPENMP
 #  include <omp.h>
-#  define CSTACK_DEFNS 7
-#  include <Rinterface.h>
+#  ifdef OPENMP_STACK
+#    define CSTACK_DEFNS 7
+#    include <Rinterface.h>
+#  endif
 #endif
 
 SEXP nbthreads()
 {
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     uintptr_t const oldstack = R_CStackLimit;
     R_CStackLimit = (uintptr_t) - 1;
 # endif
   SEXP result;
   PROTECT(result = allocVector(REALSXP, 1));
   double *__result = REAL(result);
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     *__result = omp_get_max_threads(); 
 # else
     *__result = 0;
 # endif
 
-# ifdef _OPENMP
+# ifdef OPENMP_STACK
     R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);

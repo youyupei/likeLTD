@@ -1,6 +1,8 @@
 #ifndef LIKELTD_GENETICS_H
 #define LIKELTD_GENETICS_H
 
+#include "config.h"
+
 #include <R.h>
 #include <Rdefines.h>
 
