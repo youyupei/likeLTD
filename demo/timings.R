@@ -4,7 +4,7 @@ library(stats)
 library(likeLTD)
 
 caseName = 'hammer'
-datapath = file.path(file.path('inst', 'extdata'), caseName)
+datapath = file.path(system.file("extdata", package="likeLTD"), caseName)
 
 args = list(
   databaseFile = NULL,
@@ -43,12 +43,24 @@ bench.any <- function(scenario, times=100L, ...) {
 bench.prosecution <- function(...) bench.any(prosecutionScenario, ...)
 bench.defense <- function(...) bench.any(defenseScenario, ...)
 
-cat(paste("Number of threads", .Call(.cpp.nbthreads, PACKAGE="likeLTD")))
+result = list() 
+result[["zero"]] = bench.prosecution(nUnknowns=0, doDropin=TRUE)
+result[["one"]] = bench.prosecution(nUnknowns=1, doDropin=TRUE)
+result[["two"]] = bench.prosecution(nUnknowns=2, doDropin=TRUE)
+result[["three"]] = bench.prosecution(nUnknowns=3, doDropin=TRUE, times=100)
+
+nbthreads = .Call(.cpp.nbthreads, PACKAGE="likeLTD")
+cat(sprintf("NUMBER OF THREADS: %d\n", nbthreads))
 cat("\n\nPROSECUTION -- unknown=0, doDropin=TRUE\n")
-print(bench.prosecution(nUnknowns=0, doDropin=TRUE))
+print(result[["zero"]])
 cat("\n\nPROSECUTION -- unknown=1, doDropin=TRUE\n")
-print(bench.prosecution(nUnknowns=1, doDropin=TRUE))
+print(result[["one"]])
 cat("\n\nPROSECUTION -- unknown=2, doDropin=TRUE\n")
-print(bench.prosecution(nUnknowns=2, doDropin=TRUE))
+print(result[["two"]])
 cat("\n\nPROSECUTION -- unknown=3, doDropin=TRUE\n")
-print(bench.prosecution(nUnknowns=3, doDropin=TRUE, times=5))
+print(result[["three"]])
+
+if(FALSE) {
+  path = sprintf("likeLTD.timings.%d.C", nbthreads)
+  save(result, file=path)
+}
