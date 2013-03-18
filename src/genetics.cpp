@@ -30,18 +30,16 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
     int * const ptr = INTEGER(result);
     int * const combptr = INTEGER(comb);
     
-#   pragma omp parallel
+#   pragma omp parallel for
+    for(int j=0; j < ncol; ++j)
     {
-#     pragma omp for
-      for(int j=0; j < ncol; ++j)
+      int const out_index = j * nrow;
+      for(int i=nb-1, u=j; i >= 0; --i, u /= ncomb)
       {
-        int const out_index = j * nrow;
-        for(int i=nb-1, u=j; i >= 0; --i, u /= ncomb)
-        {
-          int const in_index = (u % ncomb) << 1;
-          *(ptr + out_index + i * 2) = *(combptr + in_index);
-          *(ptr + out_index + i * 2 + 1) = *(combptr + in_index + 1);
-        }
+        int const l = (u % ncomb) << 1;
+        int const m = out_index + (i << 1);
+        ptr[m] = combptr[l];
+        ptr[m + 1] = combptr[l + 1];
       }
     }
   }
@@ -86,11 +84,11 @@ SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
     for(int j=0; j < ncol; ++j)
     {
       int const column = j * nrow;
-//     int const * geno_ptr = geno_first + j * nUnknowns;
-      for(int u=0, v=0; u < nUnknowns; ++u, v += nrow) 
+      int const *geno_ptr = geno_first + j * nUnknowns;
+      for(int u=0, v=0; u < nUnknowns; ++u, v += nrow, ++geno_ptr) 
       {
-        int const index = u; //*geno_ptr - 1;
-        epg_ptr[column + index] += 1e0; // doses_ptr[index + v];
+        int const index = *geno_ptr - 1;
+        epg_ptr[column + index] += doses_ptr[index + v];
       } // loop over unknown contributors.
     } // loop over space of compatible genotypes
   }

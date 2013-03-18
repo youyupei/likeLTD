@@ -9,7 +9,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  //! \brief Computes all possible genotypes per locus.
+  //! \brief Computes all possible genotypes per locus for n unknonw
+  //!        contributors.
   //! \param[in] nContrib: Number of contributors.
   //! \param[in] comb: All possible genotypes for a single unknown
   //!                  contributor.
