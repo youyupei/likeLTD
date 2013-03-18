@@ -20,8 +20,9 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
   int const nb = *INTEGER(nContrib);
   int const ncomb = INTEGER(GET_DIM(comb))[1];
   int const nrow  = nb * 2;
-  int ncol  = ncomb;
-  for(int i=1; i < nb; ++i, ncol *= ncomb);
+  int nncol  = ncomb;
+  for(int i=1; i < nb; ++i, nncol *= ncomb);
+  int const ncol = nncol;
   SEXP result;
   PROTECT(result = allocMatrix(INTSXP, nrow, ncol));
   if(nrow and ncol)
@@ -30,7 +31,6 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
     int * const combptr = INTEGER(comb);
     
 #   pragma omp parallel
-#   pragma threadprivate(ncol) copyin(ncol)
     {
 #     pragma omp for
       for(int j=0; j < ncol; ++j)
@@ -86,11 +86,11 @@ SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
     for(int j=0; j < ncol; ++j)
     {
       int const column = j * nrow;
-      int const * geno_ptr = geno_first + j * nUnknowns;
-      for(int u=0, v=0; u < nUnknowns; ++u, ++geno_ptr, v += nrow) 
+//     int const * geno_ptr = geno_first + j * nUnknowns;
+      for(int u=0, v=0; u < nUnknowns; ++u, v += nrow) 
       {
-        int const index = *geno_ptr - 1;
-        *(epg_ptr + column + index) += *(doses_ptr + index + v);
+        int const index = u; //*geno_ptr - 1;
+        epg_ptr[column + index] += 1e0; // doses_ptr[index + v];
       } // loop over unknown contributors.
     } // loop over space of compatible genotypes
   }

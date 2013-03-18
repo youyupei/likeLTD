@@ -38,10 +38,8 @@ SEXP probabilitiesNoDropin(SEXP input, SEXP vDoseDropout, SEXP condA, SEXP condB
     for(int i=0; i < nrow; ++i, ++condA_ptr, ++condB_ptr) 
     {
       if(*(zero_ptr + v + i)) continue;
-      if(*condA_ptr)      
-        *(out_ptr + j) *= *(vdose_ptr + v + i);
-      else if(*condB_ptr) 
-        *(out_ptr + j) *= 1.0 - *(vdose_ptr + v + i);
+      if(*condA_ptr)      out_ptr[j] *= vdose_ptr[v + i];
+      else if(*condB_ptr) out_ptr[j] *= 1.0 - vdose_ptr[v + i];
     }
   }
 # ifdef OPENMP_STACK
@@ -78,16 +76,12 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
     int const *condB_ptr = condB_first;
     for(int i=0; i < nrow; ++i, ++condA_ptr, ++condB_ptr) 
     {
-      if(*(zero_ptr + v + i)) {
-        if(*condA_ptr)     
-          *(out_ptr + j) *= 1.0 - (*(freq_ptr + i)) * rate; 
-        else if(*condB_ptr)
-          *(out_ptr + j) *= (*(freq_ptr + i)) * rate; 
+      if(zero_ptr[v + i]) {
+        if(*condA_ptr)      out_ptr[j] *= 1.0 - freq_ptr[i] * rate; 
+        else if(*condB_ptr) out_ptr[j] *= freq_ptr[i] * rate; 
       } else {
-        if(*condA_ptr)      
-          *(out_ptr + j) *= *(vdose_ptr + v + i);
-        else if(*condB_ptr) 
-          *(out_ptr + j) *= 1.0 - *(vdose_ptr + v + i);
+        if(*condA_ptr)      out_ptr[j] *= vdose_ptr[v + i];
+        else if(*condB_ptr) out_ptr[j] *= 1.0 - vdose_ptr[v + i];
       }
     }
   }
@@ -124,10 +118,10 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment,
 
 # pragma omp parallel for 
   for(int j=0; j < matsize; ++j) 
-    if(not *(zero_ptr +j))
-      *(epg_ptr + j) =  std::exp(tvede * std::log(adjust * (*(epg_ptr + j))));
+    if(not zero_ptr[j])
+      epg_ptr[j] =  std::exp(tvede * std::log(adjust * (epg_ptr[j])));
 // using pow is slower somehow...
-//     *(epg_ptr + j) =  std::pow(adjust * (*(epg_ptr + j)), tvede);
+//     epg_ptr[j] =  std::pow(adjust * (epg_ptr[j]), tvede);
 
 # ifdef OPENMP_STACK
     R_CStackLimit = oldstack;
@@ -164,10 +158,10 @@ SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
 
 # pragma omp parallel for 
   for(int j=0; j < ncol*nrow; ++j) 
-    if(not *(zero_ptr +j))
+    if(not zero_ptr[j])
     {
-      double const newfact = *(epg_ptr + j) * rate;
-      *(out_ptr + j) = newfact / (newfact + 1.0 - rate);
+      double const newfact = epg_ptr[j] * rate;
+      out_ptr[j] = newfact / (newfact + 1.0 - rate);
     }
 
 # ifdef OPENMP_STACK
@@ -206,7 +200,7 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
     int const v = j * nAlleles;
     memcpy((void*) (out_ptr + v), (void*) known_ptr, cpysize);
     for(int i=j*nrow; i < (j + 1) * nrow; ++i)
-      *(out_ptr + v + *(geno_ptr + i) - 1) = 0;
+      out_ptr[v + *(geno_ptr + i) - 1] = 0;
   }
 
 # ifdef OPENMP_STACK
@@ -249,9 +243,9 @@ SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
 
     // compute allele fraction factor.
     i_geno = geno_ptr + j*nrow;
-    *(out_ptr + j) = double(n);
+    out_ptr[j] = double(n);
     for(int i=0; i < nrow; ++i, ++i_geno)
-      *(out_ptr + j) *= *(frac_ptr + *i_geno - 1);
+      out_ptr[j] *= frac_ptr[*i_geno - 1];
   }
 
 # ifdef OPENMP_STACK
