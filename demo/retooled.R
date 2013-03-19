@@ -49,75 +49,75 @@ arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
 arguments$degradation = rep(3e-3, 3+args$nUnknowns)
 objective <- create.likelihood.vectors(defenseScenario, TRUE)
 
-funcs <- attr(objective, "functions") 
-# a <- do.call(objective, arguments)
+# funcs <- attr(objective, "functions") 
+# # a <- do.call(objective, arguments)
 
-bench <- microbenchmark( D3=do.call(funcs$D3, arguments), 
-                         vWA=do.call(funcs$vWA, arguments), 
-                         D16=do.call(funcs$D16, arguments), 
-                         D2=do.call(funcs$D2, arguments), 
-                         D8=do.call(funcs$D8, arguments), 
-                         D21=do.call(funcs$D21, arguments), 
-                         D18=do.call(funcs$D18, arguments), 
-                         D19=do.call(funcs$D19, arguments), 
-                         TH01=do.call(funcs$TH01, arguments), 
-                         FGA=do.call(funcs$FGA, arguments) )
-print(bench)
-# if (require("ggplot2")) {
-#   plt <- ggplot2::qplot(y=time, data=bench, colour=expr)
-#   plt <- plt + ggplot2::scale_y_log10()
-#   print(plt)
+# bench <- microbenchmark( D3=do.call(funcs$D3, arguments), 
+#                          vWA=do.call(funcs$vWA, arguments), 
+#                          D16=do.call(funcs$D16, arguments), 
+#                          D2=do.call(funcs$D2, arguments), 
+#                          D8=do.call(funcs$D8, arguments), 
+#                          D21=do.call(funcs$D21, arguments), 
+#                          D18=do.call(funcs$D18, arguments), 
+#                          D19=do.call(funcs$D19, arguments), 
+#                          TH01=do.call(funcs$TH01, arguments), 
+#                          FGA=do.call(funcs$FGA, arguments) )
+# print(bench)
+# # if (require("ggplot2")) {
+# #   plt <- ggplot2::qplot(y=time, data=bench, colour=expr)
+# #   plt <- plt + ggplot2::scale_y_log10()
+# #   print(plt)
+# # }
+# modify.args = function(index, newvalue, args) { 
+#   for(n in names(args)) {
+#     if(index == 1 & length(args[[n]]) == 1) { args[[n]] = newvalue; break }
+#     else if( index < length(args[[n]]) ) { args[[n]][index] = newvalue; break }
+#     else index = index - length(args[[n]])
+#   }
+#   return(args)
 # }
-modify.args = function(index, newvalue, args) { 
-  for(n in names(args)) {
-    if(index == 1 & length(args[[n]]) == 1) { args[[n]] = newvalue; break }
-    else if( index < length(args[[n]]) ) { args[[n]][index] = newvalue; break }
-    else index = index - length(args[[n]])
-  }
-  return(args)
-}
 
-plot_all.log <- function(which=1, x=(1:99)/100.0) {
-  require("ggplot2")
-  
-  funcme <- function(i) { 
-    args$rcont = args$rcont[1:3+args$nUnknowns]
-    args$degradation = args$degradation[1:3+args$nUnknowns]
-    result <- do.call(prosecutionObjective, modify.args(which, x[i], args))
-    result$objectives * result$penalties
-  }
-  y = log(sapply(1:length(x), funcme) )
-  total = colSums(y)
-  total = total - min(total) 
-  y = rbind(y, total=total)
-  data = data.frame(prob=c(y), locus=rep(rownames(y), ncol(y)),
-                    rcont=rep(x, rep(nrow(y), length(x))))
-  return(ggplot(data, aes(x=rcont, y=prob, group=locus, colour=locus)) + geom_line())
-}
+# plot_all.log <- function(which=1, x=(1:99)/100.0) {
+#   require("ggplot2")
+#   
+#   funcme <- function(i) { 
+#     args$rcont = args$rcont[1:3+args$nUnknowns]
+#     args$degradation = args$degradation[1:3+args$nUnknowns]
+#     result <- do.call(prosecutionObjective, modify.args(which, x[i], args))
+#     result$objectives * result$penalties
+#   }
+#   y = log(sapply(1:length(x), funcme) )
+#   total = colSums(y)
+#   total = total - min(total) 
+#   y = rbind(y, total=total)
+#   data = data.frame(prob=c(y), locus=rep(rownames(y), ncol(y)),
+#                     rcont=rep(x, rep(nrow(y), length(x))))
+#   return(ggplot(data, aes(x=rcont, y=prob, group=locus, colour=locus)) + geom_line())
+# }
 
-plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0) {
-  require("ggplot2")
-  result = matrix(1, nrow=length(x), ncol=length(y))
-  for(i in 1:length(x)) 
-  {
-    argi = modify.args(which[1], x[i], arguments)
-    for(j in 1:length(y))
-    {
-      argij = modify.args(which[2], x[j], argi)
-      r = do.call(objective, argij)
-      result[i, j] = sum(log(r$objectives) + log(r$penalties))
-    }
-  }
-  amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))), z=c(result))
-  return(ggplot(amap, aes(x, y, z=z)))
-}
+# plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0) {
+#   require("ggplot2")
+#   result = matrix(1, nrow=length(x), ncol=length(y))
+#   for(i in 1:length(x)) 
+#   {
+#     argi = modify.args(which[1], x[i], arguments)
+#     for(j in 1:length(y))
+#     {
+#       argij = modify.args(which[2], x[j], argi)
+#       r = do.call(objective, argij)
+#       result[i, j] = sum(log(r$objectives) + log(r$penalties))
+#     }
+#   }
+#   amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))), z=c(result))
+#   return(ggplot(amap, aes(x, y, z=z)))
+# }
 
-# arguments$degradation = log10(arguments$degradation)
-# optimizeme = fixed.params(objective, arguments, zero=1e-12)
+# # arguments$degradation = log10(arguments$degradation)
+# # optimizeme = fixed.params(objective, arguments, zero=1e-12)
 
-# res <- optim( optimizeme$args, optimizeme$objective, 
-#               method="L-BFGS-B",
-#               upper=optimizeme$upper.bounds,
-#               lower=optimizeme$lower.bounds,
-#               hessian=FALSE,
-#               control=list(fnscale=-1, factr=1e12) )
+# # res <- optim( optimizeme$args, optimizeme$objective, 
+# #               method="L-BFGS-B",
+# #               upper=optimizeme$upper.bounds,
+# #               lower=optimizeme$lower.bounds,
+# #               hessian=FALSE,
+# #               control=list(fnscale=-1, factr=1e12) )

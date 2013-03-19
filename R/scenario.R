@@ -1,12 +1,6 @@
+# Reads crime scene profile from file.
+# Documentation is in man directory.
 read.csp.profile = function(path) {
-  # Reads crime scene profile from file.
-  #
-  # Returns a matrix containing the profiles for each locus (columns) and each
-  # replicate (rows). Each element is a string or list of string naming the
-  # alleles present in the CSP.
-  #
-  # For simplicity, the return does not contain loci for which replicates are
-  # all NA.
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
   profile = sapply(profile, function (n) strsplit(n, ','))
@@ -14,25 +8,19 @@ read.csp.profile = function(path) {
   allNA = apply(profile, 2, function(n) !all(is.na(n)))
   profile[, allNA]
 }
+
+# Reads uncertain alleles in crime scene profile from file.
+# Documentation is in man directory.
 read.unc.profile = function(path) {
-  # Reads uncertain alleles in crime scene profile from file.
-  #
-  # Returns a matrix containing the profiles for each locus (columns) and each
-  # replicate (rows). Each element is a string or list of string naming the
-  # uncertain alleles present in the CSP.
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
   profile = sapply(profile, function (n) strsplit(n, ','))
   profile[profile[, "X"] == "Uncertain", 5:ncol(profile)]
 }
 
+# Reads known profiles from file.
+# Documentation is in man directory.
 read.known.profiles = function(path) {
-  # Reads known profiles from file.
-  #
-  # Returns a matrix where each person is a given row. The column labeled
-  # "queried" indicates whether that individual is queried or not. Other
-  # columns are loci. Each element in a loci is a vector of two strings naming
-  # the allele of the individual.
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profiles = read.table(path, header=T, colClasses='character', row.names=1,
                         sep=',', quote = "\"")
@@ -43,19 +31,9 @@ read.known.profiles = function(path) {
   result
 }
 
+# Adds dropout column to known profiles.
+# Documentation is in man directory.
 determine.dropout = function(knownProfiles, cspProfile) {
-  # Adds dropout column to known profiles.
-  #
-  # An individual is subject to doprout if the individual's allele at one or
-  # more locus is not in the crime-scene profile.
-  #
-  # Parameters:
-  #   knownProfiles: A matrix containing the known profiles. 
-  #   cspProfile: The crime scene profile.
-  # Returns: 
-  #   A list with one element per individual. Each is True if that individual
-  #   is subject to dropout.
-  
   # Alleles present in any replicate of the csp per locus.
   per.indiv = function(indiv) {
     per.locus = function(locus) {
@@ -173,9 +151,11 @@ agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
        queriedProfile=queriedProfile[1, colnames(cspProfile)])
 }
 
+# Creates prosecution scenario.
+# Documentation is in man directory.
 prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, adj=1e0,
                                  fst=0.02, databaseFile=NULL, ...) {
-  # Creates prosecution scenario.
+
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
   uncProfile = read.unc.profile(mixedFile)
@@ -195,9 +175,11 @@ prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, 
   result
 }
 
+# Creates defense scenario.
+# Documentation is in man directory.
 defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                              adj=1e0, fst=0.02, databaseFile=NULL, ...) {
-  # Creates defense scenario.
+  
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
   uncProfile = read.unc.profile(mixedFile)
@@ -222,6 +204,14 @@ defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
 
 add.args.to.scenario <- function(scenario, ...) {
   # Updates scenario with input arguments.
+  #
+  # Convenience function to easily modify scenarios when creating the objective
+  # functions. 
+  #
+  # Parameters:
+  #   scenario: The scenario to modify.
+  #   ...: Named parameters to add/update the scenario.
+  # Returns: The modified scenario.  
 
   args = list(...)
   argnames = intersect(names(scenario), names(args))

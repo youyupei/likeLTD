@@ -390,18 +390,11 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
   return(suggested)
 }
 
+# Packs and verifies administrative information.
+# Documentation in man directory.
 pack.admin.input = function( mixedFile, refFile, caseName='dummy',
                              databaseFile=NULL, outputPath=NULL,
                              checkFiles=TRUE ) {
-  # Packs and verifies administrative information.
-  #
-  # Args:
-  #   databaseFile: File holding the allele afreq
-  #   mixedFile: Mixed crime scene profile
-  #   refFile: Reference profiles
-  #   casename: Name of the current case
-  #   outputPath: Path where the output should be stored.
-  #   checkFiles: Whether to check file existence and such.
   if(is.null(outputPath)) outputPath = file.path(getwd(), caseName)
 
   if(checkFiles) {
@@ -426,8 +419,9 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
   return(admin)
 }
 
+# Loads allele database
+# Documentation is in man directory.
 load.allele.database <- function(path=NULL) {
-  # Frequency table provided in package. 
   if(is.null(path)) { # Load default database
     dummyEnv <- new.env()
     data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
@@ -437,9 +431,10 @@ load.allele.database <- function(path=NULL) {
   read.table(path, sep="\t", header=TRUE)
 }
 
+# Generates and packs genetics input into a list.
+# Documentation in man directory.
 pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
                                unknowns=0, ethnic='EA1', fst=NULL, adj=1) {
-  # Generates and packs genetics input into a list.
   #
   # This list contains all the genetics data needed to perform all subsequent
   # calculations. 
@@ -501,8 +496,9 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
 }
 
 
-allele.report <- function(admin, genetics=NULL) {
-  # Generates an allele summary from input profiles:
+# Generates an allele summary from input profiles:
+# Documentation in man directory.
+allele.report <- function(admin) {
   #
   # Args:
   #   admin: List containing administration data, as packed by

@@ -216,29 +216,18 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
 }
 
 
+# Penalties to apply to the likelihood.
+# Documentation is in man directory.
 penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
                       dropin, localAdjPenalty=50, dropinPenalty=2,
                       degradationPenalty=50, bemn=-4.35, besd=0.38, ...) {
-  # Penalties to apply to the likelihood.
-  #
-  # The return can be a scalar (no localAdj argument) or a vector (localAdj
-  # argument). They can be applied to the likelihood as:
-  #
-  #   >>> prod(likelihood * penalties(...))
-  #
-  # Where likelihood is a vector where each element is the likelihood for a
-  # given locus.
-  #
-  # It should be applied to the negative log likelihood as:
-  #
-  #  >>> sum( -log(likelihood) - log(penalties(...)))
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
   # Some penalties are per locus and other for all locus. Hence this bit of run
   # around.
   normalization = 1.0 / max(length(localAdjustment), 1)
 
-  if(!missing(rcont) & !is.null(rcont))
+  if(!missing(dropin) & !is.null(dropin))
     result = result * exp(-dropin * dropinPenalty * normalization)
   if(!missing(degradation) & !is.null(degradation))
     result = result * exp(-sum(degradation) * degradationPenalty 
@@ -251,24 +240,9 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   return(result)
 }
 
+# Creates a likelihood function from the input scenario.
+# Documentation is in man directory.
 create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {
-  # Creates a likelihood function from the input scenario.
-  #
-  # Likelihood function returns a list with two objects: an array of likelihood
-  # per locus, an array of penalties per locus.
-  #
-  # .. seealso:: create.likelihood, create.likelihood.log
-  #
-  # Parameters
-  #   scenario: A list containing all the items necessary to building the
-  #             objective function. It is likely the result of a call to
-  #             defense.scenario or prosecution.scenario.
-  #   addAttr: If TRUE, adds some attribute to the objective function.
-  #            This is mostly for debug purposes. It makes it easier to known
-  #            what parameters were use to build the objective function.
-  #   ...: Extra named arguments are added to or replace values in scenario.
-  #        This makes it easier to play with different scenarios. Best you know
-  #        what you are doing.
 
   scenario = add.args.to.scenario(scenario, ...)
   locusCentric = transform.to.locus.centric(scenario)
@@ -306,10 +280,9 @@ create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {
 }
 
 
+# Creates a likelihood function from the input scenario.
+# Documentation is in man directory.
 create.likelihood <- function(scenario, addAttr=FALSE, ...) {
-  # Creates a likelihood function from the input scenario.
-  #
-  # .. seealso:: create.likelihood.vectors, create.likelihood.log
 
   vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
 
@@ -322,12 +295,10 @@ create.likelihood <- function(scenario, addAttr=FALSE, ...) {
   return(likelihood.scalar)
 }
 
+# Creates a likelihood function from the input scenario.
+# Documentation is in man directory.
 create.likelihood.log <- function(scenario, addAttr=FALSE, ...) {
-  # Creates a likelihood function from the input scenario.
-  #
-  # .. seealso::
-  #   
-  #   create.likelihood, create.likelihood.vectors
+
   vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
   likelihood.log <- function(...) { 
     result <- vecfunc(...) 

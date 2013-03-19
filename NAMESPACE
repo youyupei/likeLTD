@@ -1,17 +1,22 @@
 useDynLib(likeLTD, .registration=TRUE, .fixes=".cpp.") 
-export(initial.arguments)
 export(.cpp.nbthreads)
-export(optimization.params)
 export(pack.admin.input)
-export(pack.genetics.input)
 export(allele.report)
+
 export(read.csp.profile)
 export(read.unc.profile)
 export(read.known.profiles)
+export(defense.scenario)
+
+export(prosecution.scenario)
 export(determine.dropout)
+
+export(load.allele.database)
+
+export(initial.arguments)
+export(optimization.params)
+
 export(create.likelihood.vectors)
 export(create.likelihood.log)
 export(create.likelihood)
 export(penalties)
-export(defense.scenario)
-export(prosecution.scenario)

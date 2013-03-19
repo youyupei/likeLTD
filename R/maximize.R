@@ -25,6 +25,7 @@ estimates <- function(indiv, csp) {
   meanrep
 }
 
+# Best(?) guess for initial arguments. 
 initial.arguments <- function(scenario, ...) {
   # Best(?) guess for initial arguments. 
   #
