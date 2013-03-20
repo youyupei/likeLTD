@@ -1,193 +1,37 @@
-library('gplots')
-source('R/allele_report.R')
-source('R/genetics.R')
-source('R/objectives.R')
+library('stats')
+library('likeLTD')
 
 
 # Case we are going to be looking at.
 caseName = 'hammer'
-datapath <- file.path(file.path('inst', 'extdata'), caseName)
-# Construct input: frequency file.
-databaseFile = NULL #file.path(datapath, 'lgc-allele-freqs-wbp.txt')
-# Construct input: crime scene profile
-mixedFile = file.path(datapath, 'hammer-CSP.csv')
-# Construct input: reference profiles
-refFile = file.path(datapath, 'hammer-reference.csv')
-# Construct input: output path in the R temp directory for now
-outputPath = tempdir()
+datapath = file.path(system.file("extdata", package="likeLTD"), caseName)
 
-# Construct list of all administrative input
-admin <- pack.admin.input( caseName=caseName,
-                           databaseFile=databaseFile,
-                           mixedFile=mixedFile,
-                           refFile=refFile,
-                           outputPath=outputPath )
-genetics <- pack.genetics.input(admin)
+args = list(
+  databaseFile = NULL,
+  mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+  refFile      = file.path(datapath, 'hammer-reference.csv'),
+  nUnknowns    = 0,
+  doDropin     = TRUE,
+  ethnic       = "EA1",
+  adj          = 1.0,
+  fst          = 0.02,
+  relatedness  = c(0, 0)/4
+)
 
-callmeNth <- function(what, times=10, interTimes=10) {
-  empty <- function() { return(0) }
-  emptyMean <- mean(replicate(times, system.time(replicate(interTimes, empty()))[3]), trim=0.05)
-  result <- replicate(times, system.time(replicate(interTimes, what()))[3])
-  return(result - emptyMean)
-}
+# Create scenarios for defense and prosecution.
+prosecutionScenario = do.call(prosecution.scenario, args)
+defenseScenario     = do.call(defense.scenario, args)
 
-timings <- function(times=10, interTimes=10, nUnknowns=0, doDropin=TRUE) {
-  loci = names(genetics$cprofs)
-  dropins = rep(doDropin, length(loci))
-  nunknowns = rep(nUnknowns, length(loci))
-  alleles = list()
-
-  allTimes = list()
-  objective <- create.likelihood(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  objectives <- attr(objective, "loci")
-  for(locus in loci) {
-    print(paste("Working on", locus))
-    newfunc <- function() {
-      objectives[[locus]](rcont=c(0.923913043478261, 0.565217391304348,
-                                  1.000000000000000, 0.543478260869565,
-                                  0.108695652173913), 
-                          degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-                          localAdjustment=1,
-                          tvedebrink=-4.35,
-                          beta=-4.35,
-                          dropout=c(0.175, 0.105) )
-    }
-    allTimes[[locus]] = callmeNth(newfunc, times=times, interTimes=interTimes)
-    allTimes[[locus]] = allTimes[[locus]] / interTimes
-    alleles[[locus]]  = nrow(attr(objectives[[locus]], "alleleDb"))
-  }
-  alleles = unlist(alleles)
-  allTimes = matrix(unlist(allTimes), nrow=length(allTimes), byrow=T)
-  means = apply(allTimes, 1, mean, na.rm=TRUE)
-  stdevs = apply(allTimes, 1, sd, na.rm=TRUE)
-  matsize = sapply(alleles, function(n) (n*(n+1)/2)**nUnknowns)
-  return(data.frame(loci=loci, doDropin=dropins, unknowns=nunknowns,
-                    alleles=alleles, matsize=matsize, mean=means,
-                    stdev=stdevs))
-}
+# Create optimization parameters, with some modification to scenario arguments.
+# nUnknowns is modified here and now. It does not need to be, but it can be. 
+# The somethingParams values contain the objective functions and optimization
+# parameters.
+prosecutionParams <- optimization.params(prosecutionScenario, verbose=FALSE,
+                                         nUnknowns=1) 
+defenseParams <- optimization.params(defenseScenario, verbose=FALSE,
+                                     nUnknowns=2)
 
 
-trial <- function(nUnknowns=0, doDropin=TRUE, rcont=NULL) {
-
-  if(is.null(rcont)) 
-    rcont = c(0.923913043478261, 0.565217391304348, 1.000000000000000,
-              0.543478260869565, 0.108695652173913)
-  objective <- create.likelihood.vectors(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  objective(rcont=rcont, degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-            localAdjustment=1, tvedebrink=-4.35,
-            dropout=c(0.175, 0.105), beta=-4.35 )
-}
-
-args = list(rcont=c(0.923913043478261, 0.565217391304348, 1.000000000000000,
-                    0.543478260869565, 0.108695652173913), 
-            degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-            localAdjustment=1, tvedebrink=-4.35,
-            dropout=c(0.175, 0.105), beta=-4.35 )
-
-create.newfuncs <- function(nUnknowns=0, dropin=TRUE) {
-  objectives = create.likelihood.functions(admin, nUnknowns=nUnknowns, doDropin=dropin)
-  args = list(rcont=c(0.923913043478261, 0.565217391304348, 1.000000000000000,
-                      0.543478260869565, 0.108695652173913), 
-              degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-              localAdjustment=1, tvedebrink=-4.35,
-              dropout=c(0.175, 0.105), beta=-4.35 )
-  sapply(objectives, function(n) { n = eval(n); args = eval(args); 
-                                   function() { do.call(n, args) } }) 
-}
-
-plot_rcont <- function(which=1, x=(1:99)/100.0, nUnknowns=0, doDropin=TRUE, ...) {
-  require("ggplot2")
-  objective = create.likelihood.vectors(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  funcme <- function(i) { args$rcont[which] = x[i]; do.call(objective, args)$objectives}
-  y = sapply(1:length(x), funcme) 
-  total = array(1, ncol(y))
-  for(i in 1:nrow(y)) total = total * y[i, ]
-  y = rbind(y, total=total)
-  data = data.frame(prob=c(y), locus=rep(rownames(y), ncol(y)),
-                    rcont=rep(x, rep(nrow(y), length(x))))
-  return(ggplot(data, aes(x=rcont, y=prob, group=locus, colour=locus)) + geom_line())
-}
-
-plot_deg <- function(which=1, range=c(1e-4, 1e-2), n=100, nUnknowns=0, doDropin=TRUE, ...) {
-  objective = create.likelihood(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  funcme <- function(i) { args$degradation[which] = x[i]; do.call(objective, args) }
-  x = 1:n/n * (max(range) - min(range)) + min(range)
-  y = sapply(1:length(x), funcme)
-  plot(x, y, ...)
-}
-
-modify.args = function(index, newvalue, args) { 
-  for(n in names(args)) {
-    if(index == 1 & length(args[[n]]) == 1) { args[[n]] = newvalue; break }
-    else if( index < length(args[[n]]) ) { args[[n]][index] = newvalue; break }
-    else index = index - length(args[[n]])
-  }
-  return(args)
-}
-
-plot_all.log <- function(which=1, x=(1:99)/100.0, nUnknowns=0, doDropin=TRUE) {
-  require("ggplot2")
-  objective = create.likelihood.vectors(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  funcme <- function(i) { 
-    do.call(objective, modify.args(which, x[i], args))$objectives
-  }
-  y = log(sapply(1:length(x), funcme) )
-  total = colSums(y)
-  total = total - min(total) 
-  y = rbind(y, total=total)
-  data = data.frame(prob=c(y), locus=rep(rownames(y), ncol(y)),
-                    rcont=rep(x, rep(nrow(y), length(x))))
-  return(ggplot(data, aes(x=rcont, y=prob, group=locus, colour=locus)) + geom_line())
-}
-
-plot_all2d.log <- function(which=c(1, 2), x=(1:99)/100.0, y=(1:99)/100.0, nUnknowns=0, doDropin=TRUE) {
-  require("ggplot2")
-  objective = create.likelihood.log(admin, nUnknowns=nUnknowns, doDropin=doDropin)
-  
-  result = matrix(1, nrow=length(x), ncol=length(y))
-  for(i in 1:length(x)) 
-    for(j in 1:length(y))
-      result[i, j] = do.call(objective, 
-                             modify.args(which[2], y[j],
-                                         modify.args(which[1], x[i], args)))
-  amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))), z=c(result))
-  return(ggplot(amap, aes(x, y, z=z)))
-}
-# plot_all2d.log(which=c(1,3), nUnknowns=1, x=(1:20/10.0), y=(1:20/10.0)) + 
-#          geom_tile(aes(fill=z))                                         + 
-#          stat_contour()
-  text = "SEXP res;
-          int const nrow = INTEGER(GET_DIM(x))[0];
-          int const ncol = INTEGER(GET_DIM(x))[1];
-          PROTECT(res = allocVector(REALSXP, nrow));
-          double *inptr = &REAL(x)[0];
-          double *outptr = &REAL(res)[0];
-          for(int i=0; i < nrow; ++i, ++inptr, ++outptr) *outptr = *inptr;
-            for(int j=1; j < ncol; ++j) {
-              outptr = &REAL(res)[0];
-              for(int i=0; i < nrow; ++i, ++inptr, ++outptr) *outptr *= *inptr;
-            }
-          UNPROTECT(1);
-          return res;"
-  sig = signature(x="array");
-
-code="SEXP res;
-      int nprotect = 0, nx, ny, nz, x, y;
-      PROTECT(res = Rf_duplicate(a)); nprotect++;
-      nx = INTEGER(GET_DIM(a))[0];
-      ny = INTEGER(GET_DIM(a))[1];
-      nz = INTEGER(GET_DIM(a))[2];
-      double sigma2 = REAL(s)[0] * REAL(s)[0], d2 ;
-      double cx = REAL(centre)[0], cy = REAL(centre)[1], *data, *rdata;
-      for (int im = 0; im < nz; im++) {
-        data = &(REAL(a)[im*nx*ny]); rdata = &(REAL(res)[im*nx*ny]);
-        for (x = 0; x < nx; x++)
-          for (y = 0; y < ny; y++) {
-            d2 = (x-cx)*(x-cx) + (y-cy)*(y-cy);
-            rdata[x + y*nx] = data[x + y*nx] * exp(-d2/sigma2);
-          }
-      }
-      UNPROTECT(nprotect);
-      return res;"
-funx <- cfunction(signature(a="array", s="numeric", centre="numeric"), code)
-funx <- cfunction(signature(x="array"), text)
+# Now perform actual optimization.
+prosecutionResult <- do.call(optim, prosecutionParams)
+defenseResult     <- do.call(optim, defenseParams)
