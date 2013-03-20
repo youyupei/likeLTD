@@ -505,7 +505,7 @@ allele.report <- function(admin) {
   #          pack.admin.input.
   
   # reads genetics information if not given on input.
-  library('gplots')
+  if(!library('gplots')) stop("allele.report reqires the package gplots.")
   if(is.null(genetics)) genetics = pack.genetics.input(admin)
 
 

@@ -2,7 +2,7 @@ Package: likeLTD
 Title: Tools to determine DNA profile evidence.
 Description: Tools to determine DNA profile evidence.
 Depends: R (>= 2.10), gtools
-Suggests: svUnit
+Suggests: svUnit, gplots
 Version: 5.0.0
 Date: 2013-01-15
 Author: David Balding, Adrian Timpson, Christopher Steele.
