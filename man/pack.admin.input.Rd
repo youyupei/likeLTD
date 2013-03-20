@@ -5,10 +5,10 @@
                         databaseFile=NULL, outputPath=NULL,
                         checkFiles=TRUE)}
 \arguments{
-  \item{databaseFile}{File holding the allele afreq}
   \item{mixedFile}{Mixed crime scene profile}
   \item{refFile}{Reference profiles}
-  \item{casename}{Name of the current case}
+  \item{caseName}{Name of the current case}
+  \item{databaseFile}{Path to the allele database}
   \item{outputPath}{Path where the output should be stored}
   \item{checkFiles}{Whether to check file existence and such}
 }

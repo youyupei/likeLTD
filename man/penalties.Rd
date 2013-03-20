@@ -10,11 +10,13 @@
   \item{localAdjustment}{Local adjustment for each locus}
   \item{tvedebrink}{Tvedebrink exponent}
   \item{dropout}{Ignored}
+  \item{dropin}{Dropin rate}
   \item{localAdjPenalty}{Penalty parameter for the local adjustments}
   \item{dropinPenalty}{Penalty parameter for the dropin rate}
-  \item{degradationPenalty}{Penalty parameter for the degration parameters}
-  \item{bemn}{Penalty parameter for the degration parameters}
-  \item{besd}{Penalty parameter for the degration parameters}
+  \item{degradationPenalty}{Penalty parameter for the degradation parameters}
+  \item{bemn}{Mean of the normal distribution used to penalize degradation}
+  \item{besd}{Standard deviation of the normal distribution used to penalize
+  degradation}
   \item{\dots}{Ignored}
 }
 \description{Returns the penalty for the current arguments}
@@ -36,6 +38,11 @@
     adjustment, \code{dgamma} is the density of the Gamma distribution with
     \code{p} its shape and rate}
   }
+
+  Some of these penalties are meant to be applied simultaneously across all
+  loci. Since we want penalties \emph{per} locus, a normalization
+  \eqn{p^{\frac{1}{n}}}{p^(1/n)} is applied, where \eqn{p} is the penalty and
+  \eqn{n} the number of loci.
 }
 \seealso{create.likelyhood.vectors, create.likelihood.log, create.likelyhood,
          Objective Functions}

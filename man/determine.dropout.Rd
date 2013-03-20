@@ -9,7 +9,7 @@
 \value{ A list with one element per individual. Each is True if that individual
  is subject to dropout. 
 }
-\description{An individual is subject to doprout if the individual's allele at
+\description{An individual is subject to dropout if the individual's allele at
  one or more locus is not in the crime-scene profile.
 }
 \seealso{read.csp.profile, read.known.profiles}

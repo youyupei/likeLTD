@@ -12,7 +12,7 @@
   \item{nUnknowns}{Number of unknown contributors for which to perform
                    calculation.}
   \item{adj}{Allele frequency adjustment parameter.}
-  \item{fst}{}
+  \item{fst}{Allele fraction adjustment \eqn{F_{ST}}}
   \item{databaseFile}{Path to the allele database. If NULL, then defaults to
                       the database provided with \code{likeLTD}}
   \item{...}{Other parameters to determine how to perform calculations, e.g.

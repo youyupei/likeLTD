@@ -5,7 +5,7 @@
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=1e-8, \dots)}
 \arguments{
-  \item{scenario}{Scenario from which to perform maximixation}
+  \item{scenario}{Scenario from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
   function is called}
   \item{fixed}{Names of the parameters to keep fixed}
@@ -21,7 +21,7 @@
   \code{nUnknowns}}
 }
 \value{
-  \item{par}{A vector of initial (nuisance) parametrs}
+  \item{par}{A vector of initial (nuisance) parameters}
   \item{fn}{The objective function}
   \item{lower}{Lower bounds for the parameters}
   \item{upper}{Upper bounds for the parameters}
@@ -32,7 +32,7 @@
 \description{Creates a list of parameters to use with \code{stats::optim}.}
 \details{
   Starting from the scenario, it creates an list of arguments which can be
-  applied to \code{stats::optim} to obtain the maxmimum (log-)likelihood of that
+  applied to \code{stats::optim} to obtain the maximum (log-)likelihood of that
   scenario. By default, it provides the input for using the \dQuote{L-BFGS-B} of
   \code{optim}, including the upper and lower bounds of the nuisance parameter. 
 
@@ -41,10 +41,10 @@
   \itemize{
     \item The optimization can be performed for the likelihood or the log of
     the likelihood. The latter is recommended.
-    \item wether the \code{degradation} parameter should be inpute as \eqn{x}
+    \item wether the \code{degradation} parameter should be inputs as \eqn{x}
     or  as an exponent \eqn{10^x}. The latter seems to be more numerically
     stable, likely because degradations (in first form) are factors of an
-    expoenent in any case.
+    exponent in any case.
     \item whether to keep some nuisance parameters fixed
   }
 

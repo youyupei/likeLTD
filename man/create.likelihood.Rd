@@ -17,6 +17,6 @@
   The objective function is created from the scenario. Itself, it takes as
   arguments the nuisance parameters and, optionally, the parameters for the
   penalty function. This particular flavor of the objective returns the product
-  of the likelihood and penalties acrossall loci.
+  of the likelihood and penalties across all loci.
 }
 \seealso{create.likelyhood.vectors, create.likelihood.log, penalties, Objective Functions}
