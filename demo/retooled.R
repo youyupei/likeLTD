@@ -6,7 +6,7 @@ library(likeLTD)
 # source('R/genetics.R')
 # source('R/allele_report.R')
 # source('R/optimized.R')
-# source('R/scenario.R')
+# source('R/hypothesis.R')
 # source('R/objectives.R')
 # source('R/maximize.R')
 caseName = 'hammer'
@@ -25,18 +25,18 @@ args = list(
 )
 
 
-# Create scenarios for defense and prosecution.
-prosecutionScenario = do.call(prosecution.scenario, args)
-defenseScenario     = do.call(defense.scenario, args)
+# Create hypothesis for defense and prosecution.
+prosecutionHypothesis = do.call(prosecution.hypothesis, args)
+defenseHypothesis     = do.call(defense.hypothesis, args)
 
-# pOpt#0 = optimization.params(prosecutionScenario, nUnknowns=0, doDropin=TRUE)
-# pOpti1 = optimization.params(prosecutionScenario, nUnknowns=1, doDropin=TRUE)
-# pOpti2 = optimization.params(prosecutionScenario, nUnknowns=2, doDropin=TRUE)
-# pOpti3 = optimization.params(prosecutionScenario, nUnknowns=3, doDropin=TRUE)
+# pOpt#0 = optimization.params(prosecutionHypothesis, nUnknowns=0, doDropin=TRUE)
+# pOpti1 = optimization.params(prosecutionHypothesis, nUnknowns=1, doDropin=TRUE)
+# pOpti2 = optimization.params(prosecutionHypothesis, nUnknowns=2, doDropin=TRUE)
+# pOpti3 = optimization.params(prosecutionHypothesis, nUnknowns=3, doDropin=TRUE)
 
 # # Create objective functions for defense and prosecution.
-# # prosecutionObjective = create.likelihood.vectors(prosecutionScenario, TRUE)
-# defenseObjective     = create.likelihood.vectors(defenseScenario, TRUE)
+# # prosecutionObjective = create.likelihood.vectors(prosecutionHypothesis, TRUE)
+# defenseObjective     = create.likelihood.vectors(defenseHypothesis, TRUE)
 
 arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                          0.543478260869565),
@@ -47,7 +47,7 @@ arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                  dropout=c(0.175, 0.105) )
 arguments$rcont = arguments$rcont[1:(2+args$nUnknowns)]
 arguments$degradation = rep(3e-3, 3+args$nUnknowns)
-objective <- create.likelihood.vectors(defenseScenario, TRUE)
+objective <- create.likelihood.vectors(defenseHypothesis, TRUE)
 
 # funcs <- attr(objective, "functions") 
 # # a <- do.call(objective, arguments)

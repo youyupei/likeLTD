@@ -37,7 +37,7 @@ SEXP probabilitiesNoDropin(SEXP input, SEXP vDoseDropout, SEXP condA, SEXP condB
     int const *condB_ptr = condB_first;
     for(int i=0; i < nrow; ++i, ++condA_ptr, ++condB_ptr) 
     {
-      if(*(zero_ptr + v + i)) continue;
+      if(zero_ptr[v + i]) continue;
       if(*condA_ptr)      out_ptr[j] *= vdose_ptr[v + i];
       else if(*condB_ptr) out_ptr[j] *= 1.0 - vdose_ptr[v + i];
     }
@@ -301,7 +301,7 @@ SEXP relatednessFactors(SEXP inout, SEXP relatednessR, SEXP genotypes,
 
   // The following builds up the factors which will modify the inout vector. 
   // There are only four possible factors corresponding to four possible
-  // scenarios: (i) neither queried alleles are present.
+  // hypothesis: (i) neither queried alleles are present.
   //            (ii) first queried allele is in first unknown contributor, 
   //            (iii) second queried allele is in first unknown contributor,
   //            (iv) both queried alleles are in first unknown contributor,

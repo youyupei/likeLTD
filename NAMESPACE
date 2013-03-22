@@ -6,9 +6,9 @@ export(allele.report)
 export(read.csp.profile)
 export(read.unc.profile)
 export(read.known.profiles)
-export(defense.scenario)
+export(defense.hypothesis)
 
-export(prosecution.scenario)
+export(prosecution.hypothesis)
 export(determine.dropout)
 
 export(load.allele.database)

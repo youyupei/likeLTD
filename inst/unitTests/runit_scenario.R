@@ -1,4 +1,4 @@
-## Test unit 'scenario'
+## Test unit 'hypothesis'
 library(svUnit)
 
 ###############################################################
@@ -10,7 +10,7 @@ function () {
 	## Specific actions for svUnit: prepare context
 	if ("package:svUnit" %in% search()) {
 		.Log <- Log() ## Make sure .Log is created
-		.Log$..Unit <- "inst/unitTests/runit_scenario.R"
+		.Log$..Unit <- "inst/unitTests/runit_hypothesis.R"
 		.Log$..File <- ""
 		.Log$..Obj <- ""
 		.Log$..Tag <- ""
@@ -113,12 +113,12 @@ test_missing.alleles <- svTest(function() {
 })
 
 
-test_add.args.to.scenario <- svTest(function() {
+test_add.args.to.hypothesis <- svTest(function() {
 
   start = list(a="hello", b="world")
-  if(! "add.args.to.scenario" %in% ls(.GlobalEnv))
-    add.args.to.scenario <- getFromNamespace("add.args.to.scenario", "likeLTD")
-  result = add.args.to.scenario(start, c=5, a=2)
+  if(! "add.args.to.hypothesis" %in% ls(.GlobalEnv))
+    add.args.to.hypothesis <- getFromNamespace("add.args.to.hypothesis", "likeLTD")
+  result = add.args.to.hypothesis(start, c=5, a=2)
   
   checkEquals(result, list(a=2, b="world", c=5))
 })

@@ -83,18 +83,18 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
   relatedness.factors(result, genotypes, alleleDb, queriedProfile, relatedness)
 }
 
-likelihood.constructs.per.locus = function(scenario) {
+likelihood.constructs.per.locus = function(hypothesis) {
   # Creates the locus-specific data needed by each likehood function.
   #
   # Parameters:
-  #   scenario: A scenario, for instance one returned by
-  #             prosecution.scenario(...) or defense.scenario(...)
-  alleles = rownames(scenario$alleleDb)
+  #   hypothesis: A hypothesis, for instance one returned by
+  #               prosecution.hypothesis(...) or defense.hypothesis(...)
+  alleles = rownames(hypothesis$alleleDb)
   if(is.null(alleles)) stop("Could not figure out alleles names.")
   alleles.vector = function(n) alleles %in% unlist(n)
-  cspPresence     = apply(scenario$cspProfile, 1, alleles.vector)
-  dropoutPresence = apply(scenario$dropoutProfs, 1, alleles.vector)
-  uncPresence     = apply(scenario$uncProf, 1, alleles.vector)
+  cspPresence     = apply(hypothesis$cspProfile, 1, alleles.vector)
+  dropoutPresence = apply(hypothesis$dropoutProfs, 1, alleles.vector)
+  uncPresence     = apply(hypothesis$uncProf, 1, alleles.vector)
   if(!is.matrix(cspPresence))
     cspPresence = matrix(nrow=0, ncol=length(alleles))
   if(!is.matrix(dropoutPresence))
@@ -102,67 +102,69 @@ likelihood.constructs.per.locus = function(scenario) {
   if(!is.matrix(uncPresence))
     uncPresence = matrix(nrow=0, ncol=length(alleles))
 
-  missingReps = apply(scenario$cspProfile, 1, is.na)
+  missingReps = apply(hypothesis$cspProfile, 1, is.na)
 
   genotypes <- compatible.genotypes(cspPresence, dropoutPresence, missingReps,
-                                  alleles, scenario$nUnknowns,
-                                  scenario$doDropin)
-  zeroAll = empty.alleles(genotypes, dropoutPresence, scenario$nUnknowns) 
-  factors = genotype.factors(genotypes, scenario$alleleDb, scenario$nUnknowns,
-                             scenario$doDropin, scenario$queriedProfile,
-                             scenario$relatedness) 
+                                    alleles, hypothesis$nUnknowns,
+                                    hypothesis$doDropin)
+  zeroAll = empty.alleles(genotypes, dropoutPresence, hypothesis$nUnknowns) 
+  factors = genotype.factors(genotypes, hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             hypothesis$relatedness) 
 
   list(cspPresence=cspPresence, dropoutPresence=dropoutPresence,
        uncPresence=uncPresence, missingReps=missingReps,
        genotypes=genotypes, zeroAll=zeroAll, factors=factors,
-       freqMat=scenario$alleleDb[, 1])
+       freqMat=hypothesis$alleleDb[, 1])
 }
 
-create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
-  # Creates a likelyhood function for a given scenario and locus
+create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
+  # Creates a likelyhood function for a given hypothesis and locus
   #
-  # A scenario is given by the number of unknown contributors, whether to model
+  # A hypothesis is given by the number of unknown contributors, whether to model
   # dropin, so on and so forth.
 
-  cons = likelihood.constructs.per.locus(scenario)
-  doR = !is.null(scenario$doR) && scenario$doR == TRUE
-  probabilities = probabilities.function(scenario, cons, doR=doR)
+  cons = likelihood.constructs.per.locus(hypothesis)
+  doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
+  probabilities = probabilities.function(hypothesis, cons, doR=doR)
 
   result.function <- function(rcont, degradation, localAdjustment,
                               tvedebrink, dropout, dropin, ...) {
-    # Likelyhood function for a given scenario and locus
+    # Likelyhood function for a given hypothesis and locus
     #
-    # This function is specific to the scenario for which it was created.
+    # This function is specific to the hypothesis for which it was created.
     # It hides everything except the nuisance parameters over which to
     # optimize.
     #
     # Parameters:
     #   rcont: relative contribution from each profiled individual and unknown
-    #          contributor in this scenario. If it is one less than that, then
+    #          contributor in this hypothesis If it is one less than that, then
     #          rcont is prefixed with a 1. This means that the contribution is
     #          given relative to the first profiled individual.
     #   degradation: relative degradation from each profiled individual in this
-    #                scenario.
+    #                hypothesis
     #   localAdjustment: a scalar floating point value.
     #   tvedebrink: a scalar floating point value.
     #   dropout: the dropout rate for each replicate.
     #   ...: Any other parameter, e.g. for penalty functions. 
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
-    #          scenario.
-    if(length(rcont) + 1 == scenario$nUnknowns + ncol(cons$dropoutPresence)) 
+    #          hypothesis
+    if(length(rcont) + 1 == hypothesis$nUnknowns + ncol(cons$dropoutPresence)) 
       rcont = c(1, rcont)
-    if(length(rcont) != scenario$nUnknowns + ncol(cons$dropoutPresence))
+    if(length(rcont) != hypothesis$nUnknowns + ncol(cons$dropoutPresence))
       stop(sprintf("rcont should be %d long.",
-                   scenario$nUnknowns + ncol(cons$dropoutPresence)))
-    if(length(degradation) != scenario$nUnknowns + ncol(cons$dropoutPresence))
+                   hypothesis$nUnknowns + ncol(cons$dropoutPresence)))
+    if(length(degradation) != hypothesis$nUnknowns +
+                              ncol(cons$dropoutPresence))
       stop(sprintf("degradation should be %d long.",
-                   scenario$nUnknowns + ncol(cons$dropoutPresence)))
+                   hypothesis$nUnknowns + ncol(cons$dropoutPresence)))
     if(length(dropout) != length(cons$missingReps))
       stop(sprintf("dropout should be %d long.", ncol(cons$dropoutPresence)))
     if(any(rcont < 0)) stop("found negative relative contribution.")
     if(any(degradation < 0)) stop("found negative degradation parameter.")
-    if(scenario$doDropin && dropin < 0) 
+    if(hypothesis$doDropin && dropin < 0) 
       stop("Dropin rate should be between 0 and 1 (included).")
     if(tvedebrink >= 0)
       stop("Tvedebrink parameter cannot be positive or null.")
@@ -173,8 +175,8 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
     if(localAdjustment < 0) stop("localAdjustment must be positive.")
 
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,
-                                scenario$alleleDb[, 2], cons$genotypes,
-                                scenario$nUnknowns > 0)
+                                hypothesis$alleleDb[, 2], cons$genotypes,
+                                hypothesis$nUnknowns > 0)
     # Goes to C to do exponentiation. This is quite expensive an operation.
     # Doing it in C is only interesting for larger matrices and when compiled
     # with OpenMP. 
@@ -209,7 +211,7 @@ create.likelihood.per.locus <- function(scenario, addAttr=FALSE) {
   }
 
   if(addAttr) {
-    attr(result.function, "scenario") <- scenario
+    attr(result.function, "hypothesis") <- hypothesis
     attr(result.function, "constructs") <- cons
   }
   result.function
@@ -240,12 +242,12 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   return(result)
 }
 
-# Creates a likelihood function from the input scenario.
+# Creates a likelihood function from the input hypothesis
 # Documentation is in man directory.
-create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {
+create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
 
-  scenario = add.args.to.scenario(scenario, ...)
-  locusCentric = transform.to.locus.centric(scenario)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
+  locusCentric = transform.to.locus.centric(hypothesis)
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
 
@@ -273,18 +275,18 @@ create.likelihood.vectors <- function(scenario, addAttr=FALSE, ...) {
     list(objectives=objectives, penalties=pens)
   }
   if(addAttr) {
-    attr(likelihood.vectors, "scenario") <- scenario
+    attr(likelihood.vectors, "hypothesis") <- hypothesis
     attr(likelihood.vectors, "functions") <- functions
   }
   return(likelihood.vectors)
 }
 
 
-# Creates a likelihood function from the input scenario.
+# Creates a likelihood function from the input hypothesis
 # Documentation is in man directory.
-create.likelihood <- function(scenario, addAttr=FALSE, ...) {
+create.likelihood <- function(hypothesis, addAttr=FALSE, ...) {
 
-  vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
+  vecfunc <- create.likelihood.vectors(hypothesis, addAttr, ...)
 
   likelihood.scalar <- function(...) { 
     result <- vecfunc(...) 
@@ -295,11 +297,11 @@ create.likelihood <- function(scenario, addAttr=FALSE, ...) {
   return(likelihood.scalar)
 }
 
-# Creates a likelihood function from the input scenario.
+# Creates a likelihood function from the input hypothesis
 # Documentation is in man directory.
-create.likelihood.log <- function(scenario, addAttr=FALSE, ...) {
+create.likelihood.log <- function(hypothesis, addAttr=FALSE, ...) {
 
-  vecfunc <- create.likelihood.vectors(scenario, addAttr, ...)
+  vecfunc <- create.likelihood.vectors(hypothesis, addAttr, ...)
   likelihood.log <- function(...) { 
     result <- vecfunc(...) 
     sum(log(result$objectives)) + sum(log(result$penalties))

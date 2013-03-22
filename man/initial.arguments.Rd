@@ -1,10 +1,10 @@
 \name{initial.arguments} 
 \alias{initial.arguments} 
 \title{likeLTD::initial.arguments} 
-\usage{initial.arguments(scenario, \dots)}
+\usage{initial.arguments(hypothesis, \dots)}
 \arguments{
-  \item{scenario}{Scenario from which objective function was obtained.}
-  \item{\dots}{Any parameter to modify the scenario.}
+  \item{hypothesis}{Hypothesis from which objective function was obtained.}
+  \item{\dots}{Any parameter to modify the hypothesis.}
 }
 \value{
   \item{rcont}{Vector of relative contributions. The relative contribution of

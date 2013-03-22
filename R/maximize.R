@@ -26,19 +26,19 @@ estimates <- function(indiv, csp) {
 }
 
 # Best(?) guess for initial arguments. 
-initial.arguments <- function(scenario, ...) {
+initial.arguments <- function(hypothesis, ...) {
   # Best(?) guess for initial arguments. 
   #
   # Parameters: 
-  #    scenario: Scenario for which to guess nuisance paramters. 
+  #    hypothesis: Hypothesis for which to guess nuisance paramters. 
 
-  scenario = add.args.to.scenario(scenario, ...)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
   # -1 because relative to first.
-  nrcont          = nrow(scenario$dropoutProfs) + scenario$nUnknowns - 1
+  nrcont          = nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns - 1
   rcont           = rep(1, nrcont)
   degradation     = rep(3e-3, nrcont + 1)
-  localAdjustment = rep(1, ncol(scenario$dropoutProfs))
-  dropout         = rep(0.5, nrow(scenario$cspProfile))
+  localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
+  dropout         = rep(0.5, nrow(hypothesis$cspProfile))
 
   list(rcont           = rcont,
        degradation     = degradation,
@@ -94,7 +94,7 @@ lower.bounds = function(arguments, zero=1e-8, logDegradation=TRUE) {
 }
 
 
-optimization.params <- function(scenario, verbose=TRUE, fixed=NULL,
+optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-8, ...) {
   # Creates the optimization parameters for optim.
@@ -102,7 +102,7 @@ optimization.params <- function(scenario, verbose=TRUE, fixed=NULL,
   # optim is the optimization function from R's stat package.
   # 
   # Parameters:
-  #    scenario: Scenario for which to create the objective function.
+  #    hypothesis: Hypothesis for which to create the objective function.
   #    verbose: Wether to print each time the likelihood is computed.
   #    fixed: List of arguments to keep fixed.
   #    logObjective: Whether to optimize the log of the likelihood.
@@ -112,10 +112,10 @@ optimization.params <- function(scenario, verbose=TRUE, fixed=NULL,
   #    zero: An epsilonic number used to indicate lower and upper bounds which
   #          should be excluded.
 
-  scenario = add.args.to.scenario(scenario, ...)
-  objective = create.likelihood.vectors(scenario, ...)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
+  objective = create.likelihood.vectors(hypothesis, ...)
 
-  if(is.null(arguments)) arguments = initial.arguments(scenario)
+  if(is.null(arguments)) arguments = initial.arguments(hypothesis)
   if(logDegradation) arguments$degradation = log10(arguments$degradation)
   
   template = arguments

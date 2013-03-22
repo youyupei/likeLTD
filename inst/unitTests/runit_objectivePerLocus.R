@@ -88,13 +88,13 @@ test_TH01.regression.with.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.scenario" %in% ls(.GlobalEnv))
-    defense.scenario <- getFromNamespace("defense.scenario", "likeLTD")
-  scenario = do.call(defense.scenario, args)
+  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
+    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
+  hypothesis = do.call(defense.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
-  scenarioTH01 = transform.to.locus.centric(scenario)$TH01
+  hypothesisTH01 = transform.to.locus.centric(hypothesis)$TH01
   
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                            1.000000000000000, 0.543478260869565),
@@ -107,9 +107,9 @@ test_TH01.regression.with.dropin = svTest(function() {
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  scenarioTH01$nUnknowns = 2
-  scenarioTH01$doDropin = TRUE
-  objective.function <- create.likelihood.per.locus(scenarioTH01)
+  hypothesisTH01$nUnknowns = 2
+  hypothesisTH01$doDropin = TRUE
+  objective.function <- create.likelihood.per.locus(hypothesisTH01)
 
   checkEquals(do.call(objective.function, arguments), 0.0204764693571788)
   arguments$degradation = rep(2e-2, 4)
@@ -133,16 +133,16 @@ test_TH01.regression.no.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.scenario" %in% ls(.GlobalEnv))
-    defense.scenario <- getFromNamespace("defense.scenario", "likeLTD")
-  scenario = do.call(defense.scenario, args)
+  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
+    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
+  hypothesis = do.call(defense.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
-  scenarioTH01 = transform.to.locus.centric(scenario)$TH01
+  hypothesisTH01 = transform.to.locus.centric(hypothesis)$TH01
 
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                            1.000000000000000, 0.543478260869565), 
@@ -152,9 +152,9 @@ test_TH01.regression.no.dropin = svTest(function() {
                    tvedebrink=-4.35,
                    dropout=c(0.175, 0.105) )
 
-  scenarioTH01$nUnknowns = 2
-  scenarioTH01$doDropin = FALSE
-  objective.function <- create.likelihood.per.locus(scenarioTH01)
+  hypothesisTH01$nUnknowns = 2
+  hypothesisTH01$doDropin = FALSE
+  objective.function <- create.likelihood.per.locus(hypothesisTH01)
 
   checkEquals(do.call(objective.function, arguments), 0.0194512081797547)
   arguments$degradation = rep(2e-2, 4)
@@ -177,20 +177,20 @@ test_D18.regression.with.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.scenario" %in% ls(.GlobalEnv))
-    defense.scenario <- getFromNamespace("defense.scenario", "likeLTD")
-  scenario = do.call(defense.scenario, args)
+  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
+    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
+  hypothesis = do.call(defense.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
-  scenarioD18 = transform.to.locus.centric(scenario)$D18
+  hypothesisD18 = transform.to.locus.centric(hypothesis)$D18
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
     create.likelihood.per.locus <-
       getFromNamespace("create.likelihood.per.locus", "likeLTD")
 
   
-  scenarioD18$nUnknowns = 0
-  scenarioD18$doDropin = TRUE
+  hypothesisD18$nUnknowns = 0
+  hypothesisD18$doDropin = TRUE
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348,
                            1.000000000000000, 0.543478260869565),
                    dropin=1e0,
@@ -198,7 +198,7 @@ test_D18.regression.with.dropin = svTest(function() {
                    localAdjustment=1,
                    tvedebrink=-4.35,
                    dropout=c(0.175, 0.105) )
-  objective.function <- create.likelihood.per.locus(scenarioD18)
+  objective.function <- create.likelihood.per.locus(hypothesisD18)
 
   arguments$rcont=c(0.923913043478261, 0.565217391304348)
   arguments$degradation=rep(3e-3, 2)
@@ -208,8 +208,8 @@ test_D18.regression.with.dropin = svTest(function() {
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047)
   checkEquals(do.call(objective.function, arguments), 5.13626195539709e-05)
 
-  scenarioD18$nUnknowns = 1
-  objective.function <- create.likelihood.per.locus(scenarioD18)
+  hypothesisD18$nUnknowns = 1
+  objective.function <- create.likelihood.per.locus(hypothesisD18)
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
                             0.00216652022387600) 
   arguments$degradation = rep(3e-3, 3)
@@ -221,8 +221,8 @@ test_D18.regression.with.dropin = svTest(function() {
                             0.00216652022387600) 
   checkEquals(do.call(objective.function, arguments), 3.77630662967064e-05)
 
-  scenarioD18$nUnknowns = 2
-  objective.function <- create.likelihood.per.locus(scenarioD18)
+  hypothesisD18$nUnknowns = 2
+  objective.function <- create.likelihood.per.locus(hypothesisD18)
   arguments$degradation = c(0.00723217060006922, 0.00569441925951047,
                             0.00216652022387600, 0.00131485405088635)
   arguments$rcont=c(0.923913043478261, 0.565217391304348, 1e0,

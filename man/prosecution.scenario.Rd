@@ -1,7 +1,7 @@
-\name{prosecution.scenario}
-\alias{prosecution.scenario}
-\title{likeLTD::prosecution.scenario}
-\usage{prosecution.scenario(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
+\name{prosecution.hypothesis}
+\alias{prosecution.hypothesis}
+\title{likeLTD::prosecution.hypothesis}
+\usage{prosecution.hypothesis(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
                             adj=1e0, fst=0.02, databaseFile=NULL, ...)
 }
 \arguments{
@@ -17,10 +17,10 @@
   \item{...}{Other parameters to determine how to perform calculations, e.g.
              \code{doDropin}}
 }
-\value{A list of named input parameters, or scenario, suitable for the
+\value{A list of named input parameters, or hypothesis, suitable for the
 prosecution.}
 \description{Helper function to create the input for the prosecution.}
 \details{It loads the CSP, known profiles, and allele database from file. It
 makes sure the relatedness factor is zero.
 } 
-\seealso{defense.scenario}
+\seealso{defense.hypothesis}

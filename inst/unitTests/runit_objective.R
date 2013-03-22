@@ -47,12 +47,12 @@ test_regression1 <- svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.scenario" %in% ls(.GlobalEnv))
-    defense.scenario <- getFromNamespace("defense.scenario", "likeLTD")
-  scenario = do.call(defense.scenario, args)
-  scenario$nUnknowns = 0
+  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
+    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
+  hypothesis = do.call(defense.hypothesis, args)
+  hypothesis$nUnknowns = 0
 
-  likelihood <- create.likelihood.vectors(scenario)
+  likelihood <- create.likelihood.vectors(hypothesis)
   objectives = c(3.10250372325746e-04, 1.17224578453062e-02,
                  4.76863464507366e-05, 4.29822197384531e-06,
                  1.76350988087800e-03, 1.43444739873622e-08,
@@ -91,10 +91,10 @@ test_regression.zerounknown <- svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  defenseScenario = do.call(defense.scenario, args)
-  prosecutionScenario = do.call(prosecution.scenario, args)
+  defenseHypothesis = do.call(defense.hypothesis, args)
+  prosecutionHypothesis = do.call(prosecution.hypothesis, args)
 
-  likelihood <- create.likelihood.vectors(prosecutionScenario)
+  likelihood <- create.likelihood.vectors(prosecutionHypothesis)
   arguments = list(rcont=c(1.0, 0.923913043478261, 0.565217391304348),
                    dropin = 0.543478260869565,
                    degradation=c(3e-3, 3e-3, 3e-3),
@@ -112,7 +112,7 @@ test_regression.zerounknown <- svTest(function() {
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), 5.82387768745086e-25)
 
-  likelihood <- create.likelihood.vectors(defenseScenario)
+  likelihood <- create.likelihood.vectors(defenseHypothesis)
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0),
                    dropin = 0.543478260869565,
                    degradation=c(3e-3, 3e-3, 3e-3),
@@ -144,10 +144,10 @@ test_regression.oneunknown <- svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  defenseScenario = do.call(defense.scenario, args)
-  prosecutionScenario = do.call(prosecution.scenario, args)
+  defenseHypothesis = do.call(defense.hypothesis, args)
+  prosecutionHypothesis = do.call(prosecution.hypothesis, args)
 
-  likelihood <- create.likelihood.vectors(prosecutionScenario)
+  likelihood <- create.likelihood.vectors(prosecutionHypothesis)
   arguments = list(rcont=c(1.0, 0.923913043478261, 0.565217391304348,
                            0.543478260869565),
                    dropin = 0.108695652173913,
@@ -165,7 +165,7 @@ test_regression.oneunknown <- svTest(function() {
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), 1.9762409429182e-25)
 
-  likelihood <- create.likelihood.vectors(defenseScenario)
+  likelihood <- create.likelihood.vectors(defenseHypothesis)
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0,
                            0.543478260869565),
                    dropin = 0.108695652173913,
@@ -198,10 +198,10 @@ test_regression.relatedness <- svTest(function() {
     fst          = 0.02,
     relatedness  = c(1, 1)/4
   )
-  defenseScenario = do.call(defense.scenario, args)
-  prosecutionScenario = do.call(prosecution.scenario, args)
+  defenseHypothesis = do.call(defense.hypothesis, args)
+  prosecutionHypothesis = do.call(prosecution.hypothesis, args)
 
-  likelihood <- create.likelihood.vectors(prosecutionScenario)
+  likelihood <- create.likelihood.vectors(prosecutionHypothesis)
   arguments = list(rcont=c(1.0, 0.923913043478261, 0.565217391304348,
                            0.543478260869565),
                    dropin = 0.108695652173913,
@@ -219,7 +219,7 @@ test_regression.relatedness <- svTest(function() {
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), 1.9762409429182e-25)
 
-  likelihood <- create.likelihood.vectors(defenseScenario)
+  likelihood <- create.likelihood.vectors(defenseHypothesis)
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0,
                            0.543478260869565),
                    dropin = 0.108695652173913,
@@ -237,8 +237,8 @@ test_regression.relatedness <- svTest(function() {
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), 5.75589320779353e-25)
 
-  defenseScenario$relatedness = c(0.5, 0.75)/4
-  likelihood <- create.likelihood.vectors(defenseScenario)
+  defenseHypothesis$relatedness = c(0.5, 0.75)/4
+  likelihood <- create.likelihood.vectors(defenseHypothesis)
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0,
                            0.543478260869565),
                    dropin = 0.108695652173913,

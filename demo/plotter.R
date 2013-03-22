@@ -17,20 +17,20 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create scenarios for defense
-defenseScenario = do.call(defense.scenario, args)
+# Create hypothesis for defense
+defenseHyp = do.call(defense.hypothesis, args)
 
 # Import private functions.
 upper.bounds <- getFromNamespace("upper.bounds", "likeLTD")
 lower.bounds <- getFromNamespace("lower.bounds", "likeLTD")
 
-plotme2d <- function(scenario, which=c(1, 2), large=100, N=20, arguments=NULL,
+plotme2d <- function(hypothesis, which=c(1, 2), large=100, N=20, arguments=NULL,
                      x=NULL, y=NULL) {
 
   # Create objective function
-  objective <- create.likelihood.log(scenario, verbose=FALSE)
+  objective <- create.likelihood.log(hypothesis, verbose=FALSE)
   # This gives us the shape of the arguments.
-  if(is.null(arguments)) arguments <- initial.arguments(scenario)
+  if(is.null(arguments)) arguments <- initial.arguments(hypothesis)
   # Figure out the bounds. 
   upper <- upper.bounds(arguments)
   lower <- lower.bounds(arguments)
@@ -64,8 +64,8 @@ plotme2d <- function(scenario, which=c(1, 2), large=100, N=20, arguments=NULL,
 
   amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))),
                     z=c(map))
-  title = sprintf("nUnknowns=%d, dropin=%d", scenario$nUnknowns,
-                  scenario$doDropin)
+  title = sprintf("nUnknowns=%d, dropin=%d", hypothesis$nUnknowns,
+                  hypothesis$doDropin)
   ggplot(amap, aes(x, y, z=z))                      +
      xlab(names(unlist(arguments))[[which[[1]]]])   +
      ylab(names(unlist(arguments))[[which[[2]]]])   +

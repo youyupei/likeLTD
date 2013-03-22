@@ -1,11 +1,11 @@
 \name{optimization.params} 
 \alias{optimization.params} 
 \title{likeLTD::optimization.params} 
-\usage{optimization.params(scenario, verbose=TRUE, fixed=NULL,
+\usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=1e-8, \dots)}
 \arguments{
-  \item{scenario}{Scenario from which to perform maximization}
+  \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
   function is called}
   \item{fixed}{Names of the parameters to keep fixed}
@@ -17,7 +17,7 @@
   \code{NULL}, calls \code{initial.arguments}.}
   \item{zero}{Epsilon to indicate lower and upper bounds as \eqn{\alpha \pm
   \epsilon}{alpha +/- epsilon} that exclude the bound itself}
-  \item{\dots}{Any named parameter to modify the scenario, e.g.
+  \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
 \value{
@@ -31,9 +31,9 @@
 }
 \description{Creates a list of parameters to use with \code{stats::optim}.}
 \details{
-  Starting from the scenario, it creates an list of arguments which can be
+  Starting from the hypothesis, it creates an list of arguments which can be
   applied to \code{stats::optim} to obtain the maximum (log-)likelihood of that
-  scenario. By default, it provides the input for using the \dQuote{L-BFGS-B} of
+  hypothesis. By default, it provides the input for using the \dQuote{L-BFGS-B} of
   \code{optim}, including the upper and lower bounds of the nuisance parameter. 
 
   It accepts a number of customization:

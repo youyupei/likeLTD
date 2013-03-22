@@ -18,15 +18,15 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create scenarios for defense and prosecution.
-prosecutionScenario = do.call(prosecution.scenario, args)
-defenseScenario     = do.call(defense.scenario, args)
+# Create hypothesis for defense and prosecution.
+prosecutionHyp = do.call(prosecution.hypothesis, args)
+defenseHyp     = do.call(defense.hypothesis, args)
 
-bench.any <- function(scenario, times=100L, ...) {
+bench.any <- function(hypothesis, times=100L, ...) {
 
-  objective <- create.likelihood.vectors(scenario, addAttr=TRUE, ...)
+  objective <- create.likelihood.vectors(hypothesis, addAttr=TRUE, ...)
   funcs <- attr(objective, "functions") 
-  arguments <- initial.arguments(scenario, ...)
+  arguments <- initial.arguments(hypothesis, ...)
   arguments$localAdjustment = 1
   microbenchmark( D3=do.call(funcs$D3, arguments), 
                   vWA=do.call(funcs$vWA, arguments), 
@@ -40,8 +40,8 @@ bench.any <- function(scenario, times=100L, ...) {
                   FGA=do.call(funcs$FGA, arguments), times=times )
 
 }
-bench.prosecution <- function(...) bench.any(prosecutionScenario, ...)
-bench.defense <- function(...) bench.any(defenseScenario, ...)
+bench.prosecution <- function(...) bench.any(prosecutionHyp, ...)
+bench.defense <- function(...) bench.any(defenseHyp, ...)
 
 result = list() 
 result[["zero"]] = bench.prosecution(nUnknowns=0, doDropin=TRUE)

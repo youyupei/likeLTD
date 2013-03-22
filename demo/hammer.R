@@ -18,18 +18,17 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create scenarios for defense and prosecution.
-prosecutionScenario = do.call(prosecution.scenario, args)
-defenseScenario     = do.call(defense.scenario, args)
+# Create hypothesis for defense and prosecution.
+prosecutionHyp = do.call(prosecution.hypothesis, args)
+defenseHyp     = do.call(defense.hypothesis, args)
 
-# Create optimization parameters, with some modification to scenario arguments.
-# nUnknowns is modified here and now. It does not need to be, but it can be. 
-# The somethingParams values contain the objective functions and optimization
-# parameters.
-prosecutionParams <- optimization.params(prosecutionScenario, verbose=FALSE,
+# Create optimization parameters, with some modification to hypothesis
+# arguments. nUnknowns is modified here and now. It does not need to be, but it
+# can be. The somethingParams values contain the objective functions and
+# optimization parameters.
+prosecutionParams <- optimization.params(prosecutionHyp, verbose=TRUE,
                                          nUnknowns=1) 
-defenseParams <- optimization.params(defenseScenario, verbose=FALSE,
-                                     nUnknowns=2)
+defenseParams <- optimization.params(defenseHyp, verbose=FALSE, nUnknowns=2)
 
 
 # Now perform actual optimization.

@@ -1,4 +1,4 @@
-probabilities.function <- function(scenario, cons, doR=FALSE) {
+probabilities.function <- function(hypothesis, cons, doR=FALSE) {
   # Creates a probability function.
   #
   # The probability function computes all probabilities associated with a
@@ -7,7 +7,7 @@ probabilities.function <- function(scenario, cons, doR=FALSE) {
   # In practice, this function makes is easy to substitute C vs R
   # implementations, as well as specialize the C implementations. 
 
-  if((!scenario$doDropin) && !doR) {
+  if((!hypothesis$doDropin) && !doR) {
     probabilities.no.dropin.C <- function(res, vDoseDropout, csp, unc, ...) {
         if(length(res) != ncol(vDoseDropout))
           stop("output vector and vDoseDropout have incompatible sizes.")
@@ -21,7 +21,7 @@ probabilities.function <- function(scenario, cons, doR=FALSE) {
               cons$zeroAll, PACKAGE="likeLTD") 
     }
     return(probabilities.no.dropin.C) 
-  } else if(scenario$doDropin && !doR) {
+  } else if(hypothesis$doDropin && !doR) {
     probabilities.with.dropin.C <- function(res, vDoseDropout, csp, unc, rate) {
        if(length(res) != ncol(vDoseDropout))
          stop("output vector and vDoseDropout have incompatible sizes.")
@@ -43,7 +43,7 @@ probabilities.function <- function(scenario, cons, doR=FALSE) {
      res <- res                                             *
             selective.col.prod(!csp & !unc, vDoseDropout)   *
             selective.col.prod(csp, 1 - vDoseDropout)  
-    if(scenario$doDropin) 
+    if(hypothesis$doDropin) 
       res <- res                                                           *
              selective.col.prod(csp & cons$zeroAll, rate * cons$freqMat)   *
              selective.col.prod(!csp & !unc & cons$zeroAll,

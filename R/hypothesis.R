@@ -87,17 +87,17 @@ missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
   alleleDb
 }
 
-transform.to.locus.centric = function(scenario) {
-  # Transform scenarios to locus centric modes.
+transform.to.locus.centric = function(hypothesis) {
+  # Transform hypothesis to locus centric modes.
   # 
   # This means we reorganise the data to be in lists of the loci.
   result = list()
-  for(locus in colnames(scenario$cspProfile)) {
+  for(locus in colnames(hypothesis$cspProfile)) {
     # Value of the resulting list for a given locus 
     locusValue = list()
     # Loop over all items in original list.
-    for(key in names(scenario)) {
-      value = scenario[[key]]
+    for(key in names(hypothesis)) {
+      value = hypothesis[[key]]
       # If a matrix and locus is either in rows or columns, then add only locus
       # part of the matrix. 
       # If a list, then add only the locus specific part of the list.
@@ -119,10 +119,10 @@ transform.to.locus.centric = function(scenario) {
 }
 
 
-agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
+agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
                               queriedProfile, alleleDb, ethnic='EA1', adj=1e0,
                               fst=0.02) {
-  # Helper function to figure out the input of most scenarios.
+  # Helper function to figure out the input of most hypothesiss.
   #
   # Basically, this groups operations that are done the same by defense and
   # prosection. 
@@ -151,9 +151,9 @@ agnostic.scenario <- function(cspProfile, uncProfile, knownProfiles,
        queriedProfile=queriedProfile[1, colnames(cspProfile)])
 }
 
-# Creates prosecution scenario.
+# Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, adj=1e0,
+prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, adj=1e0,
                                  fst=0.02, databaseFile=NULL, ...) {
 
   alleleDb = load.allele.database(databaseFile)
@@ -165,9 +165,9 @@ prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, 
   queriedProfile = knownProfiles[unlist(knownProfiles[, "queried"]), ,
                                   drop=FALSE]
   
-  result = agnostic.scenario(cspProfile, uncProfile, knownProfiles,
-                             queriedProfile, alleleDb, ethnic=ethnic,
-                             adj=adj, fst=fst)
+  result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
+                               queriedProfile, alleleDb, ethnic=ethnic,
+                               adj=adj, fst=fst)
 
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns
@@ -175,9 +175,9 @@ prosecution.scenario <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, 
   result
 }
 
-# Creates defense scenario.
+# Creates defense hypothesis
 # Documentation is in man directory.
-defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
+defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                              adj=1e0, fst=0.02, databaseFile=NULL, ...) {
   
   alleleDb = load.allele.database(databaseFile)
@@ -192,7 +192,7 @@ defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   knownProfiles = knownProfiles[!unlist(knownProfiles[, "queried"]), ,
                                 drop=FALSE]
   
-  result = agnostic.scenario(cspProfile, uncProfile, knownProfiles,
+  result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                              queriedProfile, alleleDb, ethnic=ethnic,
                              adj=adj, fst=fst)
 
@@ -202,21 +202,21 @@ defense.scenario <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
 }
 
 
-add.args.to.scenario <- function(scenario, ...) {
-  # Updates scenario with input arguments.
+add.args.to.hypothesis <- function(hypothesis, ...) {
+  # Updates hypothesis with input arguments.
   #
-  # Convenience function to easily modify scenarios when creating the objective
+  # Convenience function to easily modify hypothesis when creating the objective
   # functions. 
   #
   # Parameters:
-  #   scenario: The scenario to modify.
-  #   ...: Named parameters to add/update the scenario.
-  # Returns: The modified scenario.  
+  #   hypothesis: The hypothesis to modify.
+  #   ...: Named parameters to add/update the hypothesis
+  # Returns: The modified hypothesis  
 
   args = list(...)
-  argnames = intersect(names(scenario), names(args))
-  if(length(argnames)) scenario[argnames] = args[argnames]
-  argnames = setdiff(names(args), names(scenario))
-  if(length(argnames)) scenario = append(scenario, args[argnames])
-  scenario
+  argnames = intersect(names(hypothesis), names(args))
+  if(length(argnames)) hypothesis[argnames] = args[argnames]
+  argnames = setdiff(names(args), names(hypothesis))
+  if(length(argnames)) hypothesis = append(hypothesis, args[argnames])
+  hypothesis
 }

@@ -38,7 +38,7 @@ extern "C" {
 
   //! \brief factors in relatedness.
   //! \details There are only four possible factors corresponding to four
-  //!          possible scenarios: 
+  //!          possible hypothesis: 
   //!            
   //!            (i) neither queried alleles are present.
   //!            (ii) first queried allele is in first unknown contributor, 
