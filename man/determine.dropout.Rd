@@ -3,7 +3,7 @@
 \title{determine.dropout}
 \usage{determine.dropout(knownProfiles, cspProfile)}
 \arguments{
-  \item{knownProfiles}{A matrix containing the known profiles.}
+  \item{knownProfiles}{A matrix containing the profiles to examin.}
   \item{cspProfile}{A matrix containing the crime scene profile.}
 }
 \value{ A list with one element per individual. Each is True if that individual

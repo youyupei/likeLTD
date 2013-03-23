@@ -140,8 +140,10 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     # Parameters:
     #   rcont: relative contribution from each profiled individual and unknown
     #          contributor in this hypothesis If it is one less than that, then
-    #          rcont is prefixed with a 1. This means that the contribution is
-    #          given relative to the first profiled individual.
+    #          an additional 1 is inserted at a position given by
+    #          hypothesis$refIndiv. In general, this means either the queried
+    #          individual (if subject to dropout and prosecution hypothesis) or
+    #          the first individual subject to droput is the reference individual.
     #   degradation: relative degradation from each profiled individual in this
     #                hypothesis
     #   localAdjustment: a scalar floating point value.
@@ -151,8 +153,13 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          hypothesis
-    if(length(rcont) + 1 == hypothesis$nUnknowns + ncol(cons$dropoutPresence)) 
-      rcont = c(1, rcont)
+    if(length(rcont) + 1 == hypothesis$nUnknowns
+                            + ncol(cons$dropoutPresence)) {
+      if(hypothesis$refIndiv == 1) rcont = c(1, rcont)
+      else if(hypothesis$refIndiv <= length(rcont)) rcont = c(rcont, 1)
+      else rcont = c(rcont[1:hypothesis$refIndiv], 1,
+                     rcont[hypothesis$refIndiv+1:length(rcont)])
+    }
     if(length(rcont) != hypothesis$nUnknowns + ncol(cons$dropoutPresence))
       stop(sprintf("rcont should be %d long.",
                    hypothesis$nUnknowns + ncol(cons$dropoutPresence)))

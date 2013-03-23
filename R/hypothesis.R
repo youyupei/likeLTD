@@ -120,8 +120,8 @@ transform.to.locus.centric = function(hypothesis) {
 
 
 agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
-                              queriedProfile, alleleDb, ethnic='EA1', adj=1e0,
-                              fst=0.02) {
+                                queriedProfile, alleleDb, ethnic='EA1',
+                                adj=1e0, fst=0.02) {
   # Helper function to figure out the input of most hypothesiss.
   #
   # Basically, this groups operations that are done the same by defense and
@@ -172,6 +172,12 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns
   result[["relatedness"]] = c(0, 0)
+  # If queried profile is subject to dropout, then it should be the reference
+  # individual. Otherwise, the first individual subject to dropout will be set
+  # as the reference individual.
+  result[["refIndiv"]] = 1
+  if(any(determine.dropout(queriedProfile, cspProfile)))
+    result[["refIndiv"]] = which(unlist(knownProfiles[, "queried"]))[1]
   result
 }
 
@@ -198,6 +204,7 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
 
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
+  result[["refIndiv"]] = 1
   result
 }
 

@@ -24,8 +24,11 @@
                  known profiles, and \eqn{u} is the number of unknown
                  contributors. Since the input is for \emph{relative}
                  contributions, there are two possible sizes. In the first
-                 case, the contribution of the first known profile is kept to
-                 1. In the second case, the contributions are used for all
+                 case, the contribution of a reference individual is kept to 1.
+                 In general, the reference individual will be the queried
+                 individual (if subjecto dropout and in prosecution hypothesis)
+                 or the first individual subject to dropout.
+                 In the second case, the contributions are used for all
                  known and unknown contributors as given.  It is for the user
                  to know what she is doing.  \code{rcont} should always be
                  positive.}
