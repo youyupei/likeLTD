@@ -18,7 +18,7 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create hypothesis for defense and prosecution.
+# Create hypothesis for defense and prosecution.
 prosecutionHyp = do.call(prosecution.hypothesis, args)
 defenseHyp     = do.call(defense.hypothesis, args)
 

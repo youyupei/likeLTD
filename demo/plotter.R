@@ -17,7 +17,7 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create hypothesis for defense
+# Create hypothesis for defense
 defenseHyp = do.call(defense.hypothesis, args)
 
 # Import private functions.
@@ -75,5 +75,5 @@ plotme2d <- function(hypothesis, which=c(1, 2), large=100, N=20, arguments=NULL,
 }
 
 # plot_all2d.log(which=c(1,3), nUnknowns=1, x=(1:20/10.0), y=(1:20/10.0)) + 
-#          geom_tile(aes(fill=z))                                         + 
+#          geom_tile(aes(fill=z))                                         + 
 #          stat_contour()

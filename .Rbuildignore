@@ -1,9 +1,5 @@
-R/GUI-optimised.R
-R/control-functions.R
-R/control.R
 R/output-report.R
 R/continue.R
-R/demo/trial.R
-R/demo/old.function.R
-R/demo/timing.R
-tests/
+demo/trial.R
+demo/old.function.R
+demo/old.timings.R

@@ -1,1 +1,4 @@
 allele_report Creates allele report PDF
+timings       Times the likelihood functions per locus
+hammer        Simple optimization of the likelihood
+plotter       Plots likelihood from Hammer case
