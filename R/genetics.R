@@ -73,6 +73,7 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
                 fst=fst))
 }
 
+# R version of computing all genotypes per locus.
 all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
   # All compatible agreggate profiles for a given locus.
   #
@@ -101,34 +102,21 @@ all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
                  perms=nContribPerms) 
   do.call(rbind, rows)
 }
-all.genotypes.per.locus = all.genotypes.per.locus.R
-# if(!require("inline")) all.genotypes.per.locus = all.genotypes.per.locus.R
+# Computes all possible genetic make-ups for the set of
+# unprofiledcontributors. 
+all.genotypes.per.locus <- function(nAlleles, nContrib=1) {
+  if(nAlleles < 0) stop("Negative or null number of alleles.")
+  if(nContrib < 0) stop("Negative number of contributors.")
+  if(nContrib == 0 || nAlleles == 0) return(matrix(nrow=0, ncol=0))
+  nContrib = as.integer(nContrib)
+  a = t(combinations(nAlleles, 2, repeats.allowed=TRUE))
+  if(is.null(nContrib) || is.null(a)) stop("something went very wrong.")
+  .Call(.cpp.allGenotypesPerLocus, nContrib, a, PACKAGE="likeLTD")
+}
 
-compatible.genotypes = function(cspPresence, profPresence, missingReps,
-                                alleleNames, nUnknowns, dropin) {
-  # Profiles of unknown contributors for given locus.
-  #
-  # Figures out all compatible profiles of n contributors, including dependance
-  # on doprin.
-  #
-  # Parameters:
-  #   cspPresence: Crime Scene Profile for given locus. This should be a matrix
-  #             where rows are replicas and contributors, columns are alleles
-  #             for the given locus, and the input is TRUE or FALSE and
-  #             indicates the presence of that particular allele.
-  #   profPresence: Known profiles for given locus. Same type of format as
-  #              cspLocus.
-  #   alleleNames: Name of the alleles, e.g. columns of the previous two.
-  #   nUnknowns: number of unknown contributors. 
-  #   dropin: TRUE if modelling drop-ins.
-  #
-  # Return: A m by (2n) matrix where the colums (grouped by twos) correspond to
-  #         contributors, and each row is their potential contribution to the
-  #         CSP.
-  #
-  # Note: If nUnknowns == 0 and dropin == TRUE is equivalent to nUnknowns == 1
-  #       and dropin == TRUE. 
-
+# Profiles of unknown contributors for given locus.
+compatible.genotypes = function(cspPresence, profPresence, alleleNames,
+                                nUnknowns, dropin=FALSE, missingReps=NULL) {
   
   # Catch early. Shouldn't be a problem here, but will be at some point. 
   if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
@@ -146,6 +134,7 @@ compatible.genotypes = function(cspPresence, profPresence, missingReps,
   # account for the alleles in the CSP that are not in the known profile.
   # Might be able to return early here also.
   # Reduce matrices to a single logical vector
+  if(is.null(missingReps)) missingReps = rep(TRUE, nrow(cspPresence))
   cspPresence  = rowSums(cspPresence[, c(!missingReps), drop=FALSE]) > 0
   profPresence = rowSums(profPresence) > 0
 

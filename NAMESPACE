@@ -6,8 +6,9 @@ export(allele.report)
 export(read.csp.profile)
 export(read.unc.profile)
 export(read.known.profiles)
-export(defense.hypothesis)
+export(compatible.genotypes)
 
+export(defense.hypothesis)
 export(prosecution.hypothesis)
 export(determine.dropout)
 

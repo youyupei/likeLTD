@@ -198,9 +198,11 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
   for(int j=0; j < ncol; ++j)
   {
     int const v = j * nAlleles;
+    // copies zeros from known profiles to thos column
     memcpy((void*) (out_ptr + v), (void*) known_ptr, cpysize);
+    // now sets additional alleles to zero
     for(int i=j*nrow; i < (j + 1) * nrow; ++i)
-      out_ptr[v + *(geno_ptr + i) - 1] = 0;
+      out_ptr[v + geno_ptr[i] - 1] = 0;
   }
 
 # ifdef OPENMP_STACK
