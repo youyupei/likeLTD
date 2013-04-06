@@ -9,8 +9,6 @@ likeLTD.path <- path.package('likeLTD')
 # Case we are going to be looking at.
 caseName = 'hammer'
 datapath <- file.path(file.path(likeLTD.path, 'extdata'), caseName)
-# Construct input: frequency file.
-frequencyFile = NULL #file.path(datapath, 'lgc-allele-freqs-wbp.txt')
 # Construct input: crime scene profile
 mixedFile = file.path(datapath, 'hammer-CSP.csv')
 # Construct input: reference profiles
@@ -20,7 +18,6 @@ outputPath = tempdir()
 
 # Construct list of all administrative input
 admin = pack.admin.input( caseName=caseName,
-                          frequencyFile=frequencyFile,
                           mixedFile=mixedFile,
                           refFile=refFile,
                           outputPath=outputPath )

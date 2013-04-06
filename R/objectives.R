@@ -299,7 +299,8 @@ penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
   if(!missing(tvedebrink) & !is.null(tvedebrink))
     result = result * dnorm(tvedebrink, bemn, besd) ^ normalization
   if(!missing(localAdjustment) & !is.null(localAdjustment))
-    result = result * dgamma(localAdjustment, localAdjPenalty, localAdjPenalty)
+    result = result * dgamma(as.vector(unlist(localAdjustment)),
+                             localAdjPenalty, localAdjPenalty)
 
   return(result)
 }
@@ -330,6 +331,8 @@ create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
     }
     if(length(localAdjustment) == 1)
       localAdjustment = rep(localAdjustment, length(functions))
+    if(setequal(names(localAdjustment), colnames(hypothesis$cspProfile)))
+      localAdjustment <- localAdjustment[colnames(hypothesis$cspProfile)]
     objectives = mapply(callme, functions, localAdjustment)
     arguments = append(arguments, list(localAdjustment=localAdjustment))
     arguments = append(arguments, list(...))

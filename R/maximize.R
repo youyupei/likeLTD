@@ -67,9 +67,9 @@ upper.bounds = function(arguments, zero=1e-8) {
        degradation     = degradation,
        localAdjustment = localAdjustment,
        tvedebrink      = 1-zero, 
-       dropout         = dropout)
+       dropout         = dropout)[names(arguments)]
 }
-lower.bounds = function(arguments, zero=1e-8, logDegradation=TRUE) { 
+lower.bounds = function(arguments, zero=1e-8, logDegradation=FALSE) { 
   # Lower bounds of optimization function.
   # 
   # Parameters:
@@ -90,7 +90,7 @@ lower.bounds = function(arguments, zero=1e-8, logDegradation=TRUE) {
        degradation     = degradation,
        localAdjustment = localAdjustment,
        tvedebrink      = -Inf,
-       dropout         = dropout)
+       dropout         = dropout)[names(arguments)]
 }
 
 
@@ -144,7 +144,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
       # print(unlist(append(x, list(result=result))))
       print(result)
     }
-    # return resul
+    # return result
     result
   }
   

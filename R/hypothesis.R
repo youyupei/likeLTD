@@ -153,8 +153,9 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0, adj=1e0,
-                                 fst=0.02, databaseFile=NULL, ...) {
+prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
+                                   nUnknowns=0, adj=1e0, fst=0.02,
+                                   databaseFile=NULL, ...) {
 
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
@@ -184,7 +185,7 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1', nUnknowns=0
 # Creates defense hypothesis
 # Documentation is in man directory.
 defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
-                             adj=1e0, fst=0.02, databaseFile=NULL, ...) {
+                               adj=1e0, fst=0.02, databaseFile=NULL, ...) {
   
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
@@ -205,6 +206,7 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
   result[["refIndiv"]] = 1
+  if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
   result
 }
 

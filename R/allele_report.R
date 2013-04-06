@@ -505,8 +505,8 @@ allele.report <- function(admin) {
   #          pack.admin.input.
   
   # reads genetics information if not given on input.
-  if(!library('gplots')) stop("allele.report reqires the package gplots.")
-  if(is.null(genetics)) genetics = pack.genetics.input(admin)
+  if(!require('gplots')) stop("allele.report reqires the package gplots.")
+  genetics = pack.genetics.input(admin)
 
 
   # Generate 'summary', whether multiple Q or single Q

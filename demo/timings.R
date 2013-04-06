@@ -1,7 +1,6 @@
-library(gtools)
 library(microbenchmark)
-library(stats)
 library(likeLTD)
+library(ggplot2)
 
 caseName = 'hammer'
 datapath = file.path(system.file("extdata", package="likeLTD"), caseName)
@@ -44,21 +43,38 @@ bench.prosecution <- function(...) bench.any(prosecutionHyp, ...)
 bench.defense <- function(...) bench.any(defenseHyp, ...)
 
 result = list() 
-result[["zero"]] = bench.prosecution(nUnknowns=0, doDropin=TRUE)
 result[["one"]] = bench.prosecution(nUnknowns=1, doDropin=TRUE)
 result[["two"]] = bench.prosecution(nUnknowns=2, doDropin=TRUE)
-result[["three"]] = bench.prosecution(nUnknowns=3, doDropin=TRUE, times=100)
+result[["three"]] = bench.prosecution(nUnknowns=3, doDropin=TRUE, times=10)
 
 nbthreads = .Call(.cpp.nbthreads, PACKAGE="likeLTD")
+
+
 cat(sprintf("NUMBER OF THREADS: %d\n", nbthreads))
-cat("\n\nPROSECUTION -- unknown=0, doDropin=TRUE\n")
-print(result[["zero"]])
+
 cat("\n\nPROSECUTION -- unknown=1, doDropin=TRUE\n")
 print(result[["one"]])
+ggplot(result[["one"]], aes(x=expr, y=time)) +
+  geom_boxplot()   + 
+  scale_y_log10()  +
+  labs(title="Timing of likehood-per-locus functions with 1 unprofiled contributor",
+       x="Locus", y="timings")
+
 cat("\n\nPROSECUTION -- unknown=2, doDropin=TRUE\n")
 print(result[["two"]])
+ggplot(result[["two"]], aes(x=expr, y=time)) +
+  geom_boxplot()   + 
+  scale_y_log10()  +
+  labs(title="Timing of likehood-per-locus functions with 2 unprofiled contributor",
+       x="Locus", y="timings")
+
 cat("\n\nPROSECUTION -- unknown=3, doDropin=TRUE\n")
 print(result[["three"]])
+ggplot(result[["three"]], aes(x=expr, y=time)) +
+  geom_boxplot()   + 
+  scale_y_log10()  +
+  labs(title="Timing of likehood-per-locus functions with 3 unprofiled contributor",
+       x="Locus", y="timings")
 
 if(FALSE) {
   path = sprintf("likeLTD.timings.%d.C", nbthreads)

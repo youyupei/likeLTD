@@ -21,3 +21,5 @@ export(create.likelihood.vectors)
 export(create.likelihood.log)
 export(create.likelihood)
 export(penalties)
+
+export(plotLikelihood.2d)
