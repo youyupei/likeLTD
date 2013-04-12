@@ -1,0 +1,278 @@
+\documentclass[a4paper]{article}
+
+\def\likeLTD{\textsc{LikeLTD}} 
+
+%\VignetteIndexEntry{Using LikeLTD}
+\title{Using \likeLTD}
+
+\begin{document}
+
+\section{Code usage}
+
+Computing a likehood model takes place in three-parts: (i) creation of the
+hypothesis, (ii) creation of the model itself from the hypothesis, (iii)
+maximizing the likehood function over the set of nuisance parameters. 
+
+\subsection{Creating a hypothesis}
+
+A hypothesis consists of all the parameters are used to describe the model,
+e.~g.\ the known profiles to include, the number of unprofiled contributors,
+and whether to include dropin. It does not include anything about the
+maximization of the likehood: that is a different concern. It does not contain
+any information which needs to be computed. That would be premature. 
+
+<<verystart, eval=FALSE, tidy=FALSE, print=FALSE>>=
+  require(likeLTD)
+
+  # Case we are going to be looking at.
+  caseName = 'hammer'
+  datapath = file.path(system.file("extdata", package="likeLTD"), 
+                       caseName)
+  args = list(
+    databaseFile = NULL,
+    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    refFile      = file.path(datapath, 'hammer-reference.csv'),
+    nUnknowns    = 0,
+    doDropin     = TRUE,
+    ethnic       = "EA1",
+    adj          = 1.0,
+    fst          = 0.02,
+    relatedness  = c(0, 0)/4
+  )
+  # Create hypothesis for defense and prosecution.
+  defenseHyp = do.call(defense.hypothesis, args)
+  prosecuHyp = do.call(prosecution.hypothesis, args)
+@
+
+Two methods are provided to facilitate the creation of hypothesis from a common
+minimal set of input parameters, \texttt{defense.hypothesis}
+for the defense and \texttt{prosecution.hypothesis} for the
+prosecution. These two methods read the allele database, the known profiles,
+and the crime-scene profile from file. They also make sensible decision
+about the input; it determines which known profiles need be subject to
+dropout; in the defense hypothesis the queried individual is replaced by an
+unprofiled contributor; in the prosecution case, relatedness is set to zero;
+etc. Both return a list with all the formal input to a model. These
+lists/hypothesis could be further modified by the user at this point.
+
+
+\subsection{Creating and calling a likehood function}
+
+Once a hypothesis is created, we can obtain the likehood functions by calling
+one of \texttt{create.likelihood}:
+
+<<models, tidy=FALSE, eval=FALSE>>=
+  defenseModel <- create.likelihood(defenseHyp)
+  prosecuModel <- create.likelihood(prosecuHyp)
+@
+
+\texttt{create.likelihood} returns a method which takes as arguments the
+nuisance parameters and computes the full weight of evidence, e.~g.\ the
+product of the likelihoods and penalties associated with each locus.
+
+<<tidy=FALSE, eval=FALSE>>=
+  defenseModel(rcont=c(1, 1e-8, 1.63), 
+               degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
+               localAdjustment=list(D3=0.983, vWA=1.010, D16=1.028, 
+                                    D2=1.072, D8=1.020, D21=0.930,
+                                    D18=0.850, D19=0.932, 
+                                    TH01=1.041, FGA=0.916),
+               dropout=c(0.5072, 1e-8), 
+               dropin=1.0216,
+               tvedebrink=-4.4462)
+@
+
+The function above returns a scalar which represents the weight of evidence for
+the given values of the nuisance parameters. One could then use
+\texttt{defenseModel} to perform an optimization or to create
+a plot with respect to various arguments. For instance, the following leads to
+Fig.~\ref{fig:plotme}:
+
+<<plotscalarWoE, tidy=FALSE, eval=FALSE>>=
+  require(ggplot2)
+  require(scales)
+  # Function that winnows down to a single value
+  scalarWoE <- function(x) {
+     defenseModel(rcont=c(1, 1e-8, x), 
+                  degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
+                  localAdjustment=list(D3=0.983, vWA=1.010,
+                                       D16=1.028, D2=1.072,
+                                       D8=1.020, D21=0.930,
+                                       D18=0.850, D19=0.932, 
+                                       TH01=1.041, FGA=0.916),
+                  dropout=c(0.5072, 1e-8), 
+                  dropin=1.0216,
+                  tvedebrink=-4.4462)
+  }
+
+  x = 0:100/100 * 3e0
+  data = data.frame(x=x, y=sapply(x, scalarWoE))
+  plots <- ggplot(data, aes(x=x, y=y))            +
+              geom_line()                         +
+              xlab("Relative contribution of X")  +
+              ylab("Weight of Evidence")          +
+              scale_y_log10(
+                labels=trans_format("log10", math_format(10^.x)))
+  print(plots)
+@
+
+\begin{figure}[!h]
+<<plotme, fig=TRUE, echo=FALSE>>=
+<<verystart>>
+<<models>>
+<<plotscalarWoE>>
+@
+  \caption{Logarithmic plot of the weight of evidence versus the relative
+           contribution from X. The likelihood is for the Hammer case, with one
+           unprofiled contributor ("X"), and including dropin. The fixed
+           parameters are given in Tab.~\ref{tab:maxi}. }
+  \label{fig:plotme}
+\end{figure}
+
+\subsection{Maximizing the likehood}
+
+Once we have a likelihood method, it is possible to use the \texttt{stats}
+package to maximize it. However, the likelihood method takes several arguments
+(\texttt{rcont}, \texttt{degradation}, etc), whereas \texttt{stats::optim}
+expects a methods which takes only a vector as argument. Hence, we need to
+create a new methods from the likelihood method:
+
+<<skel, eval=FALSE, tidy=FALSE>>=
+  skeleton = initial.arguments(defenseHyp)
+  vector.model <- function(x) {
+    args <- relist(x, skeleton)
+    args[["degradation"]] = 10^args[["degradation"]]
+    result <- do.call(defenseModel, args)
+    log10(result)
+  }
+
+  # Call vector.model with vector argument.
+  arguments = skeleton
+  arguments[["degradation"]] = log10(arguments[["degradation"]])
+  vector.model( as.vector(unlist(arguments)) )
+@
+
+The new method \texttt{vectorModel} does three things: (i) it recreates the
+list of arguments for \texttt{defenseModel}, (ii) it transforms the degradation
+parameter from an exponential form, (iii) it takes the logarithm of the weight
+of evidence. The last two points make optimization somewhat easier. We can now
+apply the optimization methods on \texttt{vectorModel}.
+
+<<maxiskel, eval=FALSE, tidy=FALSE>>=
+  require(stats)
+  # define upper and lower bounds for constrained maximization
+  nloci = ncol(defenseHyp$cspProfile)
+  upper = list(rcont           = rep(Inf, 2),
+               degradation     = rep(Inf, 3),
+               localAdjustment = rep(Inf, nloci),
+               dropout         = c(1, 1),
+               dropin          = Inf,
+               tvedebrink      = -1e-8 )[names(arguments)]
+  lower = list(rcont           = rep(1e-8, 2),
+               degradation     = rep(-Inf, 3),
+               localAdjustment = rep(1e-8, nloci),
+               dropout         = c(1e-8, 1e-8),
+               dropin          = 1e-8,
+               tvedebrink      = -Inf )[names(arguments)]
+
+  # perform maximization
+  result <- optim(par = unlist(arguments),
+                  fn  = vector.model,
+                  upper = unlist(upper),
+                  lower = unlist(lower),
+                  control = list(fnscale=-1, factr=1e12), 
+                  method = "L-BFGS-B",
+                  hessian = FALSE)
+  opti = relist(result$par, skeleton)
+  cat(sprintf("Resulting Weight of Evidence: 10^%f\n",
+              result$value))
+@
+<<alltheabove, echo=FALSE>>=
+<<verystart>>
+<<models>>
+<<skel>>
+<<maxiskel>>
+@
+
+The above calculates the maximum of the likelihood using a conjugate gradient
+method. The particular flavor of conjugate-gradient used here allows the user
+to set upper and lower bounds for parameters. The \texttt{stats::optim}
+computes the derivatives of \texttt{vector.model} numerically. Upon
+convergence, it returns a list with the optimum and its location. Please see
+the \texttt{stat} package for description.
+
+The above is somewhat wordy. \likeLTD\ provides a convenience method,
+\texttt{optimization.params}, which returns a list of adequate arguments for
+\texttt{optim} given a hypothesis:
+
+<<optim, eval=FALSE, tidy=FALSE>>=
+  params = optimization.params(defenseHyp)
+  results <- do.call(optim, params)
+  arguments <- relist(results$par, initial.arguments(defenseHyp))
+@
+
+Running the above yields the parameters in Tab.~\ref{tab:maxi}.
+\begin{table}
+<<tabopt, echo=FALSE>>=
+<<verystart>>
+<<models>>
+<<optim>>
+@
+% \begin{tabular}{l|ccc}
+%   \hline
+%               & Victim 1 & Victim 2 & X \\\hline
+%   rcont & \Sexpr{paste0(format(c(1, arguments$rcont), digits=3),
+%                                collapse=" & ")} \\
+%   degradation & $10^{\Sexpr{format(arguments[["degradation"]][[1]], digits=3)}}$ &
+%                 $10^{\Sexpr{format(arguments[["degradation"]][[2]], digits=3)}}$ &
+%                 $10^{\Sexpr{format(arguments[["degradation"]][[3]], digits=3)}}$ \\\hline
+% \end{tabular}\\[2ex]
+
+% \begin{tabular}{ccccc}
+%   \hline
+%   \multicolumn{5}{c}{Local Ajustments for each locus}\\\hline
+%   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[1:5], collapse=" & ")}\\
+%   \Sexpr{paste0(format(arguments$localAdjustment[1:5], digits=3),
+%                 collapse=" & ")}\\\hline
+%   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[6:10], collapse=" & ")}\\
+%   \Sexpr{paste0(format(arguments$localAdjustment[6:10], digits=3),
+%                 collapse=" & ")}\\\hline
+% \end{tabular}\\[2ex]
+
+% \begin{tabular}{l|cc}
+%   \hline
+%               & First Replicate & Second Replicate \\\hline
+%   dropout     & \Sexpr{arguments$dropout[[1]]}
+%               & \Sexpr{arguments$dropout[[2]]} \\\hline
+% \end{tabular}\\[2ex]
+
+% \begin{tabular}{l|c}
+%   \hline
+%   dropin      & \Sexpr{arguments$dropin} \\
+%   tvedebrink  & \Sexpr{arguments$tvedebrink}\\\hline
+% \end{tabular}
+
+  \caption{Arguments at the maximum for the defense hypothesis of the Hammer
+  case, with dropin and a single unprofiled contributor X. The optimum is
+  obtained by running the external function \texttt{stats::optim} directly on
+  the objective function generated by \likeLTD. }\label{tab:maxi}
+\end{table}
+
+
+\subsection{Testing}
+
+\likeLTD comes a fairly extensive suite of tests. The tests can be run as part
+of the installation process, or using the following commands:
+
+<<testing, tidy=FALSE, eval=FALSE>>=
+library(svUnit)
+library(likeLTD)
+
+runTest( svSuite("package:likeLTD") )
+Log()
+@
+Although not shown here, this snippet will print results for each tests. Each
+should return "OK".
+
+\end{document}
+
