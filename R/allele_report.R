@@ -411,7 +411,7 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
     if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
       stop(paste(outputPath, " exists and is not a directory."))
   } # condition whether to check files.
-  admin = list( caseName='hammer',
+  admin = list( caseName=caseName,
                 databaseFile=databaseFile,
                 mixedFile=mixedFile,
                 refFile=refFile,
