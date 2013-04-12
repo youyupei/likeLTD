@@ -34,4 +34,4 @@ defenseParams <- optimization.params(defenseHyp, verbose=FALSE, nUnknowns=2)
 # Now perform actual optimization.
 prosecutionResult <- do.call(optim, prosecutionParams)
 print(prosecutionResult)
-# defenseResult     <- do.call(optim, defenseParams)
+# defenseResult     <- do.call(optim, defenseParams)
