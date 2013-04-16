@@ -6,6 +6,7 @@
 \title{Using \likeLTD}
 
 \begin{document}
+\maketitle
 
 \section{Code usage}
 
@@ -17,9 +18,9 @@ maximizing the likehood function over the set of nuisance parameters.
 
 A hypothesis consists of all the parameters are used to describe the model,
 e.~g.\ the known profiles to include, the number of unprofiled contributors,
-and whether to include dropin. It does not include anything about the
-maximization of the likehood: that is a different concern. It does not contain
-any information which needs to be computed. That would be premature. 
+and whether to include dropin. A proper description of the hypothesis should be
+independent of other information, including neither information about the
+maximization of the likelihood nor any information which needs to be computed.
 
 <<verystart, eval=FALSE, tidy=FALSE, print=FALSE>>=
   require(likeLTD)
@@ -44,22 +45,16 @@ any information which needs to be computed. That would be premature.
   prosecuHyp = do.call(prosecution.hypothesis, args)
 @
 
-Two methods are provided to facilitate the creation of hypothesis from a common
-minimal set of input parameters, \texttt{defense.hypothesis}
-for the defense and \texttt{prosecution.hypothesis} for the
-prosecution. These two methods read the allele database, the known profiles,
-and the crime-scene profile from file. They also make sensible decision
-about the input; it determines which known profiles need be subject to
-dropout; in the defense hypothesis the queried individual is replaced by an
-unprofiled contributor; in the prosecution case, relatedness is set to zero;
-etc. Both return a list with all the formal input to a model. These
-lists/hypothesis could be further modified by the user at this point.
-
-
-\subsection{Creating and calling a likehood function}
-
-Once a hypothesis is created, we can obtain the likehood functions by calling
-one of \texttt{create.likelihood}:
+Two methods are provided to facilitate the creation of a hypothesis from a
+common minimal set of input parameters, \texttt{defense.hypothesis} for the
+defence and \texttt{prosecution.hypothesis} for the prosecution. These two
+methods read the allele database, the known profiles, and the crime-scene
+profile from file. They also automate sensible default decisions about the
+input, (determining which known profiles need be subject to dropout; in the
+defense hypothesis the queried individual is replaced by an unprofiled
+contributor; in the prosecution case, relatedness is set to zero.) These
+default choices may be further modified by the user at this point.  These
+methods return lists with all the input needed for model execution. 
 
 <<models, tidy=FALSE, eval=FALSE>>=
   defenseModel <- create.likelihood(defenseHyp)
@@ -135,7 +130,7 @@ Once we have a likelihood method, it is possible to use the \texttt{stats}
 package to maximize it. However, the likelihood method takes several arguments
 (\texttt{rcont}, \texttt{degradation}, etc), whereas \texttt{stats::optim}
 expects a methods which takes only a vector as argument. Hence, we need to
-create a new methods from the likelihood method:
+transform our method into the form the optimisation method expects:
 
 <<skel, eval=FALSE, tidy=FALSE>>=
   skeleton = initial.arguments(defenseHyp)
@@ -152,7 +147,7 @@ create a new methods from the likelihood method:
   vector.model( as.vector(unlist(arguments)) )
 @
 
-The new method \texttt{vectorModel} does three things: (i) it recreates the
+The new method \texttt{vectorModel} achieves three objectives: (i) it recreates the
 list of arguments for \texttt{defenseModel}, (ii) it transforms the degradation
 parameter from an exponential form, (iii) it takes the logarithm of the weight
 of evidence. The last two points make optimization somewhat easier. We can now
@@ -201,12 +196,12 @@ computes the derivatives of \texttt{vector.model} numerically. Upon
 convergence, it returns a list with the optimum and its location. Please see
 the \texttt{stat} package for description.
 
-The above is somewhat wordy. \likeLTD\ provides a convenience method,
-\texttt{optimization.params}, which returns a list of adequate arguments for
-\texttt{optim} given a hypothesis:
+The functionality of the above code can be achieved more succinctly through a
+convenience method provided by \likeLTD\, \texttt{optimization.params}. It
+returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
-  params = optimization.params(defenseHyp)
+  params = optimization.params(defenseHyp, verbose=FALSE)
   results <- do.call(optim, params)
   arguments <- relist(results$par, initial.arguments(defenseHyp))
 @
@@ -218,39 +213,36 @@ Running the above yields the parameters in Tab.~\ref{tab:maxi}.
 <<models>>
 <<optim>>
 @
-% \begin{tabular}{l|ccc}
-%   \hline
-%               & Victim 1 & Victim 2 & X \\\hline
-%   rcont & \Sexpr{paste0(format(c(1, arguments$rcont), digits=3),
-%                                collapse=" & ")} \\
-%   degradation & $10^{\Sexpr{format(arguments[["degradation"]][[1]], digits=3)}}$ &
-%                 $10^{\Sexpr{format(arguments[["degradation"]][[2]], digits=3)}}$ &
-%                 $10^{\Sexpr{format(arguments[["degradation"]][[3]], digits=3)}}$ \\\hline
-% \end{tabular}\\[2ex]
+\begin{tabular}{l|ccc}
+  \hline
+              & Victim 1 & Victim 2 & X \\\hline
+  rcont & \Sexpr{paste0(format(c(1, arguments$rcont), digits=3), collapse="&")} \\
+  degradation & $10^{\Sexpr{format(arguments[["degradation"]][[1]], digits=3)}}$ &
+                $10^{\Sexpr{format(arguments[["degradation"]][[2]], digits=3)}}$ &
+                $10^{\Sexpr{format(arguments[["degradation"]][[3]], digits=3)}}$ \\\hline
+\end{tabular}\\[2ex]
 
-% \begin{tabular}{ccccc}
-%   \hline
-%   \multicolumn{5}{c}{Local Ajustments for each locus}\\\hline
-%   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[1:5], collapse=" & ")}\\
-%   \Sexpr{paste0(format(arguments$localAdjustment[1:5], digits=3),
-%                 collapse=" & ")}\\\hline
-%   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[6:10], collapse=" & ")}\\
-%   \Sexpr{paste0(format(arguments$localAdjustment[6:10], digits=3),
-%                 collapse=" & ")}\\\hline
-% \end{tabular}\\[2ex]
+\begin{tabular}{ccccc}
+  \hline
+  \multicolumn{5}{c}{Local Ajustments for each locus}\\\hline
+  \Sexpr{paste0(colnames(defenseHyp$cspProfile)[1:5], collapse=" & ")}\\
+  \Sexpr{paste0(format(arguments$localAdjustment[1:5], digits=3), collapse=" & ")}\\\hline
+  \Sexpr{paste0(colnames(defenseHyp$cspProfile)[6:10], collapse=" & ")}\\
+  \Sexpr{paste0(format(arguments$localAdjustment[6:10], digits=3), collapse=" & ")}\\\hline
+\end{tabular}\\[2ex]
 
-% \begin{tabular}{l|cc}
-%   \hline
-%               & First Replicate & Second Replicate \\\hline
-%   dropout     & \Sexpr{arguments$dropout[[1]]}
-%               & \Sexpr{arguments$dropout[[2]]} \\\hline
-% \end{tabular}\\[2ex]
+\begin{tabular}{l|cc}
+  \hline
+              & First Replicate & Second Replicate \\\hline
+  dropout     & \Sexpr{arguments$dropout[[1]]}
+              & \Sexpr{arguments$dropout[[2]]} \\\hline
+\end{tabular}\\[2ex]
 
-% \begin{tabular}{l|c}
-%   \hline
-%   dropin      & \Sexpr{arguments$dropin} \\
-%   tvedebrink  & \Sexpr{arguments$tvedebrink}\\\hline
-% \end{tabular}
+\begin{tabular}{l|c}
+  \hline
+  dropin      & \Sexpr{arguments$dropin} \\
+  tvedebrink  & \Sexpr{arguments$tvedebrink}\\\hline
+\end{tabular}
 
   \caption{Arguments at the maximum for the defense hypothesis of the Hammer
   case, with dropin and a single unprofiled contributor X. The optimum is
