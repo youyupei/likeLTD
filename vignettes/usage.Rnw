@@ -4,6 +4,7 @@
 
 %\VignetteIndexEntry{Using LikeLTD}
 \title{Using \likeLTD}
+\author{Mayeul d'Avezac}
 
 \begin{document}
 \maketitle
