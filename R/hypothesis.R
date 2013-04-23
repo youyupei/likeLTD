@@ -163,22 +163,28 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
-  queriedProfile = knownProfiles[unlist(knownProfiles[, "queried"]), ,
-                                  drop=FALSE]
+
+  qIndices = which(unlist(knownProfiles[, "queried"]))
+  uIndices = which(!unlist(knownProfiles[, "queried"]))
+  queriedProfile = knownProfiles[qIndices, , drop=FALSE]  
+  # Puts queried profile at the end.
+  knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE]
+  
   
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst)
 
-  result = append(result, list(...))
-  result[["nUnknowns"]] = nUnknowns
-  result[["relatedness"]] = c(0, 0)
   # If queried profile is subject to dropout, then it should be the reference
   # individual. Otherwise, the first individual subject to dropout will be set
   # as the reference individual.
   result[["refIndiv"]] = 1
   if(any(determine.dropout(queriedProfile, cspProfile)))
     result[["refIndiv"]] = which(unlist(knownProfiles[, "queried"]))[1]
+
+  result = append(result, list(...))
+  result[["nUnknowns"]] = nUnknowns
+  result[["relatedness"]] = c(0, 0)
   result
 }
 
@@ -203,9 +209,10 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                              queriedProfile, alleleDb, ethnic=ethnic,
                              adj=adj, fst=fst)
 
+  result[["refIndiv"]] = nrow(result[["dropoutProfs"]]) + 1
+
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
-  result[["refIndiv"]] = 1
   if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
   result
 }

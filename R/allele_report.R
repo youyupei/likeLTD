@@ -134,21 +134,17 @@ estimate.csp <- function(ref, cprofs) {
 	  for(rep in 1:nrep){
       # number of alleles in common for given person and CSP replicate, across
       # all loci
-			nalleles = 0
-      # How many reference loci exists in a given replicate
-      nloci = 0
+			represented = c()
 			for(locus in 1:length(cprofs)){
 				if(!is.null(cprofs[[locus]][[rep]])) {
           # figure out unique alleles in reference 
 			  	alleles  <- unique(unlist(strsplit(ref[person,locus],',')))
           # figure out howmany of these allele are in CSP
-          represented = alleles %in% cprofs[[locus]][[rep]]$csp
-          nalleles <- nalleles + sum(represented) / length(represented)
-          # this locus exists in replicate 
-          nloci    <- nloci + 1
+          represented = c(represented, alleles %in% cprofs[[locus]][[rep]]$csp)
 		    }
       }
-      if(nloci > 0) result[person, rep] = round(100*nalleles/nloci)
+      if(length(represented) > 0) 
+        result[person, rep] = round(100*sum(represented)/length(represented))
 	  }
   }
   if(nrep==1)  result[, nrep+1] = result[, nrep]

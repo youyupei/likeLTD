@@ -211,9 +211,9 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     if(length(rcont) + 1 == hypothesis$nUnknowns
                             + ncol(cons$dropoutPresence)) {
       if(hypothesis$refIndiv == 1) rcont = c(1, rcont)
-      else if(hypothesis$refIndiv <= length(rcont)) rcont = c(rcont, 1)
-      else rcont = c(rcont[1:hypothesis$refIndiv], 1,
-                     rcont[hypothesis$refIndiv+1:length(rcont)])
+      else if(hypothesis$refIndiv > length(rcont)) rcont = c(rcont, 1)
+      else rcont = c(rcont[1:hypothesis$refIndiv-1], 1,
+                     rcont[hypothesis$refIndiv:length(rcont)])
     }
     if(length(rcont) != hypothesis$nUnknowns + ncol(cons$dropoutPresence))
       stop(sprintf("rcont should be %d long.",

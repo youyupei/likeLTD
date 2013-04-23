@@ -81,7 +81,7 @@ internal.representation.data = function() {
                             list(csp=c("28", "29", "30", "31", "31.2"), unc="") ),
                  D18= list( list(csp=c(""), unc=""),
                             list(csp=c("13", "14", "16", "17"), unc="") ),
-                 D19= list( list(csp=c("12", "13", "15.2", "17.2"), unc=""),
+                 D19= list( list(csp=c("12", "14", "15.2", "17.2"), unc=""),
                             list(csp=c("12", "13", "14", "15.2", "17.2"), unc="") ),
                  TH01=list( list(csp=c("6", "8", "9", "9.3"), unc=""),
                             list(csp=c("6", "8", "9", "9.3"), unc="") ),
@@ -167,7 +167,7 @@ csp.data <- function() {
                D8=c("11,12,13,15", "", "11,12,13,15", ""),
                D21=c("28,31", "", "28,29,30,31,31.2", ""),
                D18=c("", "", "13,14,16,17", ""),
-               D19=c("12,13,15.2,17.2", "", "12,13,14,15.2,17.2",""),
+               D19=c("12,14,15.2,17.2", "", "12,13,14,15.2,17.2",""),
                TH01=c("6,8,9,9.3", "", "6,8,9,9.3", ""),
                FGA=c("22", "", "22,23,25", "") )
   csp = data.frame(csp, stringsAsFactors=FALSE)
@@ -228,13 +228,13 @@ test_estimates.csp <- svTest(function() {
 
   cprofs = internal.representation.data()
 
-  check = list(a=c(85, 70, 40), b=c(100, 100, 65), c=c(92, 85, 52))
+  check = list(a=c(85, 75, 47), b=c(100, 100, 63), c=c(92, 88, 55))
   check = data.frame(check, row.names=c("Suspect", "Victim 1", "Victim 2"))
   colnames(check) <- c("run 1", "run 2", "Total")
 
-  if(! "estimates.csp" %in% ls(.GlobalEnv))
-    estimates.csp = getFromNamespace("estimate.csp", "likeLTD")
-  result = estimates.csp(ref.data(), cprofs)
+  if(! "estimate.csp" %in% ls(.GlobalEnv))
+    estimate.csp = getFromNamespace("estimate.csp", "likeLTD")
+  result = estimate.csp(ref.data(), cprofs)
   checkEquals(result, check)
 })
 
@@ -256,15 +256,16 @@ test_summary.generator <- svTest(function() {
                   D8   = c("12 13{}[]", "11 15{}[]", "{}"),
                   D21  = c("28 31{}[]", "{29 30}[]", "{31.2}"),
                   D18  = c("{14 17}[]", "{17 17}[]", "{13 16}"),
-                  D19  = c("15.2 17.2{}[]", "12{14}[]", "13{}"),
+                  D19  = c("15.2 17.2{}[]", "12 14{}[]", "{13}"),
                   TH01 = c("9 9.3{}[]", "6 8{}[]", "{}"),
                   FGA  = c("22{23}[]", "22{25}[]", "{}") )
   summary = data.frame( summary, stringsAsFactors=FALSE,
                         row.names=c( "Suspect (Q)", "Victim 1 (K)",
                                      "Unattributable") )
   check = list( summary=summary,
-                otherRep=c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0),
-                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 0, 0, 0) )
+                otherRep=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 1, 0, 0) )
+
 
   checkEquals(result, check)
 
@@ -278,15 +279,15 @@ test_summary.generator <- svTest(function() {
                   D8   =c("12 13{}[]", "11 13{}[]", "15{}"),
                   D21  =c("28 31{}[]", "{29 30}[]", "{31.2}"),
                   D18  =c("{14 17}[]", "{17}[15]", "{13 16}"),
-                  D19  =c("15.2 17.2{}[]", "{14 14}[]", "12 13{}"),
+                  D19  =c("15.2 17.2{}[]", "14 14{}[]", "12{13}"),
                   TH01 =c("9 9.3{}[]", "6{}[7]", "8{}"),
                   FGA  =c("22{23}[]", "22{}[20]", "{25}") )
   summary = data.frame( summary, stringsAsFactors=FALSE,
                         row.names=c( "Suspect (Q)", "Victim 2 (K)",
                                     "Unattributable") )
   check = list( summary=summary,
-                otherRep=c(0, 0, 0, 1, 1, 0, 0, 2, 1, 0),
-                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 0, 0, 1) )
+                otherRep=c(0, 0, 0, 1, 1, 0, 0, 1, 1, 0),
+                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 1, 0, 1) )
   checkEquals(result, check)
 
   # Test with known = Victim 1&2 only.
@@ -299,15 +300,15 @@ test_summary.generator <- svTest(function() {
                   D8   = c("12 13{}[]", "11 15{}[]", "11 13{}[]", "{}"), 
                   D21  = c("28 31{}[]", "{29 30}[]", "{29 30}[]", "{31.2}"), 
                   D18  = c("{14 17}[]", "{17 17}[]", "{17}[15]", "{13 16}"), 
-                  D19  = c("15.2 17.2{}[]", "12{14}[]", "{14 14}[]", "13{}"), 
+                  D19  = c("15.2 17.2{}[]", "12 14{}[]", "14 14{}[]", "{13}"), 
                   TH01 = c("9 9.3{}[]", "6 8{}[]", "6{}[7]", "{}"), 
                   FGA  = c("22{23}[]", "22{25}[]", "22{}[20]", "{}") )
   summary = data.frame( summary, stringsAsFactors=FALSE,
                         row.names=c( "Suspect (Q)", "Victim 1 (K)",
                                      "Victim 2 (K)", "Unattributable") )
   check = list( summary=summary,
-                otherRep=c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0),
-                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 0, 0, 0) )
+                otherRep=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                otherUnrep=c(0, 1, 0, 1, 0, 1, 2, 1, 0, 0) )
   checkEquals(result, check)
 })
 

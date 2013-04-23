@@ -58,8 +58,8 @@ test_estimates <- svTest(function() {
 
   checkEquals(array(c(0.575, 0.500)),
               estimates(knownProfiles[1, ], cspProfile))
-  checkEquals(array(c(0.725, 0.600)),
+  checkEquals(array(c(0.625, 0.500)),
               estimates(knownProfiles[2, ], cspProfile))
-  checkEquals(array(c(0.8, 0.7)),
+  checkEquals(array(c(0.750, 0.675)),
               estimates(knownProfiles[3, ], cspProfile))
 })

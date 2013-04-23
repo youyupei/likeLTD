@@ -9,15 +9,12 @@ estimates <- function(indiv, csp) {
   #         the crime-scene profile. 
   meanrep = array(0, nrow(csp))
   for(rep in 1:nrow(csp))  {
-    nloci = 0e0
+    represented = c()
     for(locus in colnames(csp)) 
       if(!is.null(csp[[rep, locus]])) {
-        represented = intersect(csp[[rep, locus]], indiv[[locus]])
-        meanrep[[rep]] <- meanrep[[rep]] + 
-          length(represented) / length(indiv[[locus]])
-        nloci <- nloci + 1
+        represented = c(represented, indiv[[locus]] %in% csp[[rep, locus]])
       }
-    meanrep[[rep]] <- meanrep[[rep]] / nloci
+    meanrep[[rep]] <- sum(represented) / length(represented) 
   }
   meanrep <- 1e0 - meanrep / nrow(csp)
   meanrep[meanrep > 0.99] = 0.99

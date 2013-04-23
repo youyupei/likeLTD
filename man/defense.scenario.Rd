@@ -23,5 +23,7 @@ defense.}
 \details{It loads the CSP, known profiles, and allele database from file. It
 removes the queried individual from the known profiles. It increments the
 number of unknown contributors by one (to make up for the queried individual).
+The reference individual is set to "X" (first unprofiled contributor) by
+default. 
 } 
 \seealso{prosecution.hypothesis}
