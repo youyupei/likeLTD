@@ -5,6 +5,10 @@
 %\VignetteIndexEntry{Using LikeLTD}
 \title{Using \likeLTD}
 \author{Mayeul d'Avezac}
+\author{Christopher Steele}
+\author{Adrian Timpson}
+\author{James Hetherington}
+\author{David Balding}
 
 \begin{document}
 \maketitle
@@ -89,7 +93,7 @@ Fig.~\ref{fig:plotme}:
   require(scales)
   # Function that winnows down to a single value
   scalarWoE <- function(x) {
-     defenseModel(rcont=c(1, 1e-8, x), 
+     defenseModel(rcont=c(x, 1e-8, 1), 
                   degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
                   localAdjustment=list(D3=0.983, vWA=1.010,
                                        D16=1.028, D2=1.072,
@@ -103,10 +107,10 @@ Fig.~\ref{fig:plotme}:
 
   x = 0:100/100 * 3e0
   data = data.frame(x=x, y=sapply(x, scalarWoE))
-  plots <- ggplot(data, aes(x=x, y=y))            +
-              geom_line()                         +
-              xlab("Relative contribution of X")  +
-              ylab("Weight of Evidence")          +
+  plots <- ggplot(data, aes(x=x, y=y))                  +
+              geom_line()                               +
+              xlab("Relative contribution of Victim 1") +
+              ylab("Weight of Evidence")                +
               scale_y_log10(
                 labels=trans_format("log10", math_format(10^.x)))
   print(plots)
@@ -119,9 +123,9 @@ Fig.~\ref{fig:plotme}:
 <<plotscalarWoE>>
 @
   \caption{Logarithmic plot of the weight of evidence versus the relative
-           contribution from X. The likelihood is for the Hammer case, with one
-           unprofiled contributor ("X"), and including dropin. The fixed
-           parameters are given in Tab.~\ref{tab:maxi}. }
+           contribution from "Victim 1". The likelihood is for the Hammer case,
+           with one unprofiled contributor ("X"), and including dropin. The
+           fixed parameters are given in Tab.~\ref{tab:maxi}. }
   \label{fig:plotme}
 \end{figure}
 

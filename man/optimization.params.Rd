@@ -3,20 +3,21 @@
 \title{likeLTD::optimization.params} 
 \usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
-                           arguments=NULL, zero=1e-8, \dots)}
+                           arguments=NULL, zero=1e-4, throwError=TRUE, \dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
   function is called}
   \item{fixed}{Names of the parameters to keep fixed}
   \item{logObjective}{If \code{TRUE} (default), the objective function is the
-  log-likelihood.}
+  log10-likelihood.}
   \item{logDegradation}{If \code{TRUE} (default), the degradation parameters
   are entered as \eqn{10^x}}
   \item{arguments}{Initial parameters from which to start the maximization. If
   \code{NULL}, calls \code{initial.arguments}.}
   \item{zero}{Epsilon to indicate lower and upper bounds as \eqn{\alpha \pm
   \epsilon}{alpha +/- epsilon} that exclude the bound itself}
+  \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
