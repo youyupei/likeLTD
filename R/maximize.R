@@ -46,7 +46,7 @@ initial.arguments <- function(hypothesis, ...) {
 }
 
 
-upper.bounds = function(arguments, zero=1e-8) { 
+upper.bounds = function(arguments, zero=1e-4) { 
   # Upper bounds of optimization function.
   # 
   # Parameters:
@@ -66,7 +66,7 @@ upper.bounds = function(arguments, zero=1e-8) {
        tvedebrink      = 1-zero, 
        dropout         = dropout)[names(arguments)]
 }
-lower.bounds = function(arguments, zero=1e-8, logDegradation=FALSE) { 
+lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) { 
   # Lower bounds of optimization function.
   # 
   # Parameters:
@@ -93,7 +93,7 @@ lower.bounds = function(arguments, zero=1e-8, logDegradation=FALSE) {
 
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-                                arguments=NULL, zero=1e-8, ...) {
+                                arguments=NULL, zero=1e-4, throwError=TRUE, ...) {
   # Creates the optimization parameters for optim.
   #
   # optim is the optimization function from R's stat package.
@@ -102,12 +102,13 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    hypothesis: Hypothesis for which to create the objective function.
   #    verbose: Wether to print each time the likelihood is computed.
   #    fixed: List of arguments to keep fixed.
-  #    logObjective: Whether to optimize the log of the likelihood.
+  #    logObjective: Whether to optimize the log10 of the likelihood.
   #    logDegradation: Whether to input the degradation as 10^d or not.
   #    arguments: Starting arguments. If NULL, then uses initial.arguments to
   #               compute them.
   #    zero: An epsilonic number used to indicate lower and upper bounds which
   #          should be excluded.
+  #    throwError: Throw an error if result is infinite
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   objective = create.likelihood.vectors(hypothesis, ...)
@@ -134,12 +135,18 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     result <- do.call(objective, x)
     # Compute as log if requested, otherwise as product.
     if(logObjective)
-      result <- sum(log(result$objectives) + log(result$penalties))
-    else result <- log(prod(result$objectives) * prod(result$penalties))
+      result <- sum(log10(result$objectives) + log10(result$penalties))
+    else result <- prod(result$objectives) * prod(result$penalties)
     # Print out if requested.
     if(verbose) {
       # print(unlist(append(x, list(result=result))))
       print(result)
+    }
+    # If result is infinite, do throw
+    if(throwError == TRUE && is.infinite(result)) {
+      cat("Objective function is over/underflow: ", result, "\n")
+      print(x)
+      stop("Objective function over/underflow")
     }
     # return result
     result
