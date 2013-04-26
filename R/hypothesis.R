@@ -3,10 +3,10 @@
 read.csp.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
-  profile = sapply(profile, function (n) strsplit(n, ','))
-  profile = profile[profile[, "X"] != "Uncertain", 5:ncol(profile)]
-  allNA = apply(profile, 2, function(n) !all(is.na(n)))
-  profile[, allNA]
+  result = sapply(profile, function (n) strsplit(n, ','))
+  result = result[result[, "X"] != "Uncertain", 5:ncol(result), drop=FALSE]
+  allNA = apply(result, 2, function(n) !all(is.na(n)))
+  result[, allNA, drop=FALSE]
 }
 
 # Reads uncertain alleles in crime scene profile from file.
@@ -14,8 +14,8 @@ read.csp.profile = function(path) {
 read.unc.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
-  profile = sapply(profile, function (n) strsplit(n, ','))
-  profile[profile[, "X"] == "Uncertain", 5:ncol(profile)]
+  result = sapply(profile, function (n) strsplit(n, ','))
+  result[result[, "X"] == "Uncertain", 5:ncol(result), drop=FALSE]
 }
 
 # Reads known profiles from file.
@@ -25,6 +25,11 @@ read.known.profiles = function(path) {
   profiles = read.table(path, header=T, colClasses='character', row.names=1,
                         sep=',', quote = "\"")
   result = sapply(profiles, function (n) strsplit(n, ','))
+  # undoing R damage
+  if(nrow(profiles) == 1) {
+    result <- matrix(result, nrow=1)
+    colnames(result) <- colnames(profiles)
+  }
   row.names(result) = row.names(profiles)
   colnames(result)[1] = "queried"
   result[, "queried"] = result[, "queried"] == "queried"
