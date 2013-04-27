@@ -169,6 +169,7 @@ known.epg.per.locus <- function(rcont, degradation, fragmentLengths,
   #          not within the known profile, or it is its dose within the
   #          candidate CSP.
 
+  if(ncol(dropoutPresence) == 0) return(array(0.0, nrow(dropoutPresence)))
   indices = which(dropoutPresence > 0) - 1
   indivs = trunc(indices / nrow(dropoutPresence)) + 1
   alleles = indices %% nrow(dropoutPresence) + 1

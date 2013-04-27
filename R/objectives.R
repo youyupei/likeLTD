@@ -62,7 +62,8 @@ empty.alleles = function(genotypes, dropoutPresence, nUnknowns) {
   # Returns: A matrix indicating which alleles will be NA in dosage.
   if(!is.matrix(dropoutPresence)) stop("Expected matrix in input.")
   if(ncol(genotypes) == 0) return(matrix(nrow=nrow(dropoutPresence), ncol=0))
-  knownZero = rowSums(dropoutPresence) == 0
+  if(nrow(dropoutPresence) != 0) knownZero = rowSums(dropoutPresence) == 0
+  else knownZero = array(FALSE, ncol(genotypes))
   if(nUnknowns == 0) 
     return(matrix(knownZero, nrow=length(knownZero), ncol=ncol(genotypes)))
   # Performs following call in C:
@@ -151,11 +152,11 @@ likelihood.constructs.per.locus = function(hypothesis) {
   dropoutPresence = apply(hypothesis$dropoutProfs, 1, alleles.vector)
   uncPresence     = apply(hypothesis$uncProf, 1, alleles.vector)
   if(!is.matrix(cspPresence))
-    cspPresence = matrix(nrow=0, ncol=length(alleles))
+    cspPresence = matrix(ncol=0, nrow=length(alleles))
   if(!is.matrix(dropoutPresence))
-    dropoutPresence = matrix(nrow=0, ncol=length(alleles))
+    dropoutPresence = matrix(ncol=0, nrow=length(alleles))
   if(!is.matrix(uncPresence))
-    uncPresence = matrix(nrow=0, ncol=length(alleles))
+    uncPresence = matrix(ncol=0, nrow=length(alleles))
 
   missingReps = apply(hypothesis$cspProfile, 1, is.na)
 

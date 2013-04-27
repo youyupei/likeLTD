@@ -40,6 +40,7 @@ read.known.profiles = function(path) {
 # Documentation is in man directory.
 determine.dropout = function(knownProfiles, cspProfile) {
   # Alleles present in any replicate of the csp per locus.
+  if(nrow(knownProfiles) == 0) return(vector(mode="logical"))
   per.indiv = function(indiv) {
     per.locus = function(locus) {
       all(sapply(cspProfile[, locus], function(n) indiv[[locus]] %in% n))
@@ -205,7 +206,7 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
   queriedProfile = knownProfiles[unlist(knownProfiles[, "queried"]), ,
-                                  drop=FALSE]
+                                 drop=FALSE]
   # Removing queried individual from knownProfiles. 
   knownProfiles = knownProfiles[!unlist(knownProfiles[, "queried"]), ,
                                 drop=FALSE]
