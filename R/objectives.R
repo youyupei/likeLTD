@@ -186,7 +186,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
   probabilities = probabilities.function(hypothesis, cons, doR=doR)
 
   result.function <- function(rcont, degradation, localAdjustment,
-                              tvedebrink, dropout, dropin, ...) {
+                              tvedebrink, dropout, dropin=NULL, ...) {
     # Likelyhood function for a given hypothesis and locus
     #
     # This function is specific to the hypothesis for which it was created.
@@ -227,6 +227,9 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
       stop(sprintf("dropout should be %d long.", ncol(cons$dropoutPresence)))
     if(any(rcont < 0)) stop("found negative relative contribution.")
     if(any(degradation < 0)) stop("found negative degradation parameter.")
+    if(hypothesis$doDropin && is.null(dropin)) 
+      stop("Model requires missing argument 'dropin'")
+    else if(is.null(dropin)) dropin = 0
     if(hypothesis$doDropin && dropin < 0) 
       stop("Dropin rate should be between 0 and 1 (included).")
     if(tvedebrink >= 0)
@@ -284,7 +287,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
 # Penalties to apply to the likelihood.
 # Documentation is in man directory.
 penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
-                      dropin, localAdjPenalty=50, dropinPenalty=2,
+                      dropin=NULL, localAdjPenalty=50, dropinPenalty=2,
                       degradationPenalty=50, bemn=-4.35, besd=0.38, ...) {
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
@@ -316,7 +319,7 @@ create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
                       MoreArgs=list(addAttr=addAttr))
 
   likelihood.vectors <- function(rcont, degradation, localAdjustment,
-                                 tvedebrink, dropout, dropin,
+                                 tvedebrink, dropout, dropin=NULL,
                                  localAdjPenalty=50, dropinPenalty=2,
                                  degradationPenalty=50, bemn=-4.35,
                                  besd=0.38, ...) {

@@ -211,7 +211,12 @@ test_compatible.genotypes <- svTest(function() {
   # Try with exact match
   result <- compatible.genotypes(cspPresence, profPresence, alleleNames, 2,
                                  FALSE, missingReps)
-  checkEquals(result, matrix(0, 1, 0))
+  checkEquals(ncol(result), 6)
+  checkEquals(nrow(result), 4)
+  check = matrix(ncol=6, nrow=4, byrow=TRUE, 
+                 data=c(2, 2, 2, 3, 3, 4, 3, 4, 5, 4, 5, 5, 4, 3, 3, 2, 2, 2,
+                        5, 5, 4, 5, 4, 3))
+  checkEquals(result, check)
 
   # Try with two contributors 
   profPresence = matrix(c(TRUE, TRUE, FALSE, FALSE, FALSE), ncol=1)
