@@ -185,8 +185,8 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
   probabilities = probabilities.function(hypothesis, cons, doR=doR)
 
-  result.function <- function(rcont, degradation, localAdjustment,
-                              tvedebrink, dropout, dropin=NULL, ...) {
+  result.function <- function(localAdjustment, tvedebrink, dropout,
+                              degradation=NULL, rcont=NULL, dropin=NULL, ...) {
     # Likelyhood function for a given hypothesis and locus
     #
     # This function is specific to the hypothesis for which it was created.
@@ -194,21 +194,23 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     # optimize.
     #
     # Parameters:
+    #   localAdjustment: a scalar floating point value.
+    #   tvedebrink: a scalar floating point value.
+    #   dropout: the dropout rate for each replicate.
+    #   degradation: relative degradation from each profiled individual in this
+    #                hypothesis
     #   rcont: relative contribution from each profiled individual and unknown
     #          contributor in this hypothesis If it is one less than that, then
     #          an additional 1 is inserted at a position given by
     #          hypothesis$refIndiv. In general, this means either the queried
     #          individual (if subject to dropout and prosecution hypothesis) or
     #          the first individual subject to droput is the reference individual.
-    #   degradation: relative degradation from each profiled individual in this
-    #                hypothesis
-    #   localAdjustment: a scalar floating point value.
-    #   tvedebrink: a scalar floating point value.
-    #   dropout: the dropout rate for each replicate.
     #   ...: Any other parameter, e.g. for penalty functions. 
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          hypothesis
+    if(is.null(degradation)) degradation = c()
+    if(is.null(rcont)) rcont = c()
     if(length(rcont) + 1 == hypothesis$nUnknowns
                             + ncol(cons$dropoutPresence)) {
       if(hypothesis$refIndiv == 1) rcont = c(1, rcont)
@@ -286,9 +288,10 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
 
 # Penalties to apply to the likelihood.
 # Documentation is in man directory.
-penalties <- function(rcont, degradation, localAdjustment, tvedebrink, dropout,
-                      dropin=NULL, localAdjPenalty=50, dropinPenalty=2,
-                      degradationPenalty=50, bemn=-4.35, besd=0.38, ...) {
+penalties <- function(localAdjustment, tvedebrink, dropout, degradation=NULL,
+                      rcont=NULL, dropin=NULL, localAdjPenalty=50,
+                      dropinPenalty=2, degradationPenalty=50, bemn=-4.35,
+                      besd=0.38, ...) {
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
   # Some penalties are per locus and other for all locus. Hence this bit of run
@@ -318,14 +321,14 @@ create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
 
-  likelihood.vectors <- function(rcont, degradation, localAdjustment,
-                                 tvedebrink, dropout, dropin=NULL,
+  likelihood.vectors <- function(localAdjustment, tvedebrink, dropout,
+                                 degradation=NULL, rcont=NULL, dropin=NULL,
                                  localAdjPenalty=50, dropinPenalty=2,
                                  degradationPenalty=50, bemn=-4.35,
                                  besd=0.38, ...) {
     # Call each and every function in the array.
-    arguments = list(rcont=rcont, degradation=degradation,
-                     tvedebrink=tvedebrink, dropout=dropout,
+    arguments = list(tvedebrink=tvedebrink, dropout=dropout,
+                     degradation=degradation, rcont=rcont,
                      dropinPenalty=dropinPenalty,
                      degradationPenalty=degradationPenalty, bemn=bemn,
                      besd=besd, dropin=dropin)

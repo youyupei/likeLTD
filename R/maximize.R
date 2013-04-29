@@ -31,18 +31,20 @@ initial.arguments <- function(hypothesis, ...) {
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   # -1 because relative to first.
-  nrcont          = nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns - 1
-  rcont           = rep(1, nrcont)
-  degradation     = rep(3e-3, nrcont + 1)
+  nrcont          = max(nrow(hypothesis$dropoutProfs)
+                        + hypothesis$nUnknowns - 1, 0)
   localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
   dropout         = rep(0.5, nrow(hypothesis$cspProfile))
+  degradation     = rep( 3e-3, 
+                         nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
+  rcont           = rep(1, nrcont)
 
-  list(rcont           = rcont,
-       degradation     = degradation,
-       localAdjustment = localAdjustment,
+  list(localAdjustment = localAdjustment,
        tvedebrink      = -4.35,
-       dropin          = 1e-2,
-       dropout         = dropout)
+       dropout         = dropout, 
+       degradation     = degradation,
+       rcont           = rcont,
+       dropin          = 1e-2)
 }
 
 
@@ -54,17 +56,17 @@ upper.bounds = function(arguments, zero=1e-4) {
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
-  degradation = rep(Inf, length(arguments$degradation))
-  rcont       = rep(Inf, length(arguments$rcont))
   localAdjustment = rep(Inf, length(arguments$localAdjustment))
   dropout     = rep(1-zero, length(arguments$dropout))
+  degradation = rep(Inf, length(arguments$degradation))
+  rcont       = rep(Inf, length(arguments$rcont))
 
-  list(rcont           = rcont, 
-       dropin          = Inf,
-       degradation     = degradation,
-       localAdjustment = localAdjustment,
+  list(localAdjustment = localAdjustment,
        tvedebrink      = 1-zero, 
-       dropout         = dropout)[names(arguments)]
+       dropout         = dropout,
+       degradation     = degradation,
+       rcont           = rcont,
+       dropin          = Inf)[names(arguments)]
 }
 lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) { 
   # Lower bounds of optimization function.
@@ -76,18 +78,18 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   #         an epsilon to simulate the first case.
   #   logDegradation: Wether degradation parameters are entered as exponents of
   #                   10.
+  localAdjustment = rep(zero, length(arguments$localAdjustment))
   degradation = if(logDegradation) { -Inf } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
-  rcont       = rep(zero, length(arguments$rcont))
-  localAdjustment = rep(zero, length(arguments$localAdjustment))
   dropout     = rep(zero, length(arguments$dropout))
+  rcont       = rep(zero, length(arguments$rcont))
 
-  list(rcont           = rcont, 
-       dropin          = zero,
-       degradation     = degradation,
-       localAdjustment = localAdjustment,
+  list(localAdjustment = localAdjustment,
        tvedebrink      = -Inf,
-       dropout         = dropout)[names(arguments)]
+       degradation     = degradation,
+       dropout         = dropout,
+       rcont           = rcont, 
+       dropin          = zero)[names(arguments)]
 }
 
 
@@ -114,13 +116,15 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   objective = create.likelihood.vectors(hypothesis, ...)
 
   if(is.null(arguments)) arguments = initial.arguments(hypothesis)
-  if(logDegradation) arguments$degradation = log10(arguments$degradation)
+  if(logDegradation && "degradation" %in% names(arguments)) 
+    arguments$degradation = log10(arguments$degradation)
   
-  template = arguments
+  # Make sure we don't include empty stuff (like rcont sometimes)
+  template = Filter(function(n) length(n) > 0, arguments)
 
   if(!is.null(fixed)) {
-    fixedstuff = template[fixed]
-    template = template[-which(names(arguments) %in% fixed)]
+    fixedstuff = arguments[fixed]
+    template = arguments[-which(names(arguments) %in% fixed)]
   } else  fixedstuff = NULL
 
   result.function <- function(x) {
@@ -130,7 +134,8 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # Make sure it contains fixed terms.
     if(length(fixedstuff)) x = append(x, fixedstuff)
     # Converts degradation from log10 format.
-    if(logDegradation) x$degradation = 10^x$degradation
+    if(logDegradation && "degradation" %in% names(x))
+      x$degradation = 10^x$degradation
     # Compute objective function.
     result <- do.call(objective, x)
     # Compute as log if requested, otherwise as product.

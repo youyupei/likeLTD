@@ -1,15 +1,15 @@
 \name{penalties} 
 \alias{penalties} 
 \title{likeLTD::penalties} 
-\usage{penalties(rcont, degradation, localAdjustment, tvedebrink, dropout,
-                 dropin, localAdjPenalty=50, dropinPenalty=2,
+\usage{penalties(localAdjustment, tvedebrink, dropout, degradation=NULL,
+                 rcont=NULL, dropin, localAdjPenalty=50, dropinPenalty=2,
                  degradationPenalty=50, bemn=-4.35, besd=0.38, ...)}
 \arguments{
-  \item{rcont}{Ignored.}
-  \item{degradation}{Degradation parameters}
   \item{localAdjustment}{Local adjustment for each locus}
   \item{tvedebrink}{Tvedebrink exponent}
   \item{dropout}{Ignored}
+  \item{degradation}{Degradation parameters}
+  \item{rcont}{Ignored.}
   \item{dropin}{Dropin rate}
   \item{localAdjPenalty}{Penalty parameter for the local adjustments}
   \item{dropinPenalty}{Penalty parameter for the dropin rate}

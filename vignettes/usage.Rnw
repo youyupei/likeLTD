@@ -93,14 +93,14 @@ Fig.~\ref{fig:plotme}:
   require(scales)
   # Function that winnows down to a single value
   scalarWoE <- function(x) {
-     defenseModel(rcont=c(x, 1e-8, 1), 
-                  degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
-                  localAdjustment=list(D3=0.983, vWA=1.010,
+     defenseModel(localAdjustment=list(D3=0.983, vWA=1.010,
                                        D16=1.028, D2=1.072,
                                        D8=1.020, D21=0.930,
                                        D18=0.850, D19=0.932, 
                                        TH01=1.041, FGA=0.916),
                   dropout=c(0.5072, 1e-8), 
+                  degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
+                  rcont=c(x, 1e-8, 1), 
                   dropin=1.0216,
                   tvedebrink=-4.4462)
   }
@@ -162,16 +162,16 @@ apply the optimization methods on \texttt{vectorModel}.
   require(stats)
   # define upper and lower bounds for constrained maximization
   nloci = ncol(defenseHyp$cspProfile)
-  upper = list(rcont           = rep(Inf, 2),
-               degradation     = rep(Inf, 3),
-               localAdjustment = rep(Inf, nloci),
+  upper = list(localAdjustment = rep(Inf, nloci),
                dropout         = c(1, 1),
+               degradation     = rep(Inf, 3),
+               rcont           = rep(Inf, 2),
                dropin          = Inf,
                tvedebrink      = -1e-8 )[names(arguments)]
-  lower = list(rcont           = rep(1e-8, 2),
-               degradation     = rep(-Inf, 3),
-               localAdjustment = rep(1e-8, nloci),
+  lower = list(localAdjustment = rep(1e-8, nloci),
                dropout         = c(1e-8, 1e-8),
+               degradation     = rep(-Inf, 3),
+               rcont           = rep(1e-8, 2),
                dropin          = 1e-8,
                tvedebrink      = -Inf )[names(arguments)]
 

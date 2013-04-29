@@ -16,9 +16,17 @@
   
   The general form of these objective functions is:
 
-  \code{function(rcont, degradation, localAdjustment, tvedebrink, dropout, dropin, \dots)}
+  \code{function(localAdjustment, tvedebrink, dropout, degradation=NULL,
+                 rcont=NULL, dropin=NULL, \dots)}
 
   \itemize{
+    \item{localAdjustment}{A scalar (single locus objective) or a list of values
+                           giving the local adjustment for each locus. Must be
+                           positive.}
+    \item{tvedebrink}{Tvedebrink exponent. Must be a scalar and negative.}
+    \item{dropout}{Dropout rate for each replicate. Must be between 0 and 1.}
+    \item{degradation}{Degradation parameters to determine likeliness of
+                       dropout. Should be of length \eqn{k + u}.}
     \item{rcont}{Relative contribution. Must be of length \eqn{k + u} or \eqn{k
                  + u - 1}, where \eqn{k} is the number of contributors with
                  known profiles, and \eqn{u} is the number of unknown
@@ -32,13 +40,6 @@
                  known and unknown contributors as given.  It is for the user
                  to know what she is doing.  \code{rcont} should always be
                  positive.}
-    \item{degradation}{Degradation parameters to determine likeliness of
-                       dropout. Should be of length \eqn{k + u}.}
-    \item{localAdjustment}{A scalar (single locus objective) or a list of values
-                           giving the local adjustment for each locus. Must be
-                           positive.}
-    \item{tvedebrink}{Tvedebrink exponent. Must be a scalar and negative.}
-    \item{dropout}{Dropout rate for each replicate. Must be between 0 and 1.}
     \item{dropin}{A scalar giving the dropin rate. Ignored in models without
                   dropin. Otherwise it should be positive (unless given in
                   exponential form).}
