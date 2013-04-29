@@ -40,9 +40,9 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
   #
   # Parameters:
   #   alleleDb: Allele database for given locus, for a given ethnic group (see
-  #             ethnic.database), completed for rare alleles in queried
-  #             profile (see add.missing.alleles). The loci in both alleleDb
-  #             and queriedAlleles should occur in the same order.
+  #             ethnic.database), completed for rare alleles in queried profile
+  #             (see missing.alleles). The loci in both alleleDb and
+  #             queriedAlleles should occur in the same order.
   #   queriedAlleles: Profile of the queried individual, with colums as locus.
   #                   This will generally be something returned by
   #                   known.alleles.

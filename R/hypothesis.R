@@ -3,7 +3,7 @@
 read.csp.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
-  result = sapply(profile, function (n) strsplit(n, ','))
+  result = sapply(profile, function (n) strsplit(n, "(\\s*,|\\s)\\s*"))
   result = result[result[, "X"] != "Uncertain", 5:ncol(result), drop=FALSE]
   allNA = apply(result, 2, function(n) !all(is.na(n)))
   result[, allNA, drop=FALSE]
@@ -14,7 +14,7 @@ read.csp.profile = function(path) {
 read.unc.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profile = read.table(path, header=T, colClasses='character', sep=',')
-  result = sapply(profile, function (n) strsplit(n, ','))
+  result = sapply(profile, function (n) strsplit(n, "(\\s*,|\\s)\\s*"))
   result[result[, "X"] == "Uncertain", 5:ncol(result), drop=FALSE]
 }
 
@@ -24,7 +24,7 @@ read.known.profiles = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
   profiles = read.table(path, header=T, colClasses='character', row.names=1,
                         sep=',', quote = "\"")
-  result = sapply(profiles, function (n) strsplit(n, ','))
+  result = sapply(profiles, function (n) strsplit(n, "(\\s*,|\\s)\\s*"))
   # undoing R damage
   if(nrow(profiles) == 1) {
     result <- matrix(result, nrow=1)
@@ -85,7 +85,8 @@ missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
     missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
     # Now add new rows to database. 
     if(length(missingAlleles)) {
-      newrows = matrix(c(1, 0), nrow=length(missingAlleles), byrow=T)
+      newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+                       byrow=TRUE)
       rownames(newrows) = missingAlleles
       alleleDb[[locus]] = rbind(alleleDb[[locus]], newrows)
     }
