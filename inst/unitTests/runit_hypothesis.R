@@ -122,3 +122,72 @@ test_add.args.to.hypothesis <- svTest(function() {
   
   checkEquals(result, list(a=2, b="world", c=5))
 })
+
+test_read.csp.profile <- svTest(function() {
+  
+  data = list( D3=list(c("14", "16"), c("14", "16")),
+               vWA=list(c("15", "16", "19"), c("15", "16", "17", "19")),
+               D16=list(c("11", "13", "14"), c("11", "13", "14")),
+               D2=list(c("20", "23", "24", "25"), c("20", "24", "25")),
+               D8=list(c("11", "12", "13", "15"), c("11", "12", "13", "15")),
+               D21=list(c("28", "31"), c("28", "29", "30", "31", "31.2")),
+               D18=list(character(0), c("13", "14", "16", "17")),
+               D19=list(c("12", "14", "15.2", "17.2"), c("12", "13", "14", "15.2", "17.2")),
+               TH01=list(c("6", "8", "9", "9.3"), c("6", "8", "9", "9.3")),
+               FGA=list(c("22"), c("22", "23", "25")) )
+  if(! "read.csp.profile" %in% ls(.GlobalEnv))
+    read.csp.profile = getFromNamespace("read.csp.profile", "likeLTD")
+  # Path to data files.                                 
+  for(filename in c("hammer", "space")) {
+    path = Reduce(file.path, c("extdata", "hammer", paste(filename, "-CSP.csv", sep="")))
+    path = system.file(path, package="likeLTD")
+    # Now read data.
+    result = read.csp.profile(path)
+  
+    # And check it
+    checkTrue(is.matrix(result))
+    checkEquals(nrow(result), 2)
+    checkEquals(ncol(result), length(data))
+    checkTrue(setequal(names(data), colnames(result)))
+    for(col in names(data)) {
+      checkEquals(data[[col]][[1]], result[[1, col]])
+      checkEquals(data[[col]][[2]], result[[2, col]])
+    }
+  }
+})
+
+test_read.known.profiles <- svTest(function() {
+  
+  data = list( queried=c(TRUE, FALSE, FALSE),
+               D3  =list(c("14", "16"), c("16", "16"), c("15", "17")),
+               vWA =list(c("15", "19"), c("15", "16"), c("16", "19")),
+               D16 =list(c("11", "14"), c("13", "13"), c("12", "13")),
+               D2  =list(c("24", "25"), c("20", "20"), c("18", "25")),
+               D8  =list(c("12", "13"), c("11", "15"), c("11", "13")),
+               D21 =list(c("28", "31"), c("29", "30"), c("29", "30")),
+               D18 =list(c("14", "17"), c("17", "17"), c("15", "17")),
+               D19 =list(c("15.2", "17.2"), c("12", "14"), c("14", "14")),
+               TH01=list(c("9", "9.3"), c("6", "8"), c("6", "7")),
+               FGA =list(c("22", "23"), c("22", "25"), c("20", "22")) )
+  if(! "read.known.profiles" %in% ls(.GlobalEnv))
+    read.known.profiles = getFromNamespace("read.known.profiles", "likeLTD")
+  # Path to data files.                                 
+  for(filename in c("hammer", "space")) {
+    path = Reduce(file.path, c("extdata", "hammer", paste(filename, "-reference.csv", sep="")))
+    path = system.file(path, package="likeLTD")
+    # Now read data.
+    result = read.known.profiles(path)
+  
+    # And check it
+    checkTrue(is.matrix(result))
+    checkEquals(nrow(result), 3)
+    checkEquals(ncol(result), length(data))
+    checkTrue(setequal(names(data), colnames(result)))
+    checkTrue(setequal(c("Suspect", "Victim 1", "Victim 2"), rownames(result)))
+    for(col in names(data)) {
+      checkEquals(data[[col]][[1]], result[["Suspect", col]])
+      checkEquals(data[[col]][[2]], result[["Victim 1", col]])
+      checkEquals(data[[col]][[3]], result[["Victim 2", col]])
+    }
+  }
+})
