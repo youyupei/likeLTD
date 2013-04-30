@@ -38,13 +38,15 @@ initial.arguments <- function(hypothesis, ...) {
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
   rcont           = rep(1, nrcont)
+  dropin          = NULL
+  if(hypothesis$doDropin) dropin = 1e-2
 
   list(localAdjustment = localAdjustment,
        tvedebrink      = -4.35,
        dropout         = dropout, 
        degradation     = degradation,
        rcont           = rcont,
-       dropin          = 1e-2)
+       dropin          = dropin)
 }
 
 relistArguments <- function(arguments, hypothesis, logDegradation=TRUE) {
@@ -72,13 +74,15 @@ upper.bounds = function(arguments, zero=1e-4) {
   dropout     = rep(1-zero, length(arguments$dropout))
   degradation = rep(Inf, length(arguments$degradation))
   rcont       = rep(Inf, length(arguments$rcont))
+  dropin      = NULL
+  if(!is.null(arguments[["dropin"]])) dropin = Inf
 
   list(localAdjustment = localAdjustment,
        tvedebrink      = 1-zero, 
        dropout         = dropout,
        degradation     = degradation,
        rcont           = rcont,
-       dropin          = Inf)[names(arguments)]
+       dropin          = dropin)[names(arguments)]
 }
 lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) { 
   # Lower bounds of optimization function.
@@ -95,13 +99,15 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   degradation = rep(degradation, length(arguments$degradation))
   dropout     = rep(zero, length(arguments$dropout))
   rcont       = rep(zero, length(arguments$rcont))
+  dropin      = NULL
+  if(!is.null(arguments[["dropin"]])) dropin = zero
 
   list(localAdjustment = localAdjustment,
        tvedebrink      = -Inf,
        degradation     = degradation,
        dropout         = dropout,
        rcont           = rcont, 
-       dropin          = zero)[names(arguments)]
+       dropin          = dropin)[names(arguments)]
 }
 
 

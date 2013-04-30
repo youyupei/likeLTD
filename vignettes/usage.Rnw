@@ -219,7 +219,6 @@ over \texttt{relist}.
 \begin{table}
 <<tabopt, echo=FALSE>>=
 <<verystart>>
-<<models>>
 <<optim>>
 @
 \begin{tabular}{l|ccc}
