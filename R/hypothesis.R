@@ -63,6 +63,17 @@ masking.and.uncertain.profile = function(uncProfile, maskingProfiles) {
   uncProfile
 }
 
+masking.profile = function(cspProfile, maskingProfiles) {
+  # Remove masking alleles from CSP.
+  if(length(maskingProfiles) == 0) return(cspProfile)
+  for(locus in intersect(colnames(cspProfile), colnames(maskingProfiles))) {
+    alleles = Reduce(union, maskingProfiles[, locus, drop=FALSE])
+    for(i in 1:nrow(cspProfile))
+      cspProfile[[i, locus]] = setdiff(cspProfile[[i, locus]], alleles)
+  }
+  cspProfile
+}
+
 missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
   # Adds missing alleles to database
   #
@@ -145,6 +156,8 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   noDropoutProfs = knownProfiles[!dropout, colnames(cspProfile), drop=FALSE]
   # Adjust uncertain profile to also contain masking (no-dropout) profiles.
   uncProf = masking.and.uncertain.profile(uncProfile, noDropoutProfs)
+  # Remove masked alleles from  CSP.
+  cspProf = masking.profile(cspProfile, noDropoutProfs)
 
   # Adjust database to contain all requisite alleles.
   alleleDb = missing.alleles(alleleDb, cspProfile, noDropoutProfs)
@@ -153,7 +166,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
                                  adj=adj, fst=fst )
 
   # Construct all profiles as arrays of  
-  list(cspProfile=cspProfile, uncProf=uncProf, dropoutProfs=dropoutProfs,
+  list(cspProfile=cspProf, uncProf=uncProf, dropoutProfs=dropoutProfs,
        alleleDb=alleleDb,
        queriedProfile=queriedProfile[1, colnames(cspProfile)])
 }

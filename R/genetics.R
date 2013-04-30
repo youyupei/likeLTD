@@ -144,7 +144,13 @@ compatible.genotypes = function(cspPresence, profPresence, alleleNames,
   required = which(cspPresence & !profPresence) 
 
   # Not enough contributors, return empty matrix.
-  if(length(required) > 2*nUnknowns)  stop("Not enough unknown contributors.")
+  if(length(required) > 2*nUnknowns)  {
+    stop(sprintf("Not enough unknown contributors:
+       %d contributors, 
+       %d required allele (%s).", 
+       nUnknowns, length(required),
+       paste(alleleNames[required], collapse=", ")))
+  }
   if(nUnknowns == 0) return(matrix(0, nrow=1, ncol=1))
 
   hasRequired <- apply(genotypes, 2, function(n) all(required %in% n))

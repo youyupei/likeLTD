@@ -32,26 +32,11 @@ function () {
 	}
 }
 
-
-###############################################################
-# Then data functions
-###############################################################
-
-ref.data.path <- function() {
-  path = Reduce(file.path, c("extdata", "nodropin", "hammer-reference.csv"))
-  system.file(path, package="likeLTD")
-}
-csp.data.path <- function() {
-  path = Reduce(file.path, c("extdata", "nodropin", "hammer-CSP.csv"))
-  system.file(path, package="likeLTD")
-}
-
-
 ###################################
 # Finally, the unit-test themselves
 ###################################
 
-test_genotype_sizes <- svTest(function() {
+test_dropin_genotype_sizes <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
@@ -85,7 +70,7 @@ test_genotype_sizes <- svTest(function() {
   checkEquals(ncol(attr(functions[["FGA"]],  "constructs")$genotypes), 2744) 
 })
 
-test_regression_prosecution <- svTest(function() {
+test_dropin_regression_prosecution <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
@@ -128,7 +113,7 @@ test_regression_prosecution <- svTest(function() {
   checkEquals(newP, checks)
 })
 
-test_regression_defense <- svTest(function() {
+test_dropin_regression_defense <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(

@@ -51,7 +51,7 @@ csp.data.path <- function() {
 # Finally, the unit-test themselves
 ###################################
 
-test_read.known.profiles <- svTest(function() {
+test_novictim_read.known.profiles <- svTest(function() {
   # Checks reading from profiles without Victim still returns a matrix.
   knownProfiles = read.known.profiles(ref.data.path())
   checkEquals(nrow(knownProfiles), 1)
@@ -60,7 +60,7 @@ test_read.known.profiles <- svTest(function() {
   checkTrue(is.matrix(knownProfiles))
   checkEquals(rownames(knownProfiles), "Suspect")
 })
-test_determine.dropout <- svTest(function() {
+test_novictim_determine.dropout <- svTest(function() {
   # Test that determine.dropout can be fed an empty knownProfiles.
   cspProfile = read.csp.profile(csp.data.path())
   knownProfiles = read.known.profiles(ref.data.path())
@@ -70,7 +70,7 @@ test_determine.dropout <- svTest(function() {
   checkEquals(result, logical(0))
 })
 
-test_regression_prosecution <- svTest(function() {
+test_novictim_regression_prosecution <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "novictim")
   args = list(
@@ -114,7 +114,7 @@ test_regression_prosecution <- svTest(function() {
   checkEquals(newP, checks)
 })
 
-test_regression_defense <- svTest(function() {
+test_novictim_regression_defense <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "novictim")
   args = list(
