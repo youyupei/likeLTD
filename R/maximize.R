@@ -47,6 +47,18 @@ initial.arguments <- function(hypothesis, ...) {
        dropin          = 1e-2)
 }
 
+relistArguments <- function(arguments, hypothesis, logDegradation=TRUE) {
+  # Remakes arguments from a flat vector into a list.
+
+  template = initial.arguments(hypothesis)
+  notempty = Filter(function(n) length(n) > 0, template)
+  result <- relist(arguments, notempty)
+  if(logDegradation && "degradation" %in% names(result))
+    result[["degradation"]] = 10^result[["degradation"]]
+  result
+}
+
+
 
 upper.bounds = function(arguments, zero=1e-4) { 
   # Upper bounds of optimization function.

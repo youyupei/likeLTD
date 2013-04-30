@@ -15,6 +15,7 @@ export(determine.dropout)
 export(load.allele.database)
 
 export(initial.arguments)
+export(relistArguments)
 export(optimization.params)
 
 export(create.likelihood.vectors)

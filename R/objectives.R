@@ -239,7 +239,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     if(any(dropout < 0) || any(dropout > 1)) 
       stop("Dropout rates must be between 0 and 1 (included).")
     if(length(localAdjustment) != 1)
-      stop("localAdjustment should be a scaler")
+      stop("localAdjustment should be a scalar")
     if(localAdjustment < 0) stop("localAdjustment must be positive.")
 
     allEPG <- all.epg.per.locus(rcont, degradation, cons$dropoutPresence,

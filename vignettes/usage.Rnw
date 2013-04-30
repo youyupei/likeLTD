@@ -208,10 +208,14 @@ returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 <<optim, eval=FALSE, tidy=FALSE>>=
   params = optimization.params(defenseHyp, verbose=FALSE)
   results <- do.call(optim, params)
-  arguments <- relist(results$par, initial.arguments(defenseHyp))
+  arguments <- relistArguments(results$par, defenseHyp)
 @
 
-Running the above yields the parameters in Tab.~\ref{tab:maxi}.
+Running the above yields the parameters in Tab.~\ref{tab:maxi}. The last line
+transforms the linear vector of arguments returned by \texttt{optim} back into
+a more meaningful list, much as \texttt{relist} did earlier. However, it takes
+care of some specialized problems with the operation, and should be preferred
+over \texttt{relist}.
 \begin{table}
 <<tabopt, echo=FALSE>>=
 <<verystart>>
@@ -239,14 +243,14 @@ Running the above yields the parameters in Tab.~\ref{tab:maxi}.
 \begin{tabular}{l|cc}
   \hline
               & First Replicate & Second Replicate \\\hline
-  dropout     & \Sexpr{arguments$dropout[[1]]}
-              & \Sexpr{arguments$dropout[[2]]} \\\hline
+  dropout     & \Sexpr{format(arguments$dropout[[1]], digits=3)}
+              & \Sexpr{format(arguments$dropout[[2]], digits=3)} \\\hline
 \end{tabular}\\[2ex]
 
 \begin{tabular}{l|c}
   \hline
-  dropin      & \Sexpr{arguments$dropin} \\
-  tvedebrink  & \Sexpr{arguments$tvedebrink}\\\hline
+  dropin      & \Sexpr{format(arguments$dropin, digits=3)} \\
+  tvedebrink  & \Sexpr{format(arguments$tvedebrink, digits=3)}\\\hline
 \end{tabular}
 
   \caption{Arguments at the maximum for the defense hypothesis of the Hammer
