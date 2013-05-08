@@ -36,6 +36,44 @@ read.known.profiles = function(path) {
   result
 }
 
+# Should check that hypothesis is syntactically correct
+# This means matrices as opposed to lists, so on and so forth.
+# It does not mean it the input should make any sort of sense.
+sanity.check = function(hypothesis) {
+  errors = c()
+  if(!is.matrix(hypothesis$cspProfile)) 
+     errors = c(errors, "cspProfile should be a matrix 'replicates' x 'loci'.")
+  if(!is.matrix(hypothesis$dropoutProfs))
+     errors = c( errors, 
+                 "dropoutProfs should be a matrix 'profiles' x 'loci'.")
+  if(!is.matrix(hypothesis$uncProf))
+     errors = c(errors, "uncProf should be a matrix 'replicates' x 'loci'.")
+  if(!is.matrix(hypothesis$queriedProfile))
+     errors = c(errors, "queriedProfile should be a matrix 'profiles' x 'loci'.")
+  if(length(errors) == 0) {
+    if(nrow(hypothesis$cspProfile) != nrow(hypothesis$uncProf))
+      errors = c( errors,
+                  "Number of rows of uncProf and cspProfile do not match." )
+    if(ncol(hypothesis$cspProfile) != ncol(hypothesis$uncProf))
+      errors = c( errors,
+                  "Number of loci of uncProf and cspProfile do not match." )
+    if(ncol(hypothesis$cspProfile) != ncol(hypothesis$dropoutProfs))
+      errors = c( errors,
+                  "Number of loci of uncProf and dropoutProfs do not match." )
+    if(ncol(hypothesis$cspProfile) != ncol(hypothesis$dropoutProfs))
+      errors = c( errors,
+                  "Number of loci of uncProf and dropoutProfs do not match." )
+    if(ncol(hypothesis$cspProfile) != ncol(hypothesis$queriedProfile))
+      errors = c( errors,
+                  "Number of loci of uncProf and queriedProfs do not match." )
+  }
+  if(length(errors) != 0) {
+    cat("There seems to be an error with the input hypothesis.\n")
+    for(error in errors) cat(paste(c(error, "\n")))
+    stop()
+  }
+}
+
 # Adds dropout column to known profiles.
 # Documentation is in man directory.
 determine.dropout = function(knownProfiles, cspProfile) {
@@ -162,13 +200,14 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   # Adjust database to contain all requisite alleles.
   alleleDb = missing.alleles(alleleDb, cspProfile, noDropoutProfs)
   alleleDb = adjust.frequencies( alleleDb, 
-                                 queriedProfile[1, colnames(cspProfile)],
+                                 queriedProfile[1, colnames(cspProfile), 
+                                                drop=FALSE],
                                  adj=adj, fst=fst )
 
   # Construct all profiles as arrays of  
   list(cspProfile=cspProf, uncProf=uncProf, dropoutProfs=dropoutProfs,
        alleleDb=alleleDb,
-       queriedProfile=queriedProfile[1, colnames(cspProfile)])
+       queriedProfile=queriedProfile[1, colnames(cspProfile), drop=FALSE])
 }
 
 # Creates prosecution hypothesis.
@@ -205,6 +244,7 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns
   result[["relatedness"]] = c(0, 0)
+  sanity.check(result) # makes sure hypothesis has right type.
   result
 }
 
@@ -226,14 +266,15 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                                 drop=FALSE]
   
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
-                             queriedProfile, alleleDb, ethnic=ethnic,
-                             adj=adj, fst=fst)
+                               queriedProfile, alleleDb, ethnic=ethnic,
+                               adj=adj, fst=fst)
 
   result[["refIndiv"]] = nrow(result[["dropoutProfs"]]) + 1
 
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
   if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
+  sanity.check(result) # makes sure hypothesis has right type.
   result
 }
 
@@ -254,5 +295,6 @@ add.args.to.hypothesis <- function(hypothesis, ...) {
   if(length(argnames)) hypothesis[argnames] = args[argnames]
   argnames = setdiff(names(args), names(hypothesis))
   if(length(argnames)) hypothesis = append(hypothesis, args[argnames])
+
   hypothesis
 }

@@ -81,8 +81,8 @@ relatedness.factors <- function(input, genotypes, alleleDb, queriedProfile,
   # subject and modifies allele frequencies accordingly.
 
   if(any(abs(relatedness) > 1e-8)) {
-    indices = c(which(rownames(alleleDb) %in% queriedProfile[[1]]), 
-                which(rownames(alleleDb) %in% queriedProfile[[2]]) )
+    indices = c(which(rownames(alleleDb) %in% queriedProfile[[1]][[1]]), 
+                which(rownames(alleleDb) %in% queriedProfile[[1]][[2]]) )
     frequencies = alleleDb[indices, 1]
     
     .Call(.cpp.relatednessFactors, input, relatedness, genotypes, indices,
@@ -317,6 +317,7 @@ penalties <- function(localAdjustment, tvedebrink, dropout, degradation=NULL,
 create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
+  sanity.check(hypothesis) # makes sure hypothesis has right type.
   locusCentric = transform.to.locus.centric(hypothesis)
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
