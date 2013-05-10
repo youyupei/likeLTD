@@ -30,6 +30,7 @@ initial.arguments <- function(hypothesis, ...) {
   #    hypothesis: Hypothesis for which to guess nuisance paramters. 
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
+  sanity.check(hypothesis) # makes sure hypothesis has right type.
   # -1 because relative to first.
   nrcont          = max(nrow(hypothesis$dropoutProfs)
                         + hypothesis$nUnknowns - 1, 0)
@@ -131,6 +132,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    throwError: Throw an error if result is infinite
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
+  sanity.check(hypothesis) # makes sure hypothesis has right type.
   objective = create.likelihood.vectors(hypothesis, ...)
 
   if(is.null(arguments)) arguments = initial.arguments(hypothesis)

@@ -237,7 +237,7 @@ test_relatedness.factors <- svTest(function() {
   row.names(alleleDb) = c("10", "11", "12", "13", "14", "14.2", "15", "16",
                           "17", "18", "19", "20", "21", "22")
   
-  queriedAlleles = c("11", "21")
+  queriedAlleles = matrix(list(c("11", "21")), nrow=1, ncol=1)
   alleleDb[2, 1] = 2e0
   alleleDb[13, 1] = 3e0
   

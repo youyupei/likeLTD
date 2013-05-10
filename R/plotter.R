@@ -5,6 +5,7 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
                               contours=list()) {
 
   if(!require(ggplot2)) stop("Plotting reqires ggplot2")
+  sanity.check(hypothesis) # makes sure hypothesis has right type.
   # Create objective function
   creator <- create.likelihood
   if(logObjective) creator <- create.likelihood.log
