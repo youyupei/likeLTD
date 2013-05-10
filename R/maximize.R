@@ -50,14 +50,18 @@ initial.arguments <- function(hypothesis, ...) {
        dropin          = dropin)
 }
 
-relistArguments <- function(arguments, hypothesis, logDegradation=TRUE) {
+relistArguments <- function( parameters, hypothesis, fixed=NULL,
+                             logDegradation=TRUE, arguments=NULL ) {
   # Remakes arguments from a flat vector into a list.
-
-  template = initial.arguments(hypothesis)
+  if(is.null(arguments)) arguments = initial.arguments(hypothesis) 
+  if(!is.null(fixed)) 
+       template = arguments[-which(names(arguments) %in% fixed)]
+  else template = arguments
   notempty = Filter(function(n) length(n) > 0, template)
-  result <- relist(arguments, notempty)
+  result <- relist(parameters, notempty)
   if(logDegradation && "degradation" %in% names(result))
     result[["degradation"]] = 10^result[["degradation"]]
+  if(!is.null(fixed)) result <- append(result, arguments[fixed])
   result
 }
 
@@ -135,27 +139,33 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   sanity.check(hypothesis) # makes sure hypothesis has right type.
   objective = create.likelihood.vectors(hypothesis, ...)
 
-  if(is.null(arguments)) arguments = initial.arguments(hypothesis)
-  if(logDegradation && "degradation" %in% names(arguments)) 
-    arguments$degradation = log10(arguments$degradation)
+
+  args = arguments
+  if(is.null(args)) args = initial.arguments(hypothesis)
+  if(logDegradation && "degradation" %in% names(args)) 
+    args$degradation = log10(args$degradation)
   
   # Make sure we don't include empty stuff (like rcont sometimes)
-  template = Filter(function(n) length(n) > 0, arguments)
+  template = Filter(function(n) length(n) > 0, args)
 
   if(!is.null(fixed)) {
-    fixedstuff = arguments[fixed]
-    template = arguments[-which(names(arguments) %in% fixed)]
+    fixedstuff = args[fixed]
+    template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
 
   result.function <- function(x) {
  
     # If a flat vector, reconstruct list. 
-    if(typeof(x) == "double") x = relist(x, template)
-    # Make sure it contains fixed terms.
-    if(length(fixedstuff)) x = append(x, fixedstuff)
-    # Converts degradation from log10 format.
-    if(logDegradation && "degradation" %in% names(x))
-      x$degradation = 10^x$degradation
+    if(typeof(x) == "double")
+      x = relistArguments(x, hypothesis, fixed=fixed, arguments=arguments)
+    # Otherwise, checks some options.
+    else { 
+      # Make sure it contains fixed terms.
+      if(length(fixedstuff)) x = append(x, fixedstuff)
+      # Converts degradation from log10 format.
+      if(logDegradation && "degradation" %in% names(x))
+        x$degradation = 10^x$degradation
+    }
     # Compute objective function.
     result <- do.call(objective, x)
     # Compute as log if requested, otherwise as product.
@@ -177,8 +187,8 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     result
   }
   
-  lower = lower.bounds(arguments, zero, logDegradation)
-  upper = upper.bounds(arguments, zero)
+  lower = lower.bounds(args, zero, logDegradation)
+  upper = upper.bounds(args, zero)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
