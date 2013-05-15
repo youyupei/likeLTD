@@ -196,7 +196,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
-       control = list(fnscale=-1, factr=1e12), 
+       control = list(fnscale=-1, factr=1e7), 
        method  = "L-BFGS-B",
        hessian = FALSE )
 }
