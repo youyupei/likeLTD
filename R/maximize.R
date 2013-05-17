@@ -35,7 +35,7 @@ initial.arguments <- function(hypothesis, ...) {
   nrcont          = max(nrow(hypothesis$dropoutProfs)
                         + hypothesis$nUnknowns - 1, 0)
   localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
-  dropout         = rep(0.5, nrow(hypothesis$cspProfile))
+  dropout         = rep(0.05, nrow(hypothesis$cspProfile))
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
   rcont           = rep(1, nrcont)
