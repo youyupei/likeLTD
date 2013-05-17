@@ -120,7 +120,7 @@ genotype.factors <- function(genotypes, alleleDb, nUnknowns, doDropin,
   #
 
   if(nUnknowns == 0 & !doDropin) {
-    het = matrix(1, ncol=1, nrow=nrow(alleleDb))
+    het = rep(1,nrow(alleleDb))
     fractions <- matrix(alleleDb[genotypes, 1], ncol=ncol(genotypes))
     result <- apply(fractions, 2, prod) * het
   }
