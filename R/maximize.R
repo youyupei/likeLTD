@@ -192,6 +192,9 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
+  # Set unknown rcont upper limits to 1. Temporary placeholder.
+  upper$rcont[nrow(hypothesis$dropoutProfs)+1: length(upper$rcont)] = 1
+
   list(par     = unlist(template), 
        fn      = result.function, 
        lower   = unlist(lower), 
