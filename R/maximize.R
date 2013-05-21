@@ -189,7 +189,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   }
   
   lower = lower.bounds(args, zero, logDegradation)
-  upper = upper.bounds(args, zero, nrow(hypothesis$dropoutProfs),Hypothesis)
+  upper = upper.bounds(args, zero, nrow(hypothesis$dropoutProfs),hypothesis$hypothesis)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
