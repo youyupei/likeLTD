@@ -35,7 +35,7 @@ initial.arguments <- function(hypothesis, ...) {
   nrcont          = max(nrow(hypothesis$dropoutProfs)
                         + hypothesis$nUnknowns - 1, 0)
   localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
-  dropout         = rep(0.05, nrow(hypothesis$cspProfile))
+  dropout         = rep(0.5, nrow(hypothesis$cspProfile))
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
   rcont           = rep(1, nrcont)
@@ -67,7 +67,7 @@ relistArguments <- function( parameters, hypothesis, fixed=NULL,
 
 
 
-upper.bounds = function(arguments, zero=1e-4, dropoutNumProf, Hyp) { 
+upper.bounds = function(arguments, zero=1e-4) { 
   # Upper bounds of optimization function.
   # 
   # Parameters:
@@ -79,7 +79,6 @@ upper.bounds = function(arguments, zero=1e-4, dropoutNumProf, Hyp) {
   dropout     = rep(1-zero, length(arguments$dropout))
   degradation = rep(Inf, length(arguments$degradation))
   rcont       = rep(Inf, length(arguments$rcont))
-  if(Hyp=="defense") rcont[(dropoutNumProf+1): length(rcont)] = 1
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = Inf
 
@@ -189,7 +188,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   }
   
   lower = lower.bounds(args, zero, logDegradation)
-  upper = upper.bounds(args, zero, nrow(hypothesis$dropoutProfs),hypothesis$hypothesis)
+  upper = upper.bounds(args, zero)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
