@@ -24,3 +24,5 @@ export(create.likelihood)
 export(penalties)
 
 export(plotLikelihood.2d)
+
+export(multiRun)
