@@ -35,10 +35,10 @@ initial.arguments <- function(hypothesis, ...) {
   nrcont          = max(nrow(hypothesis$dropoutProfs)
                         + hypothesis$nUnknowns - 1, 0)
   localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
-  dropout         = rep(0.5, nrow(hypothesis$cspProfile))
+  dropout         = runif(nrow(hypothesis$cspProfile),min=0.3,max=0.7)
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
-  rcont           = rep(1, nrcont)
+  rcont           = runif(nrcont, min=0.5, max=1.5)
   dropin          = NULL
   if(hypothesis$doDropin) dropin = 1e-2
 
@@ -201,3 +201,20 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        method  = "L-BFGS-B",
        hessian = FALSE )
 }
+
+multiRun <- function(hyp, nrun, ...) 
+  {
+	# Runs the optimisation for a given hypothesis nrun times
+	# before returning the results that gave the maximum likelihood,
+	# as well as the standard deviation of the likelihoods, and the
+	# number of runs that completed
+	results <- NULL; L=NULL
+	for(i in 1:nrun) 
+		{
+		params = optimization.params(hyp, ...)
+		results[[i]] <- try(do.call(optim, params), TRUE)
+		# If optim returns an error do not record likelihood
+		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) L <- c(L, results[[i]]$value)
+		}
+	return(list(bestResult = results[[which.max(L)]], LikeStanDev = sd(L), numComplete = length(L)))
+	}
