@@ -1,7 +1,7 @@
 \name{multiRun} 
 \alias{multiRun} 
 \title{likeLTD::multiRun} 
-\usage{multiRUN(hypothesis, nrun, \dots)}
+\usage{multiRun(hypothesis, nrun, \dots)}
 \arguments{
   \item{hypothesis}{Hypothesis for which to run the optimisation}
   \item{nrun}{How many times to run the optimisation.}
