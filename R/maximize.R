@@ -211,7 +211,7 @@ multiRun <- function(hypothesis, nrun, ...)
 	results <- NULL; L=NULL
 	for(i in 1:nrun) 
 		{
-		params = optimization.params(hyp, ...)
+		params = optimization.params(hypothesis, ...)
 		results[[i]] <- try(do.call(optim, params), TRUE)
 		# If optim returns an error do not record likelihood
 		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) L <- c(L, results[[i]]$value)
