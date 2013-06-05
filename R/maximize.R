@@ -202,7 +202,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        hessian = FALSE )
 }
 
-multiRun <- function(hyp, nrun, ...) 
+multiRun <- function(hypothesis, nrun, ...) 
   {
 	# Runs the optimisation for a given hypothesis nrun times
 	# before returning the results that gave the maximum likelihood,
