@@ -545,7 +545,7 @@ outputReport <- function (prosecutionHypothesis,defenseHypothesis, prosecutionRe
 	yaxp=c(0,max(otherBoth),max(otherBoth))
 	if(max(otherBoth)==0)yaxp=c(0,1,1)
 	barplot(otherBoth,names.arg=colnames(read.csp.profile(args$mixedFile)),yaxp=yaxp,main='Unattributable alleles',ylab='No. alleles')
-	barplot(add=T,col='black',otherRep, yaxt='n')
+	barplot(add=T,col='black',alleleTableOut$otherRep, yaxt='n')
 	if(max(otherBoth)>3)abline(h=2,lty=2)
 	if(max(otherBoth)>5)abline(h=4,lty=2)
 	if(max(otherBoth)>7)abline(h=6,lty=2)
