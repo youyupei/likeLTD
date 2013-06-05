@@ -26,3 +26,7 @@ export(penalties)
 export(plotLikelihood.2d)
 
 export(multiRun)
+
+export(locusLikes)
+export(outputReport)
+export(outputNames)
