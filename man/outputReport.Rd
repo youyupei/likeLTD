@@ -1,7 +1,7 @@
 \name{outputReport} 
 \alias{outputReport} 
 \title{likeLTD::outputReport} 
-\usage{outputNames(prosecutionHypothesis, defenseHypothesis, prosecutionResults, defenseResults, args, caseName, stain)}
+\usage{outputReport(prosecutionHypothesis, defenseHypothesis, prosecutionResults, defenseResults, args, caseName, stain)}
 \arguments{
   \item{prosecutionHypothesis}{The output from prosecution.hypothesis().}
   \item{defenseHypothesis}{The output from defense.hypothesis().}
