@@ -1,7 +1,7 @@
-\name{outputReport} 
-\alias{outputReport} 
-\title{likeLTD::outputReport} 
-\usage{outputReport(prosecutionHypothesis, defenseHypothesis, prosecutionResults, defenseResults, args, caseName, stain)}
+\name{output.report} 
+\alias{output.report} 
+\title{likeLTD::output.report} 
+\usage{output.report(admin,prosecutionHypothesis,defenseHypothesis, prosecutionResults,defenseResults,args,stain)}
 \arguments{
   \item{prosecutionHypothesis}{The output from prosecution.hypothesis().}
   \item{defenseHypothesis}{The output from defense.hypothesis().}
@@ -16,4 +16,4 @@
 \details{
   Best used with pdf(width=8.25,height=11.5,file). Can use outputNames()$pdf.name to generate automatic name.
 }
-\seealso{pdf, outputNames}
+\seealso{pdf, output.names}
