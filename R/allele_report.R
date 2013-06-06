@@ -126,7 +126,7 @@ estimate.csp <- function(ref, cprofs) {
       
   # Constructs the result data frame.
   result = data.frame(array(0, c(nrow(ref), nrep+1)), row.names=rownames(ref))
-  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('run', n)})
+  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('Replicate', n)})
   colnames(result)[nrep+1] = 'Total' 
   
   # now add data.
@@ -709,7 +709,7 @@ dropDeg <- function(hypothesis,results,args)
 	if(condition)for(n in 1:hypothesis$nUnknowns)Names = c(Names,paste('U',n,sep=''))
 	condition = (hypothesis$nUnknowns>1)&(hypothesis$hypothesis=="defense")
 	if(condition)for(n in 1:(hypothesis$nUnknowns-1))Names = c(Names,paste('U',n,sep=''))
-	runNames = c();for(rName in 1:nrep)runNames[rName]=paste('Run',rName)
+	runNames = c();for(rName in 1:nrep)runNames[rName]=paste('Replicate',rName)
 
 # Table
 	h = h1 = round(dropout,4)	
