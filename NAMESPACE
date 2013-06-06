@@ -27,6 +27,6 @@ export(plotLikelihood.2d)
 
 export(multiRun)
 
-export(locusLikes)
-export(outputReport)
-export(outputNames)
+export(locus.likes)
+export(output.report)
+export(output.names)
