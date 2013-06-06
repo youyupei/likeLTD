@@ -796,6 +796,9 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
   if(!require('gplots')) stop("allele.report reqires the package gplots.")
   genetics = pack.genetics.input(admin)
 
+  # Unnatributable alleles
+  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
+
 
   # Generate 'summary', whether multiple Q or single Q
 
@@ -809,14 +812,19 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
       uncTotal[r] = uncTotal[r] + length(genetics$cprofs[[l]][[r]]$unc)
     }
   }
-  tablesize = min(1,25/max(c(cspTotal,uncTotal)))
+  max.width = max(c(cspTotal,uncTotal))
+  tablesize = min(1,20/max.width,4.3/genetics$nrep)
 
   outputPath = file.path( admin$outputPath, 
-                          paste(admin$caseName, '-allele_report.pdf', sep='') )
+                          paste(admin$caseName, '-output_report.pdf', sep='') )
 
   # report pg1
-  par(mai = c(0.5,0.5,0.5,0.5))
   par(mai = rep(0.3,times=4))
+  heightspg1 = c(2,((genetics$nrep*2)+1),(length(c(genetics$nameQ,genetics$nameK))+1),4,max(otherBoth))
+  # add titles space  
+  heightspg1 = heightspg1+2
+  widthspg1 = c(1)
+  layout(matrix(c(1:5),nrow=5),heights = heightspg1, widths=widthspg1)
  
   # End time
   endTime = as.character(Sys.time())
@@ -848,7 +856,6 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
   title('likelihood',cex=hsize)
 
   # Unattributable Alleles
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
   otherRep  = genetics$summary$otherRep
   yaxp=c(0, max(otherBoth), max(otherBoth))
   if(max(otherBoth)==0) yaxp=c(0,1,1)
@@ -864,8 +871,20 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
          pch=c(15,15))
 
   # report pg2
-  par(mfrow= c(6,1),mai = c(0.5,0.5,0.5,0.5))
-  par(mfrow= c(6,1),mai = rep(0.3,times=4))
+  par(mai = rep(0.3,times=4))
+  # Number of people to display
+  npeep = genetics$unknowns+length(c(genetics$nameK,genetics$nameQ))
+  if(args$doDropin==FALSE) 
+	{
+  	heightspg2 = c(4,npeep+2,npeep+2,((npeep-genetics$unknowns)+1),9)
+	} else {
+  	heightspg2 = c(4,npeep+2,npeep+2,((npeep-genetics$unknowns)+1),2,9)
+	}
+  # add titles space  
+  heightspg2 = heightspg2+2
+  widthspg2 = c(1)
+  layout(matrix(c(1:length(heightspg2)),nrow=length(heightspg2)),heights = heightspg2, widths=widthspg2)
+
 
   # Overall likelihood
   overallLikelihood  = data.frame(signif(10^prosecutionResults$value,2),signif(10^defenseResults$value,2),signif(10^(prosecutionResults$value/defenseResults$value),2),signif(prosecutionResults$value/defenseResults$value,2))
@@ -907,8 +926,7 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
   title('System info',cex=hsize)
 
   # report pg3
-  layout(mat = c(1,2), heights = c(2,1))
-  par(mai = c(0.5,0.5,0.5,0.5))
+  layout(mat = c(1,2), heights = c(29,10))
   par(mai = rep(0.3,times=4))
   size = 0.7
 
