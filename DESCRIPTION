@@ -6,5 +6,5 @@ Suggests: svUnit, gplots, ggplot2, scales
 Version: 5.0.0
 Date: 2013-01-15
 Author: David Balding, Adrian Timpson, Christopher Steele, Mayeul d'Avezac, James Hetherington.
-Maintainer: Adrian Timpson <a.timpson@ucl.ac.uk>
+Maintainer: Christopher Steele <c.steele.11@ucl.ac.uk>
 License: GPL-3
