@@ -383,7 +383,7 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
   # element of suggested is a string detailing the hypothesis.
   suggested = sapply(hypothesis, generate.hypothesis, USE.NAMES=FALSE,
                      simplify=FALSE)
-  return(suggested)
+  return(suggested[[1]])
 }
 
 # Packs and verifies administrative information.
