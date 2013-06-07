@@ -208,7 +208,7 @@ multiRun <- function(hypothesis, nrun, ...)
 	# before returning the results that gave the maximum likelihood,
 	# as well as the standard deviation of the likelihoods, and the
 	# number of runs that completed
-	results <- NULL; L=NULL
+	results <- list(); L=NULL
 	for(i in 1:nrun) 
 		{
 		params = optimization.params(hypothesis, ...)
