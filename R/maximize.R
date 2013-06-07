@@ -216,5 +216,8 @@ multiRun <- function(hypothesis, nrun, ...)
 		# If optim returns an error do not record likelihood
 		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) L <- c(L, results[[i]]$value)
 		}
-	return(list(bestResult = results[[which(is.finite(L))[which.max(L[is.finite(L)])]]], LikeStanDev = sd(L), numComplete = length(L)))
+	out = results[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
+	out$likeStanDev = sd(L)
+	out$numComplete = length(L)
+	return(out)
 	}
