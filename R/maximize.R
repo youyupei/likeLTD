@@ -219,5 +219,6 @@ multiRun <- function(hypothesis, nrun, ...)
 	out = results[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
 	out$likeStanDev = sd(L)
 	out$numComplete = length(L)
+	out$startParams = startParams[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
 	return(out)
 	}
