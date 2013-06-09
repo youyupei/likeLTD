@@ -245,6 +245,8 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
   result[["nUnknowns"]] = nUnknowns
   result[["relatedness"]] = c(0, 0)
   result[["hypothesis"]] = "prosecution"
+  result[["adj"]] = adj
+  result[["fst"]] = fst
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
@@ -276,6 +278,8 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   result[["nUnknowns"]] = nUnknowns + 1
   if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
   result[["hypothesis"]] = "defense"
+  result[["adj"]] = adj
+  result[["fst"]] = fst
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
