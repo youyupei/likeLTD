@@ -83,7 +83,7 @@ upper.bounds = function(arguments, zero=1e-4) {
   if(!is.null(arguments[["dropin"]])) dropin = Inf
 
   list(localAdjustment = localAdjustment,
-       tvedebrink      = 1-zero, 
+       tvedebrink      = 0-zero, 
        dropout         = dropout,
        degradation     = degradation,
        rcont           = rcont,
