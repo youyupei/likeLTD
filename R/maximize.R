@@ -208,17 +208,21 @@ multiRun <- function(hypothesis, nrun, ...)
 	# before returning the results that gave the maximum likelihood,
 	# as well as the standard deviation of the likelihoods, and the
 	# number of runs that completed
-	results <- list(); L=NULL
+	results <- list(); L=NULL; startParams <- list()
 	for(i in 1:nrun) 
 		{
 		params = optimization.params(hypothesis, ...)
+		startParams[[i]] <- params$par
 		results[[i]] <- try(do.call(optim, params), TRUE)
 		# If optim returns an error do not record likelihood
-		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) L <- c(L, results[[i]]$value)
+		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
+			{
+			L <- c(L, results[[i]]$value)
+			}
 		}
 	out = results[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
 	out$likeStanDev = sd(L)
 	out$numComplete = length(L)
-	out$startParams = params[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
+	out$startParams = startParams[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
 	return(out)
 	}
