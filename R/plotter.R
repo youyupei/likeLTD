@@ -5,32 +5,24 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
                               contours=list()) {
 
   if(!require(ggplot2)) stop("Plotting reqires ggplot2")
+  if(length(which) != 2)
+    stop("Argument 'which' to plotLikelihood.2d' should be of length 2")
+
+  sanity.check = getFromNamespace("sanity.check", "likeLTD")
   sanity.check(hypothesis) # makes sure hypothesis has right type.
   # Create objective function
-  creator <- create.likelihood
   if(logObjective) creator <- create.likelihood.log
 
-  if(logDegradation) {
-    objective0 <- creator(hypothesis, verbose=FALSE)
-    objective <- function(...) {
-      args = list(...)
-      args$degradation <- 10^args$degradation
-      do.call(objective0, args)
-    }
-  } else objective <- creator(hypothesis, verbose=FALSE)
-  
-  # This gives us the shape of the arguments.
-  if(is.null(arguments)) {
-    arguments <- initial.arguments(hypothesis)
-    if(logDegradation) arguments$degradation = log10(arguments$degradation)
-  }
-  # Figure out the bounds. 
-  upper <- upper.bounds(arguments)
-  lower <- lower.bounds(arguments, logDegradation=TRUE)
+  params = optimization.params( hypothesis, verbose=FALSE,
+                                logObjective=logObjective,
+                                logDegradation=logDegradation, 
+                                arguments=arguments, zero=0e0 )
+  if(any(which > length(params$par))) stop("'which' argument it too large")
+  if(any(which < 1)) stop("'which' argument it too small")
 
   # Now figure out extents.
-  xRange = c(unlist(lower)[which[[1]]], unlist(upper)[which[[1]]]) 
-  yRange = c(unlist(lower)[which[[2]]], unlist(upper)[which[[2]]]) 
+  xRange = c(params$lower[which[[1]]], params$upper[which[[1]]]) 
+  yRange = c(params$lower[which[[2]]], params$upper[which[[2]]]) 
 
   # Replace infinities with large number.
   if(length(large) == 1) large = rep(large, 2)
@@ -49,10 +41,10 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
 
   map = matrix(0, nrow=length(x), ncol=length(y))
   for(i in 1:length(x)) for(j in 1:length(y)) {
-    newargs = unlist(arguments)
+    newargs = params$par
     newargs[[which[[1]]]] = x[[i]]
     newargs[[which[[2]]]] = y[[j]]
-    map[i, j] = do.call(objective, relist(newargs, arguments))
+    map[i, j] = params$fn(newargs)
   }
 
   amap = data.frame(x=rep(x, length(y)), y=rep(y, rep(length(x), length(y))),
