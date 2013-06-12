@@ -223,11 +223,19 @@ multiRun <- function(hypothesis, nrun, ...)
 		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
 			{
 			L <- c(L, results[[i]]$value)
+			} else {
+			L <- c(L, NA)
 			}
 		}
-	out = results[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
-	out$likeStanDev = sd(L)
-	out$numComplete = length(L)
-	out$startParams = startParams[[which(is.finite(L))[which.max(L[is.finite(L)])]]]
+	# Index of which runs returned finite L
+	finiteIndex <- which(is.finite(L))
+	# Index of which run returned highest L
+    	maxIndex <- finiteIndex[which.max(L[finiteIndex])]
+    	# Produce results to be returned
+    	out = list()
+    	out$startParams = startParams[[maxIndex]]
+	out$likeStanDev = sd(L[finiteIndex],na.rm=TRUE)
+	out$numComplete = length(finiteIndex)
+	out = append(out, results[[maxIndex]])
 	return(out)
 	}
