@@ -3,7 +3,7 @@
 \title{likeLTD::plotLikelihood.2d} 
 \usage{plotLikelihood.2d(hypothesis, which=c(1, 2), large=100, N=20,
                          arguments=NULL, x=NULL, y=NULL, logObjective=TRUE,
-                         logDegradation=TRUE, contours=list())}
+                         logDegradation=TRUE, contours=list(), \dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to derive the likelihood}
   \item{which}{Indices of the arguments for which to plot likelihood}
@@ -18,6 +18,7 @@
   \item{logObjective}{Whether to plot log-likelihood}
   \item{logDegradation}{Whether to input degradation as \eqn{10^x}}
   \item{contours}{Arguments to stat_contour}
+  \item{\dots}{Other arguments are fed to the internal call to optimization.params}
 }
 \description{Plots two dimensional graph of likelihood for two input
              directions.}

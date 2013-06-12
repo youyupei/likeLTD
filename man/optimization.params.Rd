@@ -3,7 +3,8 @@
 \title{likeLTD::optimization.params} 
 \usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
-                           arguments=NULL, zero=1e-4, throwError=TRUE, \dots)}
+                           arguments=NULL, zero=1e-4, throwError=TRUE,
+                           withPenalties=TRUE, \dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -18,6 +19,7 @@
   \item{zero}{Epsilon to indicate lower and upper bounds as \eqn{\alpha \pm
   \epsilon}{alpha +/- epsilon} that exclude the bound itself}
   \item{throwError}{If TRUE, throws an error if the result is infinite}
+  \item{withPenalties}{If TRUE, then penalties are evaluated and used}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }

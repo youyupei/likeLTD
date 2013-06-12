@@ -118,7 +118,8 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-                                arguments=NULL, zero=1e-4, throwError=TRUE, ...) {
+                                arguments=NULL, zero=1e-4, throwError=TRUE,
+                                withPenalties=TRUE, ...) {
   # Creates the optimization parameters for optim.
   #
   # optim is the optimization function from R's stat package.
@@ -169,9 +170,13 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # Compute objective function.
     result <- do.call(objective, x)
     # Compute as log if requested, otherwise as product.
-    if(logObjective)
-      result <- sum(log10(result$objectives) + log10(result$penalties))
-    else result <- prod(result$objectives) * prod(result$penalties)
+    if(withPenalties) {
+      if(logObjective)
+        result <- sum(log10(result$objectives) + log10(result$penalties))
+      else result <- prod(result$objectives) * prod(result$penalties)
+    } else if(logObjective) {
+      result <- sum(log10(result$objectives))
+    } else result <- prod(result$objectives) 
     # Print out if requested.
     if(verbose) {
       # print(unlist(append(x, list(result=result))))

@@ -2,7 +2,7 @@
 plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
                               arguments=NULL, x=NULL, y=NULL,
                               logObjective=TRUE, logDegradation=TRUE,
-                              contours=list()) {
+                              contours=list(), ...) {
 
   if(!require(ggplot2)) stop("Plotting reqires ggplot2")
   if(length(which) != 2)
@@ -16,7 +16,7 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
   params = optimization.params( hypothesis, verbose=FALSE,
                                 logObjective=logObjective,
                                 logDegradation=logDegradation, 
-                                arguments=arguments, zero=0e0 )
+                                arguments=arguments, zero=0e0, ... )
   if(any(which > length(params$par))) stop("'which' argument it too large")
   if(any(which < 1)) stop("'which' argument it too small")
 
