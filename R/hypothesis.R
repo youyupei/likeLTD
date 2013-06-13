@@ -241,7 +241,7 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
   if(any(determine.dropout(queriedProfile, cspProfile)))
     {
   	# refIndiv is in relation to dropoutProfs rather than knownProfiles
-  	nameRef = rownames(defenseHyp$queriedProfile)
+  	nameRef = rownames(hypothesis$queriedProfile)
   	result[["refIndiv"]] = which(rownames(result$dropoutProfs)==nameRef)
 	  }
 
