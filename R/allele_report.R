@@ -610,7 +610,7 @@ stateHypotheses <- function(prosecutionHypothesis, admin)
 	}
 
 
-locus.likes <- function(hypothesis,results) 
+locus.likes <- function(hypothesis,results,...) 
 	{
 	# Generate locus likelihoods from overall likelihood
 	#
@@ -619,7 +619,7 @@ locus.likes <- function(hypothesis,results)
         #       prosecution.hypothesis()
 	#	results: results from do.call(optim,params)
 	model <- create.likelihood.vectors(hypothesis)
-	arguments <- relistArguments(results$par, hypothesis)
+	arguments <- relistArguments(results$par, hypothesis, ...)
 	likes <- do.call(model,arguments)
 	likes <- likes$objectives * likes$penalties
 	}
