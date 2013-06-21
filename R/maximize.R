@@ -213,25 +213,26 @@ multiRun <- function(hypothesis, nrun, ...)
 	# before returning the results that gave the maximum likelihood,
 	# as well as the standard deviation of the likelihoods, and the
 	# number of runs that completed
-	results <- list(); L=NULL; startParams <- list()
+	results = NULL; L=NULL; startParams <- list()
 	for(i in 1:nrun) 
 		{
-		# If the previous run did not converge, do it again
-		if(i>1)
+		# Set convergence to 99 initially
+		results = append(results,list(list(convergence=99)))
+		# Re-run if no convergence
+		while(results[[i]]$convergence!=0)
 			{
-			condition = results[[i-1]]$convergence!=0
-			if(condition) i = i - 1
-			}
-		# Set parameters (including randomisation)
-		params = optimization.params(hypothesis, ...)
-		startParams[[i]] <- params$par
-		results[[i]] <- try(do.call(optim, params), TRUE)
-		# If optim returns an error record likelihood as NA
-		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
-			{
-			L <- c(L, results[[i]]$value)
-			} else {
-			L <- c(L, NA)
+			# Set parameters (including randomisation)
+			params = optimization.params(hypothesis,...)
+			startParams[[i]] <- params$par
+			results[[i]] <- try(do.call(optim, params), TRUE)
+			# If optim returns an error record likelihood as NA
+			if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
+				{
+				L <- c(L, results[[i]]$value)
+				} else {
+				results[[i]]$convergence = 0
+				L <- c(L, NA)
+				}
 			}
 		}
 	# Index of which runs returned finite L
