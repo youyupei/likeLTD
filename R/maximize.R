@@ -202,7 +202,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
-       control = list(fnscale=-1, factr=1e7), 
+       control = list(fnscale=-1, factr=1e7, maxit=500), 
        method  = "L-BFGS-B",
        hessian = FALSE )
 }
@@ -216,10 +216,17 @@ multiRun <- function(hypothesis, nrun, ...)
 	results <- list(); L=NULL; startParams <- list()
 	for(i in 1:nrun) 
 		{
+		# If the previous run did not converge, do it again
+		if(i>1)
+			{
+			condition = results[[i-1]]$convergence!=0
+			if(condition) i = i - 1
+			}
+		# Set parameters (including randomisation)
 		params = optimization.params(hypothesis, ...)
 		startParams[[i]] <- params$par
 		results[[i]] <- try(do.call(optim, params), TRUE)
-		# If optim returns an error do not record likelihood
+		# If optim returns an error record likelihood as NA
 		if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
 			{
 			L <- c(L, results[[i]]$value)
