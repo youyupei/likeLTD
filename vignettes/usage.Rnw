@@ -206,7 +206,7 @@ convenience method provided by \likeLTD\, \texttt{optimization.params}. It
 returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
-  params = optimization.params(defenseHyp, verbose=FALSE)
+  params = optimization.params(defenseHyp, verbose=FALSE, throwError=FALSE)
   results <- do.call(optim, params)
   arguments <- relistArguments(results$par, defenseHyp)
 @
