@@ -228,10 +228,10 @@ multiRun <- function(hypothesis, nrun, ...)
 			# If optim returns an error record likelihood as NA
 			if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
 				{
-				L <- c(L, results[[i]]$value)
+				L[i] = results[[i]]$value
 				} else {
 				results[[i]]$convergence = 0
-				L <- c(L, NA)
+				L[i] = NA
 				}
 			}
 		}
