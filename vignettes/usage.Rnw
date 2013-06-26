@@ -105,7 +105,7 @@ Fig.~\ref{fig:plotme}:
                   tvedebrink=-4.4462)
   }
 
-  x = 0:100/100 * 3e0
+  x = 0:10/10 * 3e0
   data = data.frame(x=x, y=sapply(x, scalarWoE))
   plots <- ggplot(data, aes(x=x, y=y))                  +
               geom_line()                               +
