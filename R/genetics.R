@@ -57,12 +57,11 @@ adjust.frequencies <- function(alleleDb, queriedAlleles, adj=1, fst=0.02) {
   #        populations (e.g.  small, isolated subpopulations of the population
   #        from which the reference database has been drawn).
   adjust.per.locus <- function(alleleDbLocus, queriedLocus, adj=1, fst=0.02) {
-
     # Applies operations to a single locus.
     homozygote <- as.integer(queriedLocus[1] == queriedLocus[2])
     alleleDbLocus[queriedLocus, 1] <- 
       alleleDbLocus[queriedLocus, 1] + adj * (1 + homozygote)
-    #  shared ancestry adjustements.
+    #  shared ancestry adjustments.
     alleleDbLocus[, 1] <-
       alleleDbLocus[, 1] / sum(alleleDbLocus[, 1]) * (1 - fst) / (1 + fst) 
     alleleDbLocus[queriedLocus, 1] <-
@@ -84,12 +83,10 @@ all.genotypes.per.locus.R = function(nAlleles, nContrib=1) {
   # Parameters:
   #   nAlleles: number of alleles. 
   #   nContrib: number of unprofiled contributors.
-  
   if(nContrib == 0 || nAlleles == 0) return(matrix(nrow=0, ncol=0))
   # All compatible genotypes for a single contributor.
   singleContributor = t(combinations(nAlleles, 2, repeats.allowed=T))
   if(nContrib == 1) return(singleContributor)
-  
   # All compatible permutations of "nContrib" contributors.
   nContribPerms = permutations(ncol(singleContributor), nContrib,
                                repeats.allowed=T)

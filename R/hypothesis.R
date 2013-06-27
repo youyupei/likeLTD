@@ -112,7 +112,7 @@ masking.profile = function(cspProfile, maskingProfiles) {
   cspProfile
 }
 
-missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
+missing.alleles = function(alleleDb, cspProfile, dropoutProfiles) {
   # Adds missing alleles to database
   #
   # There may be alleles in the crime-scene profile, in the queried individual,
@@ -122,13 +122,14 @@ missing.alleles = function(alleleDb, cspProfile, noDropoutProfiles) {
   if(!is.matrix(cspProfile)) stop("input should be a matrix.")
   if(is.null(colnames(cspProfile)))
     stop("input matrix does not have column names.")
-  if(!is.matrix(noDropoutProfiles)) stop("input should be a matrix.")
+  if(!is.matrix(dropoutProfiles)) stop("input should be a matrix.")
 
   for(locus in colnames(cspProfile)) {
     dbAlleles = rownames(alleleDb[[locus]])
     cspAlleles = unique(unlist(cspProfile[, locus]))
-    dropAlleles = unique(unlist(noDropoutProfiles[, locus]))
-    missingAlleles = setdiff(cspAlleles, union(dbAlleles, dropAlleles))
+    dropAlleles = unique(unlist(dropoutProfiles[, locus]))
+    allAlleles = union(cspAlleles, dropAlleles)
+    missingAlleles = allAlleles[!allAlleles%in%dbAlleles]
     # At this point, some of the missingAlleles might just be saying move
     # along, nothing to see.
     missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
@@ -178,27 +179,29 @@ transform.to.locus.centric = function(hypothesis) {
 agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
                                 adj=1e0, fst=0.02) {
-  # Helper function to figure out the input of most hypothesiss.
+  # Helper function to figure out the input of most hypothesis.
   #
   # Basically, this groups operations that are done the same by defense and
   # prosection. 
 
   # Read database and filter it down to requisite ethnicity and locus. 
   alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
-
+ 
   # Figure out which profiles show dropout.
   dropout = determine.dropout(knownProfiles, cspProfile)
 
   # Creates profiles with and without dropout.
   dropoutProfs = knownProfiles[dropout, colnames(cspProfile), drop=FALSE]
   noDropoutProfs = knownProfiles[!dropout, colnames(cspProfile), drop=FALSE]
+
   # Adjust uncertain profile to also contain masking (no-dropout) profiles.
   uncProf = masking.and.uncertain.profile(uncProfile, noDropoutProfs)
+
   # Remove masked alleles from  CSP.
   cspProf = masking.profile(cspProfile, noDropoutProfs)
 
-  # Adjust database to contain all requisite alleles.
-  alleleDb = missing.alleles(alleleDb, cspProfile, noDropoutProfs)
+  # Adjust database to contain all requisite alleles
+  alleleDb = missing.alleles(alleleDb, cspProfile, dropoutProfs)
   alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
@@ -207,7 +210,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   # Construct all profiles as arrays of  
   list(cspProfile=cspProf, uncProf=uncProf, dropoutProfs=dropoutProfs,
        alleleDb=alleleDb,
-       queriedProfile=queriedProfile[1, colnames(cspProfile), drop=FALSE])
+       queriedProfile=queriedProfile[1, colnames(cspProfile), drop=FALSE]) 
 }
 
 # Creates prosecution hypothesis.
@@ -215,21 +218,18 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, ...) {
-
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(mixedFile)
   uncProfile = read.unc.profile(mixedFile)
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
-
   qIndices = which(unlist(knownProfiles[, "queried"]))
   uIndices = which(!unlist(knownProfiles[, "queried"]))
   queriedProfile = knownProfiles[qIndices, , drop=FALSE]  
   # Puts queried profile at the end.
-  knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE]
-  
-  
+  knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
+
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst)
@@ -272,11 +272,9 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   # Removing queried individual from knownProfiles. 
   knownProfiles = knownProfiles[!unlist(knownProfiles[, "queried"]), ,
                                 drop=FALSE]
-  
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst)
-
+                               adj=adj, fst=fst) 
   result[["refIndiv"]] = nrow(result[["dropoutProfs"]]) + 1
 
   result = append(result, list(...))
