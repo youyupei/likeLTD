@@ -112,7 +112,7 @@ masking.profile = function(cspProfile, maskingProfiles) {
   cspProfile
 }
 
-missing.alleles = function(alleleDb, cspProfile, dropoutProfiles) {
+missing.alleles = function(alleleDb, cspProfile, queriedProfile, dropoutProfiles) {
   # Adds missing alleles to database
   #
   # There may be alleles in the crime-scene profile, in the queried individual,
@@ -123,12 +123,12 @@ missing.alleles = function(alleleDb, cspProfile, dropoutProfiles) {
   if(is.null(colnames(cspProfile)))
     stop("input matrix does not have column names.")
   if(!is.matrix(dropoutProfiles)) stop("input should be a matrix.")
-
   for(locus in colnames(cspProfile)) {
     dbAlleles = rownames(alleleDb[[locus]])
     cspAlleles = unique(unlist(cspProfile[, locus]))
+    qAlleles = unique(unlist(queriedProfile[, locus]))
     dropAlleles = unique(unlist(dropoutProfiles[, locus]))
-    allAlleles = union(cspAlleles, dropAlleles)
+    allAlleles = unique(c(cspAlleles,qAlleles, dropAlleles))
     missingAlleles = allAlleles[!allAlleles%in%dbAlleles]
     # At this point, some of the missingAlleles might just be saying move
     # along, nothing to see.
@@ -201,7 +201,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   cspProf = masking.profile(cspProfile, noDropoutProfs)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = missing.alleles(alleleDb, cspProfile, dropoutProfs)
+  alleleDb = missing.alleles(alleleDb, cspProfile, queriedProfile, dropoutProfs)
   alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
@@ -272,6 +272,7 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   # Removing queried individual from knownProfiles. 
   knownProfiles = knownProfiles[!unlist(knownProfiles[, "queried"]), ,
                                 drop=FALSE]
+
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst) 
