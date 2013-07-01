@@ -119,7 +119,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-4, throwError=TRUE,
-                                withPenalties=TRUE, ...) {
+                                withPenalties=TRUE, objective=NULL, ...) {
   # Creates the optimization parameters for optim.
   #
   # optim is the optimization function from R's stat package.
@@ -138,7 +138,9 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check(hypothesis) # makes sure hypothesis has right type.
-  objective = create.likelihood.vectors(hypothesis, ...)
+  # If the objective function has not been handed to optimizatio.params,
+  # make the objective function
+  if(is.null(objective)) objective = create.likelihood.vectors(hypothesis, ...)
 
 
   args = arguments
@@ -207,12 +209,21 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        hessian = FALSE )
 }
 
+
+
 multiRun <- function(hypothesis, nrun, ...) 
   {
 	# Runs the optimisation for a given hypothesis nrun times
 	# before returning the results that gave the maximum likelihood,
 	# as well as the standard deviation of the likelihoods, and the
 	# number of runs that completed
+	# Convert ... into lost
+	tmpargs = list(...)
+	# Add arguments to hypothesis
+  	tmphypothesis = add.args.to.hypothesis(hypothesis, ...)
+  	sanity.check(tmphypothesis) 
+	# Create objective function (computationally expensive)
+	objective = create.likelihood.vectors(tmphypothesis,...)
 	results = NULL; L=NULL; startParams <- list()
 	for(i in 1:nrun) 
 		{
@@ -222,8 +233,34 @@ multiRun <- function(hypothesis, nrun, ...)
 		while(results[[i]]$convergence!=0)
 			{
 			# Set parameters (including randomisation)
-			params = optimization.params(hypothesis,...)
+			# Hand objective function to optimization.params
+			params = optimization.params(hypothesis,objective=objective,...)
+			# If there are fixed parameters, set them
+			if(!is.null(tmpargs$fixed))
+				{
+				parameters = c( "localAdjustment",
+						"tvedebrink",
+						"dropout",
+						"degradation",
+						"rcont",
+						"dropin")
+				for(j in 1:length(parameters))
+					{
+					userDefined = parse(text=paste("tmpargs$",parameters[j],sep=""))
+					if(!is.null(eval(userDefined))) 
+						{
+						index = grep(parameters[j],names(params$par))
+						# If only one value has been specified, replicate that value
+						# the necessary number of times
+						if(length(eval(userDefined))==1) userDefined = rep(eval(userDefined),times=length(index)) else userDefined = eval(userDefined)
+						# Replace default parameters with user-defined parameters 
+						params$par[index] = userDefined
+						}
+					}
+				}
+			# Update start parameters list
 			startParams[[i]] <- params$par
+			# Run optimization
 			results[[i]] <- try(do.call(optim, params), TRUE)
 			# If optim returns an error record likelihood as NA
 			if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
