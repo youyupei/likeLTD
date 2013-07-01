@@ -4,7 +4,7 @@
 \usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=1e-4, throwError=TRUE,
-                           withPenalties=TRUE, \dots)}
+                           withPenalties=TRUE, objective=NULL,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -20,6 +20,7 @@
   \epsilon}{alpha +/- epsilon} that exclude the bound itself}
   \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
+  \item{objective}{Objective function produced from create.likelihood.vectors}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
