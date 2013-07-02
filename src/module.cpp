@@ -9,7 +9,7 @@ R_CallMethodDef callMethods[]  = {
        {"addProfilesToEPG", (DL_FUNC) &addProfilesToEPG, 3},
        {"probabilitiesWithDropin", (DL_FUNC) &probabilitiesWithDropin, 7},
        {"probabilitiesNoDropin", (DL_FUNC) &probabilitiesNoDropin, 5},
-       {"tvedebrinkAdjustment", (DL_FUNC) &tvedebrinkAdjustment, 4},
+       {"powerAdjustment", (DL_FUNC) &powerAdjustment, 4},
        {"doseFraction", (DL_FUNC) &doseFraction, 3},
        {"emptyAlleles", (DL_FUNC) &emptyAlleles, 2},
        {"fractionsAndHet", (DL_FUNC) &fractionsAndHet, 2},
