@@ -17,9 +17,9 @@ extern "C" {
                                SEXP condA, SEXP condB, SEXP zeroAll, 
                                SEXP freqMat, SEXP rate);
   //! \brief Computes adjustment + exponential. 
-  //! \details computes (localAdjustment * allEPG[!zeroAll])^tvedebrink. allEPG
+  //! \details computes (locusAdjustment * allEPG[!zeroAll])^tvedebrink. allEPG
   //!          is both input and output.
-  SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
+  SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
                             SEXP tvedebrink);
 
   //! \brief Computes faction allEPG * dropout / (allEPG + 1 - dropout)
