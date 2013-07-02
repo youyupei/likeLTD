@@ -43,7 +43,7 @@ initial.arguments <- function(hypothesis, ...) {
   if(hypothesis$doDropin) dropin = 1e-2
 
   list(locusAdjustment = locusAdjustment,
-       tvedebrink      = -4.35,
+       power           = -4.35,
        dropout         = dropout, 
        degradation     = degradation,
        rcont           = rcont,
@@ -83,7 +83,7 @@ upper.bounds = function(arguments, zero=1e-4) {
   if(!is.null(arguments[["dropin"]])) dropin = Inf
 
   list(locusAdjustment = locusAdjustment,
-       tvedebrink      = 0-zero, 
+       power           = 0-zero, 
        dropout         = dropout,
        degradation     = degradation,
        rcont           = rcont,
@@ -108,7 +108,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   if(!is.null(arguments[["dropin"]])) dropin = zero
 
   list(locusAdjustment = locusAdjustment,
-       tvedebrink      = -Inf,
+       power           = -Inf,
        degradation     = degradation,
        dropout         = dropout,
        rcont           = rcont, 
@@ -238,8 +238,8 @@ multiRun <- function(hypothesis, nrun, ...)
 			# If there are fixed parameters, set them
 			if(!is.null(tmpargs$fixed))
 				{
-				parameters = c( "localAdjustment",
-						"tvedebrink",
+				parameters = c( "locusAdjustment",
+						"power",
 						"dropout",
 						"degradation",
 						"rcont",
