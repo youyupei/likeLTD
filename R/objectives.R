@@ -185,7 +185,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
   probabilities = probabilities.function(hypothesis, cons, doR=doR)
 
-  result.function <- function(locusAdjustment, tvedebrink, dropout,
+  result.function <- function(locusAdjustment, power, dropout,
                               degradation=NULL, rcont=NULL, dropin=NULL, ...) {
     # Likelyhood function for a given hypothesis and locus
     #
@@ -195,7 +195,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     #
     # Parameters:
     #   locusAdjustment: a scalar floating point value.
-    #   tvedebrink: a scalar floating point value.
+    #   power: a scalar floating point value.
     #   dropout: the dropout rate for each replicate.
     #   degradation: relative degradation from each profiled individual in this
     #                hypothesis
@@ -234,8 +234,8 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     else if(is.null(dropin)) dropin = 0
     if(hypothesis$doDropin && dropin < 0) 
       stop("Dropin rate should be between 0 and 1 (included).")
-    if(tvedebrink >= 0)
-      stop("Tvedebrink parameter cannot be positive or null.")
+    if(power >= 0)
+      stop("Power parameter cannot be positive or null.")
     if(any(dropout < 0) || any(dropout > 1)) 
       stop("Dropout rates must be between 0 and 1 (included).")
     if(length(locusAdjustment) != 1)
@@ -248,10 +248,10 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     # Goes to C to do exponentiation. This is quite expensive an operation.
     # Doing it in C is only interesting for larger matrices and when compiled
     # with OpenMP. 
-    # allEPG = (allEPG * locusAdjustment)^tvedebrink
+    # allEPG = (allEPG * locusAdjustment)^power
     # Nothing is returned by this function. Works directly on allEPG. 
-    .Call(.cpp.tvedebrinkAdjustment, allEPG, cons$zeroAll, locusAdjustment,
-          tvedebrink, PACKAGE="likeLTD")
+    .Call(.cpp.powerAdjustment, allEPG, cons$zeroAll, locusAdjustment,
+          power, PACKAGE="likeLTD")
 
     # res: (Partial) Likelihood per allele.
     res = array(1, length(cons$factors))
@@ -288,7 +288,7 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
 
 # Penalties to apply to the likelihood.
 # Documentation is in man directory.
-penalties <- function(locusAdjustment, tvedebrink, dropout, degradation=NULL,
+penalties <- function(locusAdjustment, power, dropout, degradation=NULL,
                       rcont=NULL, dropin=NULL, locusAdjPenalty=50,
                       dropinPenalty=2, degradationPenalty=50, bemn=-4.35,
                       besd=0.38, ...) {
@@ -303,8 +303,8 @@ penalties <- function(locusAdjustment, tvedebrink, dropout, degradation=NULL,
   if(!missing(degradation) & !is.null(degradation))
     result = result * exp(-sum(degradation) * degradationPenalty 
                            * normalization )
-  if(!missing(tvedebrink) & !is.null(tvedebrink))
-    result = result * dnorm(tvedebrink, bemn, besd) ^ normalization
+  if(!missing(power) & !is.null(power))
+    result = result * dnorm(power, bemn, besd) ^ normalization
   if(!missing(locusAdjustment) & !is.null(locusAdjustment))
     result = result * dgamma(as.vector(unlist(locusAdjustment)),
                              locusAdjPenalty, locusAdjPenalty)
@@ -322,13 +322,13 @@ create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
 
-  likelihood.vectors <- function(locusAdjustment, tvedebrink, dropout,
+  likelihood.vectors <- function(locusAdjustment, power, dropout,
                                  degradation=NULL, rcont=NULL, dropin=NULL,
                                  locusAdjPenalty=50, dropinPenalty=2,
                                  degradationPenalty=50, bemn=-4.35,
                                  besd=0.38, ...) {
     # Call each and every function in the array.
-    arguments = list(tvedebrink=tvedebrink, dropout=dropout,
+    arguments = list(power=power, dropout=dropout,
                      degradation=degradation, rcont=rcont,
                      dropinPenalty=dropinPenalty,
                      degradationPenalty=degradationPenalty, bemn=bemn,
