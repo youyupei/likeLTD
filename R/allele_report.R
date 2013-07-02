@@ -639,7 +639,7 @@ calc.dropout = function(results, hypothesis)
 	do = results$par[grep("dropout",names(results$par))]
 	rcont = results$par[grep("rcont",names(results$par))]
 	rcont = rcontConvert(hypothesis$refIndiv,rcont)
-	BB = results$par[grep("tvedebrink",names(results$par))]
+	BB = results$par[grep("power",names(results$par))]
 	drout = matrix(0,N-1,nrep)
 	if(N>1) for(x in 1:(N-1)) for(z in 1:nrep) drout[x,z] = do[z]/(do[z]+rcont[x]^-BB*(1-do[z]))
 	return(drout)
