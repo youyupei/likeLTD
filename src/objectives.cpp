@@ -93,7 +93,7 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
 }
 
 // Computes adjustment + exponential. 
-SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment, 
+SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
                           SEXP tvedebrink)
 {
 # ifdef OPENMP_STACK
@@ -111,7 +111,7 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP localAdjustment,
     error("Second dimension of allEPG and zeroAll do not match.");
     return R_NilValue;
   }
-  double      const adjust   = *REAL(localAdjustment);
+  double      const adjust   = *REAL(locusAdjustment);
   double      const tvede    = *REAL(tvedebrink);
   int const * const zero_ptr = LOGICAL(zeroAll);
   double    * const epg_ptr  = REAL(allEPG);
