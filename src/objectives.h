@@ -17,10 +17,10 @@ extern "C" {
                                SEXP condA, SEXP condB, SEXP zeroAll, 
                                SEXP freqMat, SEXP rate);
   //! \brief Computes adjustment + exponential. 
-  //! \details computes (locusAdjustment * allEPG[!zeroAll])^tvedebrink. allEPG
+  //! \details computes (locusAdjustment * allEPG[!zeroAll])^power. allEPG
   //!          is both input and output.
-  SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
-                            SEXP tvedebrink);
+  SEXP powerAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
+                            SEXP power);
 
   //! \brief Computes faction allEPG * dropout / (allEPG + 1 - dropout)
   //! \details Does the above operation only for zeroAll == false. 
