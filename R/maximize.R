@@ -34,7 +34,7 @@ initial.arguments <- function(hypothesis, ...) {
   # -1 because relative to first.
   nrcont          = max(nrow(hypothesis$dropoutProfs)
                         + hypothesis$nUnknowns - 1, 0)
-  localAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
+  locusAdjustment = rep(1, ncol(hypothesis$dropoutProfs))
   dropout         = runif(nrow(hypothesis$cspProfile),min=0.3,max=0.7)
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns )
@@ -42,7 +42,7 @@ initial.arguments <- function(hypothesis, ...) {
   dropin          = NULL
   if(hypothesis$doDropin) dropin = 1e-2
 
-  list(localAdjustment = localAdjustment,
+  list(locusAdjustment = locusAdjustment,
        tvedebrink      = -4.35,
        dropout         = dropout, 
        degradation     = degradation,
@@ -75,14 +75,14 @@ upper.bounds = function(arguments, zero=1e-4) {
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
-  localAdjustment = rep(Inf, length(arguments$localAdjustment))
+  locusAdjustment = rep(Inf, length(arguments$locusAdjustment))
   dropout     = rep(1-zero, length(arguments$dropout))
   degradation = rep(Inf, length(arguments$degradation))
   rcont       = rep(Inf, length(arguments$rcont))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = Inf
 
-  list(localAdjustment = localAdjustment,
+  list(locusAdjustment = locusAdjustment,
        tvedebrink      = 0-zero, 
        dropout         = dropout,
        degradation     = degradation,
@@ -99,7 +99,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   #         an epsilon to simulate the first case.
   #   logDegradation: Wether degradation parameters are entered as exponents of
   #                   10.
-  localAdjustment = rep(zero, length(arguments$localAdjustment))
+  locusAdjustment = rep(zero, length(arguments$locusAdjustment))
   degradation = if(logDegradation) { -Inf } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
   dropout     = rep(zero, length(arguments$dropout))
@@ -107,7 +107,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
 
-  list(localAdjustment = localAdjustment,
+  list(locusAdjustment = locusAdjustment,
        tvedebrink      = -Inf,
        degradation     = degradation,
        dropout         = dropout,
