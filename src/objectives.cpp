@@ -93,8 +93,8 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
 }
 
 // Computes adjustment + exponential. 
-SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
-                          SEXP tvedebrink)
+SEXP powerAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment, 
+                          SEXP power)
 {
 # ifdef OPENMP_STACK
     uintptr_t const oldstack = R_CStackLimit;
@@ -112,7 +112,7 @@ SEXP tvedebrinkAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment,
     return R_NilValue;
   }
   double      const adjust   = *REAL(locusAdjustment);
-  double      const tvede    = *REAL(tvedebrink);
+  double      const tvede    = *REAL(power);
   int const * const zero_ptr = LOGICAL(zeroAll);
   double    * const epg_ptr  = REAL(allEPG);
 
