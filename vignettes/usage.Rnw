@@ -73,13 +73,13 @@ product of the likelihoods and penalties associated with each locus.
 <<tidy=FALSE, eval=FALSE>>=
   defenseModel(rcont=c(1, 1e-8, 1.63), 
                degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
-               localAdjustment=list(D3=0.983, vWA=1.010, D16=1.028, 
+               locusAdjustment=list(D3=0.983, vWA=1.010, D16=1.028, 
                                     D2=1.072, D8=1.020, D21=0.930,
                                     D18=0.850, D19=0.932, 
                                     TH01=1.041, FGA=0.916),
                dropout=c(0.5072, 1e-8), 
                dropin=1.0216,
-               tvedebrink=-4.4462)
+               power=-4.4462)
 @
 
 The function above returns a scalar which represents the weight of evidence for
@@ -93,7 +93,7 @@ Fig.~\ref{fig:plotme}:
   require(scales)
   # Function that winnows down to a single value
   scalarWoE <- function(x) {
-     defenseModel(localAdjustment=list(D3=0.983, vWA=1.010,
+     defenseModel(locusAdjustment=list(D3=0.983, vWA=1.010,
                                        D16=1.028, D2=1.072,
                                        D8=1.020, D21=0.930,
                                        D18=0.850, D19=0.932, 
@@ -102,7 +102,7 @@ Fig.~\ref{fig:plotme}:
                   degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
                   rcont=c(x, 1e-8, 1), 
                   dropin=1.0216,
-                  tvedebrink=-4.4462)
+                  power=-4.4462)
   }
 
   x = 0:10/10 * 3e0
@@ -162,18 +162,18 @@ apply the optimization methods on \texttt{vectorModel}.
   require(stats)
   # define upper and lower bounds for constrained maximization
   nloci = ncol(defenseHyp$cspProfile)
-  upper = list(localAdjustment = rep(Inf, nloci),
+  upper = list(locusAdjustment = rep(Inf, nloci),
                dropout         = c(1, 1),
                degradation     = rep(Inf, 3),
                rcont           = rep(Inf, 2),
                dropin          = Inf,
-               tvedebrink      = -1e-8 )[names(arguments)]
-  lower = list(localAdjustment = rep(1e-8, nloci),
+               power      = -1e-8 )[names(arguments)]
+  lower = list(locusAdjustment = rep(1e-8, nloci),
                dropout         = c(1e-8, 1e-8),
                degradation     = rep(-Inf, 3),
                rcont           = rep(1e-8, 2),
                dropin          = 1e-8,
-               tvedebrink      = -Inf )[names(arguments)]
+               power      = -Inf )[names(arguments)]
 
   # perform maximization
   result <- optim(par = unlist(arguments),
@@ -232,11 +232,11 @@ over \texttt{relist}.
 
 \begin{tabular}{ccccc}
   \hline
-  \multicolumn{5}{c}{Local Ajustments for each locus}\\\hline
+  \multicolumn{5}{c}{Locus Ajustments for each locus}\\\hline
   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[1:5], collapse=" & ")}\\
-  \Sexpr{paste0(format(arguments$localAdjustment[1:5], digits=3), collapse=" & ")}\\\hline
+  \Sexpr{paste0(format(arguments$locusAdjustment[1:5], digits=3), collapse=" & ")}\\\hline
   \Sexpr{paste0(colnames(defenseHyp$cspProfile)[6:10], collapse=" & ")}\\
-  \Sexpr{paste0(format(arguments$localAdjustment[6:10], digits=3), collapse=" & ")}\\\hline
+  \Sexpr{paste0(format(arguments$locusAdjustment[6:10], digits=3), collapse=" & ")}\\\hline
 \end{tabular}\\[2ex]
 
 \begin{tabular}{l|cc}
@@ -249,7 +249,7 @@ over \texttt{relist}.
 \begin{tabular}{l|c}
   \hline
   dropin      & \Sexpr{format(arguments$dropin, digits=3)} \\
-  tvedebrink  & \Sexpr{format(arguments$tvedebrink, digits=3)}\\\hline
+  power  & \Sexpr{format(arguments$power, digits=3)}\\\hline
 \end{tabular}
 
   \caption{Arguments at the maximum for the defense hypothesis of the Hammer
