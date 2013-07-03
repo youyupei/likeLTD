@@ -6,7 +6,7 @@
                  degradationPenalty=50, bemn=-4.35, besd=0.38, ...)}
 \arguments{
   \item{locusAdjustment}{Locus adjustment for each locus}
-  \item{tvedebrink}{Tvedebrink exponent}
+  \item{power}{Tvedebrink exponent}
   \item{dropout}{Ignored}
   \item{degradation}{Degradation parameters}
   \item{rcont}{Ignored.}
