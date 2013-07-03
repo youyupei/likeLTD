@@ -57,12 +57,12 @@ test_dropout_regression_prosecution <- svTest(function() {
   # Create and call a likelihood function
   prosecuModel <- create.likelihood.vectors(prosecuHyp)
 
-  argsP = list( localAdjustment=c( 0.980883952583997, 0.980464467636125,
+  argsP = list( locusAdjustment=c( 0.980883952583997, 0.980464467636125,
                                    0.980243910764109, 0.980280452794204,
                                    0.980771919430644, 0.980489238622726,
                                    0.981327128481614, 0.979711058314168,
                                    0.980826168761904, 0.980795415358621 ),
-                tvedebrink=-4.35195406059307,
+                power=-4.35195406059307,
                 dropout=c(1e-04, 1e-04),
                 degradation=0.00110893573762344,
                 dropin=1e-04 )
@@ -98,12 +98,12 @@ test_dropout_regression_defense <- svTest(function() {
   # Create and call a likelihood function
   defenseModel <- create.likelihood.vectors(defenseHyp)
 
-  argsD = list( localAdjustment=c( 0.979178047455148, 0.981265026384822,
+  argsD = list( locusAdjustment=c( 0.979178047455148, 0.981265026384822,
                                    0.981380871718712, 0.980188885321909,
                                    0.979999998544042, 0.979999469147536,
                                    0.979178390673367, 0.979820452384997,
                                    0.979274819180087, 0.979181441869338 ),
-                 tvedebrink=-4.36675942037325,
+                 power=-4.36675942037325,
                  dropout=c(1e-04, 1e-04),
                  degradation=c(0.00146422147787705, 0.00178103375279096),
                  rcont=1.68052278396074, 
