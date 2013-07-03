@@ -82,34 +82,83 @@ test_determine.dropout <- svTest(function() {
 })
 
 test_missing.alleles <- svTest(function() {
+
+# Load missing.alleles from likeLTD namespace
+  if(! "missing.alleles" %in% ls(.GlobalEnv))
+    missing.alleles <- getFromNamespace("missing.alleles", "likeLTD")
   
   alleleDb   = list(D2=matrix(c(2, 2), nrow=14, ncol=2))
   row.names(alleleDb$D2) = c("10", "11", "12", "13", "14", "14.2", "15", "16",
                              "17", "18", "19", "20", "21", "22")
   cspProfile = matrix(list("D2"=list(c("10", "16"), c("14", "16", "17"))))
-  noDropoutProfiles = matrix(list("D2"=list(c("10", "16"), c("14", "16"))))
+  colnames(cspProfile) <- c("D2")
+  dropoutProfiles = matrix(list("D2"=list(c("10", "16"), c("14", "16"))))
+  colnames(dropoutProfiles) <- c("D2")
+  queriedProfile = matrix(list("D2"=list(c("10","16"))))
+  colnames(queriedProfile) <- c("D2")
   
-  if(! "missing.alleles" %in% ls(.GlobalEnv))
-    missing.alleles <- getFromNamespace("missing.alleles", "likeLTD")
-  checkException(missing.alleles(alleleDb, cspProfile, noDropoutProfiles))
+# Check cspProfile is a matrix
+  checkException(missing.alleles(alleleDb,list("D2"=list(c("10", "16"), c("14", "16", "17"))),queriedProfile,dropoutProfiles))
 
-  colnames(cspProfile) = c("D2")
-  colnames(noDropoutProfiles) = c("D2")
-  result = missing.alleles(alleleDb, cspProfile, noDropoutProfiles)
-  checkEquals(alleleDb, result)
+# Check dropoutProfiles are a matrix
+  checkException(missing.alleles(alleleDb,cspProfile,queriedProfile,list("D2"=list(c("10", "16"), c("14", "16")))))
 
-  cspProfile = matrix(list("D2"=list(c("9", "16"), c("14", "16", "17"))))
-  noDropoutProfiles = matrix(list("D2"=list(c("9", "16"), c("14", "16"))))
-  colnames(cspProfile) = c("D2")
-  colnames(noDropoutProfiles) = c("D2")
-  checkEquals(alleleDb, missing.alleles(alleleDb, cspProfile, noDropoutProfiles))
+# Check queriedProfile is a matrix
+  checkException(missing.alleles(alleleDb,cspProfile,list("D2"=list(c("10","16"))),dropoutProfiles))
+ 
+# Check colnames are present
+  tmpcspProfile = cspProfile; colnames(tmpcspProfile) = NULL
+  checkException(missing.alleles(alleleDb,tmpcspProfile,queriedProfile,dropoutProfiles))
+		
+# Does not change if no missing alleles
+  checkEquals(alleleDb,missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles))
 
-  noDropoutProfiles = matrix(list("D2"=list(c("10", "16"), c("14", "16"))))
-  colnames(noDropoutProfiles) = c("D2")
-  result = missing.alleles(alleleDb, cspProfile, noDropoutProfiles)
-  checkEquals(nrow(alleleDb$D2)+1, nrow(result$D2))
-  checkTrue("9" %in% rownames(result$D2))
-  checkEquals(result$D2["9", ], c(1, 0))
+# 
+  cspProfile = matrix(list("D2"=list(c("10", "16"), c("14", "16", "999"))))
+  colnames(cspProfile) <- c("D2")
+  tmp = missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles)
+# Check 999 is in new alleleDb
+  checkTrue("999" %in% rownames(tmp$D2))
+# Check have only added 999
+  checkEquals(alleleDb$D2, tmp$D2[-which(rownames(tmp$D2)=="999"),])
+# Check values of 999 are correct
+  checkEquals(tmp$D2["999",][1], 1) 
+  checkEquals(tmp$D2["999",][2], 0) 
+
+# Check behaviours of NA
+  cspProfile = matrix(list("D2"=list(NA, NA)))
+  colnames(cspProfile) <- c("D2")
+  checkEquals(alleleDb,missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles))
+
+  cspProfile = matrix(list("D2"=list(NA)))
+  colnames(cspProfile) <- c("D2")
+  checkEquals(alleleDb,missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles))
+
+# Check behaviour of NA and exceptional
+  queriedProfile = matrix(list("D2"=list(c("10","999"))))
+  colnames(queriedProfile) <- c("D2")
+  tmp = missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles)
+# Check 999 is in new alleleDb
+  checkTrue("999" %in% rownames(tmp$D2))
+# Check have only added 999
+  checkEquals(alleleDb$D2, tmp$D2[-which(rownames(tmp$D2)=="999"),])
+# Check values of 999 are correct
+  checkEquals(tmp$D2["999",][1], 1) 
+  checkEquals(tmp$D2["999",][2], 0) 
+
+  dropoutProfiles = matrix(list("D2"=list(c("10", "16"), c("14", "998"))))
+  colnames(dropoutProfiles) <- c("D2")
+  tmp = missing.alleles(alleleDb,cspProfile,queriedProfile,dropoutProfiles)
+# Check 999 and 998 is in new alleleDb
+  checkTrue("999" %in% rownames(tmp$D2))
+  checkTrue("998" %in% rownames(tmp$D2))
+# Check have only added 999 and 998
+  checkEquals(alleleDb$D2, tmp$D2[-which(rownames(tmp$D2)%in%c("999","998")),])
+# Check values of 999 and 998 are correct
+  checkEquals(tmp$D2["999",][1], 1) 
+  checkEquals(tmp$D2["999",][2], 0) 
+  checkEquals(tmp$D2["998",][1], 1) 
+  checkEquals(tmp$D2["998",][2], 0) 
 })
 
 
