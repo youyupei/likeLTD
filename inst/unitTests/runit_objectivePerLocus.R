@@ -100,8 +100,8 @@ test_TH01.regression.with.dropin = svTest(function() {
                            1.000000000000000, 0.543478260869565),
                    dropin = 1e0, #0.108695652173913,
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
 
   if(! "create.likelihood.per.locus" %in% ls(.GlobalEnv))
@@ -148,8 +148,8 @@ test_TH01.regression.no.dropin = svTest(function() {
                            1.000000000000000, 0.543478260869565), 
                    dropin=1e0,
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
 
   hypothesisTH01$nUnknowns = 2
@@ -195,8 +195,8 @@ test_D18.regression.with.dropin = svTest(function() {
                            1.000000000000000, 0.543478260869565),
                    dropin=1e0,
                    degradation=c(3e-3, 3e-3, 3e-3, 3e-3),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
   objective.function <- create.likelihood.per.locus(hypothesisD18)
 
