@@ -1,8 +1,9 @@
 \name{output.names} 
 \alias{output.names} 
 \title{likeLTD::output.names} 
-\usage{output.names(stain, args, prosecutionHypothesis, caseFolder)}
+\usage{output.names(caseName,stain, args, prosecutionHypothesis, caseFolder)}
 \arguments{
+  \item{caseName}{String containing the case name.}
   \item{stain}{String containing the name of the stain.}
   \item{args}{Arguments specified by user that were passed to defense.hypothesis() or prosecution.hypothesis().}
   \item{prosecutionHypothesis}{The output from prosecution.hypothesis().}
