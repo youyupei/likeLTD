@@ -793,7 +793,7 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
 
 
   # Generate 'summary', whether multiple Q or single Q
-
+  
   #-----------------------------------------------
   # Write the output report
   # works out sensible font size
@@ -812,6 +812,7 @@ output.report <- function(admin,prosecutionHypothesis,defenseHypothesis, prosecu
   title.size = 1.3
   heading.size = 2
   # outputPath = file.path( admin$outputPath, paste(admin$caseName, '-output_report.pdf', sep='') )
+  pdf(paste(admin$caseName,"-outputReport.pdf"),paper="a4")
 
   # report pg1
   par(mai = rep(0.3,times=4))
@@ -1026,5 +1027,5 @@ Nkdo:    number of profiled potential contributors subject to dropout.
   textplot(nomenclature,valign='top',cex=size)
   title('Nomenclature')
 
-
+dev.off()
 }
