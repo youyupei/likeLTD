@@ -70,8 +70,8 @@ test_regression1 <- svTest(function() {
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348),
                    dropin = 1.0,
                    degradation=rep(3e-3, 2),
-                   localAdjustment=1,
-                   tvedebrink=-4.35, beta=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35, beta=-4.35,
                    dropout=c(0.175, 0.105) )
   result <- do.call(likelihood, arguments)
   checkEquals(result$objectives, check$objectives)
@@ -98,8 +98,8 @@ test_regression.zerounknown <- svTest(function() {
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0),
                    dropin = 0.543478260869565,
                    degradation=c(3e-3, 3e-3, 3e-3),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.15, 0.01) )
   objectives = c(2.64877312615097e-04, 8.30010229904578e-02,
                  6.57219727208952e-02, 3.55156330421480e-03,
@@ -116,8 +116,8 @@ test_regression.zerounknown <- svTest(function() {
   arguments = list(rcont=c(0.923913043478261, 0.565217391304348, 1.0),
                    dropin = 0.543478260869565,
                    degradation=c(3e-3, 3e-3, 3e-3),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
   objectives = c(2.01470581026018e-03, 1.13394042752114e-02, 4.69287546906059e-03,
                  2.47293709587760e-04, 5.90787709164540e-02, 9.97729081224379e-07,
@@ -152,8 +152,8 @@ test_regression.oneunknown <- svTest(function() {
                            0.543478260869565),
                    dropin = 0.108695652173913,
                    degradation=rep(3e-3, 4),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.15, 0.01) )
   objectives = c(5.24609987450467e-05, 1.28369768074416e-01, 3.19566044368621e-02, 
                  9.37696749226556e-04, 3.54990168257584e-01, 3.61714632221897e-05, 
@@ -170,8 +170,8 @@ test_regression.oneunknown <- svTest(function() {
                            0.543478260869565),
                    dropin = 0.108695652173913,
                    degradation=rep(3e-3, 4),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
   objectives = c(5.40928563410066e-04, 1.24028883413425e-02, 4.32400562747164e-03,
                  3.71369198539134e-04, 7.20410130310739e-02, 1.08896493758788e-06,
@@ -206,8 +206,8 @@ test_regression.relatedness <- svTest(function() {
                            0.543478260869565),
                    dropin = 0.108695652173913,
                    degradation=rep(3e-3, 4),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.15, 0.01) )
   objectives = c(5.24609987450467e-05, 1.28369768074416e-01, 3.19566044368621e-02, 
                  9.37696749226556e-04, 3.54990168257584e-01, 3.61714632221897e-05, 
@@ -224,8 +224,8 @@ test_regression.relatedness <- svTest(function() {
                            0.543478260869565),
                    dropin = 0.108695652173913,
                    degradation=rep(3e-3, 4),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
   objectives = c(1.80216091977255e-03, 3.60032286625716e-02, 3.91628936030574e-02,
                  1.35921436545295e-03, 1.70921706383154e-01, 6.80165107428541e-06,
@@ -245,8 +245,8 @@ test_regression.relatedness <- svTest(function() {
                            0.543478260869565),
                    dropin = 0.108695652173913,
                    degradation=rep(3e-3, 4),
-                   localAdjustment=1,
-                   tvedebrink=-4.35,
+                   locusAdjustment=1,
+                   power=-4.35,
                    dropout=c(0.175, 0.105) )
   objectives = c(1.42928505786127e-03, 2.89308741853859e-02, 2.91781768719226e-02,
                  1.07691206144212e-03, 1.40960034434433e-01, 5.21398235786849e-06,
