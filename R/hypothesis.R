@@ -123,6 +123,7 @@ missing.alleles = function(alleleDb, cspProfile, queriedProfile, dropoutProfiles
   if(is.null(colnames(cspProfile)))
     stop("input matrix does not have column names.")
   if(!is.matrix(dropoutProfiles)) stop("input should be a matrix.")
+  if(!is.matrix(queriedProfile)) stop("input should be a matrix.")
   for(locus in colnames(cspProfile)) {
     dbAlleles = rownames(alleleDb[[locus]])
     cspAlleles = unique(unlist(cspProfile[, locus]))
