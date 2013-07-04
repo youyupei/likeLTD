@@ -54,7 +54,7 @@ read.known.profiles = function(path) {
     colnames(result) <- colnames(profiles)
   }
   row.names(result) = row.names(profiles)
-  colnames(result)[2] = "queried"
+  colnames(result)[1] = "queried"
   result[, "queried"] = result[, "queried"] == "queried"
   result
 }
