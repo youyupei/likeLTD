@@ -105,7 +105,7 @@ Fig.~\ref{fig:plotme}:
                   power=-4.4462)
   }
 
-  x = 0:10/10 * 3e0
+  x = 0:30/30 * 3e0
   data = data.frame(x=x, y=sapply(x, scalarWoE))
   plots <- ggplot(data, aes(x=x, y=y))                  +
               geom_line()                               +
@@ -207,6 +207,7 @@ returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
   params = optimization.params(defenseHyp, verbose=FALSE, throwError=FALSE)
+  params$control$factr=1e12 # Less strict convergence, for demo purposes.
   results <- do.call(optim, params)
   arguments <- relistArguments(results$par, defenseHyp)
 @
