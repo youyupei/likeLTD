@@ -7,7 +7,7 @@ read.csp.profile = function(path) {
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
   	require(gdata)
-  	profile = read.xls(path)
+  	profile = read.xls(path, header=T, colClasses='character', sep=',')
   	} else {
   	profile = read.table(path, header=T, colClasses='character', sep=',')
   	}
@@ -26,7 +26,7 @@ read.unc.profile = function(path) {
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
   	require(gdata)
-  	profile = read.xls(path)
+  	profile = read.xls(path, header=T, colClasses='character', sep=',')
   	} else {
   	profile = read.table(path, header=T, colClasses='character', sep=',')
   	}
@@ -43,7 +43,7 @@ read.known.profiles = function(path) {
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
   	require(gdata)
-  	profiles = read.xls(path)
+  	profiles = read.xls(path, header=T, colClasses='character', row.names=1,sep=',', quote = "\"")
   	} else {
  	profiles = read.table(path, header=T, colClasses='character', row.names=1,sep=',', quote = "\"") 
   	}
