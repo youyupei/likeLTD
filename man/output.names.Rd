@@ -1,13 +1,11 @@
 \name{output.names} 
 \alias{output.names} 
 \title{likeLTD::output.names} 
-\usage{output.names(caseName,stain, args, prosecutionHypothesis, caseFolder)}
+\usage{output.names(admin, prosecutionHypothesis)}
 \arguments{
-  \item{caseName}{String containing the case name.}
-  \item{stain}{String containing the name of the stain.}
-  \item{args}{Arguments specified by user that were passed to defense.hypothesis() or prosecution.hypothesis().}
+  \item{admin}{Arguments packed by pack.admin.input().}
   \item{prosecutionHypothesis}{The output from prosecution.hypothesis().}
-  \item{caseFolder}{String containing the path to the directory you want to output to.}
+
 }
 \value{Two strings, pdf.name and RData.name.} 
 \description{Automatic names for pdf and RData output.}

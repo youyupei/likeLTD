@@ -4,7 +4,7 @@ unusual.alleles <- function(afreq, profile) {
   # Such alleles are likely to be mistakes.
   #
   # Args:
-  #   freqencies: Table of allele afreq“
+  #   freqencies: Table of allele afreqs
   #   profile: The reference profile in the genetics list
   #
   # returns: data frame with the rare alleles. 
@@ -76,13 +76,13 @@ queried.vs.known <- function(path) {
 internal.representation <- function(profile) {
   # Takes a profile and transforms it to the cprofs format.
   #
-  # cprofs is an internal format to do calulations on a crime scene profile.
+  # cprofs is an internal format to do calculations on a crime scene profile.
   #
   # Args:
   #   profile: The crime-scene profile to  process.
   # Returns: The same information in a different format.
 
-  # Half the crime profile is empty for some reason.
+  # each rep has two rows: alleleic and uncertain
   nrep = nrow(profile)/2
 
   result = list()
@@ -389,11 +389,8 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
 # Packs and verifies administrative information.
 # Documentation in man directory.
 pack.admin.input = function( mixedFile, refFile, caseName='dummy',
-                             databaseFile=NULL, outputPath=NULL,
-                             checkFiles=TRUE ) {
-  if(is.null(outputPath)) outputPath = file.path(getwd(), caseName)
-
-  if(checkFiles) {
+                             databaseFile=NULL, outputPath=getwd()
+					 ) {
     paths = c(mixedFile, refFile) 
     if(!is.null(databaseFile)) paths = c(databaseFile, paths, recursive=TRUE)
     for(path in paths) {
@@ -406,7 +403,6 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
     } # loop over files.
     if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
       stop(paste(outputPath, " exists and is not a directory."))
-  } # condition whether to check files.
   admin = list( caseName=caseName,
                 databaseFile=databaseFile,
                 mixedFile=mixedFile,

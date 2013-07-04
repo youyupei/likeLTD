@@ -1,4 +1,4 @@
-## Test unit 'allele_report'
+## Test unit 'reports'
 library(svUnit)
 
 ###############################################################
@@ -10,7 +10,7 @@ function () {
 	## Specific actions for svUnit: prepare context
 	if ("package:svUnit" %in% search()) {
 		.Log <- Log() ## Make sure .Log is created
-		.Log$..Unit <- "inst/unitTests//runitallele_report.R"
+		.Log$..Unit <- "inst/unitTests//runit_reports.R"
 		.Log$..File <- ""
 		.Log$..Obj <- ""
 		.Log$..Tag <- ""
@@ -99,27 +99,33 @@ internal.representation.data = function() {
   # Tests pack.admin.input interface
   # 
   # Checks it packs the data as expected.
-  # Checks it raises an exception if files do not exist and checkFile is TRUE.
-  # Checks it does not raise an exception if checkFiles is FALSE.
-  # Checks it does not raise an exception if checkFiles is TRUE and files exist
-  databaseFile = 'data/lgc-allele-freqs-wbp.txt'
-  mixedFile = 'hammer/hammer-CSP.csv'
-  refFile = 'hammer/hammer-reference.csv'
+  # Checks it does not raise an exception if files exist
+  # Checks it raises an exception if files do not exist
+
+  databaseFile = 'likeLTD/data/lgc-allele-freqs-wbp.txt.gz'
+  mixedFile = 'likeLTD/extdata/hammer/hammer-CSP.csv'
+  refFile = 'likeLTD/extdata/hammer/hammer-reference.csv'
   caseName = 'hammer'
   outputPath = 'hammer'
 
-  callme <- function(checkfile) {
-    # Helper function to convserve finger strength
-    pack.admin.input( caseName=caseName,
+  correct <- function() {
+    pack.admin.input( caseName=caseName,		
                       databaseFile=databaseFile,
-                      mixedFile=mixedFile,
+       		    mixedFile=mixedFile,
                       refFile=refFile, 
-                      outputPath=outputPath,
-                      checkFiles=checkfile )
-  }
- 
+                      outputPath=outputPath)
+  				}
+
+  incorrect <- function() {
+    pack.admin.input( caseName=caseName,		
+                      databaseFile=databaseFile,
+       		    mixedFile='nonexistant-file.csv', # only need one to be wrong
+                      refFile=refFile, 
+                      outputPath=outputPath)
+  				}
+
   # Checks it packs the data as expected.
-  admin <- callme(FALSE)
+  admin <- correct()
   checkEquals(length(admin), 5)
   checkEquals(admin$caseName, caseName)
   checkEquals(admin$databaseFile, databaseFile)
@@ -127,17 +133,11 @@ internal.representation.data = function() {
   checkEquals(admin$refFile, refFile)
   checkEquals(admin$outputPath, outputPath)
 
-  checkException(callme(checkfile=TRUE), msg="No file found exception")
-  checkNoException(callme(TRUE), msg="Files not checked.")
+  # Checks it does not raise an exception if files exist
+  checkNoException(correct(), msg="Files do exist.")
 
-  temporary.directory({
-    dir.create('data')
-    dir.create('hammer')
-    file.create(file.path('data', 'lgx-allele-freqs-wbp.txt'))
-    file.create(file.path('hammer', 'hammer-CSP.csv'))
-    file.create(file.path('hammer', 'hammer-reference.csv'))
-    checkNoException(callme(TRUE), msg="Files checked and exist.")
-  })
+  # Checks it raises an exception if files do not exist
+  checkException(incorrect(), msg="One file doesn't exist")
 })
 
 
