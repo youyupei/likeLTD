@@ -45,7 +45,7 @@ read.known.profiles = function(path) {
   	require(gdata)
   	profiles = read.xls(path)
   	} else {
-  	profiles = read.table(path, header=T, colClasses='character', sep=',')
+ 	profiles = read.table(path, header=T, colClasses='character', row.names=1,sep=',', quote = "\"") 
   	}
   result = sapply(profiles, function (n) strsplit(n, "(\\s*,|\\s)\\s*"))
   # undoing R damage
@@ -54,7 +54,7 @@ read.known.profiles = function(path) {
     colnames(result) <- colnames(profiles)
   }
   row.names(result) = row.names(profiles)
-  colnames(result)[1] = "queried"
+  colnames(result)[2] = "queried"
   result[, "queried"] = result[, "queried"] == "queried"
   result
 }
