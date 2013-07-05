@@ -144,7 +144,7 @@ likelihood.constructs.per.locus = function(hypothesis) {
   #
   # Parameters:
   #   hypothesis: A hypothesis, for instance one returned by
-  #               prosecution.hypothesis(...) or defense.hypothesis(...)
+  #               prosecution.hypothesis(...) or defence.hypothesis(...)
   alleles = rownames(hypothesis$alleleDb)
   if(is.null(alleles)) stop("Could not figure out alleles names.")
   alleles.vector = function(n) alleles %in% unlist(n)
