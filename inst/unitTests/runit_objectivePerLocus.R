@@ -88,9 +88,9 @@ test_TH01.regression.with.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
-    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
-  hypothesis = do.call(defense.hypothesis, args)
+  if(! "defence.hypothesis" %in% ls(.GlobalEnv))
+    defence.hypothesis <- getFromNamespace("defence.hypothesis", "likeLTD")
+  hypothesis = do.call(defence.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
@@ -133,9 +133,9 @@ test_TH01.regression.no.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
-    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
-  hypothesis = do.call(defense.hypothesis, args)
+  if(! "defence.hypothesis" %in% ls(.GlobalEnv))
+    defence.hypothesis <- getFromNamespace("defence.hypothesis", "likeLTD")
+  hypothesis = do.call(defence.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
@@ -177,9 +177,9 @@ test_D18.regression.with.dropin = svTest(function() {
     fst          = 0.02,
     relatedness  = c(0.0, 0)
   )
-  if(! "defense.hypothesis" %in% ls(.GlobalEnv))
-    defense.hypothesis <- getFromNamespace("defense.hypothesis", "likeLTD")
-  hypothesis = do.call(defense.hypothesis, args)
+  if(! "defence.hypothesis" %in% ls(.GlobalEnv))
+    defence.hypothesis <- getFromNamespace("defence.hypothesis", "likeLTD")
+  hypothesis = do.call(defence.hypothesis, args)
   if(! "transform.to.locus.centric" %in% ls(.GlobalEnv))
     transform.to.locus.centric <-
       getFromNamespace("transform.to.locus.centric", "likeLTD")
