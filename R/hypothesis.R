@@ -205,7 +205,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
                                 adj=1e0, fst=0.02) {
   # Helper function to figure out the input of most hypothesis.
   #
-  # Basically, this groups operations that are done the same by defense and
+  # Basically, this groups operations that are done the same by defence and
   # prosection. 
 
   # Read database and filter it down to requisite ethnicity and locus. 
@@ -280,9 +280,9 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
   result
 }
 
-# Creates defense hypothesis
+# Creates defence hypothesis
 # Documentation is in man directory.
-defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
+defence.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, ...) {
   
   alleleDb = load.allele.database(databaseFile)
@@ -305,7 +305,7 @@ defense.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
   if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
-  result[["hypothesis"]] = "defense"
+  result[["hypothesis"]] = "defence"
   result[["ethnic"]] = ethnic 
   result[["adj"]] = adj
   result[["fst"]] = fst
