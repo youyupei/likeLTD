@@ -51,8 +51,8 @@ test_dropin_genotype_sizes <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
-  hypothesis = do.call(defense.hypothesis, args)
+  # Create hypothesis for defence and prosecution.
+  hypothesis = do.call(defence.hypothesis, args)
 
   # Create and call a likelihood function
   model <- create.likelihood.vectors(hypothesis, addAttr=TRUE)
@@ -85,7 +85,7 @@ test_dropin_regression_prosecution <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
+  # Create hypothesis for defence and prosecution.
   prosecuHyp = do.call(prosecution.hypothesis, args)
 
   # Create and call a likelihood function
@@ -113,7 +113,7 @@ test_dropin_regression_prosecution <- svTest(function() {
   checkEquals(newP, checks)
 })
 
-test_dropin_regression_defense <- svTest(function() {
+test_dropin_regression_defence <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
@@ -128,11 +128,11 @@ test_dropin_regression_defense <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
-  defenseHyp = do.call(defense.hypothesis, args)
+  # Create hypothesis for defence and prosecution.
+  defenceHyp = do.call(defence.hypothesis, args)
 
   # Create and call a likelihood function
-  defenseModel <- create.likelihood.vectors(defenseHyp)
+  defenceModel <- create.likelihood.vectors(defenceHyp)
 
   argsD = list(rcont = c(0.840590259524432, 0.028546165926857,
                          1.000000000000000, 0.946753652037012),
@@ -146,7 +146,7 @@ test_dropin_regression_defense <- svTest(function() {
                power = -4.42426563254477,
                dropout = c(0.415989161376334515, 0.000161235911814838))
 
-  newD <- do.call(defenseModel, argsD)$objectives
+  newD <- do.call(defenceModel, argsD)$objectives
   checks = c(1.87064469330605e-02, 1.13464140439553e-02, 8.56137314546463e-03,
              1.64066893120773e-07, 6.89490152498635e-02, 7.27356001552238e-04,
              1.87654288015654e-04, 4.10268638515752e-04, 9.86365555197756e-02,
