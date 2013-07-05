@@ -24,4 +24,4 @@ prosecution.}
 makes sure the relatedness factor is zero. It sets the reference individual to
 the first queried individual, unless it is not subject to dropout. In that
 case, the reference individual is the first individual with dropout. } 
-\seealso{defense.hypothesis}
+\seealso{defence.hypothesis}
