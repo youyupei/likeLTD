@@ -45,24 +45,24 @@ maximization of the likelihood nor any information which needs to be computed.
     fst          = 0.02,
     relatedness  = c(0, 0)/4
   )
-  # Create hypothesis for defense and prosecution.
-  defenseHyp = do.call(defense.hypothesis, args)
+  # Create hypothesis for defence and prosecution.
+  defenceHyp = do.call(defence.hypothesis, args)
   prosecuHyp = do.call(prosecution.hypothesis, args)
 @
 
 Two methods are provided to facilitate the creation of a hypothesis from a
-common minimal set of input parameters, \texttt{defense.hypothesis} for the
+common minimal set of input parameters, \texttt{defence.hypothesis} for the
 defence and \texttt{prosecution.hypothesis} for the prosecution. These two
 methods read the allele database, the known profiles, and the crime-scene
 profile from file. They also automate sensible default decisions about the
 input, (determining which known profiles need be subject to dropout; in the
-defense hypothesis the queried individual is replaced by an unprofiled
+defence hypothesis the queried individual is replaced by an unprofiled
 contributor; in the prosecution case, relatedness is set to zero.) These
 default choices may be further modified by the user at this point.  These
 methods return lists with all the input needed for model execution. 
 
 <<models, tidy=FALSE, eval=FALSE>>=
-  defenseModel <- create.likelihood(defenseHyp)
+  defenceModel <- create.likelihood(defenceHyp)
   prosecuModel <- create.likelihood(prosecuHyp)
 @
 
@@ -71,7 +71,7 @@ nuisance parameters and computes the full weight of evidence, e.~g.\ the
 product of the likelihoods and penalties associated with each locus.
 
 <<tidy=FALSE, eval=FALSE>>=
-  defenseModel(rcont=c(1, 1e-8, 1.63), 
+  defenceModel(rcont=c(1, 1e-8, 1.63), 
                degradation=c(10^-2.27, 10^-2.74, 10^-2.47),
                locusAdjustment=list(D3=0.983, vWA=1.010, D16=1.028, 
                                     D2=1.072, D8=1.020, D21=0.930,
@@ -84,7 +84,7 @@ product of the likelihoods and penalties associated with each locus.
 
 The function above returns a scalar which represents the weight of evidence for
 the given values of the nuisance parameters. One could then use
-\texttt{defenseModel} to perform an optimization or to create
+\texttt{defenceModel} to perform an optimization or to create
 a plot with respect to various arguments. For instance, the following leads to
 Fig.~\ref{fig:plotme}:
 
@@ -93,7 +93,7 @@ Fig.~\ref{fig:plotme}:
   require(scales)
   # Function that winnows down to a single value
   scalarWoE <- function(x) {
-     defenseModel(locusAdjustment=list(D3=0.983, vWA=1.010,
+     defenceModel(locusAdjustment=list(D3=0.983, vWA=1.010,
                                        D16=1.028, D2=1.072,
                                        D8=1.020, D21=0.930,
                                        D18=0.850, D19=0.932, 
@@ -138,11 +138,11 @@ expects a methods which takes only a vector as argument. Hence, we need to
 transform our method into the form the optimisation method expects:
 
 <<skel, eval=FALSE, tidy=FALSE>>=
-  skeleton = initial.arguments(defenseHyp)
+  skeleton = initial.arguments(defenceHyp)
   vector.model <- function(x) {
     args <- relist(x, skeleton)
     args[["degradation"]] = 10^args[["degradation"]]
-    result <- do.call(defenseModel, args)
+    result <- do.call(defenceModel, args)
     log10(result)
   }
 
@@ -153,7 +153,7 @@ transform our method into the form the optimisation method expects:
 @
 
 The new method \texttt{vectorModel} achieves three objectives: (i) it recreates the
-list of arguments for \texttt{defenseModel}, (ii) it transforms the degradation
+list of arguments for \texttt{defenceModel}, (ii) it transforms the degradation
 parameter from an exponential form, (iii) it takes the logarithm of the weight
 of evidence. The last two points make optimization somewhat easier. We can now
 apply the optimization methods on \texttt{vectorModel}.
@@ -161,7 +161,7 @@ apply the optimization methods on \texttt{vectorModel}.
 <<maxiskel, eval=FALSE, tidy=FALSE>>=
   require(stats)
   # define upper and lower bounds for constrained maximization
-  nloci = ncol(defenseHyp$cspProfile)
+  nloci = ncol(defenceHyp$cspProfile)
   upper = list(locusAdjustment = rep(Inf, nloci),
                dropout         = c(1, 1),
                degradation     = rep(Inf, 3),
@@ -206,10 +206,10 @@ convenience method provided by \likeLTD\, \texttt{optimization.params}. It
 returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
-  params = optimization.params(defenseHyp, verbose=FALSE, throwError=FALSE)
+  params = optimization.params(defenceHyp, verbose=FALSE, throwError=FALSE)
   params$control$factr=1e12 # Less strict convergence, for demo purposes.
   results <- do.call(optim, params)
-  arguments <- relistArguments(results$par, defenseHyp)
+  arguments <- relistArguments(results$par, defenceHyp)
 @
 
 Running the above yields the parameters in Tab.~\ref{tab:maxi}. The last line
@@ -234,9 +234,9 @@ over \texttt{relist}.
 \begin{tabular}{ccccc}
   \hline
   \multicolumn{5}{c}{Locus Ajustments for each locus}\\\hline
-  \Sexpr{paste0(colnames(defenseHyp$cspProfile)[1:5], collapse=" & ")}\\
+  \Sexpr{paste0(colnames(defenceHyp$cspProfile)[1:5], collapse=" & ")}\\
   \Sexpr{paste0(format(arguments$locusAdjustment[1:5], digits=3), collapse=" & ")}\\\hline
-  \Sexpr{paste0(colnames(defenseHyp$cspProfile)[6:10], collapse=" & ")}\\
+  \Sexpr{paste0(colnames(defenceHyp$cspProfile)[6:10], collapse=" & ")}\\
   \Sexpr{paste0(format(arguments$locusAdjustment[6:10], digits=3), collapse=" & ")}\\\hline
 \end{tabular}\\[2ex]
 
@@ -253,7 +253,7 @@ over \texttt{relist}.
   power  & \Sexpr{format(arguments$power, digits=3)}\\\hline
 \end{tabular}
 
-  \caption{Arguments at the maximum for the defense hypothesis of the Hammer
+  \caption{Arguments at the maximum for the defence hypothesis of the Hammer
   case, with dropin and a single unprofiled contributor X. The optimum is
   obtained by running the external function \texttt{stats::optim} directly on
   the objective function generated by \likeLTD. }\label{tab:maxi}
