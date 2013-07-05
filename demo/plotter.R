@@ -18,10 +18,10 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create hypothesis for defense
-defenseHyp = do.call(defense.hypothesis, args)
+# Create hypothesis for defence
+defenceHyp = do.call(defence.hypothesis, args)
 
-graph <- plotLikelihood.2d(defenseHyp, which=c(1,3), x=(1:20/10.0),
+graph <- plotLikelihood.2d(defenceHyp, which=c(1,3), x=(1:20/10.0),
                            y=(1:20/10.0))                            + 
                   geom_tile(aes(fill=z))                             + 
                   stat_contour()                                     +
