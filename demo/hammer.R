@@ -18,9 +18,9 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create hypothesis for defense and prosecution.
+# Create hypothesis for defence and prosecution.
 prosecutionHyp = do.call(prosecution.hypothesis, args)
-defenseHyp     = do.call(defense.hypothesis, args)
+defenceHyp     = do.call(defence.hypothesis, args)
 
 # Create optimization parameters, with some modification to hypothesis
 # arguments. nUnknowns is modified here and now. It does not need to be, but it
@@ -28,10 +28,10 @@ defenseHyp     = do.call(defense.hypothesis, args)
 # optimization parameters.
 prosecutionParams <- optimization.params(prosecutionHyp, verbose=TRUE,
                                          nUnknowns=1) 
-defenseParams <- optimization.params(defenseHyp, verbose=FALSE, nUnknowns=2)
+defenceParams <- optimization.params(defenceHyp, verbose=FALSE, nUnknowns=2)
 
 
 # Now perform actual optimization.
 prosecutionResult <- do.call(optim, prosecutionParams)
 print(prosecutionResult)
-# defenseResult     <- do.call(optim, defenseParams)
+# defenceResult     <- do.call(optim, defenceParams)
