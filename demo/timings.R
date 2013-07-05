@@ -17,9 +17,9 @@ args = list(
   relatedness  = c(0, 0)/4
 )
 
-# Create hypothesis for defense and prosecution.
+# Create hypothesis for defence and prosecution.
 prosecutionHyp = do.call(prosecution.hypothesis, args)
-defenseHyp     = do.call(defense.hypothesis, args)
+defenceHyp     = do.call(defence.hypothesis, args)
 
 bench.any <- function(hypothesis, times=100L, ...) {
 
@@ -40,7 +40,7 @@ bench.any <- function(hypothesis, times=100L, ...) {
 
 }
 bench.prosecution <- function(...) bench.any(prosecutionHyp, ...)
-bench.defense <- function(...) bench.any(defenseHyp, ...)
+bench.defence <- function(...) bench.any(defenceHyp, ...)
 
 result = list() 
 result[["one"]] = bench.prosecution(nUnknowns=1, doDropin=TRUE)
