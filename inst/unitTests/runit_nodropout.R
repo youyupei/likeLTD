@@ -51,7 +51,7 @@ test_dropout_regression_prosecution <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
+  # Create hypothesis for defence and prosecution.
   prosecuHyp = do.call(prosecution.hypothesis, args)
 
   # Create and call a likelihood function
@@ -77,7 +77,7 @@ test_dropout_regression_prosecution <- svTest(function() {
   checkEquals(newP, checks)
 })
 
-test_dropout_regression_defense <- svTest(function() {
+test_dropout_regression_defence <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropout")
   args = list(
@@ -92,11 +92,11 @@ test_dropout_regression_defense <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
-  defenseHyp = do.call(defense.hypothesis, args)
+  # Create hypothesis for defence and prosecution.
+  defenceHyp = do.call(defence.hypothesis, args)
 
   # Create and call a likelihood function
-  defenseModel <- create.likelihood.vectors(defenseHyp)
+  defenceModel <- create.likelihood.vectors(defenceHyp)
 
   argsD = list( locusAdjustment=c( 0.979178047455148, 0.981265026384822,
                                    0.981380871718712, 0.980188885321909,
@@ -109,7 +109,7 @@ test_dropout_regression_defense <- svTest(function() {
                  rcont=1.68052278396074, 
                  dropin=1e-4 )
 
-  newD <- do.call(defenseModel, argsD)$objectives
+  newD <- do.call(defenceModel, argsD)$objectives
   checks = c(1.14050706665492e-01, 1.08871059314561e-02, 4.99753850183928e-02,
              2.41384344770380e-02, 2.39365424629160e-02, 7.74146362090388e-03,
              7.62049153669593e-05, 1.22837189292898e-01, 6.98334653935746e-02,
