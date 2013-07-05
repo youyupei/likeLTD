@@ -8,7 +8,7 @@ export(read.unc.profile)
 export(read.known.profiles)
 export(compatible.genotypes)
 
-export(defense.hypothesis)
+export(defence.hypothesis)
 export(prosecution.hypothesis)
 export(determine.dropout)
 
