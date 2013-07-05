@@ -1,8 +1,8 @@
-\name{defense.hypothesis}
-\alias{defense.hypothesis}
-\title{likeLTD::defense.hypothesis}
-\description{Helper function to create the input for the defense.}
-\usage{defense.hypothesis(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
+\name{defence.hypothesis}
+\alias{defence.hypothesis}
+\title{likeLTD::defence.hypothesis}
+\description{Helper function to create the input for the defence.}
+\usage{defence.hypothesis(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
                         adj=1e0, fst=0.02, databaseFile=NULL, ...)
 }
 \arguments{
@@ -19,7 +19,7 @@
              \code{doDropin}}
 }
 \value{A list of named input parameters, or hypothesis, suitable for the
-defense.}
+defence.}
 \details{It loads the CSP, known profiles, and allele database from file. It
 removes the queried individual from the known profiles. It increments the
 number of unknown contributors by one (to make up for the queried individual).
