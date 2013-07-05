@@ -85,7 +85,7 @@ test_novictim_regression_prosecution <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
+  # Create hypothesis for defence and prosecution.
   prosecuHyp = do.call(prosecution.hypothesis, args)
 
   # Create and call a likelihood function
@@ -114,7 +114,7 @@ test_novictim_regression_prosecution <- svTest(function() {
   checkEquals(newP, checks)
 })
 
-test_novictim_regression_defense <- svTest(function() {
+test_novictim_regression_defence <- svTest(function() {
   # Regression test over cases without victims
   datapath = file.path(system.file("extdata", package="likeLTD"), "novictim")
   args = list(
@@ -129,11 +129,11 @@ test_novictim_regression_defense <- svTest(function() {
     relatedness = c(0, 0)/4
   )
 
-  # Create hypothesis for defense and prosecution.
-  defenseHyp = do.call(defense.hypothesis, args)
+  # Create hypothesis for defence and prosecution.
+  defenceHyp = do.call(defence.hypothesis, args)
 
   # Create and call a likelihood function
-  defenseModel <- create.likelihood.vectors(defenseHyp)
+  defenceModel <- create.likelihood.vectors(defenceHyp)
 
   argsD = list(rcont = c(# 0.840590259524432, 0.028546165926857,
                          1.000000000000000, 0.946753652037012),
@@ -148,7 +148,7 @@ test_novictim_regression_defense <- svTest(function() {
                power = -4.42426563254477,
                dropout = c(0.415989161376334515, 0.000161235911814838))
 
-  newD <- do.call(defenseModel, argsD)$objectives
+  newD <- do.call(defenceModel, argsD)$objectives
   checks = c(1.45452762382673e-02, 1.39059953090237e-03, 4.12069957025512e-03,
              2.23676993312579e-05, 1.39764825435972e-03, 6.55421895552490e-05,
              1.69972376120242e-03, 4.95286954519019e-06, 4.54379488982241e-03,
