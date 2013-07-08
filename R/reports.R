@@ -798,38 +798,31 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
       uncTotal[r] = uncTotal[r] + length(genetics$cprofs[[l]][[r]]$unc)
     }
   }
-  max.width = max(c(cspTotal,uncTotal))
-  names.width = max(nchar(c(genetics$nameQ,genetics$nameK)))+8*length(names(genetics$cprofs))
-  names.size = min(1,100/names.width)
-  table.size = min(1,26/max.width)
-  text.size = 1
-  title.size = 1.3
-  heading.size = 2
   
   # Start plotting pdf
   outputName = output.names(admin,prosecutionHypothesis)
-  pdf(paste(admin$outputPath,outputName,sep="/"),paper="a4")
+  pdf(paste(admin$outputPath,outputName,sep="/"))
 
   # report pg1
-  par(mai = rep(0.3,times=4))
-  heights.pg1 = c(4,2*genetics$nrep,(length(c(genetics$nameQ,genetics$nameK))),3,max(otherBoth))
-  heights.pg1 = heights.pg1 +2 # space for headers
+  par(mai = rep(0.6,times=4))
+  heights.pg1 = c(2,2*genetics$nrep,(length(c(genetics$nameQ,genetics$nameK))),3,max(otherBoth)+2)
+  heights.pg1 = heights.pg1 +5 # space for headers
   widths.pg1 = c(1)
-  layout(matrix(c(1:5),nrow=5),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
+  layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
  
   # 1. Hypotheses used
   hypothesisTable <- stateHypotheses(prosecutionHypothesis, admin)
-  textplot(hypothesisTable,cex=text.size,valign='top')
-  title(paste(admin$caseName,'Output Report'),cex.main=heading.size)
+  textplot(hypothesisTable,valign='top')
+  title(paste(admin$caseName,'Output Report'))
 
   # 2. CSP alleles
   alleles <- allele.table(genetics$cprofs)
-  textplot(alleles,cex=table.size,valign='top')
-  title('Crime Scene Profile',cex.main=title.size)
+  textplot(alleles,valign='top')
+  title('Crime Scene Profile')
 
   # 3. Tabular Summary 
-  textplot(genetics$summary$summary,valign='top',cex=names.size)
-  title(main = 'Reference profiles.{}=unreplicated, []=absent',cex.main=title.size)
+  textplot(genetics$summary$summary,valign='top')
+  title(main = 'Reference profiles.{}=unreplicated, []=absent')
 
   # 4. Locus Likelihood
   prosecuLikes <- locus.likes(prosecutionHypothesis,prosecutionResults)
@@ -837,8 +830,8 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   likelihood  = data.frame(signif(prosecuLikes,2),signif(defenceLikes,2),signif(prosecuLikes/defenceLikes,2))
   colnames(likelihood)= c('HP','HD','Ratio')
   row.names(likelihood)= colnames(defenceHypothesis$queriedProfile)
-  textplot(t(likelihood),valign='top',cex=text.size)
-  title('Likelihoods at each locus',cex.main=title.size)
+  textplot(t(likelihood),valign='top')
+  title('Likelihoods at each locus')
 
   # 5. Unattributable Alleles
   otherRep  = genetics$summary$otherRep
@@ -856,17 +849,14 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
          pch=c(15,15))
 
   # report pg2
-  par(mai = rep(0.3,times=4))
+
+  par(mai = rep(0.6,times=4))
+
   # Number of people to display
   npeep = genetics$unknowns+length(c(genetics$nameK,genetics$nameQ))
-  if(prosecutionHypothesis$doDropin==FALSE) 
-	{
-  	heightspg2 = c(4,npeep+2,npeep+2,((npeep-genetics$unknowns)+1),9)
-	} else {
-  	heightspg2 = c(4,npeep+2,npeep+2,((npeep-genetics$unknowns)+1),2,9)
-	}
+  heightspg2 = c(4,npeep,npeep,npeep-genetics$unknowns,2)
   # add titles space  
-  heightspg2 = heightspg2+2
+  heightspg2 = heightspg2+5
   widthspg2 = c(1)
   layout(matrix(c(1:length(heightspg2)),nrow=length(heightspg2)),heights = heightspg2, widths=widthspg2)
 
@@ -875,45 +865,51 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   overallLikelihood  = data.frame(signif(10^prosecutionResults$value,2),signif(10^defenceResults$value,2),signif(10^(prosecutionResults$value-defenceResults$value),2),signif(prosecutionResults$value-defenceResults$value,2))
   colnames(overallLikelihood)= c('HP','HD','Ratio','Log Ratio')
   row.names(overallLikelihood)= ''
-  textplot(t(overallLikelihood),valign='top',cex=text.size)
+  textplot(t(overallLikelihood),valign='top')
   title('Likelihood (overall)')
 
   # Hp dropout
   pDropout = dropDeg(prosecutionHypothesis,prosecutionResults,admin) 
-  textplot(pDropout,valign='top',cex=text.size)
+  textplot(pDropout,valign='top')
   title('HP Drop-out')
 
   # Hd dropout
   dDropout = dropDeg(defenceHypothesis,defenceResults,admin) 
-  textplot(dDropout,valign='top',cex=text.size)
+  textplot(dDropout,valign='top')
   title('HD Drop-out')
 
   # Approximate representation
-  textplot(genetics$estimates,cex=1,valign='top')
+  textplot(genetics$estimates,valign='top')
   title('Approximate representation %')
 
   # Dropin
-  if(defenceHypothesis$doDropin==TRUE)
-  	{
+  if(defenceHypothesis$doDropin){
   	pDropin = prosecutionResults$par[grep("dropin",names(prosecutionResults$par))]
   	dDropin = defenceResults$par[grep("dropin",names(defenceResults$par))]
   	dropin = round(data.frame(pDropin,dDropin),3)
   	colnames(dropin) = c('HP','HD')
   	row.names(dropin) = ''
-  	textplot(t(dropin),valign='top',cex=text.size)
+  	textplot(t(dropin),valign='top',cex=1)
   	title('Drop-in (overall)')
   	}
+
+  if(!defenceHypothesis$doDropin){
+  	textplot(' ',valign='top')
+  	title('No drop-in modelled')
+  	}
+
+  # report pg3
+  heights.pg3 = heights = c(13,33,16)
+  heights.pg3 = heights.pg3 + 5
+  layout(matrix(c(1:3),nrow=3), heights = heights.pg3)
+  par(mai = rep(0.3,times=4))
+  size = 0.7
 
   # Operator information
   operator = data.frame(Sys.info())
   colnames(operator) = 'Operator info'
-  textplot(operator,valign='top',cex=text.size)
+  textplot(operator,valign='top',cex=size)
   title('System info')
-
-  # report pg3
-  layout(mat = c(1,2), heights = c(29,10))
-  par(mai = rep(0.3,times=4))
-  size = 0.7
 
   # Parameters
   CSPname = tail(strsplit(admin$mixedFile,split='/')[[1]],1)
@@ -937,7 +933,6 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	REFname,
 	ALLELEname,
 	paste(prosecutionHypothesis$ethnic,defenceHypothesis$ethnic),
-	#initiated,
 	endTime,
 	paste(prosecutionHypothesis$adj,defenceHypothesis$adj),
 	paste(prosecutionHypothesis$fst,defenceHypothesis$fst),
@@ -947,21 +942,20 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	Nkdo,
 	paste(prosecutionHypothesis$nUnknowns,defenceHypothesis$nUnknowns),
 	paste(prosecutionHypothesis$doDropin,defenceHypothesis$doDropin),
-	#paste(format(round(start$nupa$do,2),nsmall=2),collapse=' '),
-	#paste(format(round(start$depa$do,2),nsmall=2),collapse=' '),
-	paste(format(round(prosecutionResults$par[grep("dropout",names(prosecutionResults$par))],2),nsmall=2),collapse=' '),
-	paste(format(round(defenceResults$par[grep("dropout",names(defenceResults$par))],2),nsmall=2),collapse=' '),
-	#paste(format(round(10^prosecutionResults$par[grep("degradation",names(prosecutionResults$par))],2),nsmall=2),collapse=' '),
-	#paste(format(round(start$nupa$rcont,2),nsmall=2),collapse=' '),
-	#paste(format(round(start$depa$rcont,2),nsmall=2),collapse=' '),
-	paste(format(round(prosecutionResults$par[grep("rcont",names(prosecutionResults$par))],2),nsmall=4),collapse=' '),
-	paste(format(round(defenceResults$par[grep("rcont",names(defenceResults$par))],2),nsmall=4),collapse=' '),
-	paste(format(round(prosecutionResults$par[grep("Adjustment",names(prosecutionResults$par))],2),nsmall=2),collapse=' '),
-	paste(format(round(defenceResults$par[grep("Adjustment",names(defenceResults$par))],2),nsmall=2),collapse=' '),
-	paste(format(prosecutionResults$counts,nsmall=2),collapse=' '),
+	paste(format(round(prosecutionResults$par[grep("dropout",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$par[grep("dropout",names(defenceResults$par))],3),nsmall=3),collapse=' '),
+	paste(format(round(prosecutionResults$par[grep("rcont",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$par[grep("rcont",names(defenceResults$par))],3),nsmall=3),collapse=' '),
+	paste(format(round(prosecutionResults$par[grep("Adjustment",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$par[grep("Adjustment",names(defenceResults$par))],3),nsmall=3),collapse=' '),
+	paste(prosecutionResults$numAttempted,prosecutionResults$numComplete),
+	paste(defenceResults$numAttempted,defenceResults$numComplete),
+	prosecutionResults$likeStanDev,
+	defenceResults$likeStanDev,
+	paste(format(prosecutionResults$counts,nsmall=3),collapse=' '),
 	prosecutionResults$convergence,
 	prosecutionResults$message,
-	paste(format(defenceResults$counts,nsmall=2),collapse=' '),
+	paste(format(defenceResults$counts,nsmall=3),collapse=' '),
 	defenceResults$convergence,
 	defenceResults$message,
 	signif(as.numeric(ideal.match),3),
@@ -975,7 +969,6 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Reference file:',
 	'Allele frequency file:',
 	'EA ethnic group (HP HD):',
-	#'Time started:',
 	'Time finished:',
 	'adj (HP HD):',
 	'fst (HP HD):',
@@ -985,17 +978,16 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Nkdo:',
 	'No. unknowns (HP HD):',
 	'Drop in (HP HD):',
-	#'Initial HP do:',
-	#'Initial HD do:',
 	'Max HP do:',
 	'Max HD do:',
-	#'Max deg:',	
-	#'Initial HP rcont:',
-	#'Initial HD rcont:',
 	'Max HP rcont:',
 	'Max HD rcont:',
 	'Max HP local adjust:',
 	'Max HD local adjust:',
+	'MultiRun HP(attempted succeeded):',
+	'MultiRun HD(attempted succeeded):',
+	'MultiRun HP Standard Deviation:',
+	'MultiRun HD Standard Deviation:',
 	'Optimisation HP counts:',
 	'Optimisation HP convergence:',
 	'Optimisation HP message:',
