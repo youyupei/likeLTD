@@ -804,12 +804,12 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   pdf(paste(admin$outputPath,outputName,sep="/"))
 
   # report pg1
-  par(mai = rep(0.6,times=4))
+  par(mai = rep(0.3,times=4))
   heights.pg1 = c(2,2*genetics$nrep,(length(c(genetics$nameQ,genetics$nameK))),3,max(otherBoth)+2)
   heights.pg1 = heights.pg1 +5 # space for headers
   widths.pg1 = c(1)
   layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
- 
+
   # 1. Hypotheses used
   hypothesisTable <- stateHypotheses(prosecutionHypothesis, admin)
   textplot(hypothesisTable,valign='top')
@@ -849,8 +849,7 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
          pch=c(15,15))
 
   # report pg2
-
-  par(mai = rep(0.6,times=4))
+  par(mai = rep(0.3,times=4))
 
   # Number of people to display
   npeep = genetics$unknowns+length(c(genetics$nameK,genetics$nameQ))
@@ -950,8 +949,8 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	paste(format(round(defenceResults$par[grep("Adjustment",names(defenceResults$par))],3),nsmall=3),collapse=' '),
 	paste(prosecutionResults$numAttempted,prosecutionResults$numComplete),
 	paste(defenceResults$numAttempted,defenceResults$numComplete),
-	prosecutionResults$likeStanDev,
-	defenceResults$likeStanDev,
+	format(round(prosecutionResults$likeStanDev,3),nsmall=3),
+	format(round(defenceResults$likeStanDev,3),nsmall=3),
 	paste(format(prosecutionResults$counts,nsmall=3),collapse=' '),
 	prosecutionResults$convergence,
 	prosecutionResults$message,
