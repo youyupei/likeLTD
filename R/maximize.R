@@ -75,15 +75,15 @@ upper.bounds = function(arguments, zero=1e-4) {
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
-  locusAdjustment = rep(Inf, length(arguments$locusAdjustment))
+  locusAdjustment = rep(1.5, length(arguments$locusAdjustment))
   dropout     = rep(1-zero, length(arguments$dropout))
-  degradation = rep(Inf, length(arguments$degradation))
-  rcont       = rep(Inf, length(arguments$rcont))
+  degradation = rep(0-zero, length(arguments$degradation))
+  rcont       = rep(100, length(arguments$rcont))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = Inf
+  if(!is.null(arguments[["dropin"]])) dropin = 1
 
   list(locusAdjustment = locusAdjustment,
-       power           = 0-zero, 
+       power           = -2, 
        dropout         = dropout,
        degradation     = degradation,
        rcont           = rcont,
@@ -99,8 +99,8 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   #         an epsilon to simulate the first case.
   #   logDegradation: Wether degradation parameters are entered as exponents of
   #                   10.
-  locusAdjustment = rep(zero, length(arguments$locusAdjustment))
-  degradation = if(logDegradation) { -Inf } else { 0 }
+  locusAdjustment = rep(0.5, length(arguments$locusAdjustment))
+  degradation = if(logDegradation) { -20 } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
   dropout     = rep(zero, length(arguments$dropout))
   rcont       = rep(zero, length(arguments$rcont))
@@ -108,7 +108,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
   if(!is.null(arguments[["dropin"]])) dropin = zero
 
   list(locusAdjustment = locusAdjustment,
-       power           = -Inf,
+       power           = -6,
        degradation     = degradation,
        dropout         = dropout,
        rcont           = rcont, 
