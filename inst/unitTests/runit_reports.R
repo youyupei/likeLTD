@@ -102,10 +102,13 @@ internal.representation.data = function() {
   # Checks it does not raise an exception if files exist
   # Checks it raises an exception if files do not exist
 
-  databaseFile = 'likeLTD/data/lgc-allele-freqs-wbp.txt.gz'
-  mixedFile = 'likeLTD/extdata/hammer/hammer-CSP.csv'
-  refFile = 'likeLTD/extdata/hammer/hammer-reference.csv'
-  caseName = 'hammer'
+  find.package.files <- function(path_vector) {
+    system.file(Reduce(file.path, path_vector), package="likeLTD")
+  }
+  databaseFile = find.package.files(c("data", "lgc-allele-freqs-wbp.txt.gz"))
+  mixedFile    = find.package.files(c("extdata", "hammer", "hammer-CSP.csv"))
+  refFile      = find.package.files(c("extdata", "hammer", "hammer-reference.csv"))
+  caseName   = 'hammer'
   outputPath = 'hammer'
 
   correct <- function() {
