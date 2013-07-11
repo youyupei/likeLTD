@@ -162,18 +162,18 @@ apply the optimization methods on \texttt{vectorModel}.
   require(stats)
   # define upper and lower bounds for constrained maximization
   nloci = ncol(defenceHyp$cspProfile)
-  upper = list(locusAdjustment = rep(Inf, nloci),
-               dropout         = c(1, 1),
-               degradation     = rep(Inf, 3),
-               rcont           = rep(Inf, 2),
-               dropin          = Inf,
-               power      = -1e-8 )[names(arguments)]
-  lower = list(locusAdjustment = rep(1e-8, nloci),
-               dropout         = c(1e-8, 1e-8),
-               degradation     = rep(-Inf, 3),
-               rcont           = rep(1e-8, 2),
-               dropin          = 1e-8,
-               power      = -Inf )[names(arguments)]
+  upper = list(locusAdjustment = rep(1.5, nloci),
+               dropout         = c(1-1e-3, 1-1e-3),
+               degradation     = rep(-1e-3, 3),
+               rcont           = rep(100, 2),
+               dropin          = 1,
+               power      = -2 )[names(arguments)]
+  lower = list(locusAdjustment = rep(0.5, nloci),
+               dropout         = c(1e-3, 1e-3),
+               degradation     = rep(-20, 3),
+               rcont           = rep(1e-3, 2),
+               dropin          = 1e-3,
+               power      = -6 )[names(arguments)]
 
   # perform maximization
   result <- optim(par = unlist(arguments),
@@ -225,7 +225,7 @@ over \texttt{relist}.
 \begin{tabular}{l|ccc}
   \hline
               & Victim 1 & Victim 2 & X \\\hline
-  rcont & \Sexpr{paste0(format(c(1, arguments$rcont), digits=3), collapse="&")} \\
+  rcont & \Sexpr{paste(format(c(1, arguments$rcont), digits=3), collapse="&", sep="")} \\
   degradation & $10^{\Sexpr{format(arguments[["degradation"]][[1]], digits=3)}}$ &
                 $10^{\Sexpr{format(arguments[["degradation"]][[2]], digits=3)}}$ &
                 $10^{\Sexpr{format(arguments[["degradation"]][[3]], digits=3)}}$ \\\hline
@@ -234,10 +234,10 @@ over \texttt{relist}.
 \begin{tabular}{ccccc}
   \hline
   \multicolumn{5}{c}{Locus Ajustments for each locus}\\\hline
-  \Sexpr{paste0(colnames(defenceHyp$cspProfile)[1:5], collapse=" & ")}\\
-  \Sexpr{paste0(format(arguments$locusAdjustment[1:5], digits=3), collapse=" & ")}\\\hline
-  \Sexpr{paste0(colnames(defenceHyp$cspProfile)[6:10], collapse=" & ")}\\
-  \Sexpr{paste0(format(arguments$locusAdjustment[6:10], digits=3), collapse=" & ")}\\\hline
+  \Sexpr{paste(colnames(defenceHyp$cspProfile)[1:5], collapse=" & ", sep="")}\\
+  \Sexpr{paste(format(arguments$locusAdjustment[1:5], digits=3), collapse=" & ", sep="")}\\\hline
+  \Sexpr{paste(colnames(defenceHyp$cspProfile)[6:10], collapse=" & ", sep="")}\\
+  \Sexpr{paste(format(arguments$locusAdjustment[6:10], digits=3), collapse=" & ", sep="")}\\\hline
 \end{tabular}\\[2ex]
 
 \begin{tabular}{l|cc}
