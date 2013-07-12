@@ -208,6 +208,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        control = list(strategy=3,NP=10*length(upper),itermax=iterMax) 
        #method  = "L-BFGS-B",
        #hessian = FALSE )
+       )
 }
 
 
