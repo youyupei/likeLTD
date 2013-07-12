@@ -119,7 +119,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-4, throwError=TRUE,
-                                withPenalties=TRUE, objective=NULL, ...) {
+                                withPenalties=TRUE, objective=NULL, iterMax=1000,...) {
   # Creates the optimization parameters for optim.
   #
   # optim is the optimization function from R's stat package.
@@ -191,7 +191,7 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
       stop("Objective function over/underflow")
     }
     # return result
-    result
+    -result
   }
   
   lower = lower.bounds(args, zero, logDegradation)
@@ -200,13 +200,14 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   upper = upper[names(template)] 
 
 
-  list(par     = unlist(template), 
+  list(#par     = unlist(template), 
        fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
-       control = list(fnscale=-1, factr=1e7, maxit=500), 
-       method  = "L-BFGS-B",
-       hessian = FALSE )
+       #control = list(fnscale=-1, factr=1e7, maxit=500), 
+       control = list(strategy=3,NP=10*length(upper),itermax=iterMax) 
+       #method  = "L-BFGS-B",
+       #hessian = FALSE )
 }
 
 
