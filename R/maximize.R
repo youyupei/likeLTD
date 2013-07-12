@@ -80,7 +80,7 @@ upper.bounds = function(arguments, zero=1e-4) {
   degradation = rep(0-zero, length(arguments$degradation))
   rcont       = rep(100, length(arguments$rcont))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 1
+  if(!is.null(arguments[["dropin"]])) dropin = 1 - zero
 
   list(locusAdjustment = locusAdjustment,
        power           = -2, 
