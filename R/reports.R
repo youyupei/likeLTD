@@ -615,7 +615,7 @@ locus.likes <- function(hypothesis,results,...)
         #       prosecution.hypothesis()
 	#	results: results from do.call(optim,params)
 	model <- create.likelihood.vectors(hypothesis)
-	arguments <- relistArguments(results$par, hypothesis, ...)
+	arguments <- relistArguments(results$optim$bestmem, hypothesis, ...)
 	likes <- do.call(model,arguments)
 	likes <- likes$objectives * likes$penalties
 	}
