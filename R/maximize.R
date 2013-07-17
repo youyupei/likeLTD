@@ -118,7 +118,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-                                arguments=NULL, zero=1e-4, throwError=TRUE,
+                                arguments=NULL, zero=1e-4, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=1000,...) {
   # Creates the optimization parameters for optim.
   #
