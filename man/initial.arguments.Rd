@@ -17,4 +17,4 @@
   \item{dropout}{Dropout rates per replicate}
 }
 \description{Provides starting point values for optimization.}
-\seealso{optimization.params}
+\seealso{optimisation.params}
