@@ -85,7 +85,7 @@ product of the likelihoods and penalties associated with each locus.
 
 The function above returns a scalar which represents the weight of evidence for
 the given values of the nuisance parameters. One could then use
-\texttt{defenceModel} to perform an optimization or to create
+\texttt{defenceModel} to perform an optimisation or to create
 a plot with respect to various arguments. For instance, the following leads to
 Fig.~\ref{fig:plotme}:
 
@@ -156,8 +156,8 @@ transform our method into the form the optimisation method expects:
 The new method \texttt{vectorModel} achieves three objectives: (i) it recreates the
 list of arguments for \texttt{defenceModel}, (ii) it transforms the degradation
 parameter from an exponential form, (iii) it takes the logarithm of the weight
-of evidence. The last two points make optimization somewhat easier. We can now
-apply the optimization methods on \texttt{vectorModel}.
+of evidence. The last two points make optimisation somewhat easier. We can now
+apply the optimisation methods on \texttt{vectorModel}.
 
 <<maxiskel, eval=FALSE, tidy=FALSE>>=
   require(stats)
