@@ -1,11 +1,11 @@
 \name{prosecution.hypothesis}
 \alias{prosecution.hypothesis}
 \title{likeLTD::prosecution.hypothesis}
-\usage{prosecution.hypothesis(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
+\usage{prosecution.hypothesis(cspFile, refFile, ethnic='EA1', nUnknowns=0,
                               adj=1e0, fst=0.02, databaseFile=NULL, ...)
 }
 \arguments{
-  \item{mixedFile}{Path to the crime scene profile.}
+  \item{cspFile}{Path to the crime scene profile.}
   \item{refFile}{Path to the known profiles.}
   \item{ethnic}{Ethnicity, e.g. subgroup within the allele frequency database.}
   \item{nUnknowns}{Number of unknown contributors for which to perform
