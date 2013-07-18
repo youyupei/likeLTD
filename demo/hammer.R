@@ -8,7 +8,7 @@ datapath = file.path(system.file("extdata", package="likeLTD"), caseName)
 
 args = list(
   databaseFile = NULL,
-  mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+  cspFile    = file.path(datapath, 'hammer-CSP.csv'),
   refFile      = file.path(datapath, 'hammer-reference.csv'),
   nUnknowns    = 0,
   doDropin     = TRUE,
