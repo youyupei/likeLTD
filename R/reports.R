@@ -903,7 +903,7 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   	}
 
   # report pg3
-  heights.pg3 = heights = c(13,33,16)
+  heights.pg3 = heights = c(13,44,16)
   heights.pg3 = heights.pg3 + 5
   layout(matrix(c(1:3),nrow=3), heights = heights.pg3)
   par(mai = rep(0.3,times=4))
