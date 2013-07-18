@@ -902,18 +902,10 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   	title('No drop-in modelled')
   	}
 
-  # report pg3
-  heights.pg3 = heights = c(13,44,16)
-  heights.pg3 = heights.pg3 + 5
-  layout(matrix(c(1:3),nrow=3), heights = heights.pg3)
+ # report pg3
   par(mai = rep(0.3,times=4))
   size = 0.7
-
-  # Operator information
-  operator = data.frame(Sys.info())
-  colnames(operator) = 'Operator info'
-  textplot(operator,valign='top',cex=size)
-  title('System info')
+  layout(matrix(c(1),nrow=1),heights = 50, widths=1) 
 
   # Parameters
   CSPname = tail(strsplit(admin$mixedFile,split='/')[[1]],1)
@@ -955,25 +947,25 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	paste(prosecutionResults$optim$nfeval, defenceResults$optim$nfeval,collapse=' '),
 	paste(prosecutionResults$optim$iter, defenceResults$optim$iter,collapse=' '),
 	paste(format(round(prosecutionResults$member$upper[grep("locusAdjustment",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$lower[grep("locusAdjustment",names(prosecutionResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$upper[grep("power",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$lower[grep("power",names(prosecutionResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$upper[grep("dropout",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$lower[grep("dropout",names(prosecutionResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$upper[grep("degradation",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$lower[grep("degradation",names(prosecutionResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$upper[grep("rcont",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$member$lower[grep("rcont",names(prosecutionResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$upper[grep("locusAdjustment",names(defenceResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$lower[grep("locusAdjustment",names(defenceResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$upper[grep("power",names(defenceResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$lower[grep("power",names(defenceResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$upper[grep("dropout",names(defenceResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$lower[grep("dropout",names(defenceResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$upper[grep("degradation",names(defenceResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$lower[grep("degradation",names(defenceResults$member$lower))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$upper[grep("rcont",names(defenceResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$member$lower[grep("rcont",names(defenceResults$member$lower))],3),nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("locusAdjustment",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("power",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("power",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("dropout",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("dropout",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("degradation",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("degradation",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("rcont",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("rcont",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("locusAdjustment",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("locusAdjustment",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("power",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("power",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("dropout",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("dropout",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("degradation",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("degradation",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("rcont",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("rcont",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
 	signif(as.numeric(ideal.match),3),
 	row.names=NULL)
 	)
@@ -1025,6 +1017,13 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Ideal match:')
   textplot(administration,valign='top',cex=size)
   title('Parameters')
+ 
+  # report page 4
+  heights.pg4 = heights = c(13,16)
+  heights.pg4 = heights.pg4 + 5
+  layout(matrix(c(1:2),nrow=2), heights = heights.pg4)
+  par(mai = rep(0.3,times=4))
+  size = 0.7
 
   # Nomenclature
   nomenclature = '
@@ -1042,6 +1041,12 @@ Nkdo:    number of profiled potential contributors subject to dropout.
 '
   textplot(nomenclature,valign='top',cex=size)
   title('Nomenclature')
+
+  # Operator information
+  operator = data.frame(Sys.info())
+  colnames(operator) = 'Operator info'
+  textplot(operator,valign='top',cex=size)
+  title('System info')
 
 dev.off()
 }
