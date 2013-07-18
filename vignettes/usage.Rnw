@@ -29,6 +29,7 @@ maximization of the likelihood nor any information which needs to be computed.
 
 <<verystart, eval=FALSE, tidy=FALSE, print=FALSE>>=
   require(likeLTD)
+  require(DEoptim)
 
   # Case we are going to be looking at.
   caseName = 'hammer'
@@ -176,16 +177,14 @@ apply the optimization methods on \texttt{vectorModel}.
                power      = -6 )[names(arguments)]
 
   # perform maximization
-  result <- optim(par = unlist(arguments),
-                  fn  = vector.model,
+  result <- DEoptim(fn  = vector.model,
                   upper = unlist(upper),
                   lower = unlist(lower),
-                  control = list(fnscale=-1, factr=1e12), 
-                  method = "L-BFGS-B",
-                  hessian = FALSE)
-  opti = relist(result$par, skeleton)
+                  control = list(strategy=3, itermax=500)
+  		)
+  opti = relist(result$optim$bestmem, skeleton)
   cat(sprintf("Resulting Weight of Evidence: 10^%f\n",
-              result$value))
+              -result$optim$bestval))
 @
 <<alltheabove, echo=FALSE>>=
 <<verystart>>
@@ -206,10 +205,10 @@ convenience method provided by \likeLTD\, \texttt{optimization.params}. It
 returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
-  params = optimization.params(defenceHyp, verbose=FALSE, throwError=FALSE)
-  params$control$factr=1e12 # Less strict convergence, for demo purposes.
-  results <- do.call(optim, params)
-  arguments <- relistArguments(results$par, defenceHyp)
+  params = optimization.params(defenceHyp, verbose=FALSE)
+  params$control$itermax=50 # Less strict convergence, for demo purposes.
+  results <- do.call(DEoptim, params)
+  arguments <- relistArguments(results$optim$bestmem, defenceHyp)
 @
 
 Running the above yields the parameters in Tab.~\ref{tab:maxi}. The last line
@@ -276,4 +275,3 @@ Although not shown here, this snippet will print results for each tests. Each
 should return "OK".
 
 \end{document}
-
