@@ -106,7 +106,7 @@ internal.representation.data = function() {
     system.file(Reduce(file.path, path_vector), package="likeLTD")
   }
   databaseFile = find.package.files(c("data", "lgc-allele-freqs-wbp.txt.gz"))
-  mixedFile    = find.package.files(c("extdata", "hammer", "hammer-CSP.csv"))
+  cspFile    = find.package.files(c("extdata", "hammer", "hammer-CSP.csv"))
   refFile      = find.package.files(c("extdata", "hammer", "hammer-reference.csv"))
   caseName   = 'hammer'
   outputPath = 'hammer'
@@ -114,7 +114,7 @@ internal.representation.data = function() {
   correct <- function() {
     pack.admin.input( caseName=caseName,		
                       databaseFile=databaseFile,
-       		    mixedFile=mixedFile,
+       		    cspFile=cspFile,
                       refFile=refFile, 
                       outputPath=outputPath)
   				}
@@ -122,7 +122,7 @@ internal.representation.data = function() {
   incorrect <- function() {
     pack.admin.input( caseName=caseName,		
                       databaseFile=databaseFile,
-       		    mixedFile='nonexistant-file.csv', # only need one to be wrong
+       		    cspFile='nonexistant-file.csv', # only need one to be wrong
                       refFile=refFile, 
                       outputPath=outputPath)
   				}
@@ -132,7 +132,7 @@ internal.representation.data = function() {
   checkEquals(length(admin), 5)
   checkEquals(admin$caseName, caseName)
   checkEquals(admin$databaseFile, databaseFile)
-  checkEquals(admin$mixedFile, mixedFile)
+  checkEquals(admin$cspFile, cspFile)
   checkEquals(admin$refFile, refFile)
   checkEquals(admin$outputPath, outputPath)
 
