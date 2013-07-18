@@ -68,10 +68,10 @@ relistArguments <- function( parameters, hypothesis, fixed=NULL,
 
 
 upper.bounds = function(arguments, zero=1e-4) { 
-  # Upper bounds of optimization function.
+  # Upper bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimization function. Used as a
+  #   arguments: Arguments passed to the optimisation function. Used as a
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
@@ -90,10 +90,10 @@ upper.bounds = function(arguments, zero=1e-4) {
        dropin          = dropin)[names(arguments)]
 }
 lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) { 
-  # Lower bounds of optimization function.
+  # Lower bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimization function. Used as a
+  #   arguments: Arguments passed to the optimisation function. Used as a
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
@@ -116,13 +116,13 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 }
 
 
-optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
+optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-4, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=NULL,...) {
-  # Creates the optimization parameters for optim.
+  # Creates the optimisation parameters for optim.
   #
-  # optim is the optimization function from R's stat package.
+  # optim is the optimisation function from R's stat package.
   # 
   # Parameters:
   #    hypothesis: Hypothesis for which to create the objective function.
@@ -216,76 +216,3 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
 
 
 
-multiRun <- function(hypothesis, nrun=5, ...) 
-  {
-	# Runs the optimisation for a given hypothesis nrun times
-	# before returning the results that gave the maximum likelihood,
-	# as well as the standard deviation of the likelihoods, and the
-	# number of runs that completed
-	# Convert ... into lost
-	tmpargs = list(...)
-	# Add arguments to hypothesis
-  	tmphypothesis = add.args.to.hypothesis(hypothesis, ...)
-  	sanity.check(tmphypothesis) 
-	# Create objective function (computationally expensive)
-	objective = create.likelihood.vectors(tmphypothesis,...)
-	results = NULL; L=NULL; startParams <- list()
-	for(i in 1:nrun) 
-		{
-		# Set convergence to 99 initially
-		results = append(results,list(list(convergence=99)))
-		# Re-run if no convergence
-		while(results[[i]]$convergence!=0)
-			{
-			# Set parameters (including randomisation)
-			# Hand objective function to optimization.params
-			params = optimization.params(hypothesis,objective=objective,...)
-			# If there are fixed parameters, set them
-			if(!is.null(tmpargs$fixed))
-				{
-				parameters = c( "locusAdjustment",
-						"power",
-						"dropout",
-						"degradation",
-						"rcont",
-						"dropin")
-				for(j in 1:length(parameters))
-					{
-					userDefined = parse(text=paste("tmpargs$",parameters[j],sep=""))
-					if(!is.null(eval(userDefined))) 
-						{
-						index = grep(parameters[j],names(params$par))
-						# If only one value has been specified, replicate that value
-						# the necessary number of times
-						if(length(eval(userDefined))==1) userDefined = rep(eval(userDefined),times=length(index)) else userDefined = eval(userDefined)
-						# Replace default parameters with user-defined parameters 
-						params$par[index] = userDefined
-						}
-					}
-				}
-			# Update start parameters list
-			startParams[[i]] <- params$par
-			# Run optimization
-			results[[i]] <- try(do.call(optim, params), TRUE)
-			# If optim returns an error record likelihood as NA
-			if((class(results[[i]])!="try.error")&(length(results[[i]])!=1)) 
-				{
-				L[i] = results[[i]]$value
-				} else {
-				results[[i]]$convergence = 0
-				L[i] = NA
-				}
-			}
-		}
-	# Index of which runs returned finite L
-	finiteIndex <- which(is.finite(L))
-	# Index of which run returned highest L
-    	maxIndex <- finiteIndex[which.max(L[finiteIndex])]
-    	# Produce results to be returned
-    	out = list()
-    	out$startParams = startParams[[maxIndex]]
-	out$likeStanDev = sd(L[finiteIndex],na.rm=TRUE)
-	out$numComplete = length(finiteIndex)
-	out = append(out, results[[maxIndex]])
-	return(out)
-	}
