@@ -75,7 +75,7 @@ test_novictim_regression_prosecution <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "novictim")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
     doDropin = TRUE,
@@ -119,7 +119,7 @@ test_novictim_regression_defence <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "novictim")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
     doDropin = TRUE,
