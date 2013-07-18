@@ -632,10 +632,10 @@ calc.dropout = function(results, hypothesis)
 	N = nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns + 1
 	# Number of contributors subject to dropout + number of unknowns + 1 (dropin)
 	nrep = nrow(hypothesis$cspProfile)
-	do = results$par[grep("dropout",names(results$par))]
-	rcont = results$par[grep("rcont",names(results$par))]
+	do = results$optim$bestmem[grep("dropout",names(results$optim$bestmem))]
+	rcont = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
 	rcont = rcontConvert(hypothesis$refIndiv,rcont)
-	BB = results$par[grep("power",names(results$par))]
+	BB = results$optim$bestmem[grep("power",names(results$optim$bestmem))]
 	drout = matrix(0,N-1,nrep)
 	if(N>1) for(x in 1:(N-1)) for(z in 1:nrep) drout[x,z] = do[z]/(do[z]+rcont[x]^-BB*(1-do[z]))
 	return(drout)
@@ -713,7 +713,7 @@ dropDeg <- function(hypothesis,results,admin)
 
 # Table
 	h = h1 = round(dropout,4)	
-	Loss = Loss1 = round(10^results$par[grep("degradation",names(results$par))],4)
+	Loss = Loss1 = round(10^results$optim$bestmem[grep("degradation",names(results$optim$bestmem))],4)
 	if(hypothesis$hypothesis=="prosecution")
 		{
 		if(Qdrop==F)
