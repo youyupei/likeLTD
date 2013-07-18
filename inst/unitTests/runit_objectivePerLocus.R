@@ -79,7 +79,7 @@ test_TH01.regression.with.dropin = svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 1,
     doDropin     = TRUE,
@@ -124,7 +124,7 @@ test_TH01.regression.no.dropin = svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 1,
     doDropin     = FALSE,
@@ -168,7 +168,7 @@ test_D18.regression.with.dropin = svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 1,
     doDropin     = TRUE,
