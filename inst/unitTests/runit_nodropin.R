@@ -41,7 +41,7 @@ test_dropin_genotype_sizes <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
     doDropin = FALSE,
@@ -75,7 +75,7 @@ test_dropin_regression_prosecution <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
     doDropin = FALSE,
@@ -118,7 +118,7 @@ test_dropin_regression_defence <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
     doDropin = FALSE,
