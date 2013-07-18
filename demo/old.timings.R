@@ -10,7 +10,7 @@ datapath <- file.path(file.path('inst', 'extdata'), caseName)
 # Construct input: frequency file.
 databaseFile = NULL #file.path(datapath, 'lgc-allele-freqs-wbp.txt')
 # Construct input: crime scene profile
-mixedFile = file.path(datapath, 'hammer-CSP.csv')
+cspFile = file.path(datapath, 'hammer-CSP.csv')
 # Construct input: reference profiles
 refFile = file.path(datapath, 'hammer-reference.csv')
 # Construct input: output path in the R temp directory for now
@@ -19,7 +19,7 @@ outputPath = tempdir()
 # Construct list of all administrative input
 admin <- pack.admin.input( caseName=caseName,
                            databaseFile=databaseFile,
-                           mixedFile=mixedFile,
+                           cspFile=mixedFile,
                            refFile=refFile,
                            outputPath=outputPath )
 # Finally call allele.report
