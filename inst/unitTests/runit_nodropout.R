@@ -41,7 +41,7 @@ test_dropout_regression_prosecution <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropout")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'CSP.csv'),
+    cspFile = file.path(datapath, 'CSP.csv'),
     refFile = file.path(datapath, 'reference.csv'),
     nUnknowns = 1,
     doDropin = FALSE,
@@ -82,7 +82,7 @@ test_dropout_regression_defence <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropout")
   args = list(
     databaseFile = NULL,
-    mixedFile = file.path(datapath, 'CSP.csv'),
+    cspFile = file.path(datapath, 'CSP.csv'),
     refFile = file.path(datapath, 'reference.csv'),
     nUnknowns = 1,
     doDropin = FALSE,
