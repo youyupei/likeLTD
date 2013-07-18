@@ -13,7 +13,7 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
   # Create objective function
   if(logObjective) creator <- create.likelihood.log
 
-  params = optimization.params( hypothesis, verbose=FALSE,
+  params = optimisation.params( hypothesis, verbose=FALSE,
                                 logObjective=logObjective,
                                 logDegradation=logDegradation, 
                                 arguments=arguments, zero=0e0, ... )
