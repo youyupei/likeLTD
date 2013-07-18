@@ -388,10 +388,10 @@ suggested.hypothesis = function(queried, known, ref, cprofs) {
 
 # Packs and verifies administrative information.
 # Documentation in man directory.
-pack.admin.input = function( mixedFile, refFile, caseName='dummy',
+pack.admin.input = function( cspFile, refFile, caseName='dummy',
                              databaseFile=NULL, outputPath=getwd()
 					 ) {
-    paths = c(mixedFile, refFile) 
+    paths = c(cspFile, refFile) 
     if(!is.null(databaseFile)) paths = c(databaseFile, paths, recursive=TRUE)
     for(path in paths) {
       if(!file.exists(path))
@@ -405,7 +405,7 @@ pack.admin.input = function( mixedFile, refFile, caseName='dummy',
       stop(paste(outputPath, " exists and is not a directory."))
   admin = list( caseName=caseName,
                 databaseFile=databaseFile,
-                mixedFile=mixedFile,
+                cspFile=cspFile,
                 refFile=refFile,
                 outputPath=outputPath )
   return(admin)
@@ -442,7 +442,7 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   #   fst: not sure.  If NULL and ethnic is 'EA1', then defaults to 0.02,
   #        otherwise to 0.03.
   afreq        = load.allele.database(admin$databaseFile)
-  cspData      = read.csp.profile.old(admin$mixedFile)
+  cspData      = read.csp.profile.old(admin$cspFile)
   refData      = read.ref.profile.old(admin$refFile)
   cprofs       = internal.representation(cspData)
   QvK <- queried.vs.known(admin$refFile)
@@ -690,7 +690,7 @@ dropDeg <- function(hypothesis,results,admin)
 	#	args: arguments specified by user
 
 	# 'known' (in Nkdo, Nknd, knownDropoutsLogical) by definition never includes Q (queried)
-	dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$mixedFile))
+	dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$cspFile))
 	Qdrop = dropoutsLogical[names(dropoutsLogical)==rownames(hypothesis$queriedProfile)]
 	knownDropoutsLogical = dropoutsLogical[names(dropoutsLogical)!=rownames(hypothesis$queriedProfile)]
 	Nkdo = length(which(knownDropoutsLogical))
@@ -908,11 +908,11 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   layout(matrix(c(1),nrow=1),heights = 50, widths=1) 
 
   # Parameters
-  CSPname = tail(strsplit(admin$mixedFile,split='/')[[1]],1)
+  CSPname = tail(strsplit(admin$cspFile,split='/')[[1]],1)
   REFname = tail(strsplit(admin$refFile,split='/')[[1]],1)
   ALLELEname = ifelse(is.null(admin$database),"lgc-allele-freqs-wbp.txt",tail(strsplit(admin$databaseFile,split='/')[[1]],1))
 
-  dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$mixedFile))
+  dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$cspFile))
   Nknd = length(which(!dropoutsLogical))
   Nkdo = length(which(dropoutsLogical))
 
