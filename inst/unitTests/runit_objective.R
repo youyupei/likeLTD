@@ -38,7 +38,7 @@ test_regression1 <- svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 0,
     doDropin     = TRUE,
@@ -82,7 +82,7 @@ test_regression.zerounknown <- svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 0,
     doDropin     = TRUE,
@@ -135,7 +135,7 @@ test_regression.oneunknown <- svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 1,
     doDropin     = TRUE,
@@ -189,7 +189,7 @@ test_regression.relatedness <- svTest(function() {
   datapath     = system.file(file.path('extdata', 'hammer'), package="likeLTD")
   args = list(
     databaseFile = NULL,
-    mixedFile    = file.path(datapath, 'hammer-CSP.csv'),
+    cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 1,
     doDropin     = TRUE,
