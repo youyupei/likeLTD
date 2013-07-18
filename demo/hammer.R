@@ -22,13 +22,13 @@ args = list(
 prosecutionHyp = do.call(prosecution.hypothesis, args)
 defenceHyp     = do.call(defence.hypothesis, args)
 
-# Create optimization parameters, with some modification to hypothesis
+# Create optimisation parameters, with some modification to hypothesis
 # arguments. nUnknowns is modified here and now. It does not need to be, but it
 # can be. The somethingParams values contain the objective functions and
-# optimization parameters.
-prosecutionParams <- optimization.params(prosecutionHyp, verbose=TRUE,
+# optimisation parameters.
+prosecutionParams <- optimisation.params(prosecutionHyp, verbose=TRUE,
                                          nUnknowns=1) 
-defenceParams <- optimization.params(defenceHyp, verbose=FALSE, nUnknowns=2)
+defenceParams <- optimisation.params(defenceHyp, verbose=FALSE, nUnknowns=2)
 
 
 # Now perform actual optimization.
