@@ -1,7 +1,7 @@
-\name{optimization.params} 
-\alias{optimization.params} 
-\title{likeLTD::optimization.params} 
-\usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
+\name{optimisation.params} 
+\alias{optimisation.params} 
+\title{likeLTD::optimisation.params} 
+\usage{optimisation.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=1e-4, throwError=FALSE,
                            withPenalties=TRUE, objective=NULL, iterMax=NULL,\dots)}
@@ -21,7 +21,7 @@
   \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
   \item{objective}{Objective function produced from create.likelihood.vectors}
-  \item{iterMax}{NUmber of iterations to run the optimization for}
+  \item{iterMax}{NUmber of iterations to run the optimisation for}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
@@ -44,7 +44,7 @@
   It accepts a number of customization:
     
   \itemize{
-    \item The optimization can be performed for the likelihood or the log of
+    \item The optimisation can be performed for the likelihood or the log of
     the likelihood. The latter is recommended.
     \item wether the \code{degradation} parameter should be inputs as \eqn{x}
     or  as an exponent \eqn{10^x}. The latter seems to be more numerically
