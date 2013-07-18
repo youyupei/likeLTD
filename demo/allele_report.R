@@ -18,7 +18,7 @@ outputPath = tempdir()
 
 # Construct list of all administrative input
 admin = pack.admin.input( caseName=caseName,
-                          mixedFile=mixedFile,
+                          cspFile=cspFile,
                           refFile=refFile,
                           outputPath=outputPath )
 # Finally call allele.report
