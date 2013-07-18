@@ -239,12 +239,12 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
+prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, ...) {
   alleleDb = load.allele.database(databaseFile)
-  cspProfile = read.csp.profile(mixedFile)
-  uncProfile = read.unc.profile(mixedFile)
+  cspProfile = read.csp.profile(cspFile)
+  uncProfile = read.unc.profile(cspFile)
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
@@ -282,12 +282,12 @@ prosecution.hypothesis <- function(mixedFile, refFile, ethnic='EA1',
 
 # Creates defence hypothesis
 # Documentation is in man directory.
-defence.hypothesis <- function(mixedFile, refFile, ethnic='EA1',  nUnknowns=0,
+defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, ...) {
   
   alleleDb = load.allele.database(databaseFile)
-  cspProfile = read.csp.profile(mixedFile)
-  uncProfile = read.unc.profile(mixedFile)
+  cspProfile = read.csp.profile(cspFile)
+  uncProfile = read.unc.profile(cspFile)
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
