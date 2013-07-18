@@ -2,11 +2,11 @@
 \alias{defence.hypothesis}
 \title{likeLTD::defence.hypothesis}
 \description{Helper function to create the input for the defence.}
-\usage{defence.hypothesis(mixedFile, refFile, ethnic='EA1', nUnknowns=0,
+\usage{defence.hypothesis(cspFile, refFile, ethnic='EA1', nUnknowns=0,
                         adj=1e0, fst=0.02, databaseFile=NULL, ...)
 }
 \arguments{
-  \item{mixedFile}{Path to the crime scene profile.}
+  \item{cspFile}{Path to the crime scene profile.}
   \item{refFile}{Path to the known profiles.}
   \item{ethnic}{Ethnicity, e.g. subgroup within the allele frequency database.}
   \item{nUnknowns}{Number of unknown contributors for which to perform
