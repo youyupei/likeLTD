@@ -867,7 +867,7 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 
 
   # Overall likelihood
-  overallLikelihood  = data.frame(signif(10^prosecutionResults$value,2),signif(10^defenceResults$value,2),signif(10^(prosecutionResults$value-defenceResults$value),2),signif(prosecutionResults$value-defenceResults$value,2))
+  overallLikelihood  = data.frame(signif(10^-prosecutionResults$optim$bestval,2),signif(10^-defenceResults$optim$bestval,2),signif(10^(defenceResults$optim$bestval-prosecutionResults$optim$bestval),2),signif(defenceResults$optim$bestval-prosecutionResults$optim$bestval,2))
   colnames(overallLikelihood)= c('HP','HD','Ratio','Log Ratio')
   row.names(overallLikelihood)= ''
   textplot(t(overallLikelihood),valign='top')
@@ -888,8 +888,8 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 
   # Dropin
   if(defenceHypothesis$doDropin){
-  	pDropin = prosecutionResults$par[grep("dropin",names(prosecutionResults$par))]
-  	dDropin = defenceResults$par[grep("dropin",names(defenceResults$par))]
+  	pDropin = prosecutionResults$optim$bestmem[grep("dropin",names(prosecutionResults$optim$bestmem))]
+  	dDropin = defenceResults$optim$bestmem[grep("dropin",names(defenceResults$optim$bestmem))]
   	dropin = round(data.frame(pDropin,dDropin),3)
   	colnames(dropin) = c('HP','HD')
   	row.names(dropin) = ''
@@ -946,22 +946,12 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	Nkdo,
 	paste(prosecutionHypothesis$nUnknowns,defenceHypothesis$nUnknowns),
 	paste(prosecutionHypothesis$doDropin,defenceHypothesis$doDropin),
-	paste(format(round(prosecutionResults$par[grep("dropout",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$par[grep("dropout",names(defenceResults$par))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$par[grep("rcont",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$par[grep("rcont",names(defenceResults$par))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$par[grep("Adjustment",names(prosecutionResults$par))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$par[grep("Adjustment",names(defenceResults$par))],3),nsmall=3),collapse=' '),
-	paste(prosecutionResults$numAttempted,prosecutionResults$numComplete),
-	paste(defenceResults$numAttempted,defenceResults$numComplete),
-	format(round(prosecutionResults$likeStanDev,3),nsmall=3),
-	format(round(defenceResults$likeStanDev,3),nsmall=3),
-	paste(format(prosecutionResults$counts,nsmall=3),collapse=' '),
-	prosecutionResults$convergence,
-	prosecutionResults$message,
-	paste(format(defenceResults$counts,nsmall=3),collapse=' '),
-	defenceResults$convergence,
-	defenceResults$message,
+	paste(format(round(prosecutionResults$optim$bestmem[grep("dropout",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$optim$bestmem[grep("dropout",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(format(round(prosecutionResults$optim$bestmem[grep("rcont",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$optim$bestmem[grep("rcont",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(format(round(prosecutionResults$optim$bestmem[grep("Adjustment",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(format(round(defenceResults$optim$bestmem[grep("Adjustment",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
 	signif(as.numeric(ideal.match),3),
 	row.names=NULL)
 	)
@@ -988,16 +978,6 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Max HD rcont:',
 	'Max HP local adjust:',
 	'Max HD local adjust:',
-	'MultiRun HP(attempted succeeded):',
-	'MultiRun HD(attempted succeeded):',
-	'MultiRun HP Standard Deviation:',
-	'MultiRun HD Standard Deviation:',
-	'Optimisation HP counts:',
-	'Optimisation HP convergence:',
-	'Optimisation HP message:',
-	'Optimisation HD counts:',
-	'Optimisation HD convergence:',
-	'Optimisation HD message:',
 	'Ideal match:')
   textplot(administration,valign='top',cex=size)
   title('Parameters')
