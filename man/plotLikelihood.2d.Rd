@@ -18,7 +18,7 @@
   \item{logObjective}{Whether to plot log-likelihood}
   \item{logDegradation}{Whether to input degradation as \eqn{10^x}}
   \item{contours}{Arguments to stat_contour}
-  \item{\dots}{Other arguments are fed to the internal call to optimization.params}
+  \item{\dots}{Other arguments are fed to the internal call to optimisation.params}
 }
 \description{Plots two dimensional graph of likelihood for two input
              directions.}
