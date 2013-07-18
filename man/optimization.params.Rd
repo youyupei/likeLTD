@@ -4,7 +4,7 @@
 \usage{optimization.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=1e-4, throwError=TRUE,
-                           withPenalties=TRUE, objective=NULL,\dots)}
+                           withPenalties=TRUE, objective=NULL, iterMax=NULL,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -21,6 +21,7 @@
   \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
   \item{objective}{Objective function produced from create.likelihood.vectors}
+  \item{iterMax}{NUmber of iterations to run the optimization for}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
