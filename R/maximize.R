@@ -119,7 +119,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-4, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=1000,...) {
+                                withPenalties=TRUE, objective=NULL, iterMax=NULL,...) {
   # Creates the optimization parameters for optim.
   #
   # optim is the optimization function from R's stat package.
@@ -193,6 +193,9 @@ optimization.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # return result
     -result
   }
+  
+  # Number of iterations
+  if(is.null(iterMax)) iterMax = 200 + (125*(hypothesis$nUnknowns+nrow(hypothesis$dropoutProfs)))
   
   lower = lower.bounds(args, zero, logDegradation)
   upper = upper.bounds(args, zero)
