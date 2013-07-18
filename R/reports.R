@@ -952,6 +952,8 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	paste(format(round(defenceResults$optim$bestmem[grep("rcont",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
 	paste(format(round(prosecutionResults$optim$bestmem[grep("Adjustment",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
 	paste(format(round(defenceResults$optim$bestmem[grep("Adjustment",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
+	paste(prosecutionResults$optim$nfeval, defenceResults$optim$nfeval),
+	paste(prosecutionResults$optim$iter, defenceResults$optim$iter),
 	signif(as.numeric(ideal.match),3),
 	row.names=NULL)
 	)
@@ -976,8 +978,10 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Max HD do:',
 	'Max HP rcont:',
 	'Max HD rcont:',
-	'Max HP local adjust:',
-	'Max HD local adjust:',
+	'Max HP locus adjust:',
+	'Max HD locus adjust:',
+	'NUmber of function evaluations (HP HD)',
+	'NUmber of iterations (HP HD)',
 	'Ideal match:')
   textplot(administration,valign='top',cex=size)
   title('Parameters')
