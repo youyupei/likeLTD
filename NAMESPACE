@@ -16,7 +16,7 @@ export(load.allele.database)
 
 export(initial.arguments)
 export(relistArguments)
-export(optimization.params)
+export(optimisation.params)
 
 export(create.likelihood.vectors)
 export(create.likelihood.log)
@@ -24,8 +24,6 @@ export(create.likelihood)
 export(penalties)
 
 export(plotLikelihood.2d)
-
-export(multiRun)
 
 export(locus.likes)
 export(output.report)
