@@ -738,7 +738,7 @@ dropDeg <- function(hypothesis,results,admin)
 		Loss = c(0,Loss)
 		}
 	Dropout = format(round(data.frame(h,Loss),3),nsmall=3)
-	colnames(Dropout)= c(runNames[1:(nrep)],'Degradation:')
+	colnames(Dropout)= c(runNames[1:(nrep)],'Degradation')
 	row.names(Dropout) = Names
 	return(Dropout)
 	}
@@ -772,7 +772,23 @@ output.names <- function(admin,prosecutionHypothesis)
 	return(list(pdf.name=pdf.name,RData.name=RData.name))
 	}
 
+  # Function to calculate sensible csx for each table:
+  cex.finder = function(table){
 
+	widest.row.name = max(nchar(row.names(table))) # vector of characters in the widest row name
+	heading.widths = nchar(names(table)) # vector of characters in each column name
+	data.widths = apply(nchar(as.matrix(table)), 2, max) # vector of characters for each column, the widest of each row
+	column.widths = pmax(heading.widths,data.widths) # vector of characters for each column, the widest of either data or col names
+	column.with.sum = sum(column.widths)
+	spaces = length(names(dDropout)) * 7.5 
+	total.width = widest.row.name + column.with.sum + spaces 
+
+	cex = 130 / total.width
+	if(cex>1)cex=1
+	print(cex)
+  return(cex)
+	}
+	
 
 output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecutionResults,defenceResults) {
   #
@@ -795,14 +811,6 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   
   #-----------------------------------------------
   # Write the output report
-  # works out sensible font size
-  cspTotal = uncTotal = numeric(genetics$nrep)
-  for(l in names(genetics$cprofs)){ 
-    for(r in 1:length(l)){
-      cspTotal[r] = cspTotal[r] + length(genetics$cprofs[[l]][[r]]$csp)
-      uncTotal[r] = uncTotal[r] + length(genetics$cprofs[[l]][[r]]$unc)
-    }
-  }
   
   # Start plotting pdf
   outputName = output.names(admin,prosecutionHypothesis)
@@ -811,23 +819,23 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   # report pg1
 
   par(mai = rep(0.3,times=4))
-  heights.pg1 = c(2,2*genetics$nrep,(length(c(genetics$nameQ,genetics$nameK))),3,max(otherBoth)+2)
+  heights.pg1 = c(2,2*genetics$nrep,length(c(genetics$nameQ,genetics$nameK))+1,3,max(otherBoth)+2)
   heights.pg1 = heights.pg1 +5 # space for headers
   widths.pg1 = c(1)
   layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
 
   # 1. Hypotheses used
   hypothesisTable <- stateHypotheses(prosecutionHypothesis, admin)
-  textplot(hypothesisTable,valign='top')
+  textplot(hypothesisTable,valign='top',cex=cex.finder(hypothesisTable))
   title(paste(admin$caseName,'Output Report'))
 
   # 2. CSP alleles
   alleles <- allele.table(genetics$cprofs)
-  textplot(alleles,valign='top')
+  textplot(alleles,valign='top',cex=cex.finder(alleles))
   title('Crime Scene Profile')
 
   # 3. Tabular Summary 
-  textplot(genetics$summary$summary,valign='top')
+  textplot(genetics$summary$summary,valign='top',cex=cex.finder(genetics$summary$summary))
   title(main = 'Reference profiles.{}=unreplicated, []=absent')
 
   # 4. Locus Likelihood
@@ -836,7 +844,7 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   likelihood  = data.frame(signif(prosecuLikes,2),signif(defenceLikes,2),signif(prosecuLikes/defenceLikes,2))
   colnames(likelihood)= c('HP','HD','Ratio')
   row.names(likelihood)= colnames(defenceHypothesis$queriedProfile)
-  textplot(t(likelihood),valign='top')
+  textplot(t(likelihood),valign='top',cex=cex.finder(t(likelihood)))
   title('Likelihoods at each locus')
 
   # 5. Unattributable Alleles
@@ -870,20 +878,20 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   overallLikelihood  = data.frame(signif(10^-prosecutionResults$optim$bestval,2),signif(10^-defenceResults$optim$bestval,2),signif(10^(defenceResults$optim$bestval-prosecutionResults$optim$bestval),2),signif(defenceResults$optim$bestval-prosecutionResults$optim$bestval,2))
   colnames(overallLikelihood)= c('HP','HD','Ratio','Log Ratio')
   row.names(overallLikelihood)= ''
-  textplot(t(overallLikelihood),valign='top')
+  textplot(t(overallLikelihood),valign='top',cex=cex.finder(t(overallLikelihood)))
   title('Likelihood (overall)')
 
   # Hp dropout
   pDropout = dropDeg(prosecutionHypothesis,prosecutionResults,admin) 
-  textplot(pDropout,valign='top')
+  textplot(pDropout,valign='top',cex=cex.finder(pDropout))
   title('HP Drop-out')
   # Hd dropout
   dDropout = dropDeg(defenceHypothesis,defenceResults,admin) 
-  textplot(dDropout,valign='top')
+  textplot(dDropout,valign='top',cex=cex.finder(dDropout))
   title('HD Drop-out')
 
   # Approximate representation
-  textplot(genetics$estimates,valign='top')
+  textplot(genetics$estimates,valign='top',cex=cex.finder(genetics$estimates))
   title('Approximate representation %')
 
   # Dropin
