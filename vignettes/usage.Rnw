@@ -201,11 +201,11 @@ convergence, it returns a list with the optimum and its location. Please see
 the \texttt{stat} package for description.
 
 The functionality of the above code can be achieved more succinctly through a
-convenience method provided by \likeLTD\, \texttt{optimization.params}. It
+convenience method provided by \likeLTD\, \texttt{optimisation.params}. It
 returns a list of adequate arguments for \texttt{optim} given a hypothesis:
 
 <<optim, eval=FALSE, tidy=FALSE>>=
-  params = optimization.params(defenceHyp, verbose=FALSE)
+  params = optimisation.params(defenceHyp, verbose=FALSE)
   params$control$itermax=50 # Less strict convergence, for demo purposes.
   results <- do.call(DEoptim, params)
   arguments <- relistArguments(results$optim$bestmem, defenceHyp)
