@@ -487,94 +487,6 @@ pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
   return(genetics)
 }
 
-
-# Generates an allele summary from input profiles:
-# Documentation in man directory.
-allele.report <- function(admin) {
-  #
-  # Args:
-  #   admin: List containing administration data, as packed by
-  #          pack.admin.input.
-  
-  # reads genetics information if not given on input.
-  if(!require('gplots')) stop("allele.report reqires the package gplots.")
-  genetics = pack.genetics.input(admin)
-
-
-  # Generate 'summary', whether multiple Q or single Q
-
-  #-----------------------------------------------
-  # 12. Write the allele report
-  # works out sensible font size
-  cspTotal = uncTotal = numeric(genetics$nrep)
-  for(l in names(genetics$cprofs)){ 
-    for(r in 1:length(l)){
-      cspTotal[r] = cspTotal[r] + length(genetics$cprofs[[l]][[r]]$csp)
-      uncTotal[r] = uncTotal[r] + length(genetics$cprofs[[l]][[r]]$unc)
-    }
-  }
-  tablesize = min(1,25/max(c(cspTotal,uncTotal)))
-
-  outputPath = file.path( admin$outputPath, 
-                          paste(admin$caseName, '-allele_report.pdf', sep='') )
-  
-  # Start plotting proper. 
-  pdf(width=8.25,height=11.5,file=outputPath)
-  par(mfrow=c(6,1), mai=c(0.7,0.5,0.5,0.5))
-
-  # Allele report
-  alleles <- allele.table(genetics$cprofs)
-  textplot(alleles, valign='top',cex=tablesize)
-  title(paste(admin$caseName,'Allele Report'))
-
-  # Tabular Summary 
-  textplot(genetics$summary$summary, valign='top', cex=tablesize)
-  title('Summary. {}=unreplicated, []=absent')
-
-  # Unattributable Alleles
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
-  otherRep  = genetics$summary$otherRep
-  yaxp=c(0, max(otherBoth), max(otherBoth))
-  if(max(otherBoth)==0) yaxp=c(0,1,1)
-  barplot(otherBoth, names.arg=names(genetics$cprofs), yaxp=yaxp,
-          main='Unattributable alleles', ylab='No. alleles')
-  barplot(add=T, col='black', otherRep, yaxt='n')
-  if(max(otherBoth) > 3) abline(h=2, lty=2)
-  if(max(otherBoth) > 5) abline(h=4, lty=2)
-  if(max(otherBoth) > 7) abline(h=6, lty=2) 
-  if(max(otherBoth) > 9) abline(h=8, lty=2);
-  legend(x=0, y=max(otherBoth), yjust=0, bty='n',
-         c('replicated','unreplicated'), xpd=NA, col=c('black','grey'),
-         pch=c(15,15))
-
-  # Rare Alleles
-  rare <- unusual.alleles(genetics$afreq, genetics$refData)
-  if(length(rare)==0) rare = 'No unusual alleles in Q or K profiles'
-  textplot(rare, cex=1, valign='top')
-  title('Rare alleles')
-
-  # Approximae representation.
-  # Estimate how well each reference profile is represented in the CSP
-  estimates <- estimate.csp(genetics$refData, genetics$cprofs)
-  textplot(estimates, cex=1, valign='top')
-  title('Approximate representation %')
-
-  # Suggested hypothesis.
-  suggested = suggested.hypothesis(genetics$nameQ, genetics$nameK,
-                                   genetics$refData, genetics$cprofs)
-  textplot(suggested, cex=1, valign='top')
-  title(main='Suggested Hypotheses',
-        sub= paste('Note: likeLTD is limited to 2 unknowns. If more than 2 ', 
-                   'unknowns are suggested,this may indicate a mixed profile',
-                   'with too many alleles to be statisically informative.',
-                   sep=''))
-  dev.off()
-  print(paste('Writing report to', outputPath))
-}
-
-
-
-
 stateHypotheses <- function(prosecutionHypothesis, admin)
 	{
 	# Table with hypotheses described
@@ -774,7 +686,6 @@ output.names <- function(admin,prosecutionHypothesis)
 
   # Function to calculate sensible csx for each table:
   cex.finder = function(table){
-
 	widest.row.name = max(nchar(row.names(table))) # vector of characters in the widest row name
 	heading.widths = nchar(names(table)) # vector of characters in each column name
 	data.widths = apply(nchar(as.matrix(table)), 2, max) # vector of characters for each column, the widest of each row
@@ -794,7 +705,93 @@ output.names <- function(admin,prosecutionHypothesis)
 	if(height<2) return(1)
 	if(height==2) return(2)
 	if(height>2) return(3)
-	}	
+	}
+
+
+allele.report <- function(admin=NULL,file=NULL) {
+  #
+  # Args:
+  #   admin: List containing administration data, as packed by pack.admin.input()
+  
+  # installs required packages if they aren't available
+  if(!require('gplots')) install.packages('gplots')
+
+  # checks all arguments are present, and creates default name for file if missing
+  if(is.null(admin))stop('missing argument: admin')
+  if(is.null(file))outputName = paste(admin$caseName,'allele report.pdf')
+
+  # reads genetics information 
+  genetics = pack.genetics.input(admin)
+
+  # Unnatributable alleles
+  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
+
+#----------------------------------------------
+  # Start plotting pdf
+  pdf(paste(admin$outputPath,outputName,sep="/"))
+  par(mai = rep(0.3,times=4))
+
+  # PAGE 1 
+  heights.pg1 = c(genetics$nrep,length(c(genetics$nameQ,genetics$nameK)),barchart.finder(otherBoth))
+  heights.pg1 = heights.pg1 +1 # space for headers
+  widths.pg1 = c(1)
+  layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1)
+
+  # Alleles
+  alleles = allele.table(genetics$cprofs)
+  textplot(alleles, valign='top',cex=cex.finder(alleles))
+  mtext(paste(admin$caseName,'Allele Report'),side=3,cex=1.2)
+
+  # Tabular Summary 
+  textplot(genetics$summary$summary, valign='top',cex=cex.finder(genetics$summary$summary))
+  mtext('Summary',side=3,cex=1.2)
+  mtext('{}=unreplicated, []=absent',side=1,cex=0.7)
+
+  # Unattributable Alleles
+  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
+  otherRep  = genetics$summary$otherRep
+  yaxp=c(0, max(otherBoth), max(otherBoth))
+  if(max(otherBoth)==0) yaxp=c(0,1,1)
+  barplot(otherBoth, names.arg=names(genetics$cprofs), yaxp=yaxp,
+          main='', ylab='No. alleles')
+  barplot(add=T, col='black', otherRep, yaxt='n')
+  if(max(otherBoth) > 3) abline(h=2, lty=2)
+  if(max(otherBoth) > 5) abline(h=4, lty=2)
+  if(max(otherBoth) > 7) abline(h=6, lty=2) 
+  if(max(otherBoth) > 9) abline(h=8, lty=2);
+  legend(x=0, y=max(otherBoth), yjust=0, bty='n',
+         c('replicated','unreplicated'), xpd=NA, col=c('black','grey'),
+         pch=c(15,15))
+  mtext('Unattributable alleles',side=3,cex=1.2)
+
+  # PAGE 2 
+  heights.pg2 = c(length(unusual.alleles(genetics$afreq, genetics$refData)),length(c(genetics$nameQ,genetics$nameK)),1)
+  heights.pg2 = heights.pg2 +5 # space for headers
+  widths.pg2 = c(1)
+  layout(matrix(c(1:length(heights.pg2)),nrow=length(heights.pg2)),heights = heights.pg2, widths=widths.pg2)
+
+  # Rare Alleles
+  rare <- unusual.alleles(genetics$afreq, genetics$refData)
+  if(length(rare)==0) rare = 'No unusual alleles in Q or K profiles'
+  textplot(rare, valign='top',cex=1)
+  mtext('Rare alleles',side=3,cex=1.2)
+
+  # Approximate representation.
+  # Estimate how well each reference profile is represented in the CSP
+  estimates <- estimate.csp(genetics$refData, genetics$cprofs)
+  textplot(estimates, valign='top',cex=cex.finder(estimates))
+  mtext('Approximate representation %',side=3,cex=1.2)
+
+  # Suggested hypothesis.
+  suggested = suggested.hypothesis(genetics$nameQ, genetics$nameK,
+                                   genetics$refData, genetics$cprofs)
+  textplot(suggested, valign='top',cex = 1)
+  sub= 'likeLTD can evaluate a maximum of 2 unknowns. If more are suggested, the CSP is unlikely to be statistically informative'
+  mtext('Suggested Hypotheses',side=3,cex=1.2)
+  mtext(sub,side=1,cex=0.7)
+
+  dev.off()
+}	
 
 output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesis=NULL,prosecutionResults=NULL,defenceResults=NULL,file=NULL) {
   #
