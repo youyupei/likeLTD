@@ -126,7 +126,7 @@ estimate.csp <- function(ref, cprofs) {
       
   # Constructs the result data frame.
   result = data.frame(array(0, c(nrow(ref), nrep+1)), row.names=rownames(ref))
-  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('Replicate', n)})
+  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('Rep', n)})
   colnames(result)[nrep+1] = 'Total' 
   
   # now add data.
@@ -709,7 +709,7 @@ dropDeg <- function(hypothesis,results,admin)
 	if(condition)for(n in 1:hypothesis$nUnknowns)Names = c(Names,paste('U',n,sep=''))
 	condition = (hypothesis$nUnknowns>1)&(hypothesis$hypothesis=="defence")
 	if(condition)for(n in 1:(hypothesis$nUnknowns-1))Names = c(Names,paste('U',n,sep=''))
-	runNames = c();for(rName in 1:nrep)runNames[rName]=paste('Replicate',rName)
+	runNames = c();for(rName in 1:nrep)runNames[rName]=paste('Rep',rName)
 
 # Table
 	h = h1 = round(dropout,4)	
@@ -738,7 +738,7 @@ dropDeg <- function(hypothesis,results,admin)
 		Loss = c(0,Loss)
 		}
 	Dropout = format(round(data.frame(h,Loss),3),nsmall=3)
-	colnames(Dropout)= c(runNames[1:(nrep)],'Degradation')
+	colnames(Dropout)= c(runNames[1:(nrep)],'Deg')
 	row.names(Dropout) = Names
 	return(Dropout)
 	}
@@ -780,12 +780,11 @@ output.names <- function(admin,prosecutionHypothesis)
 	data.widths = apply(nchar(as.matrix(table)), 2, max) # vector of characters for each column, the widest of each row
 	column.widths = pmax(heading.widths,data.widths) # vector of characters for each column, the widest of either data or col names
 	column.with.sum = sum(column.widths)
-	spaces = length(names(dDropout)) * 7.5 
+	spaces = length(names(table)) * 7.5 
 	total.width = widest.row.name + column.with.sum + spaces 
 
 	cex = 130 / total.width
 	if(cex>1)cex=1
-	print(cex)
   return(cex)
 	}
 	
@@ -1000,8 +999,8 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
 	'Max HD rcont:',
 	'Max HP locus adjust:',
 	'Max HD locus adjust:',
-	'NUmber of function evaluations (HP HD)',
-	'NUmber of iterations (HP HD)',
+	'No. of function evaluations (HP HD)',
+	'No. of iterations (HP HD)',
 	'Upper bounds of locusAdjutment (HP)',
 	'Lower bounds of locusAdjutment (HP)',
 	'Upper bounds of power (HP)',
