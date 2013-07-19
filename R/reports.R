@@ -787,7 +787,14 @@ output.names <- function(admin,prosecutionHypothesis)
 	if(cex>1)cex=1
   return(cex)
 	}
-	
+
+  # Function to decide the plot height of the barchart
+  barchart.finder = function(otherBoth){
+	height = max(otherBoth)
+	if(height<2) return(1)
+	if(height==2) return(2)
+	if(height>2) return(3)
+	}	
 
 output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecutionResults,defenceResults) {
   #
@@ -818,7 +825,7 @@ output.report <- function(admin,prosecutionHypothesis,defenceHypothesis, prosecu
   # report pg1
 
   par(mai = rep(0.3,times=4))
-  heights.pg1 = c(2,2*genetics$nrep,length(c(genetics$nameQ,genetics$nameK))+1,3,max(otherBoth)+2)
+  heights.pg1 = c(2,2*genetics$nrep,length(c(genetics$nameQ,genetics$nameK))+1,3,barchart.finder(otherBoth))
   heights.pg1 = heights.pg1 +5 # space for headers
   widths.pg1 = c(1)
   layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
