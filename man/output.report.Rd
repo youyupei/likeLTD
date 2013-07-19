@@ -8,12 +8,11 @@
   \item{defenceHypothesis}{The output from defence.hypothesis().}
   \item{prosecutionResults}{The output from do.call(DEoptim, prosecutionParameters).}
   \item{defenceResults}{The output from do.call(DEoptim, defenceParameters).}
-  \item{file}{A file name for the .pdf}
+  \item{file}{A file name for the pdf. By default a filename is created from the amalgamation of paramters in admin.}
 }
 \value{}
-\description{Output results pdf forlikeLTD.}
+\description{Outputs a pdf of results.}
 \details{
-  \item{output}{Creates a pdf containing all results, placed in the directory specified by admin$outputPath.}
-  \item{file}{If the file name for the pdf is omitted, by default a filename is created from the amalgamation of paramters in admin.}
+  Creates a pdf containing all results, placed in the directory specified by admin$outputPath.
 }
 \seealso{pdf, output.names}
