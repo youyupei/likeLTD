@@ -233,7 +233,7 @@ test_estimates.csp <- svTest(function() {
 
   check = list(a=c(85, 75, 47), b=c(100, 100, 63), c=c(92, 88, 55))
   check = data.frame(check, row.names=c("Suspect", "Victim 1", "Victim 2"))
-  colnames(check) <- c("Replicate 1", "Replicate 2", "Total")
+  colnames(check) <- c("Rep 1", "Rep 2", "Total")
 
   if(! "estimate.csp" %in% ls(.GlobalEnv))
     estimate.csp = getFromNamespace("estimate.csp", "likeLTD")
