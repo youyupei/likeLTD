@@ -141,6 +141,9 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   # If the objective function has not been handed to optimizatio.params,
   # make the objective function
   if(is.null(objective)) objective = create.likelihood.vectors(hypothesis, ...)
+  
+  # Load DEoptim
+  if(!require(DEoptim)) install.packages("DEoptim")
 
 
   args = arguments
