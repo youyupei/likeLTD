@@ -105,7 +105,7 @@ internal.representation.data = function() {
   find.package.files <- function(path_vector) {
     system.file(Reduce(file.path, path_vector), package="likeLTD")
   }
-  databaseFile = find.package.files(c("data", "lgc-allele-freqs-wbp.txt.gz"))
+  databaseFile = find.package.files(c("data", "lgc-allele-freqs-wbp.txt"))
   cspFile    = find.package.files(c("extdata", "hammer", "hammer-CSP.csv"))
   refFile      = find.package.files(c("extdata", "hammer", "hammer-reference.csv"))
   caseName   = 'hammer'
