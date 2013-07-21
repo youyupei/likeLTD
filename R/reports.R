@@ -719,6 +719,7 @@ allele.report <- function(admin=NULL,file=NULL) {
   # checks all arguments are present, and creates default name for file if missing
   if(is.null(admin))stop('missing argument: admin')
   if(is.null(file))outputName = paste(admin$caseName,'allele report.pdf')
+  if(!is.null(file))outputName = file
 
   # reads genetics information 
   genetics = pack.genetics.input(admin)
@@ -812,6 +813,7 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
   if(is.null(defenceHypothesis))stop('missing argument: defenceHypothesis')
   if(is.null(prosecutionResults))stop('missing argument: prosecutionResults')
   if(is.null(file))outputName = output.names(admin,prosecutionHypothesis)
+  if(!is.null(file))outputName = file
 
   # reads genetics information 
   genetics = pack.genetics.input(admin)
