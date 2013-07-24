@@ -198,7 +198,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   }
   
   # Number of iterations
-  if(is.null(iterMax)) iterMax = 200 + (125*(hypothesis$nUnknowns+nrow(hypothesis$dropoutProfs)))
+  if(is.null(iterMax)) iterMax = 250*(hypothesis$nUnknowns+nrow(hypothesis$dropoutProfs)+1)
   
   lower = lower.bounds(args, zero, logDegradation)
   upper = upper.bounds(args, zero)
