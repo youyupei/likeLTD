@@ -20,15 +20,16 @@ unusual.alleles <- function(afreq, profile) {
 
         condition = afreq$Marker==locus & afreq$Allele==allele
         x = afreq[condition, ]
-        if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
-          frame = data.frame(name=name, locus=locus, allele=allele, EA1=x$EA1,
-                             EA3=x$EA3, EA4=x$EA4)
-          rare=rbind(rare, frame)
-        }
-      }  # loop over alleles
-    } # loop over loci
-  } # loop over people
-
+        if(nrow(x)==1){
+       	  if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
+            frame = data.frame(name=name, locus=locus, allele=allele, EA1=x$EA1,
+                               EA3=x$EA3, EA4=x$EA4)
+            rare=rbind(rare, frame)
+          }
+        }  # loop over alleles
+      } # loop over loci
+    } # loop over people
+  }
   return(rare)
 }
 
