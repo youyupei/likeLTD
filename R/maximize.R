@@ -67,7 +67,7 @@ relistArguments <- function( parameters, hypothesis, fixed=NULL,
 
 
 
-upper.bounds = function(arguments, zero=1e-4) { 
+upper.bounds = function(arguments, zero=0) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -89,7 +89,7 @@ upper.bounds = function(arguments, zero=1e-4) {
        rcont           = rcont,
        dropin          = dropin)[names(arguments)]
 }
-lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) { 
+lower.bounds = function(arguments, zero=0, logDegradation=FALSE) { 
   # Lower bounds of optimisation function.
   # 
   # Parameters:
@@ -118,7 +118,7 @@ lower.bounds = function(arguments, zero=1e-4, logDegradation=FALSE) {
 
 optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-                                arguments=NULL, zero=1e-4, throwError=FALSE,
+                                arguments=NULL, zero=0, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=NULL,...) {
   # Creates the optimisation parameters for optim.
   #
