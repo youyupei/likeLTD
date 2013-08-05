@@ -964,26 +964,25 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
 	paste(format(round(defenceResults$optim$bestmem[grep("rcont",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
 	paste(format(round(prosecutionResults$optim$bestmem[grep("Adjustment",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
 	paste(format(round(defenceResults$optim$bestmem[grep("Adjustment",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(prosecutionResults$optim$nfeval, defenceResults$optim$nfeval,collapse=' '),
 	paste(prosecutionResults$optim$iter, defenceResults$optim$iter,collapse=' '),
-	paste(format(round(prosecutionResults$member$upper[grep("locusAdjustment",names(prosecutionResults$member$upper))],3),nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("locusAdjustment",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("power",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("power",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("locusAdjustment",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("locusAdjustment",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("power",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("power",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
 	paste(format(prosecutionResults$member$upper[grep("dropout",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
 	paste(format(prosecutionResults$member$lower[grep("dropout",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("degradation",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("degradation",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(prosecutionResults$member$upper[grep("degradation",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(prosecutionResults$member$lower[grep("degradation",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
 	paste(format(prosecutionResults$member$upper[grep("rcont",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
 	paste(format(prosecutionResults$member$lower[grep("rcont",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("locusAdjustment",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("locusAdjustment",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("power",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("power",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("locusAdjustment",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("locusAdjustment",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("power",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("power",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
 	paste(format(defenceResults$member$upper[grep("dropout",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
 	paste(format(defenceResults$member$lower[grep("dropout",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("degradation",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("degradation",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
+	paste(format(defenceResults$member$upper[grep("degradation",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
+	paste(format(defenceResults$member$lower[grep("degradation",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
 	paste(format(defenceResults$member$upper[grep("rcont",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
 	paste(format(defenceResults$member$lower[grep("rcont",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
 	signif(as.numeric(ideal.match),3),
@@ -1012,8 +1011,7 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
 	'Max HD rcont:',
 	'Max HP locus adjust:',
 	'Max HD locus adjust:',
-	'No. of function evaluations (HP HD)',
-	'No. of iterations (HP HD)',
+	'No. of generations (HP HD)',
 	'Upper bounds of locusAdjutment (HP)',
 	'Lower bounds of locusAdjutment (HP)',
 	'Upper bounds of power (HP)',
@@ -1034,16 +1032,16 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
 	'Lower bounds of degradation (HD)',
 	'Upper bounds of rcont (HD)',
 	'Lower bounds of rcont (HD)',
-	'Ideal match:')
+	'Theoretical maximum match LR:')
   textplot(administration,valign='top',cex=size)
   title('Parameters')
  
   # report page 4
-  heights.pg4 = heights = c(13,16)
+  heights.pg4 = heights = c(11,9,3)
   heights.pg4 = heights.pg4 + 5
-  layout(matrix(c(1:2),nrow=2), heights = heights.pg4)
+  layout(matrix(c(1:3),nrow=3), heights = heights.pg4)
   par(mai = rep(0.3,times=4))
-  size = 0.7
+  size = 1
 
   # Nomenclature
   nomenclature = '
@@ -1068,5 +1066,10 @@ Nkdo:    number of profiled potential contributors subject to dropout.
   textplot(operator,valign='top',cex=size)
   title('System info')
 
+  # software version
+  software = as.matrix(sessionInfo()$otherPkgs$likeLTD[c(1,6,12)])
+  colnames(software) = ''
+  textplot(software,valign='top',cex=size)
+  title('Software')
 dev.off()
 }
