@@ -3,7 +3,7 @@
 \title{likeLTD::optimisation.params} 
 \usage{optimisation.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
-                           arguments=NULL, zero=1e-4, throwError=FALSE,
+                           arguments=NULL, zero=0, throwError=FALSE,
                            withPenalties=TRUE, objective=NULL, iterMax=NULL,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
