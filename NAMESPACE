@@ -28,3 +28,5 @@ export(plotLikelihood.2d)
 export(locus.likes)
 export(output.report)
 export(output.names)
+
+export(DEoptimLoop)
