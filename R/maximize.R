@@ -218,7 +218,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
 }
 
 
-DEoptimLoop <- function(PARAMS)
+DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 	{
 	# Optimises over parameters, while checking for convergence every 50 iterations
 	#
