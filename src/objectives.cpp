@@ -77,8 +77,8 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
     for(int i=0; i < nrow; ++i, ++condA_ptr, ++condB_ptr) 
     {
       if(zero_ptr[v + i]) {
-        if(*condA_ptr)      out_ptr[j] *= 1.0 - freq_ptr[i] * rate; 
-        else if(*condB_ptr) out_ptr[j] *= freq_ptr[i] * rate; 
+        if(*condA_ptr)      out_ptr[j] *= 1.0 - rate * freq_ptr[i]; 
+        else if(*condB_ptr) out_ptr[j] *= rate * freq_ptr[i]; 
       } else {
         if(*condA_ptr)      out_ptr[j] *= vdose_ptr[v + i];
         else if(*condB_ptr) out_ptr[j] *= 1.0 - vdose_ptr[v + i];
