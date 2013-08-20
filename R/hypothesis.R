@@ -308,7 +308,6 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
 
   result = append(result, list(...))
   result[["nUnknowns"]] = nUnknowns + 1
-  if(!'relatedness' %in% names(result)) result[["relatedness"]] = c(0, 0)
   result[["hypothesis"]] = "defence"
   result[["ethnic"]] = ethnic 
   result[["adj"]] = adj
