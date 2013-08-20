@@ -277,6 +277,8 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   result[["ethnic"]] = ethnic  
   result[["adj"]] = adj
   result[["fst"]] = fst
+  result[["relatedness"]] = relatedness
+  result[["doDropin"]] = doDropin
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
@@ -311,6 +313,8 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
   result[["ethnic"]] = ethnic 
   result[["adj"]] = adj
   result[["fst"]] = fst
+  result[["relatedness"]] = relatedness
+  result[["doDropin"]] = doDropin
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
