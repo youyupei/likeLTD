@@ -145,6 +145,8 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   # Load DEoptim
   if(!require(DEoptim)) install.packages("DEoptim")
 
+  # Get maximum allele fraction
+  maxAF <- getMaxAF(hypothesis) 
 
   args = arguments
   if(is.null(args)) args = initial.arguments(hypothesis)
@@ -160,7 +162,6 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   } else  fixedstuff = NULL
 
   result.function <- function(x) {
- 
     # If a flat vector, reconstruct list. 
     if(typeof(x) == "double")
       x = relistArguments(x, hypothesis, fixed=fixed, arguments=arguments)
@@ -172,6 +173,15 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
       if(logDegradation && "degradation" %in% names(x))
         x$degradation = 10^x$degradation
     }
+
+    # If would return negative likelihood skip
+    if(hypothesis$doDropin & checkDropin(x, maxAF))
+	{
+	if(logObjective) result = log10(0) else result = 0
+	if(verbose) print(result)
+	return(-result)
+	}
+
     # Compute objective function.
     result <- do.call(objective, x)
     # Compute as log if requested, otherwise as product.
@@ -216,6 +226,36 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        #hessian = FALSE )
        )
 }
+
+
+
+getMaxAF <- function(hypothesis)
+	{
+	# Get the maximum allele frequency of any alleles in database 
+	#
+	# Parameters:
+	# hypothesis: Hypothesis from which to get the maximum allele fraction
+	maxAF <- function (db)
+		{
+		max(db[,1])
+		}
+	out <- max(sapply(X=hypothesis$alleleDb, FUN=maxAF))
+	return(out)
+	}
+
+
+checkDropin <- function(params, maxAF)
+	{
+	# Check that dropin value will not create negative likelihoods
+	#
+	# Parameters:
+	# 	params: parameters to be checked
+	# 	maxAF: maximum allele fraction
+	dropin = params$dropin
+	dropout = params$dropout
+	check = maxAF * (dropin*(1-dropout))
+	if(any(check>1)) return(TRUE) else return(FALSE)
+	}
 
 
 DEoptimLoop <- function(PARAMS, tolerance=1e-6)
