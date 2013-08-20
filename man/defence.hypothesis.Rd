@@ -3,7 +3,8 @@
 \title{likeLTD::defence.hypothesis}
 \description{Helper function to create the input for the defence.}
 \usage{defence.hypothesis(cspFile, refFile, ethnic='EA1', nUnknowns=0,
-                        adj=1e0, fst=0.02, databaseFile=NULL, ...)
+                        adj=1e0, fst=0.02, databaseFile=NULL, 
+                        relatedness=c(0,0), doDropin=FALSE, ...)
 }
 \arguments{
   \item{cspFile}{Path to the crime scene profile.}
@@ -15,8 +16,9 @@
   \item{fst}{Allele fraction adjustment \eqn{F_{ST}}}
   \item{databaseFile}{Path to the allele database. If NULL, then defaults to
                       the database provided with \code{likeLTD}}
-  \item{...}{Other parameters to determine how to perform calculations, e.g.
-             \code{doDropin}}
+  \item{relatedness} {IBD1 and IBD2 values to take into account close relatedness.}
+  \item{doDropin} {Whether or not to model drop-in}
+  \item{...}{Other parameters to determine how to perform calculations.}
 }
 \value{A list of named input parameters, or hypothesis, suitable for the
 defence.}
