@@ -853,8 +853,8 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
   # 4. Locus Likelihood
   prosecuLikes <- locus.likes(prosecutionHypothesis,prosecutionResults)
   defenceLikes <- locus.likes(defenceHypothesis,defenceResults)
-  likelihood  = data.frame(signif(prosecuLikes,2),signif(defenceLikes,2),signif(prosecuLikes/defenceLikes,2))
-  colnames(likelihood)= c('HP','HD','Ratio')
+  likelihood  = data.frame(signif(prosecuLikes,2),signif(defenceLikes,2),signif(prosecuLikes/defenceLikes,2),round(log10(prosecuLikes/defenceLikes),1))
+  colnames(likelihood)= c('HP','HD','Ratio','Log Ratio')
   row.names(likelihood)= colnames(defenceHypothesis$queriedProfile)
   textplot(t(likelihood),valign='top',cex=cex.finder(t(likelihood)))
   title('Likelihoods at each locus')
@@ -887,7 +887,7 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
 
 
   # Overall likelihood
-  overallLikelihood  = data.frame(signif(10^-prosecutionResults$optim$bestval,2),signif(10^-defenceResults$optim$bestval,2),signif(10^(defenceResults$optim$bestval-prosecutionResults$optim$bestval),2),signif(defenceResults$optim$bestval-prosecutionResults$optim$bestval,2))
+  overallLikelihood  = data.frame(signif(10^-prosecutionResults$optim$bestval,2),signif(10^-defenceResults$optim$bestval,2),signif(10^(defenceResults$optim$bestval-prosecutionResults$optim$bestval),2),round(defenceResults$optim$bestval-prosecutionResults$optim$bestval,1))
   colnames(overallLikelihood)= c('HP','HD','Ratio','Log Ratio')
   row.names(overallLikelihood)= ''
   textplot(t(overallLikelihood),valign='top',cex=cex.finder(t(overallLikelihood)))
