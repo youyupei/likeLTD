@@ -14,8 +14,8 @@
 SEXP nbthreads()
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   SEXP result;
   PROTECT(result = allocVector(REALSXP, 1));
@@ -27,7 +27,7 @@ SEXP nbthreads()
 # endif
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
   return result;
