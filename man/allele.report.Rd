@@ -4,7 +4,8 @@
 \usage{allele.report(admin,file)}
 \arguments{
   \item{admin}{List containing administration data, as packed by pack.admin.input()}
-  \item{file}{A file name for the pdf. By default a filename is created from the amalgamation of parameters in admin.}
+  \item{file}{A file name for the pdf. By default a filename is created from the 
+  amalgamation of parameters in admin.}
 }
 \description{Outputs a pdf summary of the data inputs, before a hypothesis is chosen}
 \details{
