@@ -2,6 +2,7 @@
 \alias{output.report}
 \title{likeLTD::output.report}
 \usage{output.report(admin,prosecutionHypothesis,defenceHypothesis, 
+
 prosecutionResults,defenceResults,file)}
 \arguments{
   \item{admin}{List containing administration data, as packed by pack.admin.input()}
