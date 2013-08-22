@@ -10,6 +10,7 @@
 \value{Two strings, pdf.name and RData.name.} 
 \description{Automatic names for pdf and RData output.}
 \details{
-  For use with output.report(), to generate an automatic name for the pdf and RData outputs.
+  For use with output.report(), to generate an automatic name for the 
+  pdf and RData outputs.
 }
 \seealso{output.report}
