@@ -2,11 +2,9 @@
 # Documentation is in man directory.
 read.csp.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
-  if(!require(tools)) install.packages("tools")
   fileType = file_ext(path)
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
-  	if(!require(gdata)) install.packages("gdata")
   	profile = read.xls(path, header=T, colClasses='character', sep=',')
   	} else {
   	profile = read.table(path, header=T, colClasses='character', sep=',')
@@ -21,11 +19,9 @@ read.csp.profile = function(path) {
 # Documentation is in man directory.
 read.unc.profile = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
-  if(!require(tools)) install.packages("tools")
   fileType = file_ext(path)
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
-  	if(!require(gdata)) install.packages("gdata")
   	profile = read.xls(path, header=T, colClasses='character', sep=',')
   	} else {
   	profile = read.table(path, header=T, colClasses='character', sep=',')
@@ -38,11 +34,9 @@ read.unc.profile = function(path) {
 # Documentation is in man directory.
 read.known.profiles = function(path) {
   if(!file.exists(path)) stop(paste(path, "does not exist."))
-  if(!require(tools)) install.packages("tools")
   fileType = file_ext(path)
   if((fileType=="xlsx")|(fileType=="xls"))
   	{
-  	if(!require(gdata)) install.packages("gdata")
   	profiles = read.xls(path, header=T, colClasses='character', row.names=1,sep=',', quote = "\"")
   	} else {
  	profiles = read.table(path, header=T, colClasses='character', row.names=1,sep=',', quote = "\"") 
