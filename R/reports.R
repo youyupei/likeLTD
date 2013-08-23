@@ -713,6 +713,9 @@ allele.report <- function(admin=NULL,file=NULL) {
   #
   # Args:
   #   admin: List containing administration data, as packed by pack.admin.input()
+  
+  # Checks if have package gplots
+  if(!require(gplots)) stop("Report requires package: gplots")
 
   # checks all arguments are present, and creates default name for file if missing
   if(is.null(admin))stop('missing argument: admin')
@@ -801,6 +804,9 @@ output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesi
   #   prosecutionResults: results from do.call(optim, prosecutionParams)
   #   defenceResults: results from do.call(optim, defenceParams)
   #	file: filename automatically generated if not provided
+  
+  # Checks if have package gplots
+  if(!require(gplots)) stop("Report requires package: gplots")
 
   # checks all arguments are present, and creates default name for file if missing
   if(is.null(admin))stop('missing argument: admin')
