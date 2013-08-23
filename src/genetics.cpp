@@ -14,8 +14,8 @@
 SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nb = *INTEGER(nContrib);
   int const ncomb = INTEGER(GET_DIM(comb))[1];
@@ -44,7 +44,7 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
     }
   }
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
   return result;
@@ -53,8 +53,8 @@ SEXP allGenotypesPerLocus(SEXP nContrib, SEXP comb)
 SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow      = INTEGER(GET_DIM(allEPG))[0];
   int const ncol      = INTEGER(GET_DIM(allEPG))[1];
@@ -93,7 +93,7 @@ SEXP addProfilesToEPG(SEXP allEPG, SEXP genotypes, SEXP doses)
     } // loop over space of compatible genotypes
   }
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   return R_NilValue;
 }
