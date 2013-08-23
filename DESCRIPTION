@@ -4,8 +4,8 @@ Description: Tools to determine DNA profile Weight of Evidence.
             For further information see the likeLTD guide at the URL provided, 
             or the paper under citation. N.B. Thi is a beta version of likeLTD,
             please report any issues to the maintainer.
-Depends: R (>= 2.10), gtools, gdata, tools, DEoptim, gplots
-Suggests: svUnit, ggplot2, scales
+Depends: R (>= 2.10), gtools, gdata, tools, DEoptim
+Suggests: svUnit, ggplot2, scales, gplots
 Version: 5.0.0
 Date: 2013-01-15
 Author: David Balding, Adrian Timpson, Christopher Steele, Mayeul d'Avezac, James Hetherington.
