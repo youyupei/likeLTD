@@ -1,5 +1,5 @@
 bibentry("Article",
-         author=c("David J. Balding"),
+         author=c("Balding, DJ"),
          title="Evaluation of mixed-source, low-template dna profiles in forensic science",
-         journal="Forensic Science International: Genetics",
+         journal="Proceedings of the National Academy of Sciences of USA",
          year=2013)
