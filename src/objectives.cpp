@@ -18,8 +18,8 @@ SEXP probabilitiesNoDropin(SEXP input, SEXP vDoseDropout, SEXP condA, SEXP condB
                            SEXP zeroAll)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(vDoseDropout))[0];
   int const ncol = INTEGER(GET_DIM(vDoseDropout))[1];
@@ -43,7 +43,7 @@ SEXP probabilitiesNoDropin(SEXP input, SEXP vDoseDropout, SEXP condA, SEXP condB
     }
   }
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
 
   return input;
@@ -55,8 +55,8 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
                              SEXP dropin)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow    = INTEGER(GET_DIM(vDoseDropout))[0];
   int const ncol    = INTEGER(GET_DIM(vDoseDropout))[1];
@@ -86,7 +86,7 @@ SEXP probabilitiesWithDropin(SEXP input, SEXP vDoseDropout, SEXP condA,
     }
   }
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
 
   return input;
@@ -97,8 +97,8 @@ SEXP powerAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment,
                           SEXP power)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(allEPG))[0];
   int const ncol = INTEGER(GET_DIM(allEPG))[1];
@@ -124,7 +124,7 @@ SEXP powerAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment,
 //     epg_ptr[j] =  std::pow(adjust * (epg_ptr[j]), tvede);
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
 
   return R_NilValue;
@@ -135,8 +135,8 @@ SEXP powerAdjustment(SEXP allEPG, SEXP zeroAll, SEXP locusAdjustment,
 SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(allEPG))[0];
   int const ncol = INTEGER(GET_DIM(allEPG))[1];
@@ -165,7 +165,7 @@ SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
     }
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
 
@@ -176,8 +176,8 @@ SEXP doseFraction(SEXP allEPG, SEXP zeroAll, SEXP dropout)
 SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(genotypes))[0];
   int const ncol = INTEGER(GET_DIM(genotypes))[1];
@@ -206,7 +206,7 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
   }
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
 
@@ -217,8 +217,8 @@ SEXP emptyAlleles(SEXP genotypes, SEXP knownZero)
 SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(genotypes))[0];
   int const ncol = INTEGER(GET_DIM(genotypes))[1];
@@ -251,7 +251,7 @@ SEXP fractionsAndHet(SEXP genotypes, SEXP fractions)
   }
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
   UNPROTECT(1);
 
@@ -263,8 +263,8 @@ SEXP relatednessFactors(SEXP inout, SEXP relatednessR, SEXP genotypes,
                         SEXP queriedR, SEXP frequenciesR)
 {
 # ifdef OPENMP_STACK
-    uintptr_t const oldstack = R_CStackLimit;
-    R_CStackLimit = (uintptr_t) - 1;
+//    uintptr_t const oldstack = R_CStackLimit;
+//    R_CStackLimit = (uintptr_t) - 1;
 # endif
   int const nrow = INTEGER(GET_DIM(genotypes))[0];
   int const ncol = INTEGER(GET_DIM(genotypes))[1];
@@ -338,7 +338,7 @@ SEXP relatednessFactors(SEXP inout, SEXP relatednessR, SEXP genotypes,
   }
 
 # ifdef OPENMP_STACK
-    R_CStackLimit = oldstack;
+//    R_CStackLimit = oldstack;
 # endif
 
   return R_NilValue;
