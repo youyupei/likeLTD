@@ -631,11 +631,10 @@ dropDeg <- function(hypothesis,results,admin)
 		{
 		if(Qdrop==F)
 			{
-			h = rbind(h[0:nrow(hypothesis$dropoutProfs),],0)
+			h = rbind(h[0:nrow(hypothesis$dropoutProfs),,drop=F],0)
 			if(hypothesis$nUnknowns>0)
 				{
-				if(nrep>1) h = rbind(h,h1[(nrow(hypothesis$dropoutProfs)+1):length(Loss1),])
-				if(!nrep>1) h = rbind(h,as.matrix(h1[(nrow(hypothesis$dropoutProfs)+1):length(Loss1),]))
+				h = rbind(h,h1[(nrow(hypothesis$dropoutProfs)+1):length(Loss1),,drop=F])
 				}
 			Loss = c(Loss[0:nrow(hypothesis$dropoutProfs)],0)
 			if(hypothesis$nUnknowns>0)
