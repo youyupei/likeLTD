@@ -12,6 +12,11 @@
 
 \begin{document}
 \maketitle
+<<setthreads, echo=FALSE>>=
+  if(.Call(likeLTD::.cpp.nbthreads) > 2) {
+    .Call(likeLTD::.cpp.set_nbthreads, as.integer(2))
+  }
+@
 
 \section{Code usage}
 

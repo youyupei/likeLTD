@@ -15,8 +15,11 @@ R_CallMethodDef callMethods[]  = {
        {"fractionsAndHet", (DL_FUNC) &fractionsAndHet, 2},
        {"relatednessFactors", (DL_FUNC) &relatednessFactors, 5},
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
-       {NULL, NULL, 0}
+       {"set_nbthreads", (DL_FUNC) &set_nbthreads, 1},
+       {NULL, NULL, 0},
+       {NULL, NULL, 0},
 };
+
 
 #ifdef __cplusplus
 extern "C" 

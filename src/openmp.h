@@ -9,8 +9,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  //! \brief Returns number of treads
+  //! \brief Returns number of threads
   SEXP nbthreads();
+  //! \brief Sets number of threads
+  SEXP set_nbthreads(SEXP _n);
 #ifdef __cplusplus
 }
 #endif

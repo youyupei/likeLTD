@@ -13,22 +13,25 @@
 
 SEXP nbthreads()
 {
-# ifdef OPENMP_STACK
-//    uintptr_t const oldstack = R_CStackLimit;
-//    R_CStackLimit = (uintptr_t) - 1;
+# ifdef _OPENMP
+    double const nthreads(omp_get_max_threads()); 
+# else
+    double const nthreads(0);
 # endif
   SEXP result;
   PROTECT(result = allocVector(REALSXP, 1));
-  double *__result = REAL(result);
+  *static_cast<double*>(REAL(result)) = nthreads;
+  UNPROTECT(1);
+
+  return result;
+}
+
+SEXP set_nbthreads(SEXP _n)
+{
 # ifdef _OPENMP
-    *__result = omp_get_max_threads(); 
-# else
-    *__result = 0;
+    int const n = *INTEGER(_n);
+    omp_set_num_threads(n); 
 # endif
 
-# ifdef OPENMP_STACK
-//    R_CStackLimit = oldstack;
-# endif
-  UNPROTECT(1);
-  return result;
+  return R_NilValue;
 }

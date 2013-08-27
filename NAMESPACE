@@ -1,5 +1,6 @@
 useDynLib(likeLTD, .registration=TRUE, .fixes=".cpp.") 
 export(.cpp.nbthreads)
+export(.cpp.set_nbthreads)
 export(pack.admin.input)
 export(allele.report)
 

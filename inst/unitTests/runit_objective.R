@@ -17,6 +17,11 @@ function () {
 		.Log$..Msg <- ""
 		rm(..Test, envir = .Log)
 	}
+  # Sets threads to 2 or less. This is a CRAN requirement.
+  if(.Call(likeLTD::.cpp.nbthreads) > 2) {
+    nb_threads_in_test = .Call(likeLTD::.cpp.nbthreads)
+    .Call(likeLTD::.cpp.set_nbthreads, as.integer(2))
+  }
 }
 
 .tearDown <-
@@ -30,6 +35,11 @@ function () {
 		.Log$..Msg <- ""
 		rm(..Test, envir = .Log)
 	}
+  # Reset number of threads to what it was.
+  if('nb_threads_in_test' %in% ls()) {
+    .Call(likeLTD::.cpp.set_nbthreads, as.integer(nb_threads_in_test))
+    rm(nb_threads_in_test)
+  }
 }
 
 
