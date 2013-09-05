@@ -609,11 +609,17 @@ dropDeg <- function(hypothesis,results,admin)
 	Nkdo = length(which(knownDropoutsLogical))
 	Nknd = length(which(!knownDropoutsLogical))
 
-	nrep = nrow(hypothesis$cspProfile)
-	nameQ = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]==TRUE)]
-	nameK = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]!=TRUE)]
+	# Note, since dropout is assumed zero for fully represented profiles,
+	# these are suffixed on the dropout table (see below), 
+	# therefore the names need to be rearranged accordingly:
+	names.Dropout = names(which(knownDropoutsLogical))
+	names.NoDropout = names(which(!knownDropoutsLogical))
+	nameQ = rownames(hypothesis$queriedProfile)
+	nameK = c(names.NoDropout,names.Dropout)	
+
 	# names (including 'Q','K','U')in correct order 
 	Names=c()
+	nrep = nrow(hypothesis$cspProfile)
 	Names[length(c(nameQ,nameK))] = paste(nameQ,'(Q)')
 	if(length(nameK)>0)for (n in 1:length(nameK)) Names[n]=paste(nameK[n],' (K',n,')',sep='')
 	if(hypothesis$hypothesis=="defence") Names[length(c(nameQ,nameK))] = 'X'
