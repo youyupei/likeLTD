@@ -161,7 +161,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   result.function <- function(x) {
     # If a flat vector, reconstruct list. 
     if(typeof(x) == "double")
-      x = relistArguments(x, hypothesis, fixed=fixed, arguments=arguments)
+      x = relistArguments(x, hypothesis, fixed=fixed, arguments=arguments, logDegradation=logDegradation)
     # Otherwise, checks some options.
     else { 
       # Make sure it contains fixed terms.
