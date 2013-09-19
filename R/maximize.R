@@ -172,7 +172,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
     }
 
     # If would return negative likelihood skip
-    if(hypothesis$doDropin & checkDropin(x, maxAF))
+    if(hypothesis$doDropin & checkDropin(x, maxAF, hypothesis$nUnknowns+nrow(hypothesis$dropoutProfs)))
 	{
 	if(logObjective) result = log10(0) else result = 0
 	if(verbose) print(result)
@@ -241,19 +241,25 @@ getMaxAF <- function(hypothesis)
 	}
 
 
-checkDropin <- function(params, maxAF)
+checkDropin <- function(params, maxAF, nContrib)
 	{
 	# Check that dropin value will not create negative likelihoods
 	#
 	# Parameters:
 	# 	params: parameters to be checked
 	# 	maxAF: maximum allele fraction
+	#	nContrib: number of unknowns plus number of contributors subject to dropout
 	dropin = params$dropin
 	dropout = params$dropout
-	check = maxAF * (dropin*(1-dropout))
+	# dropin rate is just dropin probability if no reference individual
+	if(nContrib==0)
+		{
+		check = maxAF * dropin
+		} else {
+		check = maxAF * (dropin*(1-dropout))
+		}
 	if(any(check>1)) return(TRUE) else return(FALSE)
 	}
-
 
 DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 	{
