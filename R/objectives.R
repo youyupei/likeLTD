@@ -268,9 +268,15 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
         # vDoseDropout = vDoseDropout / (vDoseDropout + 1 - dropout[i])
         vDoseDropout <- .Call(.cpp.doseFraction, allEPG, cons$zeroAll, dropout[[i]],
                               PACKAGE="likeLTD")
-
+        # When there is no reference individual the dropin rate is just the dropin probability
+	      if(nrow(hypothesis$dropoutProfs)+hypothesis$nUnknowns==0) 
+		      {		
+		      dirate = dropin
+		      } else {
+		      dirate = dropin * (1 - dropout[i])
+		      }
         res <- probabilities(res, vDoseDropout, csp, unc,
-                             dropin * (1 - dropout[i]))
+                             dirate)
       } # End of if(any(csp)) 
     } # End of loop over replicates.
 
