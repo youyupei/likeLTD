@@ -2,7 +2,7 @@ Package: likeLTD
 Title: Tools to determine DNA profile evidence.
 Description: Tools to determine DNA profile Weight of Evidence. 
             For further information see the likeLTD guide at the URL provided, 
-            or the paper under citation. N.B. Thi is a beta version of likeLTD,
+            or the paper under citation. N.B. This is a beta version of likeLTD,
             please report any issues to the maintainer.
 Depends: R (>= 2.10), gtools, gdata, tools, DEoptim
 Suggests: svUnit, ggplot2, scales, gplots
