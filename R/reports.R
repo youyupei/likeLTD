@@ -186,9 +186,9 @@ all.alleles <- function(cprofs, subitem='csp') {
   # Args:
   #   v: A locus element from cprofs. 
   # First, get all results across CSP
-  result <- sapply(cprofs, function(n) flatten.csp(n, subitem))
+  result <- sapply(cprofs, function(n) flatten.csp(n, subitem),simplify=FALSE)
   # Then nullifies elements evaluating to character 0. 
-  return(sapply(result, private_nullify.item))
+  return(sapply(result, private_nullify.item,simplify=FALSE))
 }
 replicated.alleles <- function(cprofs) {
   # For each locus, lists replicated alleles.
@@ -198,8 +198,8 @@ replicated.alleles <- function(cprofs) {
   # Returns:
   #   A list over loci, where each subitem is a vector of replicated alleles.
   allcsp <- all.alleles(cprofs, subitem='csp')
-  allcsp <- sapply(allcsp, function(n) n[duplicated(n)])
-  return(sapply(allcsp, private_nullify.item))
+  allcsp <- sapply(allcsp, function(n) n[duplicated(n)],simplify=FALSE)
+  return(sapply(allcsp, private_nullify.item,simplify=FALSE))
 }
 unreplicated.alleles <- function(cprofs) {
   # For each locus, lists replicated alleles.
@@ -209,8 +209,8 @@ unreplicated.alleles <- function(cprofs) {
   # Returns: 
   #   A list over loci, where each subitem is a vector of unreplicated alleles.
   allcsp <- all.alleles(cprofs, subitem='csp')
-  allcsp <- sapply(allcsp, function(n) setdiff(n, n[duplicated(n)]))
-  return(sapply(allcsp, private_nullify.item))
+  allcsp <- sapply(allcsp, function(n) setdiff(n, n[duplicated(n)]),simplify=FALSE)
+  return(sapply(allcsp, private_nullify.item,simplify=FALSE))
 }
 
 allele.table <- function(cprofs) {
