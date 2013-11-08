@@ -690,7 +690,7 @@ output.names <- function(admin,prosecutionHypothesis)
 	return(list(pdf.name=pdf.name,RData.name=RData.name))
 	}
 
-  # Function to calculate sensible csx for each table:
+  # Function to calculate sensible cex for each table:
   cex.finder = function(table){
 	widest.row.name = max(nchar(row.names(table))) # vector of characters in the widest row name
 	heading.widths = nchar(names(table)) # vector of characters in each column name
@@ -724,28 +724,29 @@ allele.report <- function(admin=NULL,file=NULL) {
 
   # checks all arguments are present, and creates default name for file if missing
   if(is.null(admin))stop('missing argument: admin')
-  if(is.null(file))outputName = paste(admin$caseName,'-alleleReport.pdf',sep="")
-  if(!is.null(file))outputName = file
+  if(is.null(file))file <- admin$caseName 
 
   # reads genetics information 
   genetics = pack.genetics.input(admin)
 
-  # Unnatributable alleles
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
+  # create allele table	
+  alleles = allele.table(genetics$cprofs)
 
-#----------------------------------------------
+  # Latex output
+  latex.maker(alleles,genetics$summary$summary,(paste(admin$outputPath,"/",file," table.tex",sep="")))
+
   # Start plotting pdf
-  pdf(paste(admin$outputPath,outputName,sep="/"))
+  pdf(paste(admin$outputPath,"/",file," allele report.pdf",sep=""))
   par(mai = rep(0.3,times=4))
 
   # PAGE 1 
+  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
   heights.pg1 = c(genetics$nrep,length(c(genetics$nameQ,genetics$nameK)),barchart.finder(otherBoth))
   heights.pg1 = heights.pg1 +1 # space for headers
   widths.pg1 = c(1)
   layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1)
 
   # Alleles
-  alleles = allele.table(genetics$cprofs)
   textplot(alleles, valign='top',cex=cex.finder(alleles))
   mtext(paste(admin$caseName,'Allele Report'),side=3,cex=1.2)
 
@@ -754,8 +755,6 @@ allele.report <- function(admin=NULL,file=NULL) {
   mtext('Summary',side=3,cex=1.2)
   mtext('{}=unreplicated, []=absent',side=1,cex=0.7)
 
-  # Latex output
-  latex.maker(alleles,genetics$summary$summary,paste(admin$outputPath,"table.tex",sep="/"))
   # Unattributable Alleles
   otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
   otherRep  = genetics$summary$otherRep
