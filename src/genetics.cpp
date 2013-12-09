@@ -7,7 +7,7 @@
 #  include <omp.h>
 #  ifdef OPENMP_STACK
 #    define CSTACK_DEFNS 7
-#    include <Rinterface.h>
+//#    include <Rinterface.h>
 #  endif
 #endif
 
