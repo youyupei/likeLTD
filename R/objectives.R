@@ -328,11 +328,19 @@ create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
   functions <- mapply(create.likelihood.per.locus, locusCentric,
                       MoreArgs=list(addAttr=addAttr))
 
+  if(is.null(hypothesis$locusAdjPenalty)) hypothesis$locusAdjPenalty = 50 
+  if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
+  if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
+  if(is.null(hypothesis$bemn)) hypothesis$bemn = -4.35
+  if(is.null(hypothesis$besd)) hypothesis$besd = 0.38 
+
   likelihood.vectors <- function(locusAdjustment, power, dropout,
                                  degradation=NULL, rcont=NULL, dropin=NULL,
-                                 locusAdjPenalty=50, dropinPenalty=2,
-                                 degradationPenalty=50, bemn=-4.35,
-                                 besd=0.38, ...) {
+                                 locusAdjPenalty=hypothesis$locusAdjPenalty, 
+				 dropinPenalty=hypothesis$dropinPenalty,
+                                 degradationPenalty=hypothesis$degradationPenalty, 
+				 bemn=hypothesis$bemn,
+                                 besd=hypothesis$besd, ...) {
     # Call each and every function in the array.
     arguments = list(power=power, dropout=dropout,
                      degradation=degradation, rcont=rcont,
