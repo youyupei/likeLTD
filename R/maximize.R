@@ -212,19 +212,31 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
+ # population size for optimisation
+  searchPop = 4*length(unlist(upper))
+  # increases for relatedness
+  searchPop = round(searchPop * relFactor(relatedness))
+
 
   list(#par     = unlist(template), 
        fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
        #control = list(fnscale=-1, factr=1e7, maxit=500), 
-       control = list(strategy=3,NP=4*length(unlist(upper)),itermax=iterMax) 
+       control = list(strategy=3,NP=searchPop,itermax=iterMax) 
        #method  = "L-BFGS-B",
        #hessian = FALSE )
        )
 }
 
 
+# factor by which to increase the population size for optimisation when taking into account relatedness
+# optimisation seems more difficult when related, so need a more thorough search
+relFactor = function(relatedness,base=1,fac1=9,fac2=4,fac3=2)
+	{
+	base + fac1*relatedness[1] + fac2*relatedness[2] + fac3*prod(relatedness)
+	}
+	
 
 getMaxAF <- function(hypothesis)
 	{
