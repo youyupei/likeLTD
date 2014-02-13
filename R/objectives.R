@@ -164,10 +164,19 @@ likelihood.constructs.per.locus = function(hypothesis) {
                                     hypothesis$nUnknowns, hypothesis$doDropin,
                                     missingReps)
   zeroAll = empty.alleles(genotypes, dropoutPresence, hypothesis$nUnknowns) 
-  factors = genotype.factors(genotypes, hypothesis$alleleDb,
+  # Only take into account relatedness between Q and X unedr Hd 
+  if(hypothesis$hypothesis=="defence")
+	{
+  	factors = genotype.factors(genotypes, hypothesis$alleleDb,
                              hypothesis$nUnknowns, hypothesis$doDropin,
                              hypothesis$queriedProfile,
                              hypothesis$relatedness) 
+	} else {
+  	factors = genotype.factors(genotypes, hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             c(0,0))
+	}
 
   list(cspPresence=cspPresence, dropoutPresence=dropoutPresence,
        uncPresence=uncPresence, missingReps=missingReps,
