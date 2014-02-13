@@ -215,7 +215,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
  # population size for optimisation
   searchPop = 4*length(unlist(upper))
   # increases for relatedness
-  searchPop = round(searchPop * relFactor(relatedness))
+  searchPop = round(searchPop * relFactor(hypothesis$relatedness))
 
 
   list(#par     = unlist(template), 
