@@ -31,3 +31,8 @@ export(output.report)
 export(output.names)
 
 export(DEoptimLoop)
+
+
+importFrom(DEoptim, DEoptim)
+importFrom(gdata, read.xls)
+importFrom(gtools, combinations,permutations)
