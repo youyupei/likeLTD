@@ -230,7 +230,7 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
 		)
 	
 	upstreamHypothesis <- hypothesis
-return(list(PARAMS,upstreamHypothesis))}
+return(list(PARAMS=PARAMS,upstreamHypothesis=upstreamHypothesis))}
 
 
 # factor by which to increase the population size for optimisation when taking into account relatedness
