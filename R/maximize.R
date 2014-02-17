@@ -223,7 +223,8 @@ optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
        lower   = unlist(lower), 
        upper   = unlist(upper),
        #control = list(fnscale=-1, factr=1e7, maxit=500), 
-       control = list(strategy=3,NP=searchPop,itermax=iterMax) 
+       control = list(strategy=3,NP=searchPop,itermax=iterMax),
+	hypothesis = hypothesis
        #method  = "L-BFGS-B",
        #hessian = FALSE )
        )
@@ -312,6 +313,7 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 	results$member$bestvalit = bestvalitOut
 	results$optim$iter = sum(iterOut)
 	results$optim$nfeval = sum(nfevalOut)
+	results$hypothesis <- PARAMS$hypothesis
 	return(results)
 	}
 
