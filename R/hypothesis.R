@@ -274,6 +274,8 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   result[["doDropin"]] = doDropin
   result[["cspFile"]] = cspFile
   result[["refFile"]] = refFile
+  result[["databaseFile"]] = databaseFile
+
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
@@ -311,6 +313,8 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
   result[["doDropin"]] = doDropin
   result[["cspFile"]] = cspFile
   result[["refFile"]] = refFile
+  result[["databaseFile"]] = databaseFile
+
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
