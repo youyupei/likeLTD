@@ -387,6 +387,8 @@ getMatching = function(singleGens,matchGen)
 # for internal use within getLikes()
 subGens = function(genotypes,probabilities,prob=0.1)
 	{
+	genotypes = genotypes[rev(order(probabilities)),]
+	probabilities = sort(probabilities,decreasing=TRUE)
 	index = which(probabilities>prob)
 	genotypes = genotypes[index,]
 	probabilities = probabilities[index]
