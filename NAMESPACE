@@ -32,6 +32,7 @@ export(output.names)
 
 export(DEoptimLoop)
 
+export(get.likely.genotypes)
 
 importFrom(DEoptim, DEoptim)
 importFrom(gdata, read.xls)
