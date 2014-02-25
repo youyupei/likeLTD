@@ -354,7 +354,14 @@ get.likely.genotypes = function(hypothesis,params,results,prob=0.1)
 		return(subMarginals)
 		}
 	# get marginal and subset at every locus for every individual
-	out = sapply(1:(nrow(genotypes[[1]])/2),FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
+	ncont = nrow(genotypes[[1]])/2
+	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
+	# order by dropout rate
+	rcont = vector(length=ncont)
+	rcont[hypothesis$refIndiv] = 1
+	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
+	index = (1:ncont)[rev(order(rcont))]
+	out = out[index]
 	#return(list(genotypes=genotypes,probabilities=likes))
 	return(out)
 	}
