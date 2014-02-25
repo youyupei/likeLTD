@@ -184,7 +184,7 @@ likelihood.constructs.per.locus = function(hypothesis) {
        freqMat=hypothesis$alleleDb[, 1])
 }
 
-create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
+create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE, likeMatrix = FALSE) {
   # Creates a likelyhood function for a given hypothesis and locus
   #
   # A hypothesis is given by the number of unknown contributors, whether to model
@@ -290,7 +290,12 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE) {
     } # End of loop over replicates.
 
     # Figure out likelihood for good and return.
-    return(sum(res * cons$factors))
+    if(likeMatrix==FALSE)
+	{
+    	return(sum(res * cons$factors))
+	} else {
+	return(res * cons$factors)
+	}
   }
 
   if(addAttr) {
@@ -329,13 +334,13 @@ penalties <- function(locusAdjustment, power, dropout, degradation=NULL,
 
 # Creates a likelihood function from the input hypothesis
 # Documentation is in man directory.
-create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, ...) {
+create.likelihood.vectors <- function(hypothesis, addAttr=FALSE, likeMatrix=FALSE, ...) {
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check(hypothesis) # makes sure hypothesis has right type.
   locusCentric = transform.to.locus.centric(hypothesis)
   functions <- mapply(create.likelihood.per.locus, locusCentric,
-                      MoreArgs=list(addAttr=addAttr))
+                      MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix))
 
   if(is.null(hypothesis$locusAdjPenalty)) hypothesis$locusAdjPenalty = 50 
   if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
