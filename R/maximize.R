@@ -350,10 +350,10 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=0.1)
 	if(joint==TRUE) 
 		{
 		# joint genotypes
-		outJoint = mapply(FUN=subGens,genotypes,likes,rotate=TRUE,SIMPLIFY=FALSE)
+		outJoint = mapply(FUN=subGens,genotypes,likes,rotate=TRUE,prob=prob,SIMPLIFY=FALSE)
 		# top genotype combination
 		topGenotypes = mapply(FUN=function(a,b) a[,which.max(b)],genotypes,likes,SIMPLIFY=TRUE)
-		return(list(genotypes=genotypes,probabilities=outJoint,topGenotypes=topGenotypes))
+		return(list(joint=outJoint,topGenotypes=topGenotypes))
 		}
 	# function to get marginal probabilities and subset to those with prob>prob
 	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1,top=FALSE)
