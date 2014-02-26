@@ -318,7 +318,7 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 
 
 
-get.likely.genotypes = function(hypothesis,params,results,prob=0.1)
+get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=0.1)
 	{
 	# Function to return likely genotypes for each individual
 	# Finds the marginal probabilities of genotypes, and then
@@ -346,15 +346,30 @@ get.likely.genotypes = function(hypothesis,params,results,prob=0.1)
 	likes = newParams$fn(results$optim$bestmem)$objectives
 	# convert to probabilities
 	likes = lapply(likes,FUN=function(x) x/sum(x))
+	# if we only want the joint distributions
+	if(joint==TRUE) 
+		{
+		# joint genotypes
+		outJoint = mapply(FUN=subGens,genotypes,likes,rotate=TRUE,SIMPLIFY=FALSE)
+		# top genotype combination
+		topGenotypes = mapply(FUN=function(a,b) a[,which.max(b)],genotypes,likes,SIMPLIFY=TRUE)
+		return(list(genotypes=genotypes,probabilities=outJoint,topGenotypes=topGenotypes))
+		}
 	# function to get marginal probabilities and subset to those with prob>prob
-	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1)
+	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1,top=FALSE)
 		{
 		marginals = marginal(genotypes,probabilities,indiv)
+		if(top==TRUE)	
+			{
+			topMarginals = marginals$genotypes[which.max(marginals$probabilities),,drop=FALSE]
+			return(topMarginals)
+			}
 		subMarginals = subGens(marginals$genotypes,marginals$probabilities,prob)
 		return(subMarginals)
 		}
-	# get marginal and subset at every locus for every individual
+	# number of contributors
 	ncont = nrow(genotypes[[1]])/2
+	# get marginal and subset at every locus for every individual
 	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
 	# order by dropout rate
 	rcont = vector(length=ncont)
@@ -362,8 +377,11 @@ get.likely.genotypes = function(hypothesis,params,results,prob=0.1)
 	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
 	index = (1:ncont)[rev(order(rcont))]
 	out = out[index]
+	# get top genotypes for marginals
+	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=TRUE),simplify=FALSE)
+	topGenotypes = topGenotypes[index]	
 	#return(list(genotypes=genotypes,probabilities=likes))
-	return(out)
+	return(list(marginals=out,topGenotypes=topGenotypes))
 	}
 
 
@@ -392,8 +410,9 @@ getMatching = function(singleGens,matchGen)
 
 # function to subset genotypes to those with probability greater than prob
 # for internal use within getLikes()
-subGens = function(genotypes,probabilities,prob=0.1)
+subGens = function(genotypes,probabilities,rotate=FALSE,prob=0.1)
 	{
+	if(rotate==TRUE) genotypes = t(genotypes)
 	genotypes = genotypes[rev(order(probabilities)),]
 	probabilities = sort(probabilities,decreasing=TRUE)
 	index = which(probabilities>prob)
@@ -401,3 +420,5 @@ subGens = function(genotypes,probabilities,prob=0.1)
 	probabilities = probabilities[index]
 	return(list(genotypes=genotypes,probabilities=probabilities))
 	}
+
+
