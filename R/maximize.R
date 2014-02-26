@@ -318,7 +318,7 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 
 
 
-get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=0.1)
+get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
 	{
 	# Function to return likely genotypes for each individual
 	# Finds the marginal probabilities of genotypes, and then
