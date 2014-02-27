@@ -353,7 +353,10 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 		outJoint = mapply(FUN=subGens,genotypes,likes,rotate=TRUE,prob=prob,SIMPLIFY=FALSE)
 		# top genotype combination
 		topGenotypes = mapply(FUN=function(a,b) a[,which.max(b)],genotypes,likes,SIMPLIFY=TRUE)
-		return(list(joint=outJoint,topGenotypes=topGenotypes))
+		topGenotypes = lapply(topGenotypes,FUN=t)
+		# get top probability
+		topProbability = prod(sapply(likes,FUN=max))
+		return(list(joint=outJoint,topGenotypes=list(genotype=topGenotypes,probability=topProbability)))
 		}
 	# function to get marginal probabilities and subset to those with prob>prob
 	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1,top=FALSE)
@@ -362,7 +365,8 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 		if(top==TRUE)	
 			{
 			topMarginals = marginals$genotypes[which.max(marginals$probabilities),,drop=FALSE]
-			return(topMarginals)
+			topProbability = max(marginals$probabilities)		
+			return(list(genotype=topMarginals,probability=topProbability))
 			}
 		subMarginals = subGens(marginals$genotypes,marginals$probabilities,prob)
 		return(subMarginals)
@@ -378,10 +382,15 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 	index = (1:ncont)[rev(order(rcont))]
 	out = out[index]
 	# get top genotypes for marginals
-	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=TRUE),simplify=FALSE)
+	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
+	# get top probabilities for marginals	
+	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
+	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)
 	topGenotypes = topGenotypes[index]	
+	topGenotypes = lapply(topGenotypes,FUN=t)
+	topProbabilities = topProbabilities[index]
 	#return(list(genotypes=genotypes,probabilities=likes))
-	return(list(marginals=out,topGenotypes=topGenotypes))
+	return(list(out,topGenotypes=list(genotypes=topGenotypes,probabilities=topProbabilities)))
 	}
 
 
