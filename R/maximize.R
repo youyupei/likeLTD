@@ -354,7 +354,6 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 		# top genotype combination
 		topGenotypes = mapply(FUN=function(a,b) a[,which.max(b)],genotypes,likes,SIMPLIFY=TRUE)
 		topGenotypes = t(topGenotypes)
-		print(topGenotypes)
 		# get top probability
 		topProbability = prod(sapply(likes,FUN=max))
 		return(list(joint=outJoint,topGenotypes=list(genotype=topGenotypes,probability=topProbability)))
