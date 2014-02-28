@@ -54,5 +54,5 @@
   }
 
   In any case, the value returned can always be modified prior to calling
-  \code{stats::optim}.
+  \code{DEoptim::DEoptim}.
 }
