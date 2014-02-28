@@ -4,7 +4,8 @@
 \usage{optimisation.params(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=0, throwError=FALSE,
-                           withPenalties=TRUE, objective=NULL, iterMax=NULL,\dots)}
+                           withPenalties=TRUE, objective=NULL, iterMax=NULL, 
+                           likeMatrix=FALSE,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -21,7 +22,11 @@
   \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
   \item{objective}{Objective function produced from create.likelihood.vectors}
-  \item{iterMax}{NUmber of iterations to run the optimisation for}
+  \item{iterMax}{Number of iterations to run the optimisation for}
+  \item{Whether to return likelihoods for every genotype combination, or 
+  a likelihood summed over all genotypes after optimisation. Set to TRUE 
+  for individual genotype likelihoods. This is used for 
+  \code{get.likely.genotypes}.}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
