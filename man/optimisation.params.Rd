@@ -23,7 +23,7 @@
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
   \item{objective}{Objective function produced from create.likelihood.vectors}
   \item{iterMax}{Number of iterations to run the optimisation for}
-  \item{Whether to return likelihoods for every genotype combination, or 
+  \item{likeMatrix}{Whether to return likelihoods for every genotype combination, or 
   a likelihood summed over all genotypes after optimisation. Set to TRUE 
   for individual genotype likelihoods. This is used for 
   \code{get.likely.genotypes}.}

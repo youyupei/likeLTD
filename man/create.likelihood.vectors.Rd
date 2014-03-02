@@ -8,7 +8,7 @@
   are two attributes: (1) \dQuote{hypothesis} referencing the input hypothesis,
   (ii) \sQuote{functions} containing the individual objective functions per
   Locus. The latter contain further attributes. }
-  \item{Whether to return likelihoods for every genotype combination, or 
+  \item{likeMatrix}{Whether to return likelihoods for every genotype combination, or 
   a likelihood summed over all genotypes after optimisation. Set to TRUE 
   for individual genotype likelihoods. This is used for 
   \code{get.likely.genotypes}.}
@@ -24,4 +24,5 @@
   containing two items: (i) the likelihoods per locus, (ii) the penalties per
   locus.
 }
-\seealso{create.likelihood, create.likelihood.log, get.likely.genotypes, penalties, Objective Functions}
+\seealso{create.likelihood, create.likelihood.log, get.likely.genotypes, penalties, 
+Objective Functions}
