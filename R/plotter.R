@@ -4,7 +4,6 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
                               logObjective=TRUE, logDegradation=TRUE,
                               contours=list(), ...) {
 
-  if(!require(ggplot2)) stop("Plotting reqires ggplot2")
   if(length(which) != 2)
     stop("Argument 'which' to plotLikelihood.2d' should be of length 2")
 

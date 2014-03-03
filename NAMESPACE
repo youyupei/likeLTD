@@ -28,7 +28,6 @@ export(plotLikelihood.2d)
 
 export(locus.likes)
 export(output.report)
-export(output.names)
 
 export(DEoptimLoop)
 
@@ -37,3 +36,6 @@ export(get.likely.genotypes)
 importFrom(DEoptim, DEoptim)
 importFrom(gdata, read.xls)
 importFrom(gtools, combinations,permutations)
+importFrom(ggplot2, ggplot)
+importFrom(R2DOC, tableProperties)
+importFrom(R2DOCX, addParagraph, addPageBreak, addHeader, addTOC)

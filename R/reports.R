@@ -1,1116 +1,52 @@
-unusual.alleles <- function(afreq, profile) {
-  # Searches for unusual alleles.
-  #
-  # Such alleles are likely to be mistakes.
-  #
-  # Args:
-  #   freqencies: Table of allele afreqs
-  #   profile: The reference profile in the genetics list
-  #
-  # returns: data frame with the rare alleles. 
-
-  rare =data.frame(name=NULL, locus=NULL, allele=NULL, EA1=NULL, EA3=NULL,
-                   EA4=NULL)
-
-  for(name in row.names(profile)){
-    for(locus in colnames(profile)){
-      # loop over unique allele names.
-      uniqueAlleles <- unique(strsplit(profile[name,locus],',')[[1]]) 
-      for(allele in uniqueAlleles){
-
-        condition = afreq$Marker==locus & afreq$Allele==allele
-        x = afreq[condition, ]
-        if(nrow(x)==1){
-       	  if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
-            frame = data.frame(name=name, locus=locus, allele=allele, EA1=x$EA1,
-                               EA3=x$EA3, EA4=x$EA4)
-            rare=rbind(rare, frame)
-          }
-        }  # loop over alleles
-      } # loop over loci
-    } # loop over people
-  }
-  return(rare)
-}
-
-read.csp.profile.old <- function(path) {
-  # Reads profile from path.
-  #
-  # Args:
-  #   path: Path to file with the profile. 
-  # returns: The profile 
-  
-  raw = read.table(path, header=T, colClasses='character', sep=',')
-  return(raw[,5:dim(raw)[2]])
-}
-read.ref.profile.old <- function(path) {
-  # Reads profile from path.
-  #
-  # Makes sure everything is formatted as should be, e.g. removes spaces and
-  # such.
-  #
-  # Args:
-  #   path: Path to file with the profile. 
-  # returns: The profile minus some faff.
-  
-  raw = read.table(path, header=T, colClasses='character', row.names=1,
-                   sep=',', quote = "\"")
-  result = raw[,2:ncol(raw)]
-  # removes spaces from formatting
-  for(locus in 1:ncol(result)){
-    for(person in 1:nrow(result)){
-      result[person, locus] = gsub(' ', '', result[person, locus])
-    }
-  }
-  return(result)
-}
-queried.vs.known <- function(path) {
-  # Reads profile from path and returns queried vs known column.
-  #
-  # Args:
-  #   path: Path to file with the profile. 
-  raw = read.table(path, header=T, colClasses='character', row.names=1,
-                   sep=',', quote = "\"")
-  return(raw$known.queried == 'queried')
-}
-
-internal.representation <- function(profile) {
-  # Takes a profile and transforms it to the cprofs format.
-  #
-  # cprofs is an internal format to do calculations on a crime scene profile.
-  #
-  # Args:
-  #   profile: The crime-scene profile to  process.
-  # Returns: The same information in a different format.
-
-  # each rep has two rows: alleleic and uncertain
-  nrep = nrow(profile)/2
-
-  result = list()
-  # each column in profile will be a new column in the output
-  for(locus in colnames(profile)){	
-
-    # creates a list of reps in each loci
-  	result[[locus]]=list()  
-
-    # now creates the items in the list at this locus
-	  for(rep in 1:nrep){
-		  if (!is.na(profile[(2*rep)-1,locus])) {
-        # Figures out csp
-			  csp = gsub(' ','', profile[(2*rep)-1, locus]);
-        if(csp != '') csp = unlist(strsplit(csp, ',')) 
-        # Figures out unc
-			  unc = gsub(' ','', profile[(2*rep), locus]);
-        if(unc != '') unc = unlist(strsplit(unc, ','))
-        # fills it with NULL csp and unc at first
-		    result[[locus]][[rep]]=list(csp=csp, unc=unc) 
-		  }
-      # NAs must be formatted differently
-      else result[[locus]][rep]=list(NULL) 
-    } # loop over each replicate
-
-  } # loop over loci
-  return(result)
-}
-
-estimate.csp <- function(ref, cprofs) {
-  # Estimate how well each reference profile is represented in the CSP
-  #
-  # Args: 
-  #   ref: reference profile.
-  #   cprofs: crime scene profile, internal representation.
-  # Returns: 
-  #   A data frame where row refer to people and colums to replicates, and the
-  #   content is an estimate of how well that person and loci matches the CSP.
-  #   There is an additional column for the sum over all replicates.
-  nrep = length(cprofs[[1]])
-      
-  # Constructs the result data frame.
-  result = data.frame(array(0, c(nrow(ref), nrep+1)), row.names=rownames(ref))
-  colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('Rep', n)})
-  colnames(result)[nrep+1] = 'Total' 
-  
-  # now add data.
-  for(person in row.names(ref)){
-	  for(rep in 1:nrep){
-      # number of alleles in common for given person and CSP replicate, across
-      # all loci
-			represented = c()
-			for(locus in 1:length(cprofs)){
-				if(!is.null(cprofs[[locus]][[rep]])) {
-          # figure out unique alleles in reference 
-			  	alleles  <- unique(unlist(strsplit(ref[person,locus],',')))
-          # figure out howmany of these allele are in CSP
-          represented = c(represented, alleles %in% cprofs[[locus]][[rep]]$csp)
-		    }
-      }
-      if(length(represented) > 0) 
-        result[person, rep] = round(100*sum(represented)/length(represented))
-	  }
-  }
-  if(nrep==1)  result[, nrep+1] = result[, nrep]
-  else         result[, nrep+1] = round(rowSums(result)/nrep)
-   
-  # Reorders rows and return
-  return(result[order(result[, nrep+1], decreasing=T), ])
-}
-
-private_nullify.item <- function(n) {
-  # Returns NULL if n is character(0), else returns n.
-  #
-  # This is a helper function for internal use only.
-  if(identical(n, character(0))) return(NULL)
-  return(n)
-}
-
-flatten.csp <- function(v, subitem='csp') {
-  # Flatten and filters elements of cprofs defining one locus.
-  # 
-  # This function is mostly for internal use. It takes a single lo“flattens the
-  # cprofs object, selects its subitems with a given name, and put them all in
-  # a single vector.
-  #
-  # Args:
-  #   v: A locus element from cprofs. 
-  #   subitem: Name of the subitem
-  result <- sapply(v, function(n) n[subitem], simplify=FALSE)
-  result <- unlist(result, use.names=FALSE)
-  return(Filter(function(n) !(n == ""), result))
-}
-all.alleles <- function(cprofs, subitem='csp') {
-  # Flatten and filters elements of cprofs into a list of vectors.
-  # 
-  # This function is mostly for internal use. It applies to each element of
-  # cprofs the function flatten.csp
-  #
-  # Args:
-  #   v: A locus element from cprofs. 
-  # First, get all results across CSP
-  result <- sapply(cprofs, function(n) flatten.csp(n, subitem),simplify=FALSE)
-  # Then nullifies elements evaluating to character 0. 
-  return(sapply(result, private_nullify.item,simplify=FALSE))
-}
-replicated.alleles <- function(cprofs) {
-  # For each locus, lists replicated alleles.
-  #  
-  # Args:
-  #  v: cprofs data object
-  # Returns:
-  #   A list over loci, where each subitem is a vector of replicated alleles.
-  allcsp <- all.alleles(cprofs, subitem='csp')
-  allcsp <- sapply(allcsp, function(n) n[duplicated(n)],simplify=FALSE)
-  return(sapply(allcsp, private_nullify.item,simplify=FALSE))
-}
-unreplicated.alleles <- function(cprofs) {
-  # For each locus, lists replicated alleles.
-  #  
-  # Args:
-  #  v: cprofs data object
-  # Returns: 
-  #   A list over loci, where each subitem is a vector of unreplicated alleles.
-  allcsp <- all.alleles(cprofs, subitem='csp')
-  allcsp <- sapply(allcsp, function(n) setdiff(n, n[duplicated(n)]),simplify=FALSE)
-  return(sapply(allcsp, private_nullify.item,simplify=FALSE))
-}
-
-allele.table <- function(cprofs) {
-  # Allele table of a Crime Scene Profile
-  #
-  # Creates a better looking table for a CSP. 
-  nloc = length(cprofs)
-  nrep = length(cprofs[[1]])
-
-  alleles = data.frame(array(0, c(2*nrep,nloc)))
-  rowfunc <- function(n) {c(paste('csp', n), paste('unc', n))}
-  row.names(alleles) = sapply(1:nrep, rowfunc)
-  colnames(alleles)  = names(cprofs)
-
-  for(l in 1:nloc){ 
-    for(r in 1:nrep){
-      if(!is.null(cprofs[[l]][[r]])){
-        alleles[2*r-1,l] = paste(cprofs[[l]][[r]]$csp, collapse=' ')
-        alleles[2*r,l]   = paste(cprofs[[l]][[r]]$unc, collapse=' ')
-      }
-      else {
-        alleles[2*r-1,l]='NA'
-        alleles[2*r,l] ='NA'
-      }
-    } # loop over replicates
-  } # loop over loci
-
-  return(alleles)
-}
-
-summary.generator = function(queried, known, ref, cprofs){
-  # Summnarizes the allele table for Q and K
-  # 
-  # Args:
-  #  queried: Names of queried individuals in reference profile (rows).
-  #  known: Names of known individuals in reference profile (rows).
-  #  ref: the reference profile
-  #  cprofs: the crime scene profile, external format
-  allNames = c( sapply(queried, function(n) paste(n, '(Q)'), USE.NAMES=FALSE),
-                sapply(known, function(n) paste(n, '(K)'), USE.NAMES=FALSE) )
-  ncont = length(allNames)
-  # index: indexing of ref such that queries come first and known profiles come
-  # second.
-  index = sapply(c(queried, known), function(n) which(row.names(ref) == n))
-  # knownLoci: list over locus where each item contains the alleles with the
-  # same indexing as index. 
-  knownLoci = list()
-  for(locus in names(ref)) {
-    string = paste(ref[[locus]][index], collapse=',')
-    knownLoci[[locus]] = unlist(strsplit(string, ',')) 
-  }
-
-  # Figures out all, replicated, and unreplicated alleles in crime scene.
-  cspCombinedAll  <- all.alleles(cprofs)
-  replicatedAll   <- replicated.alleles(cprofs) 
-  unreplicatedAll <- unreplicated.alleles(cprofs) 
-
-  #  construct summary data frame scaffold.
-  summary = data.frame(array(0, c(length(allNames)+1, length(ref))))
-  row.names(summary) = c(allNames,'Unattributable')
-  colnames(summary)  = names(cprofs)
-
-  # otherRep: per locus, number of unattributable and replicated
-  # alleles
-  otherRep = list()
-  # otherUnrep: per locus, number of unattributable and unreplicated
-  # alleles
-  otherUnrep = list()
-  for(locus in names(ref)){ 
-    # loop over people
-    for(c in 1:length(allNames)){
-      # alleles for this person in reference profile
-      cont = knownLoci[[locus]][(2*c-1):(2*c)]
-      rep   = paste(cont[ cont %in% replicatedAll[[locus]]],   collapse=' ')
-      unrep = paste(cont[ cont %in% unreplicatedAll[[locus]]], collapse=' ')
-      none  = paste(cont[!cont %in% cspCombinedAll[[locus]]], collapse=' ')
-      summary[c,locus] = paste(rep, '{', unrep,'}','[', none,']',sep='')
-    }
-    # other alleles not found in the cprofs
-    notfound = !cspCombinedAll[[locus]] %in% knownLoci[[locus]]
-    unattr = cspCombinedAll[[locus]][notfound]
-    unattrRep = unique(unattr[duplicated(unattr)])
-    unattrRepString = paste(unattrRep, collapse=' ')
-    unattrUnrep = unattr[!unattr %in% unattrRep]
-    unattrUnrepString = paste(unattrUnrep, collapse=' ')
-
-    otherRep[locus] = length(unattrRep)
-    otherUnrep[locus] = length(unattrUnrep)
-
-    summary[nrow(summary), locus] = paste( unattrRepString, '{',
-                                           unattrUnrepString, '}',
-                                           sep='' )
-  }
-
-  # coerce to numerics
-  otherRep = as.numeric(otherRep)
-  otherUnrep = as.numeric(otherUnrep)
-  return( list(summary=summary, otherRep=otherRep, otherUnrep=otherUnrep) )
-}
-
-hypothesis.generator = function(queried, known, otherRep, otherUnrep){
-  # function to calculate possible hypotheses
-  # 
-  # Needs to be done with various permutations of 2 Q's
-
-  otherBoth = otherRep + otherUnrep
-  # minU: Minimum number of unknown DNA in CSP 
-  minU = ceiling(max(otherRep)/2)
-  # maxU: Maximum number of unknown DNA in CSP 
-  # TODO: Not sure the next line should have "divide by 2". Might be over
-  # replicated only.
-  maxU = ceiling(max(otherBoth)/2) 
-
-  hypotheses = c()
-  for(unknowns in minU:maxU) {
-
-    extras   = otherBoth - 2*unknowns
-    unattributableAlleles = sum(extras[extras>0])
-
-    Q = paste(queried,'(Q)',sep='')
-    others = c()
-    if(length(known) > 0 ) {
-      pasting <- function(n) paste(known[n], '(K', n, ')', sep='')
-      others = sapply(1:length(known), pasting)
-    }
-    if(unknowns > 0) {
-      U = sapply(1:unknowns, function(n) paste('U', n, sep=''))
-      others = c(others, U, recursive=TRUE)
-    }
-    # If condition is TRUE, then there might be dropins.
-    if(unattributableAlleles !=0) {
-      D = paste(unattributableAlleles, 'dropins', sep='')
-      others = c(others, D, recursive=TRUE)
-    }
-         
-    others <- paste(others, collapse='+')
-    string <- paste(Q, '+', others,' vs X+', others, sep='') 
-    hypotheses[unknowns-minU+1] = string
-  }
-  return(hypotheses[!is.na(hypotheses)])
-}
-
-
-suggested.hypothesis = function(queried, known, ref, cprofs) {
-  # Figures out sensible explanation of crime profile.
-  #
-  # Returns: List of strings with sensible hypothesis. 
-
-  # estimates all possible hypotheses
-  summary = summary.generator(queried, known, ref, cprofs)
-  otherBoth = summary$otherRep + summary$otherUnrep
-  otherRep  = summary$otherRep
-
-  # Each element of hypothesis is a different, hum, hypothesis.
-  hypothesis = list(list(queried, known))
-  if(length(queried)==2)
-    hypothesis = list( hypothesis,
-                       list(queried[2], known), 
-                       list(queried[1], c(queried[2], known)), 
-                       list(queried[2], c(queried[1], known)) )
-   
-  generate.hypothesis = function(n) {
-    #  Generates a hypothesis
-    #  Ugly way to call badly designed functions.
-    summary = summary.generator(n[[1]], n[[2]], ref, cprofs)
-    result = hypothesis.generator(n[[1]], n[[2]], summary$otherRep,
-                                  summary$otherUnrep)
-    return(result)
-  }
-  # suggested: The hypothesis generator is applied to each hypothesis. Each
-  # element of suggested is a string detailing the hypothesis.
-  suggested = sapply(hypothesis, generate.hypothesis, USE.NAMES=FALSE,
-                     simplify=FALSE)
-  return(suggested[[1]])
-}
-
-# Packs and verifies administrative information.
-# Documentation in man directory.
-pack.admin.input = function( cspFile, refFile, caseName='dummy',
-                             databaseFile=NULL, outputPath=getwd()
-					 ) {
-    paths = c(cspFile, refFile) 
-    if(!is.null(databaseFile)) paths = c(databaseFile, paths, recursive=TRUE)
-    for(path in paths) {
-      if(!file.exists(path))
-        stop(paste(path, "does not exist."))
-      else { 
-        info <- file.info(path)
-        if(info$isdir) stop(paste(path, "is not a file."))
-      }
-    } # loop over files.
-    if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
-      stop(paste(outputPath, " exists and is not a directory."))
-  admin = list( caseName=caseName,
-                databaseFile=databaseFile,
-                cspFile=cspFile,
-                refFile=refFile,
-                outputPath=outputPath )
-  return(admin)
-}
-
-# Loads allele database
-# Documentation is in man directory.
-load.allele.database <- function(path=NULL) {
-  if(is.null(path)) { # Load default database
-    dummyEnv <- new.env()
-    data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
-    return(dummyEnv[['lgc-allele-freqs-wbp']])
-  }
-  if(!file.exists(path)) stop(paste(path, "does not exist."))
-  read.table(path, sep="\t", header=TRUE)
-}
-
-# Generates and packs genetics input into a list.
-# Documentation in man directory.
-pack.genetics.input = function(admin, nameK=NULL, nameQ=NULL, dropin=FALSE,
-                               unknowns=0, ethnic='EA1', fst=NULL, adj=1) {
-  #
-  # This list contains all the genetics data needed to perform all subsequent
-  # calculations. 
-  # Args:
-  #   admin: List containing administration information, as packed by
-  #          pack.admin.input.
-  #   nameK: list of names of known contributors in CSP.
-  #   nameQ: list of queried contributors in profile.
-  #   dropin: Whether to model drop-ins. 
-  #   unknown: Number of unkown contributors in CSP.
-  #   ethnic: Ethnicity of contributors.
-  #   adj: not sure
-  #   fst: not sure.  If NULL and ethnic is 'EA1', then defaults to 0.02,
-  #        otherwise to 0.03.
-  afreq        = load.allele.database(admin$databaseFile)
-  cspData      = read.csp.profile.old(admin$cspFile)
-  refData      = read.ref.profile.old(admin$refFile)
-  cprofs       = internal.representation(cspData)
-  QvK <- queried.vs.known(admin$refFile)
-  nameQ        = row.names(refData)[QvK]
-  nameK        = row.names(refData)[!QvK]
-  estimates    = estimate.csp(refData, cprofs)
-  summary      = summary.generator(nameQ, nameK, refData, cprofs)
-  if(is.null(fst)) {
-    if(ethnic == 'EA1') fst = 0.02
-    else                fst = 0.03
-  }
-
-  genetics = list( # Allele database table.
-                   afreq       = afreq,
-                   # Crime scene profile data.
-                   cspData     = cspData,
-                   # Reference contributors data.
-                   refData     = refData,
-                   # Crime scene profile in internal representation.“
-                   cprofs      = cprofs,
-                   # Names of queried contributors.
-                   nameQ       = nameQ,
-                   # Names of known contributors other than queried.
-                   nameK       = nameK,
-                   # summary
-                   summary     = summary,
-                   # Estimates on how well each contributor is represented in
-                   # CSP.
-                   estimates   = estimates, 
-                   # Number of unkown contributors.
-                   unknowns    = unknowns,
-                   # Whether to model dropins.
-                   dropin      = dropin,
-                   # Contributors' ethnicity.
-                   ethnic      = ethnic,
-                   # Not sure.
-                   fst         = fst,
-                   # Not sure.
-                   adj         = adj,
-                   # Number of replicates.
-                   nrep        = length(cprofs[[1]]) )
-  return(genetics)
-}
-
-stateHypotheses <- function(prosecutionHypothesis, admin)
-	{
-	# Table with hypotheses described
-	#
-	# Parameters:
-	# 	args: arguments specified by user
-	HP = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]==TRUE)] # nameQ
-	HD = c('Unknown (X)')
-	nameK = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]!=TRUE)]
-	if(length(nameK)>0)for (x in 1:length(nameK))
-		{
-		HP = paste(HP,nameK[x],sep=' + ')
-		HD = paste(HD,nameK[x],sep=' + ')
-		}
-	if(prosecutionHypothesis$nUnknowns>0)for (x in 1:prosecutionHypothesis$nUnknowns)
-		{
-		HP = paste(HP,paste('unknown (U',x,')',sep=''),sep=' + ')
-		HD = paste(HD,paste('unknown (U',x,')',sep=''),sep=' + ')
-		}
-	if (prosecutionHypothesis$doDropin ==T)
-		{
-		HP = paste(HP,' + Dropin')
-		HD = paste(HD,' + Dropin')
-		}
-	hypothesis = t(data.frame(HP,HD))
-	colnames(hypothesis) = NA
-	row.names(hypothesis) = c('Prosecution(HP)','Defence(HD)')
-	return(hypothesis)
+#------------------------------------------
+# script in development for new docx output format
+# should contain all revised functions to completely replace the 'reports' script
+# IMPORTANT:
+# this new script (specifically the allele.report() and outpout.report() functions are dependent on R2DOC and R2DOCX
+# however, these packages are not available on the CRAN (yet?), so instead we have removed them from the 
+# 'Depends' list in 'DESCRIPTION', and instead coded their installation here:
+if(!require(R2DOCX)){
+	install.packages("devtools")
+	devtools::install_github('R2DOC', 'davidgohel') # installs from the github
+	devtools::install_github('R2DOCX', 'davidgohel')  # installs from the github
+	Sys.setenv(NOAWT=1) #prevents usage of awt - required on Mac
 	}
 
-
-locus.likes <- function(hypothesis,results,...) 
-	{
-	# Generate locus likelihoods from overall likelihood
-	#
-	# Parameters:
-	# 	hypothesis: generated by either defence.hypothesis() or 
-        #       prosecution.hypothesis()
-	#	results: results from do.call(optim,params)
-	model <- create.likelihood.vectors(hypothesis)
-	arguments <- relistArguments(results$optim$bestmem, hypothesis, ...)
-	likes <- do.call(model,arguments)
-	likes <- likes$objectives * likes$penalties
-	}
-
-
-calc.dropout = function(results, hypothesis)
-	{
-	# Calculates dropout rates for every contributor subject to dropout and for every replicate
-	#
-	# Parameters:
-	# 	hypothesis: generated by either defence.hypothesis() or 
-        #       prosecution.hypothesis()
-	#	results: results from do.call(optim,params)
-	N = nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns + 1
-	# Number of contributors subject to dropout + number of unknowns + 1 (dropin)
-	nrep = nrow(hypothesis$cspProfile)
-	do = results$optim$bestmem[grep("dropout",names(results$optim$bestmem))]
-	rcont = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
-	rcont = rcontConvert(hypothesis$refIndiv,rcont)
-	BB = results$optim$bestmem[grep("power",names(results$optim$bestmem))]
-	drout = matrix(0,N-1,nrep)
-	if(N>1) for(x in 1:(N-1)) for(z in 1:nrep) drout[x,z] = do[z]/(do[z]+rcont[x]^-BB*(1-do[z]))
-	return(drout)
-	}
-	
-ideal = function(hypothesis,rr)
-	{
-	# Calculates idealised likelihood assuming Q is perfect match
-	#
-	# Parameters:
-	# 	hypothesis: generated by either defence.hypothesis() or 
-        #       prosecution.hypothesis()
-	#	rr: relatedness arguments from args
-	ideal.match = 1
-	for(j in 1:ncol(hypothesis$cspProfile))
-		{
-		af = hypothesis$alleleDb[j][[1]]
-		kn = hypothesis$queriedProfile[,j][[1]]
-		p1 = af[row.names(af)==kn[1],1]
-		p2 = af[row.names(af)==kn[2],1]
-		ideal.match = ideal.match/(rr[2] + rr[1]*(p1+p2)/2 + (1-sum(rr))*p1*p2*(1+(kn[1]!=kn[2])))
-		}
-	return(ideal.match)
-	}
-
-rcontConvert <- function(refIndiv,rcont) 
-	{
-	# Convert rcont to full rcont (including ref individual)
-	#
-	# Parameters:
-	# 	refIndiv: reference individual specified in args
-	#	rcont: rcont parameters from do.call(optim,params)
-	if(refIndiv == 1) rcont = c(1, rcont)
-        else if(refIndiv > length(rcont)) rcont = c(rcont, 1)
-        else rcont = c(rcont[1:refIndiv-1], 1,
-        rcont[refIndiv:length(rcont)])
-	return(rcont)
-	}
-
-
-
-dropDeg <- function(hypothesis,results,admin) 
-	{
-	dropout <- calc.dropout(results, hypothesis)
-	# Output tables for dropout and degradation
-	#
-	# Parameters:
-	# 	hypothesis: generated by either defence.hypothesis() or 
-        #       prosecution.hypothesis()
-	#	results: results from do.call(optim,params)
-	#	dropout: dropout estimates generated by calc.dropout()
-	#	args: arguments specified by user
-
-	# 'known' (in Nkdo, Nknd, knownDropoutsLogical) by definition never includes Q (queried)
-	dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$cspFile))
-	Qdrop = dropoutsLogical[names(dropoutsLogical)==rownames(hypothesis$queriedProfile)]
-	knownDropoutsLogical = dropoutsLogical[names(dropoutsLogical)!=rownames(hypothesis$queriedProfile)]
-	Nkdo = length(which(knownDropoutsLogical))
-	Nknd = length(which(!knownDropoutsLogical))
-
-	# Note, since dropout is assumed zero for fully represented profiles,
-	# these are suffixed on the dropout table (see below), 
-	# therefore the names need to be rearranged accordingly:
-	names.Dropout = names(which(knownDropoutsLogical))
-	names.NoDropout = names(which(!knownDropoutsLogical))
-	nameQ = rownames(hypothesis$queriedProfile)
-	nameK = c(names.NoDropout,names.Dropout)	
-
-	# names (including 'Q','K','U')in correct order 
-	Names=c()
-	nrep = nrow(hypothesis$cspProfile)
-	Names[length(c(nameQ,nameK))] = paste(nameQ,'(Q)')
-	if(length(nameK)>0)for (n in 1:length(nameK)) Names[n]=paste(nameK[n],' (K',n,')',sep='')
-	if(hypothesis$hypothesis=="defence") Names[length(c(nameQ,nameK))] = 'X'
-
-	condition = (hypothesis$nUnknowns>0)&(hypothesis$hypothesis=="prosecution")
-	if(condition)for(n in 1:hypothesis$nUnknowns)Names = c(Names,paste('U',n,sep=''))
-	condition = (hypothesis$nUnknowns>1)&(hypothesis$hypothesis=="defence")
-	if(condition)for(n in 1:(hypothesis$nUnknowns-1))Names = c(Names,paste('U',n,sep=''))
-	runNames = c();for(rName in 1:nrep)runNames[rName]=paste('Rep',rName)
-
-# Table
-	h = h1 = round(dropout,4)	
-	Loss = Loss1 = round(10^results$optim$bestmem[grep("degradation",names(results$optim$bestmem))],4)
-	if(hypothesis$hypothesis=="prosecution")
-		{
-		if(Qdrop==F)
-			{
-			h = rbind(h[0:nrow(hypothesis$dropoutProfs),,drop=F],0)
-			if(hypothesis$nUnknowns>0)
-				{
-				h = rbind(h,h1[(nrow(hypothesis$dropoutProfs)+1):length(Loss1),,drop=F])
-				}
-			Loss = c(Loss[0:nrow(hypothesis$dropoutProfs)],0)
-			if(hypothesis$nUnknowns>0)
-				{
-				Loss = c(Loss,Loss1[(nrow(hypothesis$dropoutProfs)+1):length(Loss1)])
-				}
-			}
-		}
-
-	if(Nknd>0) for(n in 1:Nknd)
-		{
-		h = rbind(0,h)
-		Loss = c(0,Loss)
-		}
-	Dropout = format(round(data.frame(h,Loss),3),nsmall=3)
-	colnames(Dropout)= c(runNames[1:(nrep)],'Deg')
-	row.names(Dropout) = Names
-	return(Dropout)
-	}
-
-output.names <- function(admin,prosecutionHypothesis)
-	{
-	# Names for output files
-	#
-	# Parameters:
-	# 	admin: output from pack.admin.input()
-	#	prosecutionHypothesis: generated by prosecution.hypothesis()
-	nameQ = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]==TRUE)]
-	nameK = rownames(read.known.profiles(admin$refFile))[which(read.known.profiles(admin$refFile)[,1]!=TRUE)]
-	nameCode=c()
-	for(n in 1:length(c(nameQ,nameK)))
-		{
-		nameCode=c(nameCode,strsplit(c(nameQ,nameK)[n],'')[[1]][1:2])
-		nameCode = paste(nameCode,collapse='')
-		}
-	version=1
-	FN=paste(admin$caseName,nameCode,prosecutionHypothesis$nUnknowns,prosecutionHypothesis$ethnic,prosecutionHypothesis$doDropin,version,sep='-')
-	pdf.name = paste(FN,'pdf',sep='.')
-	RData.name = paste(FN,'RData',sep='.')
-	while(pdf.name %in% list.files(admin$outputPath))
-		{
-		version=version+1
-		FN=paste(admin$caseName,nameCode,prosecutionHypothesis$nUnknowns,prosecutionHypothesis$ethnic,prosecutionHypothesis$doDropin,version,sep='-')
-		pdf.name = paste(FN,'pdf',sep='.')
-		RData.name = paste(FN,'RData',sep='.')
-		}
-	return(list(pdf.name=pdf.name,RData.name=RData.name))
-	}
-
-  # Function to calculate sensible cex for each table:
-  cex.finder = function(table){
-	widest.row.name = max(nchar(row.names(table))) # vector of characters in the widest row name
-	heading.widths = nchar(names(table)) # vector of characters in each column name
-	data.widths = apply(nchar(as.matrix(table)), 2, max) # vector of characters for each column, the widest of each row
-	column.widths = pmax(heading.widths,data.widths) # vector of characters for each column, the widest of either data or col names
-	column.with.sum = sum(column.widths)
-	spaces = length(names(table)) * 7.5 
-	total.width = widest.row.name + column.with.sum + spaces 
-
-	cex = 130 / total.width
-	if(cex>1)cex=1
-  return(cex)
-	}
-
-  # Function to decide the plot height of the barchart
-  barchart.finder = function(otherBoth){
-	height = max(otherBoth)
-	if(height<2) return(1)
-	if(height==2) return(2)
-	if(height>2) return(3)
-	}
-
-
-allele.report <- function(admin=NULL,file=NULL) {
-  #
-  # Args:
-  #   admin: List containing administration data, as packed by pack.admin.input()
-  
-  # Checks if have package gplots
-  if(!require(gplots)) stop("Report requires package: gplots")
-
-  # checks all arguments are present, and creates default name for file if missing
-  if(is.null(admin))stop('missing argument: admin')
-  if(is.null(file))file <- admin$caseName 
-
-  # reads genetics information 
-  genetics = pack.genetics.input(admin)
-
-  # create allele table	
-  alleles = allele.table(genetics$cprofs)
-
-  # Latex output
-  latex.maker(alleles,genetics$summary$summary,(paste(admin$outputPath,"/",file," table.tex",sep="")))
-
-  # Start plotting pdf
-  pdf(paste(admin$outputPath,"/",file," allele report.pdf",sep=""))
-  par(mai = rep(0.3,times=4))
-
-  # PAGE 1 
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
-  heights.pg1 = c(genetics$nrep,length(c(genetics$nameQ,genetics$nameK)),barchart.finder(otherBoth))
-  heights.pg1 = heights.pg1 +1 # space for headers
-  widths.pg1 = c(1)
-  layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1)
-
-  # Alleles
-  textplot(alleles, valign='top',cex=cex.finder(alleles))
-  mtext(paste(admin$caseName,'Allele Report'),side=3,cex=1.2)
-
-  # Tabular Summary 
-  textplot(genetics$summary$summary, valign='top',cex=cex.finder(genetics$summary$summary))
-  mtext('Summary',side=3,cex=1.2)
-  mtext('{}=unreplicated, []=absent',side=1,cex=0.7)
-
-  # Unattributable Alleles
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
-  otherRep  = genetics$summary$otherRep
-  yaxp=c(0, max(otherBoth), max(otherBoth))
-  if(max(otherBoth)==0) yaxp=c(0,1,1)
-  barplot(otherBoth, names.arg=names(genetics$cprofs), yaxp=yaxp,
-          main='', ylab='No. alleles')
-  barplot(add=T, col='black', otherRep, yaxt='n')
-  if(max(otherBoth) > 3) abline(h=2, lty=2)
-  if(max(otherBoth) > 5) abline(h=4, lty=2)
-  if(max(otherBoth) > 7) abline(h=6, lty=2) 
-  if(max(otherBoth) > 9) abline(h=8, lty=2);
-  legend(x=0, y=max(otherBoth), yjust=0, bty='n',
-         c('replicated','unreplicated'), xpd=NA, col=c('black','grey'),
-         pch=c(15,15))
-  mtext('Unattributable alleles',side=3,cex=1.2)
-
-  # PAGE 2 
-  heights.pg2 = c(length(unusual.alleles(genetics$afreq, genetics$refData)),length(c(genetics$nameQ,genetics$nameK)),1)
-  heights.pg2 = heights.pg2 +5 # space for headers
-  widths.pg2 = c(1)
-  layout(matrix(c(1:length(heights.pg2)),nrow=length(heights.pg2)),heights = heights.pg2, widths=widths.pg2)
-
-  # Rare Alleles
-  rare <- unusual.alleles(genetics$afreq, genetics$refData)
-  if(length(rare)==0) rare = 'No unusual alleles in Q or K profiles'
-  textplot(rare, valign='top',cex=1)
-  mtext('Rare alleles',side=3,cex=1.2)
-
-  # Approximate representation.
-  # Estimate how well each reference profile is represented in the CSP
-  estimates <- estimate.csp(genetics$refData, genetics$cprofs)
-  textplot(estimates, valign='top',cex=cex.finder(estimates))
-  mtext('Approximate representation %',side=3,cex=1.2)
-
-  # Suggested hypothesis.
-  suggested = suggested.hypothesis(genetics$nameQ, genetics$nameK,
-                                   genetics$refData, genetics$cprofs)
-  textplot(suggested, valign='top',cex = 1)
-  sub= 'likeLTD can evaluate a maximum of 2 unknowns. If more are suggested, the CSP is unlikely to be statistically informative'
-  mtext('Suggested Hypotheses',side=3,cex=1.2)
-  mtext(sub,side=1,cex=0.7)
-
-  dev.off()
-}	
-
-output.report <- function(admin=NULL,prosecutionHypothesis=NULL,defenceHypothesis=NULL,prosecutionResults=NULL,defenceResults=NULL,file=NULL) {
-  #
-  # Args:
-  #   admin: List containing administration data, as packed by pack.admin.input.
-  #   prosecutionHypothesis: generated by prosecution.hypothesis()
-  #   defenceHypothesis: generated by defence.hypothesis()
-  #   prosecutionResults: results from do.call(optim, prosecutionParams)
-  #   defenceResults: results from do.call(optim, defenceParams)
-  #	file: filename automatically generated if not provided
-  
-  # Checks if have package gplots
-  if(!require(gplots)) stop("Report requires package: gplots")
-
-  # checks all arguments are present, and creates default name for file if missing
-  if(is.null(admin))stop('missing argument: admin')
-  if(is.null(prosecutionHypothesis))stop('missing argument: prosecutionHypothesis')
-  if(is.null(defenceHypothesis))stop('missing argument: defenceHypothesis')
-  if(is.null(prosecutionResults))stop('missing argument: prosecutionResults')
-  if(is.null(file))outputName = output.names(admin,prosecutionHypothesis)
-  if(!is.null(file))outputName = file
-
-  # reads genetics information 
-  genetics = pack.genetics.input(admin)
-
-  # Unnatributable alleles
-  otherBoth = genetics$summary$otherRep + genetics$summary$otherUnrep
-
-#-----------------------------------------------
-  # Write the output report
-
-  # Start plotting pdf
-  pdf(paste(admin$outputPath,outputName,sep="/"))
-
-  # report pg1
-
-  par(mai = rep(0.3,times=4))
-  heights.pg1 = c(2,2*genetics$nrep,length(c(genetics$nameQ,genetics$nameK))+1,3,barchart.finder(otherBoth))
-  heights.pg1 = heights.pg1 +5 # space for headers
-  widths.pg1 = c(1)
-  layout(matrix(c(1:length(heights.pg1)),nrow=length(heights.pg1)),heights = heights.pg1, widths=widths.pg1) # one extra first row is required
-
-  # 1. Hypotheses used
-  hypothesisTable <- stateHypotheses(prosecutionHypothesis, admin)
-  textplot(hypothesisTable,valign='top',cex=cex.finder(hypothesisTable))
-  title(paste(admin$caseName,'Output Report'))
-
-  # 2. CSP alleles
-  alleles <- allele.table(genetics$cprofs)
-  textplot(alleles,valign='top',cex=cex.finder(alleles))
-  title('Crime Scene Profile')
-
-  # 3. Tabular Summary 
-  textplot(genetics$summary$summary,valign='top',cex=cex.finder(genetics$summary$summary))
-  title(main = 'Reference profiles.{}=unreplicated, []=absent')
-
-  # 4. Locus Likelihood
-  prosecuLikes <- locus.likes(prosecutionHypothesis,prosecutionResults)
-  defenceLikes <- locus.likes(defenceHypothesis,defenceResults)
-  likelihood  = data.frame(signif(prosecuLikes,2),signif(defenceLikes,2),signif(prosecuLikes/defenceLikes,2),round(log10(prosecuLikes/defenceLikes),1))
-  colnames(likelihood)= c('HP','HD','Ratio','Log Ratio')
-  row.names(likelihood)= colnames(defenceHypothesis$queriedProfile)
-  textplot(t(likelihood),valign='top',cex=cex.finder(t(likelihood)))
-  title('Likelihoods at each locus')
-
-  # 5. Unattributable Alleles
-  otherRep  = genetics$summary$otherRep
-  yaxp=c(0, max(otherBoth), max(otherBoth))
-  if(max(otherBoth)==0) yaxp=c(0,1,1)
-  barplot(otherBoth, names.arg=names(genetics$cprofs), yaxp=yaxp,
-          main='Unattributable alleles', ylab='No. alleles')
-  barplot(add=T, col='black', otherRep, yaxt='n')
-  if(max(otherBoth) > 3) abline(h=2, lty=2)
-  if(max(otherBoth) > 5) abline(h=4, lty=2)
-  if(max(otherBoth) > 7) abline(h=6, lty=2) 
-  if(max(otherBoth) > 9) abline(h=8, lty=2);
-  legend(x=0, y=max(otherBoth), yjust=0, bty='n',
-         c('replicated','unreplicated'), xpd=NA, col=c('black','grey'),
-         pch=c(15,15))
-
-  # report pg2
-  par(mai = rep(0.3,times=4))
-
-  # Number of people to display
-  npeep = genetics$unknowns+length(c(genetics$nameK,genetics$nameQ))
-  heightspg2 = c(4,npeep,npeep,npeep-genetics$unknowns,2)
-  # add titles space  
-  heightspg2 = heightspg2+5
-  widthspg2 = c(1)
-  layout(matrix(c(1:length(heightspg2)),nrow=length(heightspg2)),heights = heightspg2, widths=widthspg2)
-
-
-  # Overall likelihood
-  overallLikelihood  = data.frame(signif(10^-prosecutionResults$optim$bestval,2),signif(10^-defenceResults$optim$bestval,2),signif(10^(defenceResults$optim$bestval-prosecutionResults$optim$bestval),2),round(defenceResults$optim$bestval-prosecutionResults$optim$bestval,1))
-  colnames(overallLikelihood)= c('HP','HD','Ratio','Log Ratio')
-  row.names(overallLikelihood)= ''
-  textplot(t(overallLikelihood),valign='top',cex=cex.finder(t(overallLikelihood)))
-  title('Likelihood (overall)')
-
-  # Hp dropout
-  pDropout = dropDeg(prosecutionHypothesis,prosecutionResults,admin) 
-  textplot(pDropout,valign='top',cex=cex.finder(pDropout))
-  title('HP Drop-out')
-  # Hd dropout
-  dDropout = dropDeg(defenceHypothesis,defenceResults,admin) 
-  textplot(dDropout,valign='top',cex=cex.finder(dDropout))
-  title('HD Drop-out')
-
-  # Approximate representation
-  textplot(genetics$estimates,valign='top',cex=cex.finder(genetics$estimates))
-  title('Approximate representation %')
-
-  # Dropin
-  if(defenceHypothesis$doDropin){
-  	pDropin = prosecutionResults$optim$bestmem[grep("dropin",names(prosecutionResults$optim$bestmem))]
-  	dDropin = defenceResults$optim$bestmem[grep("dropin",names(defenceResults$optim$bestmem))]
-  	dropin = round(data.frame(pDropin,dDropin),3)
-  	colnames(dropin) = c('HP','HD')
-  	row.names(dropin) = ''
-  	textplot(t(dropin),valign='top',cex=1)
-  	title('Drop-in (overall)')
-  	}
-
-  if(!defenceHypothesis$doDropin){
-  	textplot(' ',valign='top')
-  	title('No drop-in modelled')
-  	}
-
- # report pg3
-  par(mai = rep(0.3,times=4))
-  size = 0.7
-  layout(matrix(c(1),nrow=1),heights = 50, widths=1) 
-
-  # Parameters
-  CSPname = tail(strsplit(admin$cspFile,split='/')[[1]],1)
-  REFname = tail(strsplit(admin$refFile,split='/')[[1]],1)
-  ALLELEname = ifelse(is.null(admin$database),"lgc-allele-freqs-wbp.txt",tail(strsplit(admin$databaseFile,split='/')[[1]],1))
-
-  dropoutsLogical = determine.dropout(read.known.profiles(admin$refFile),read.csp.profile(admin$cspFile))
-  Nknd = length(which(!dropoutsLogical))
-  Nkdo = length(which(dropoutsLogical))
-
-  # End time
-  endTime = as.character(Sys.time())
-
-  # Match probability
-  ideal.match=ideal(defenceHypothesis,defenceHypothesis$relatedness)
-
-  administration = data.frame(
-  	c(
-  	admin$caseName,
-	CSPname,
-	REFname,
-	ALLELEname,
-	paste(prosecutionHypothesis$ethnic,defenceHypothesis$ethnic),
-	endTime,
-	paste(prosecutionHypothesis$adj,defenceHypothesis$adj),
-	paste(prosecutionHypothesis$fst,defenceHypothesis$fst),
-	paste(prosecutionHypothesis$relatedness[1],defenceHypothesis$relatedness[1]),
-	paste(prosecutionHypothesis$relatedness[2],defenceHypothesis$relatedness[2]),
-	Nknd,
-	Nkdo,
-	paste(prosecutionHypothesis$nUnknowns,defenceHypothesis$nUnknowns),
-	paste(prosecutionHypothesis$doDropin,defenceHypothesis$doDropin),
-	paste(format(round(prosecutionResults$optim$bestmem[grep("dropout",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$optim$bestmem[grep("dropout",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$optim$bestmem[grep("rcont",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$optim$bestmem[grep("rcont",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(format(round(prosecutionResults$optim$bestmem[grep("Adjustment",names(prosecutionResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(format(round(defenceResults$optim$bestmem[grep("Adjustment",names(defenceResults$optim$bestmem))],3),nsmall=3),collapse=' '),
-	paste(prosecutionResults$optim$iter, defenceResults$optim$iter,collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("locusAdjustment",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("locusAdjustment",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("power",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("power",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("dropout",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("dropout",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("degradation",names(prosecutionResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("degradation",names(prosecutionResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(prosecutionResults$member$upper[grep("rcont",names(prosecutionResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(prosecutionResults$member$lower[grep("rcont",names(prosecutionResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("locusAdjustment",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("locusAdjustment",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("power",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("power",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("dropout",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("dropout",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("degradation",names(defenceResults$member$upper))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("degradation",names(defenceResults$member$lower))],nsmall=1),collapse=' '),
-	paste(format(defenceResults$member$upper[grep("rcont",names(defenceResults$member$upper))],nsmall=3),collapse=' '),
-	paste(format(defenceResults$member$lower[grep("rcont",names(defenceResults$member$lower))],nsmall=3),collapse=' '),
-	signif(as.numeric(ideal.match),3),
-	row.names=NULL)
-	)
-		
-  colnames(administration) = "Parameters"
-  rownames(administration) = c(
-	'Case:',
-	'CSP file:',
-	'Reference file:',
-	'Allele frequency file:',
-	'EA ethnic group (HP HD):',
-	'Time finished:',
-	'adj (HP HD):',
-	'fst (HP HD):',
-	'rr(1) (HP HD):',
-	'rr(2) (HP HD):',
-	'Nknd:',
-	'Nkdo:',
-	'No. unknowns (HP HD):',
-	'Drop in (HP HD):',
-	'Max HP do:',
-	'Max HD do:',
-	'Max HP rcont:',
-	'Max HD rcont:',
-	'Max HP locus adjust:',
-	'Max HD locus adjust:',
-	'No. of generations (HP HD)',
-	'Upper bounds of locusAdjutment (HP)',
-	'Lower bounds of locusAdjutment (HP)',
-	'Upper bounds of power (HP)',
-	'Lower bounds of power (HP)',
-	'Upper bounds of dropout (HP)',
-	'Lower bounds of dropout (HP)',
-	'Upper bounds of degradation (HP)',
-	'Lower bounds of degradation (HP)',
-	'Upper bounds of rcont (HP)',
-	'Lower bounds of rcont (HP)',
-	'Upper bounds of locusAdjutment (HD)',
-	'Lower bounds of locusAdjutment (HD)',
-	'Upper bounds of power (HD)',
-	'Lower bounds of power (HD)',
-	'Upper bounds of dropout (HD)',
-	'Lower bounds of dropout (HD)',
-	'Upper bounds of degradation (HD)',
-	'Lower bounds of degradation (HD)',
-	'Upper bounds of rcont (HD)',
-	'Lower bounds of rcont (HD)',
-	'Theoretical maximum match LR:')
-  textplot(administration,valign='top',cex=size)
-  title('Parameters')
- 
-  # report page 4
-  heights.pg4 = heights = c(11,9,3)
-  heights.pg4 = heights.pg4 + 5
-  layout(matrix(c(1:3),nrow=3), heights = heights.pg4)
-  par(mai = rep(0.3,times=4))
-  size = 1
-
-  # Nomenclature
-  nomenclature = '
-adj:     sampling adjustment parameter
-
-fst:     coancestry parameter (remote shared ancestry of Q and X).
-
-rr:      probabilities of X and Q sharing 1 and 2 alleles through
-         shared inheritance from recent ancestors such as parents 
-         and grandparents; for full sibs, rr[1]=0.5 and rr[2]=0.25.
-
-Nknd:    number of profiled potential contributors not subject to dropout.
-
-Nkdo:    number of profiled potential contributors subject to dropout.
-'
-  textplot(nomenclature,valign='top',cex=size)
-  title('Nomenclature')
-
-  # Operator information
-  operator = data.frame(Sys.info())
-  colnames(operator) = 'Operator info'
-  textplot(operator,valign='top',cex=size)
-  title('System info')
-
-  # software version
-  software = as.matrix(sessionInfo()$otherPkgs$likeLTD[c(1,6,12)])
-  colnames(software) = ''
-  textplot(software,valign='top',cex=size)
-  title('Software')
-dev.off()
-}
-
+#------------------------------------------
 latex.cleaner <- function(text){
-# text: text produced by any of the following functions:
-# latex.table.header()
-# allele.table.to.latex	
+# cleans up the text produced by any of the ...to.latex() functions below
 	text <- gsub('{\\bf}','',text,fixed=T)
 	text <- gsub(',\\fx{}','',text,fixed=T)
 	text <- gsub('{\\em}','',text,fixed=T)
 	text <- gsub(',,',',',text,fixed=T)
 	text <- gsub(',&','&',text,fixed=T)
 	text <- gsub('&,','&',text,fixed=T)
+	text <- gsub('}}','}',text,fixed=T)
 	text <- gsub(',\\\\\\hline','\\\\\\hline',text,fixed=T)
-	text <- gsub('(Q)','',text,fixed=T)
-	text <- gsub('(K)','',text,fixed=T)
 return(text)}
 
-latex.table.header <- function(t1,t2){
-# table1 table2 in either order are: 
-# CSP table produced by allele.table() 
-# Reference summary table $summary$summary produced by pack.genetics.input()
-	if(ncol(t1)!=ncol(t2))stop('different number of loci in CSP and Ref tables!')
+latex.table.header <- function(genetics){
+	N <- ncol(genetics$summary$table)+1
 	text <- c('
 	\\begin{sidewaystable}[p]\n
 	%\\setcounter{table}{1}
 	',
-	paste('\\begin{center}\\begin{tabular}{|',paste(rep('c|',ncol(t1)+1),collapse=''),'}\\hline',sep=''),
-	paste('&',paste(names(t1),collapse='&'),'\\\\\\hline',sep=''),
-	paste('\\multicolumn{',ncol(t1)+1,'}{|l|}{Crime scene profiles}\\\\\\hline',sep=''))
+	paste('\\begin{center}\\begin{tabular}{|',paste(rep('c|',N),collapse=''),'}\\hline',sep=''),
+	paste('&',paste(names(genetics$summary$table),collapse='&'),'\\\\\\hline',sep=''),
+	paste('\\multicolumn{',N,'}{|l|}{Crime scene profiles}\\\\\\hline',sep=''))
 return(text)}
 
-allele.table.to.latex <- function(table){
-# table: CSP table produced by allele.table() 
+csp.table.to.latex <- function(genetics){
+	# formats the CSP table of alleles for latex
+	table.csp <- table.collapser(genetics$cspData)
+	table.unc <- table.collapser(genetics$uncData)
+	table <- NULL; 
+	for(n in 1:genetics$nrep){
+		table <- rbind(table,table.csp[n,])
+		table <- rbind(table,table.unc[n,])
+		}
+	colnames(table) <- colnames(genetics$cspData)
+	row.names(table) <- rep(c('csp','unc'),genetics$nrep)
 	text = c()
 	N.col <- ncol(table)
 	N.row <- nrow(table)
@@ -1125,33 +61,693 @@ allele.table.to.latex <- function(table){
 		}
 return(text)}
 
-summary.table.to.latex <- function(table){
-# table: Reference summary table $summary$summary produced by pack.genetics.input()
+ref.table.to.latex <- function(genetics){
+# table: Reference table, from genetics$summary$table
+	table <- genetics$summary$table
 	text = paste('\\multicolumn{',ncol(table)+1,'}{|l|}{SUMMARY:}\\\\\\hline',sep='')
 	N.col <- ncol(table)
 	N.row <- nrow(table)
 	for(row in 1:N.row){
 		text.line = character(N.col)
 		for(col in 1:N.col){
-			temp1 = sub('{','},{\\em',table[row,col],fixed=T)
-			temp2 = sub('[',',\\fx{',temp1,fixed=T)
-			temp3 = sub(']','}',temp2,fixed=T)
-			temp4 = sub(' ',',',temp3,fixed=T)
-			text.line[col] = paste('{\\bf',temp4,sep='')
+			tmp = sub('{','},{\\em',table[row,col],fixed=T)
+			tmp = sub('[',',\\fx{',tmp,fixed=T)
+			tmp = sub(']','}',tmp,fixed=T)
+
+			text.line[col] = paste('{\\bf',tmp,'}',sep='')
 			}
 		text=c(text,paste(paste(row.names(table)[row],paste(text.line,collapse='&'),sep='&'),'\\\\\\hline',sep=''))
 		}
 return(text)}
 
-latex.maker <- function(table1,table2,filename){
+latex.maker <- function(genetics,filename){
 # table1: CSP table produced by allele.table() 
-# table2: Reference summary table $summary$summary produced by pack.genetics.input()
-	text.1 <- latex.table.header(table1,table2)
-	text.2 <- allele.table.to.latex(table1)
-	text.3 <- summary.table.to.latex(table2)
+# table2: Reference table, from genetics$summary$table
+	text.1 <- latex.table.header(genetics)
+	text.2 <- csp.table.to.latex(genetics)
+	text.3 <- ref.table.to.latex(genetics)
 	text <- latex.cleaner(c(text.1,text.2,text.3))
 
 	file <- file(filename)
 	writeLines(text,file)
 	close(file)
 	}
+
+
+pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, outputPath=getwd() ) {
+	# Packs and verifies administrative information.
+	# Documentation in man directory.
+    	paths <- c(cspFile, refFile) 
+	if(!is.null(databaseFile)) paths <- c(databaseFile, paths, recursive=TRUE)
+	for(path in paths) {
+		if(!file.exists(path))
+			stop(paste(path, "does not exist."))
+		else { 
+			info <- file.info(path)
+			if(info$isdir) stop(paste(path, "is not a file."))
+      		}
+    		} # loop over files.
+	if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
+	stop(paste(outputPath, " exists and is not a directory."))
+	admin <- list( caseName=caseName,
+                databaseFile=databaseFile,
+                cspFile=cspFile,
+                refFile=refFile,
+                outputPath=outputPath )
+	return(admin)}
+
+
+load.allele.database <- function(path=NULL) {
+	# Loads allele database
+	# Documentation is in man directory.
+	if(is.null(path)) { # Load default database
+	dummyEnv <- new.env()
+	data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
+	return(dummyEnv[['lgc-allele-freqs-wbp']])
+	}
+	if(!file.exists(path)) stop(paste(path, "does not exist."))
+	read.table(path, sep="\t", header=TRUE)
+	}
+
+
+unattributable.plot.maker <- function(genetics){
+	plot <- ggplot(genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
+		geom_bar(stat='identity')+
+		scale_fill_grey()
+return(plot)}
+
+table.collapser <- function(table){
+	# collapses a table so that fields stored as lists become comma separated strings
+	result <- array(,dim(table))
+	for(row in 1:nrow(table)){
+		for(locus in 1:ncol(table)){
+			result[row,locus] <- paste(unlist(table[row,locus]),collapse=',')
+			}}
+return(result)}
+
+unusual.alleles.per.table <- function(table,afreq){
+	# finds unusual alleles in any specific table, (provided in original listed format)
+	rare <- data.frame(locus=NULL,allele=NULL,frequency=NULL)
+	loci <- colnames(table); loci <- loci[loci!='queried']# ref table includes 'queried'
+	for(row in 1:nrow(table)){
+		for(locus in loci){
+			alleles <- unique(unlist(table[row,locus]))
+			for(allele in alleles){
+				condition <- afreq$Marker==locus & afreq$Allele==allele
+				x <- afreq[condition,]
+				if(nrow(x)==1){ # if the allele is present once in the database (should be!)
+					if(x$EA1<2 | x$EA3<2 | x$EA4<2) {
+            				frame <- data.frame(locus=locus, allele=allele, frequency=x[,4:6])
+            				rare <- rbind(rare, frame)}
+          					}
+				if(nrow(x)==0){ # if the allele is absent from database it is probably a typo	
+						frame <- data.frame(locus=locus, allele=allele, frequency=0)
+            				rare <- rbind(rare, frame)
+          					}
+				if(nrow(x)>1){ # if the allele is more than once there is a problem with the database!	
+						frame <- data.frame(locus=locus,allele=allele,frequency='present multiple times in database')
+            				rare <- rbind(rare, frame)
+          					}
+        			}  # loop over alleles
+     			} # loop over loci
+		} # loop over profiles				
+return(unique(rare))}
+
+unusual.alleles <- function(genetics){
+	#  creates and formats a combined table of unusual alleles
+
+	t1.tmp <- unusual.alleles.per.table(genetics$refData,genetics$afreq)
+	t1 <- cbind(data.frame(source=rep('Reference profiles',nrow(t1.tmp))),t1.tmp)
+	t2.tmp <- unusual.alleles.per.table(genetics$cspData,genetics$afreq)
+	t2 <- cbind(data.frame(source=rep('Crime scene certain',nrow(t2.tmp))),t2.tmp)
+	t3.tmp <- unusual.alleles.per.table(genetics$uncData,genetics$afreq)
+	t3 <- cbind(data.frame(source=rep('Crime scene uncertain',nrow(t3.tmp))),t3.tmp)
+	table <- rbind(t1,t2,t3)
+	if(nrow(table)==0)table <- data.frame(status='No unusual alleles present')
+return(table)}
+
+csp.table.reformatter <- function(genetics){
+	table.csp <- table.collapser(genetics$cspData)
+	table.unc <- table.collapser(genetics$uncData)
+	table <- NULL; 
+	for(n in 1:genetics$nrep){
+		table <- rbind(table,table.csp[n,])
+		table <- rbind(table,table.unc[n,])
+		}
+	colnames(table) <- colnames(genetics$cspData)
+	extra <- data.frame(rep=rep(1:genetics$nrep,each=2),status=rep(c("certain","uncertain"),genetics$nrep))
+	combined <- cbind(extra,table)
+return(combined)}
+
+reference.table.reformatter <- function(genetics){
+	table <- genetics$summary$table
+	extra <- data.frame(profile=row.names(table))
+	combined <- cbind(extra,table)
+return(combined)}
+
+local.likelihood.table.reformatter <- function(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults){
+	P <- log10(locus.likes(prosecutionHypothesis,prosecutionResults))
+	D <- log10(locus.likes(defenceHypothesis,defenceResults))
+	table  <- t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=(P-D),Ratio=10^(P-D)))
+	extra <- data.frame(Likelihood=row.names(table))
+	combined <- cbind(extra,table)
+return(combined)}
+
+hypothesis.generator <- function(genetics){
+	# replicated alleles may not be explained by dropin, therefore this dictates minimum number of Us (minU)
+	# maximum Us determined by whichever locus has the most unattributables (rep and unrep combined)
+	# reports all U + dropin combos between minU and maxU
+	table <- genetics$summary$counts
+	rep <- subset(table,table$status=='replicated')$counts
+	unrep <- subset(table,table$status=='unreplicated')$counts
+	minU <- ceiling(max(rep)/2)
+	maxU <- ceiling(max(rep+unrep)/2) 
+	unknowns <- minU:maxU
+	N <- length(unknowns)
+	dropins <- numeric(N)
+	recommendation <- character(N)
+	for(n in 1:N){
+		dropins[n] <- sum(pmax(0,rep+unrep-2*unknowns[n]))
+		if(dropins[n]<=2)recommendation[n]<-"strongly recommended"
+		if(dropins[n]==3)recommendation[n]<- "worth considering"
+		if(unknowns[n]==3)recommendation[n]<-"Can only be evaluated by removing the additional U from defence"
+		if(unknowns[n]>3)recommendation[n]<-"Too many U's to evaluate"
+		}
+	result <- data.frame(nUnknowns=unknowns, doDropin=dropins, Recommendation=recommendation)
+return(result)}
+
+system.info <- function(){
+	date <- date()
+	package.info <- sessionInfo()$otherPkgs$likeLTD
+	sys.info <- Sys.info()
+	Details <- t(data.frame(Details=c(date,package.info,sys.info) ))
+	Details  <- gsub("\n","",Details ,fixed=T)
+	Details  <- gsub("   ","",Details ,fixed=T)
+	Type <- data.frame(Type=c('Date report generated:',names(package.info),names(sys.info)))
+	all <- cbind(Type,Details)
+return(all)}
+
+filename.maker <- function(outputPath,file,type=NULL){
+	# type: report type, one of 'allele' or 'results'
+	if(is.null(file)){
+		if(is.null(type))report.type <- 'report'
+		if(type=='allele')report.type <- 'allele report'
+		if(type=='results')report.type <- 'results report'
+		
+		n <- 1
+		file <- file.path(outputPath,paste(report.type,n,'docx',sep='.'))
+		while(file.exists(file)){
+			n <- n + 1
+			file <- file.path(outputPath,paste(report.type,n,'docx',sep='.'))
+			}
+		}
+return(file)}
+
+hyp.P <- function(genetics){
+	Q <- paste(genetics$nameQ,'(Q)') 
+	HP <- paste('Prosecution Hypothesis:',paste(c(Q,genetics$nameK),collapse=' + ')  )
+return(HP)}
+
+hyp.D <- function(genetics){
+	X <- 'Unknown (X)'
+	HD <- paste('Defence Hypothesis:',paste(c(X,genetics$nameK),sep=' + ') )
+return(HD)}
+
+locus.likes <- function(hypothesis,results,...) 
+	{
+	# Generate locus likelihoods from overall likelihood
+	#
+	# Parameters:
+	# 	hypothesis: generated by either defence.hypothesis() or 
+      #     prosecution.hypothesis()
+	# results: results from do.call(optim,params)
+	model <- create.likelihood.vectors(hypothesis)
+	arguments <- relistArguments(results$optim$bestmem, hypothesis, ...)
+	likes <- do.call(model,arguments)
+	likes <- likes$objectives * likes$penalties
+	}
+
+pack.genetics.for.allele.report <- function(admin){
+	# packs together all the genetic information required for the allele.report()
+
+	# primary objects
+	cspData <- read.csp.profile(admin$cspFile)
+	uncData <- read.unc.profile(admin$cspFile)
+	refData <- read.known.profiles(admin$refFile)
+	afreq <- load.allele.database(admin$databaseFile)
+
+	# secondary objects
+	summary <- summary.generator(refData, cspData)
+	estimates <- estimate.csp(refData, cspData)
+	nrep	<- nrow(cspData)
+
+	allele.report.genetics <- list( 
+	cspData = cspData, 
+	uncData = uncData,
+	refData = refData,
+	afreq = afreq,
+	summary = summary,
+	estimates = estimates,
+	nrep = nrep)
+return(allele.report.genetics)}
+	
+pack.genetics.for.output.report <- function(P.hyp,D.hyp){
+	# packs together all the genetic information required for the output.report()
+
+	# Comparison checks between P.hyp and D.hyp 
+	compare.hypothesis.inputs(P.hyp,D.hyp)
+
+	# primary objects
+	cspData <- read.csp.profile(P.hyp$cspFile)
+	uncData <- read.unc.profile(P.hyp$cspFile)
+	refData <- read.known.profiles(P.hyp$refFile)
+	afreq <- load.allele.database(P.hyp$databaseFile)
+
+	# secondary objects
+	summary <- summary.generator(refData, cspData)
+	estimates <- estimate.csp(refData, cspData)
+	nrep	<- nrow(cspData)
+
+	QvK <- queried.vs.known(P.hyp$refFile)
+	nameQ <- row.names(refData)[QvK]
+	nameK <- row.names(refData)[!QvK]
+
+	output.report.genetics <- list( 
+	cspData = cspData, 
+	uncData = uncData,
+	refData = refData,
+	afreq = afreq,
+	summary = summary,
+	estimates = estimates,
+	nrep = nrep,
+	nameQ = nameQ,
+	nameK = nameK, 
+	P.hyp = P.hyp,
+	D.hyp = D.hyp)  
+return(output.report.genetics)}
+
+compare.hypothesis.inputs <- function(P.hyp,D.hyp){
+	# Checks the input data and parameters were the same for P and D
+	if(!identical(P.hyp$cspFile,D.hyp$cspFile))warning("P and D hypotheses were constructed using two different crime scene files!!")
+	if(!identical(P.hyp$refFile,D.hyp$refFile))warning("P and D hypotheses were constructed using two different reference files!!")
+	if(!identical(P.hyp$databaseFile,D.hyp$databaseFile))warning("P and D hypotheses were constructed using two different allele database files!!")
+	if(!identical(P.hyp$outputPath,D.hyp$outputPath))warning("P and D hypotheses were given two different output paths!!")
+	if(!identical(P.hyp$ethnic,D.hyp$ethnic))warning("P and D hypotheses were constructed using two different ethnic codes!!")
+	if(!identical(P.hyp$ethnic,D.hyp$ethnic))warning("P and D hypotheses were constructed using two different ethnic codes!!")
+	if(!identical(P.hyp$adj,D.hyp$adj))warning("P and D hypotheses were constructed using two different locus adjustment parameter vectors!!")
+	if(!identical(P.hyp$fst,D.hyp$fst))warning("P and D hypotheses were constructed using two different fsts!!")
+	}
+
+
+queried.vs.known <- function(path) {
+	# Reads profile from path and returns queried vs known column.
+	# Args:
+	#	path: Path to file with the profile. 
+	raw <- read.table(path, header=T, colClasses='character', row.names=1, sep=',', quote = "\"")
+	if(is.null(raw$known.queried))stop("Reference csv must contain a column 'known/queried'. This column must contain one field 'queried'. ")
+	if(sum(raw$known.queried=='queried')!=1)stop("The reference csv column 'known/queried' must contain one field 'queried'. ")
+	return(raw$known.queried == 'queried')
+	}
+
+estimate.csp <- function(refData, cspData) {
+  # Estimate how well each reference profile is represented in the CSP
+
+	nrep <- nrow(cspData)
+	# Constructs the result data frame.
+	result <- data.frame(array(0, c(nrow(refData), nrep+1)), row.names=rownames(refData))
+	colnames(result)[1:nrep] = sapply(1:nrep, function(n) {paste('Rep', n)})
+	colnames(result)[nrep+1] = 'Total' 
+  
+	# now add data.
+	for(person in row.names(refData)){
+		for(rep in 1:nrep){
+			# number of alleles in common for given person and CSP replicate, across all loci
+			represented <- c()
+			for(locus in 1:ncol(cspData)){
+				if(!is.null(cspData[rep,locus])) {
+					# figure out unique alleles in reference 
+					ref.alleles  <- unique(unlist(refData[person,locus+1]))# +1 ignores first column(queried)
+					csp.alleles <- unique(unlist(cspData[rep,locus]))
+					# figure out how many of these allele are in CSP
+					represented <- c(represented, ref.alleles %in% csp.alleles)
+					}
+				}
+			if(length(represented) > 0) 
+			result[person, rep] <- round(100*sum(represented)/length(represented))
+			}
+  		}
+	if(nrep==1)  result[, nrep+1] <- result[, nrep]
+	else         result[, nrep+1] <- round(rowSums(result)/nrep)
+   
+	# Reorders rows and return
+return(result[order(result[, nrep+1], decreasing=T), ])}
+
+estimates.reformatter <- function(genetics){
+	table <- genetics$estimates
+	extra <- data.frame(Contributor=row.names(table))
+	combined <- cbind(extra,table)
+return(combined)}
+
+summary.generator <- function(refData, cspData){
+
+	# summary table for Q and K, showing which of their alleles are replicated, unreplicated, or absent
+	table <- as.data.frame(array(,c(nrow(refData)+1,ncol(cspData))))
+	colnames(table) <- colnames(cspData)
+	row.names(table) <- c(row.names(refData),'Unattributable')
+
+	# count of unattributable alleles, to establish if they are replicated or not
+	rep.counts <- unrep.counts <- c()
+
+	# generate the results 
+	for(locus in colnames(cspData)){
+		# for unattributable alleles are rep, unrep, absent
+		cspAlleles <- unlist(cspData[,locus])
+		refAlleles <- refData[,locus][[1]]
+		unattributableAlleles <- cspAlleles[!cspAlleles%in%refAlleles]
+		table['Unattributable',locus] <- summary.helper(unattributableAlleles,cspAlleles)$string
+
+		# for unattributable alleles calculate how many are replicated /unreplicated
+		rep.counts <- c(rep.counts, summary.helper(unattributableAlleles,cspAlleles)$rep )
+		unrep.counts <- c(unrep.counts, summary.helper(unattributableAlleles,cspAlleles)$unrep )
+
+		# for each contributor calculate which alleles are rep, unrep, absent
+		for(name in row.names(refData)){
+			refAlleles <- refData[name,locus][[1]]
+			table[name,locus] <- summary.helper(refAlleles,cspAlleles)$string
+			}}	
+		
+		# reformat the counts table (c.)
+		c.rep  <- data.frame(loci=colnames(cspData), counts=rep.counts, status='replicated')
+		c.unrep <- data.frame(loci=colnames(cspData), counts=unrep.counts, status='unreplicated')
+		counts <- rbind(c.rep,c.unrep)		
+
+		summary <- list(table=table,counts=counts)
+return(summary)}
+
+summary.helper <- function(refAlleles,cspAlleles){
+	# intricate and irritating operations required to check each allele 
+	rep <- unrep <- absent <- c()
+	for(allele in unique(refAlleles)){
+		condition <- sum(cspAlleles%in%allele)
+		if(condition>1)rep <- c(rep,allele)
+		if(condition==1)unrep <- c(unrep,allele)
+		if(condition==0)absent <- c(absent,allele)
+		}
+	# then add correct parentheses etc
+	rep1 <- paste(rep,collapse=',')
+	unrep1 <- paste(unrep,collapse=',')
+	absent1 <- paste(absent,collapse=',')
+	string <- paste(rep1, '{', unrep1,'}','[', absent1,']',sep='')
+	# remove parentheses if they have nothing in them
+	string <- gsub('{}','',string,fixed=T)
+	string <- gsub('[]','',string,fixed=T)
+return(list(string=string,rep=length(rep),unrep=length(unrep)))}
+
+overall.likelihood.table.reformatter <- function(prosecutionResults,defenceResults){
+	P <- -prosecutionResults$optim$bestval
+	D <- -defenceResults$optim$bestval
+	table  <- data.frame(estimate=t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=P-D,Ratio=10^(P-D))))
+	extra <- data.frame(calculation=row.names(table))
+	combined <- cbind(extra,table)
+return(combined)}
+
+rcontConvert <- function(refIndiv,rcont){
+	# Convert rcont to full rcont (including ref individual)
+	# Parameters:
+	# 	refIndiv: reference individual specified in args
+	#	rcont: rcont parameters from do.call(optim,params)
+	if(refIndiv == 1) rcont = c(1, rcont)
+      else if(refIndiv > length(rcont)) rcont = c(rcont, 1)
+      else rcont = c(rcont[1:refIndiv-1], 1, rcont[refIndiv:length(rcont)])
+return(rcont)}
+
+calc.dropout = function(results, hypothesis){ 
+	# Calculates dropout rates for every contributor subject to dropout and for every replicate
+	# Parameters:
+	# 	hypothesis: generated by either defence.hypothesis() or  prosecution.hypothesis()
+	#	results: results from do.call(optim,params)
+
+	# Number of contributors subject to dropout + number of unknowns + 1 (dropin)
+	N <- nrow(hypothesis$dropoutProfs) + hypothesis$nUnknowns + 1
+	nrep <- nrow(hypothesis$cspProfile)
+	do <- results$optim$bestmem[grep("dropout",names(results$optim$bestmem))]
+	rcont <- results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
+	rcont <- rcontConvert(hypothesis$refIndiv,rcont)
+	BB <- results$optim$bestmem[grep("power",names(results$optim$bestmem))]
+	drout <- matrix(0,N-1,nrep)
+	if(N>1) for(x in 1:(N-1)) for(z in 1:nrep) drout[x,z] <- do[z]/(do[z]+rcont[x]^-BB*(1-do[z]))
+	return(drout)
+	}
+
+dropDeg <- function(hypothesis,results,genetics){
+	# Output tables for dropout and degradation
+	# Parameters:
+	# 	hypothesis: generated by either defence.hypothesis() or prosecution.hypothesis() 
+	#	results: results from do.call(optim,params)
+
+	dropoutsLogical <- determine.dropout(genetics$refData,genetics$cspData)
+	Qdrop <- dropoutsLogical[names(dropoutsLogical)==genetics$nameQ]
+	knownDropoutsLogical <- dropoutsLogical[names(dropoutsLogical)!=rownames(hypothesis$queriedProfile)]
+	# Number of Known contributors with No Dropout
+	Nknd <- length(which(!knownDropoutsLogical)) 
+
+	# create the row names, are arranged into the correct order: K, Q/X, U
+	names.Dropout <- names(which(knownDropoutsLogical))
+	names.NoDropout <- names(which(!knownDropoutsLogical))
+	nameK <- c(names.NoDropout,names.Dropout)	
+	Names=c()
+	if(length(nameK)>0)for (n in 1:length(nameK)) Names[n]=paste(nameK[n],' (K',n,')',sep='')
+	Names[length(c(genetics$nameQ,nameK))] = paste(genetics$nameQ,'(Q)')
+	nU <- hypothesis$nUnknowns
+	if(hypothesis$hypothesis=="defence"){
+		Names[length(c(genetics$nameQ,nameK))] = 'X' 
+		nU <- nU -1 # it already contains an extra one for X
+		}
+	if(nU>0)for(n in 1:nU)Names <- c(Names,paste('U',n,sep=''))
+
+	# column names for the table
+	runNames = c();for(rName in 1:genetics$nrep)runNames[rName]=paste('Replicate',rName)
+
+	# dropout values
+	h <- h1 <- calc.dropout(results, hypothesis)	
+	# degradation values
+	d <- d1 <- 10^results$optim$bestmem[grep("degradation",names(results$optim$bestmem))]
+	# under pros, if Q is not subject to dropout, an extra 0 needs to be added to both dropout and degradation for Q
+	if(hypothesis$hypothesis=="prosecution"){
+		if(Qdrop==F){
+			h = rbind(h[0:nrow(hypothesis$dropoutProfs),,drop=F],0)
+			d = c(d[0:nrow(hypothesis$dropoutProfs)],0)
+			if(hypothesis$nUnknowns>0){
+				h = rbind(h,h1[(nrow(hypothesis$dropoutProfs)+1):length(d1),,drop=F])
+				d = c(d,d1[(nrow(hypothesis$dropoutProfs)+1):length(d1)])
+				}
+			}
+		}
+
+	# Dropout is assumed zero for fully represented profiles, therefore suffixed on the dropout table
+	if(Nknd>0) for(n in 1:Nknd){
+		h = rbind(0,h)
+		d = c(0,d)
+		}
+	Dropout = data.frame(h,d)
+	colnames(Dropout)= c(runNames[1:genetics$nrep],'degradation')
+	row.names(Dropout) = Names
+	return(Dropout)
+	}
+
+overall.dropout.table.reformatter <- function(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults,genetics){
+	P.dropDeg <- dropDeg(prosecutionHypothesis,prosecutionResults,genetics)
+	P.extra <- data.frame(hypothesis=rep('Prosecution',nrow(P.dropDeg)),contributor=rownames(P.dropDeg))
+	P.combined <- cbind(P.extra,P.dropDeg)
+	D.dropDeg <- dropDeg(defenceHypothesis,defenceResults,genetics)
+	D.extra <- data.frame(hypothesis=rep('Defence',nrow(D.dropDeg)),contributor=rownames(D.dropDeg))
+	D.combined <- cbind(D.extra,D.dropDeg)
+	combined <- rbind(P.combined,D.combined)
+return(combined)}
+
+overall.dropin.table.reformatter <- function(prosecutionResults,defenceResults){
+	P.dropin <- prosecutionResults$optim$bestmem["dropin"]
+	D.dropin <- defenceResults$optim$bestmem["dropin"]
+	table <- data.frame(hypothesis=c('Prosecution','Defence'),dropin=c(P.dropin,D.dropin))
+return(table)}
+
+optimised.parameter.table.reformatter <- function(hypothesis,result){
+	table <- t(rbind(result$optim$bestmem,result$member$upper,result$member$lower))
+	extra <- data.frame(parameter=rownames(table))
+	combined <- cbind(extra,table)
+	colnames(combined) <- c('parameter','estimate','upper bound','lower bound')
+return(combined)}
+
+chosen.parameter.table.reformatter <- function(prosecutionHypothesis){
+	keep <- c(7,8,9,11,12,13,14,15)
+	table <- as.data.frame(unlist(prosecutionHypothesis[keep]))
+	extra <- data.frame(Parameter= rownames(table))
+	combined <- cbind(extra,table)
+	colnames(combined) <- c('Parameter','User input')
+return(combined)}
+
+ideal <- function(hypothesis,rr){
+	# Calculates idealised likelihood assuming Q is perfect match
+	# Parameters:
+	# 	hypothesis: generated by either defence.hypothesis() or prosecution.hypothesis(), although rr only makes sense under defence
+	#	rr: relatedness arguments from args
+	ideal.match <- 1
+	for(j in 1:ncol(hypothesis$cspProfile)){
+		af = hypothesis$alleleDb[j][[1]]
+		kn = hypothesis$queriedProfile[,j][[1]]
+		p1 = af[row.names(af)==kn[1],1]
+		p2 = af[row.names(af)==kn[2],1]
+		ideal.match = ideal.match/(rr[2] + rr[1]*(p1+p2)/2 + (1-sum(rr))*p1*p2*(1+(kn[1]!=kn[2])))
+		}
+	result <- data.frame(calculation =c('likelihood ratio','Log10 likelihood ratio'),estimate=c(ideal.match,log10(ideal.match)))
+	return(result)
+	}
+
+allele.report <- function(admin=NULL,file=NULL){
+
+ 	# admin: List containing administration data, as packed by pack.admin.input()
+	# file: defaults to creating its own sequential file names (to avoid overwriting)
+
+	if(is.null(admin))stop('missing argument: admin')
+
+	# create genetics information 
+	genetics <- pack.genetics.for.allele.report(admin)
+
+  	# Latex output
+	latex.maker(genetics,(paste(admin$outputPath,"/",file," table.tex",sep="")))
+
+	# Create a new Docx. We need landscape which must be adapted from an existing template (seems to inherit funny properties)
+	template.file <- file.path( find.package("likeLTD"), "extdata/landscape_template.docx" )
+	myformat = tableProperties(integer.digit=1,fraction.double.digit=0)
+
+	doc = new("Docx", basefile = template.file)
+
+	# page 1
+	doc = addParagraph( doc, value = c("Allele Report",admin$caseName), stylename = "TitleDoc" )
+	doc = addPageBreak( doc )
+
+	# page 2 contents
+	doc = addHeader(doc, "Table of content", 1);
+	doc = addTOC(doc)
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Data provided by forensic scientist", 1)
+	doc = addHeader(doc, "Crime scene profiles (CSP)", 2)
+	doc = addTable(doc, data = csp.table.reformatter(genetics), span.columns = "rep",formats = myformat)
+	doc = addHeader(doc, "Reference profiles", 2)
+	doc = addParagraph( doc, value = "{unreplicated alleles}, [absent alleles]", stylename = "Caption" )
+	doc = addTable(doc, data = reference.table.reformatter(genetics) ,formats = myformat)
+	doc = addParagraph( doc, value = "Table 2.2 above uses the 'certain' allelic designations only.", stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Summary", 1)
+	doc = addHeader(doc, "Unattributable alleles", 2)
+	doc = addPlot( doc, fun = print, x = unattributable.plot.maker(genetics) , width = 12, height = 4)
+	doc = addParagraph( doc, value = "Table 3.1 The number of 'certain' alleles that cannot be attributed to a known profile. This is intended to assist in choosing how many unknowns are required, and whether dropin is required. Suggested values are given in Table 3.4 below.", stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Unusual alleles", 2)
+	doc = addTable(doc, unusual.alleles(genetics),format=myformat)
+	doc = addHeader(doc, "Approximate representation", 2)
+	doc = addTable(doc, estimates.reformatter(genetics), format=tableProperties(integer.digit=1,fraction.double.digit=1))
+	doc = addParagraph( doc, value = "Table 3.3 The fraction of an individual's alleles (as a percentage) that have been designated as 'certain' alleles in each replicate. This estimate is not used by likeLTD, and is intended to assist informal assessments of possible known contributors to the CSP (other than the queried contributor). A more formal approach is to do a likeLTD run to compute the likelihood ratio (LR) for that individual contributor.",stylename="Normal")
+	doc = addHeader(doc, "Suggested parameter values", 2)
+	doc = addTable(doc, hypothesis.generator(genetics),format=myformat)
+	doc = addParagraph( doc, value = "Table 3.4 Recommended values for 'nUnknowns' (0,1 or 2 under the prosecution hypothesis) and 'doDropin' (TRUE or FALSE). All the attributable alleles (see Table 3.1 above) must either come from an unknown or dropin. likeLTD automatically adds and additional unknown (X) to the defence hypothesis in place of the queried profile (Q).",stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "System information", 1)
+	doc = addTable(doc,  system.info(),format=myformat)
+
+writeDoc( doc, filename.maker(admin$outputPath,file,type='allele') )}
+
+output.report <- function(prosecutionHypothesis=NULL,defenceHypothesis=NULL,prosecutionResults=NULL,defenceResults=NULL,file=NULL){
+
+ 	# prosecutionHypothesis: generated by prosecution.hypothesis()
+ 	# defenceHypothesis: generated by defence.hypothesis()
+	# prosecutionResults: results from do.call(optim, prosecutionParams)
+  	# defenceResults: results from do.call(optim, defenceParams)
+	# file: defaults to creating its own sequential file names (to avoid overwriting)
+
+	if(is.null(prosecutionResults))stop('missing argument: prosecutionResults')
+	if(is.null(defenceResults))stop('missing argument: defenceResults')
+	if(is.null(prosecutionHypothesis))stop('missing argument: prosecutionHypothesis')
+	if(is.null(defenceHypothesis))stop('missing argument: defenceHypothesis')
+
+	# create genetics information 
+	genetics <- pack.genetics.for.output.report(prosecutionHypothesis,defenceHypothesis)
+
+	# Create a new Docx. We need landscape which must be adapted from an existing template (seems to inherit funny properties)
+	template.file <- file.path( find.package("likeLTD"), "extdata/landscape_template.docx" )
+	myformat = tableProperties(integer.digit=1,fraction.double.digit=0)
+	doc = new("Docx", basefile = template.file)
+
+	# page 1
+	doc = addParagraph( doc, value = c("Statistical Evaluation report",prosecutionHypothesis$caseName), stylename = "TitleDoc" )
+	doc = addLineBreak( doc )
+	doc = addParagraph( doc, value = hyp.P(genetics), stylename = "BulletList"  )
+	doc = addParagraph( doc, value = hyp.D(genetics), stylename = "BulletList"  )
+	doc = addParagraph( doc, value = "", stylename = "TitleDoc" )
+	doc = addPageBreak( doc )
+
+	# page 2 contents
+	doc = addHeader(doc, "Table of content", 1);
+	doc = addTOC(doc)
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Data provided by forensic scientist", 1)
+	doc = addHeader(doc, "Crime scene profiles (CSP)", 2)
+	doc = addTable(doc, data = csp.table.reformatter(genetics), span.columns = "rep",formats = myformat)
+	doc = addHeader(doc, "Reference profiles", 2)
+	doc = addParagraph( doc, value = "{unreplicated alleles}, [absent alleles]", stylename = "Caption" )
+	doc = addTable(doc, data = reference.table.reformatter(genetics) ,formats = myformat)
+	doc = addParagraph( doc, value = "Table 2.2 above uses the 'certain' allelic designations only.", stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Evaluation results", 1)
+	doc = addHeader(doc, "Unattributable alleles", 2)
+	doc = addPlot( doc, fun = print, x = unattributable.plot.maker(genetics) , width = 12, height = 4)
+	doc = addParagraph( doc, value = "Table 3.1 above uses the 'certain' allelic designations to estimate how many alleles cannot be attributed to a known profile. See the Allele report for further details.", stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "Unusual alleles", 2)
+	doc = addTable(doc, unusual.alleles(genetics),format=myformat)
+	doc = addHeader(doc, "Approximate representation", 2)
+	doc = addTable(doc, estimates.reformatter(genetics), format=tableProperties(integer.digit=1,fraction.double.digit=1))
+	doc = addHeader(doc, "Likelihoods at each locus", 2)
+	doc = addTable(doc, data = local.likelihood.table.reformatter(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,
+		formats = tableProperties(integer.digit=1,fraction.double.digit=2))
+	doc = addHeader(doc, "Overall Likelihood", 2)
+	doc = addTable(doc, data = overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,
+		formats = tableProperties(integer.digit=1,fraction.double.digit=2))
+	doc = addHeader(doc, "Theoretical maximum LR", 2)
+	doc = addTable(doc, data = ideal(defenceHypothesis,defenceHypothesis$relatedness) ,
+		formats = tableProperties(integer.digit=1,fraction.double.digit=2))
+
+	doc = addHeader(doc, "Dropout and degradation parameter estimates", 2)
+	doc = addTable(doc, data = overall.dropout.table.reformatter(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults,genetics) ,
+		span.columns = "hypothesis", formats = tableProperties(integer.digit=1,fraction.double.digit=3))
+	doc = addHeader(doc, "Dropin parameter estimates", 2)
+	doc = addTable(doc, data = overall.dropin.table.reformatter(prosecutionResults,defenceResults) ,
+		formats = tableProperties(integer.digit=1,fraction.double.digit=4))
+	doc = addParagraph( doc, value = "NA indicates no dropout was modelled.", stylename="Normal")
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "User defined parameters", 2)
+	doc = addTable(doc, data = chosen.parameter.table.reformatter(prosecutionHypothesis), formats = myformat)
+	
+	doc = addHeader(doc, "Optimised parameters", 2)
+	doc = addHeader(doc, "Prosecution parameters", 3)
+	doc = addTable(doc, data = optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults),
+		formats = tableProperties(integer.digit=1,fraction.double.digit=3))
+	doc = addHeader(doc, "Defence parameters", 3)
+	doc = addTable(doc, data = optimised.parameter.table.reformatter(defenceHypothesis,defenceResults),
+		formats = tableProperties(integer.digit=1,fraction.double.digit=3))
+	doc = addPageBreak( doc )
+
+	doc = addHeader(doc, "System information", 1)
+	doc = addTable(doc,  system.info(),format=myformat)
+
+writeDoc( doc, filename.maker(prosecutionHypothesis$outputPath,file,type='results') )}
+
+
