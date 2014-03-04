@@ -131,9 +131,11 @@ load.allele.database <- function(path=NULL) {
 
 
 unattributable.plot.maker <- function(genetics){
-	plot <- ggplot(genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
-		geom_bar(stat='identity')+
-		scale_fill_grey()
+    with(genetics$summary$counts,
+	    plot <- ggplot(data=genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
+		    geom_bar(stat='identity')+
+		    scale_fill_grey()
+		)
 return(plot)}
 
 table.collapser <- function(table){
