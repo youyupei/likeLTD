@@ -6,7 +6,7 @@
 # however, these packages are not available on the CRAN (yet?), so instead we have removed them from the 
 # 'Depends' list in 'DESCRIPTION', and instead coded their installation here:
 if(!require(R2DOCX)){
-	install.packages("devtools",repos="http://cran.ma.imperial.ac.uk/")
+	install.packages(c("devtools","rJava"),repos="http://cran.ma.imperial.ac.uk/")
 	devtools::install_github('R2DOC', 'davidgohel') # installs from the github
 	devtools::install_github('R2DOCX', 'davidgohel')  # installs from the github
 	Sys.setenv(NOAWT=1) #prevents usage of awt - required on Mac
