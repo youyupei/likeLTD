@@ -5,12 +5,16 @@
 # this new script (specifically the allele.report() and outpout.report() functions are dependent on R2DOC and R2DOCX
 # however, these packages are not available on the CRAN (yet?), so instead we have removed them from the 
 # 'Depends' list in 'DESCRIPTION', and instead coded their installation here:
-if(!require(R2DOCX)){
-	install.packages(c("devtools","rJava"),repos="http://cran.ma.imperial.ac.uk/")
-	devtools::install_github('R2DOC', 'davidgohel') # installs from the github
+if(!require(R2DOCX))
+    {
 	devtools::install_github('R2DOCX', 'davidgohel')  # installs from the github
 	Sys.setenv(NOAWT=1) #prevents usage of awt - required on Mac
 	}
+if(!require(R2DOC))
+    {
+    devtools::install_github('R2DOC', 'davidgohel') # installs from the github
+    Sys.setenv(NOAWT=1) #prevents usage of awt - required on Mac
+    }
 
 #------------------------------------------
 latex.cleaner <- function(text){
