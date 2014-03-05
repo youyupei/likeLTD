@@ -3,8 +3,9 @@ Title: Tools to determine DNA profile evidence.
 Description: Tools to determine DNA profile Weight of Evidence. 
             For further information see the likeLTD guide at the URL provided, 
             or the paper under citation. 
-Depends: R (>= 2.10), gtools, gdata, tools, DEoptim, ggplot2, devtools, rJava
+Depends: R (>= 2.10), DEoptim, ggplot2, gtools
 Suggests: svUnit, scales, gplots, R2DOC, R2DOCX
+Imports: gdata, tools, devtools, rJava
 Version: 5.2.1
 Date: 2013-01-15
 Author: David Balding, Adrian Timpson, Christopher Steele, Mayeul d'Avezac, James Hetherington.
