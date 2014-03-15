@@ -1,7 +1,7 @@
 \name{allele.report} 
 \alias{allele.report} 
 \title{likeLTD::allele.report} 
-\usage{allele.report(admin=NULL,file=NULL)}
+\usage{allele.report(admin,file=NULL)}
 \arguments{
   \item{admin}{List containing administration data, as packed by pack.admin.input()}
   \item{file}{A file name for the allele report. By default a sequential filename is created to avoid accidental overwriting.}
