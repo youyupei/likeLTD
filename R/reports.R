@@ -134,11 +134,12 @@ load.allele.database <- function(path=NULL) {
 
 #--------------------------------------------------------------------------------------------------------------------
 unattributable.plot.maker <- function(genetics){
-    with(genetics$summary$counts,
+
+#	with(genetics$summary$counts,
 	    plot <- ggplot(data=genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
 		    geom_bar(stat='identity')+
 		    scale_fill_grey()
-		)
+#		)
 return(plot)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -268,14 +269,20 @@ system.info <- function(){
 return(all)}
 
 #--------------------------------------------------------------------------------------------------------------------
-filename.maker <- function(outputPath,file,type=NULL){
+filename.maker <- function(outputPath,caseName,filename,type=NULL){
 	# type: report type, one of 'allele' or 'results'
-	if(is.null(file)){ 
-		if(is.null(type)) title <- 'Report' # shouldn't remain as NULL, but just incase
-		if(type=='allele')title <- 'Allele Report'
-		if(type=='results')title <- 'DNA profile evaluation report'
+
+	# construct title 
+	if(is.null(type)) title <- 'Report' # shouldn't be possible to remain as NULL, but just incase
+	if(type=='allele')title <- 'Allele Report'
+	if(type=='results')title <- 'DNA profile evaluation report'
+
+	# assign a filename, if NULL was handed down
+	if(is.null(filename)){
 		n <- 1
 		filename <- file.path(outputPath,paste(title,n,'doc',sep='.'))
+	
+		# prevent overwriting
 		while(file.exists(filename)){
 			n <- n + 1
 			filename <- file.path(outputPath,paste(title,n,'doc',sep='.'))
@@ -694,7 +701,9 @@ common.report.section <- function(names,genetics){
 
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Unattributable alleles", TOC.level=2, font.size=fs2)
-	addPlot( doc, plot.fun = print, x = unattributable.plot.maker(genetics) , width = 10, height = 3.5)
+	plot.function <- unattributable.plot.maker(genetics)
+	addPlot( doc, plot.fun = print, width = 10, height = 3.5, x = plot.function )
+
 	addParagraph( doc, "The number of 'certain' alleles that cannot be attributed to a known profile.")
 	spacer(doc,3)
 
@@ -718,11 +727,11 @@ allele.report <- function(admin,file=NULL){
 
 	# create genetics information
 	genetics <- pack.genetics.for.allele.report(admin)
- 	
-	# Latex output
-	latex.maker(genetics,(paste(admin$outputPath,"/",file," table.tex",sep="")))
 
-	names <- filename.maker(admin$outputPath,file,type='allele')
+	# Latex output
+	latex.maker(genetics, file.path(admin$outputPath,'table.tex')  )
+
+	names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
 	names$subtitle <- admin$caseName
 
 	doc <- common.report.section(names,genetics)
@@ -751,7 +760,7 @@ output.report <- function(prosecutionHypothesis,defenceHypothesis,prosecutionRes
 
 	# create genetics information 
 	genetics <- pack.genetics.for.output.report(prosecutionHypothesis,defenceHypothesis)
-	names <- filename.maker(prosecutionHypothesis$outputPath,file,type='results')
+	names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
 	names$subtitle <- prosecutionHypothesis$caseName
 
 	doc <- common.report.section(names,genetics)
