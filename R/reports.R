@@ -19,6 +19,7 @@ rounder <- function(x,n){
 	# deals with three repetitive issues (that are more insipid than might be expected! :
 	# numerics are best converted to text, to prevent MS Word from formatting them
 	# rounding
+
 	# rounding a number with a few zeros results in 0 when we actually want 0.00 
 	if(is.numeric(x))x <- round(x,n) # method for vectors
 	if(is.data.frame(x)){	# method for data.frames, each column at a time
@@ -37,8 +38,11 @@ latex.table.header <- function(genetics){
 	# helper function for latex.maker()
 	N <- ncol(genetics$summary$table$latex)+1
 	text <- c('
+	\\documentclass{article}\n
+	\\usepackage{rotating}\n
+	\\begin{document}\n
 	\\begin{sidewaystable}[p]\n
-	%\\setcounter{table}{1}
+	%\\setcounter{table}{1}\n
 	',
 	paste('\\begin{center}\\begin{tabular}{|',paste(rep('c|',N),collapse=''),'}\\hline',sep=''),
 	paste('&',paste(names(genetics$summary$table$latex),collapse='&'),'\\\\\\hline',sep=''),
@@ -57,7 +61,7 @@ csp.table.to.latex <- function(genetics){
 		table <- rbind(table,table.unc[n,])
 		}
 	colnames(table) <- colnames(genetics$cspData)
-	row.names(table) <- rep(c('csp','unc'),genetics$nrep)
+	row.names(table) <- rep(c('alleles','uncertain'),genetics$nrep)
 	text = c()
 	N.col <- ncol(table)
 	N.row <- nrow(table)
@@ -77,24 +81,38 @@ ref.table.to.latex <- function(genetics){
 	# helper function for latex.maker()
 	# table: Reference table, from genetics$summary$table$latex
 	table <- genetics$summary$table$latex
-	text = paste('\\multicolumn{',ncol(table)+1,'}{|l|}{SUMMARY:}\\\\\\hline',sep='')
+	text = paste('\\multicolumn{',ncol(table)+1,'}{|l|}{Summary:}\\\\\\hline',sep='')
 	for(row in 1:nrow(table)){
 		text=c(text,paste(paste(row.names(table)[row],paste(table[row,],collapse='&'),sep='&'),'\\\\\\hline',sep=''))
 		}
 return(text)}
 
+#--------------------------------------------------------------------------------------------------------------------
+latex.table.footer <- function(){
+	# helper function for latex.maker()
+	text <- c('
+	\n
+	\\end{tabular}\n
+	\\caption{Alleles that are \\bf replicated \\rm unreplicated and \\it absent \\rm in the crime scene profile}\n
+	\\end{center}\n
+	\\end{sidewaystable}\n
+	\\end{document}\n
+	')
+return(text)}
+
+#--------------------------------------------------------------------------------------------------------------------	
 latex.maker <- function(genetics,filename){
 # table1: CSP table produced by allele.table() 
 # table2: Reference table, from genetics$summary$table$latex
 	text.1 <- latex.table.header(genetics)
 	text.2 <- csp.table.to.latex(genetics)
 	text.3 <- ref.table.to.latex(genetics)
-	text <- c(text.1,text.2,text.3)
+	text.4 <- latex.table.footer()
+	text <- c(text.1,text.2,text.3,text.4)
 
 	file <- file(filename)
 	writeLines(text,file)
-	close(file)
-	}
+	close(file)}
 
 #--------------------------------------------------------------------------------------------------------------------
 pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, outputPath=getwd() ) {
@@ -135,11 +153,10 @@ load.allele.database <- function(path=NULL) {
 #--------------------------------------------------------------------------------------------------------------------
 unattributable.plot.maker <- function(genetics){
 
-#	with(genetics$summary$counts,
-	    plot <- ggplot(data=genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
-		    geom_bar(stat='identity')+
-		    scale_fill_grey()
-#		)
+	loci <- counts <- status <- NULL
+	plot <- ggplot(data=genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
+		 geom_bar(stat='identity')+
+		scale_fill_grey()	
 return(plot)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -506,8 +523,12 @@ summary.helper <- function(refAlleles,cspAlleles){
 
 	# separate by commas, and apply latex, such that replicated=bold, and unreplicated=italic
 	if(!is.null(rep.latex))rep.latex <- paste('{\\bf',paste(rep.latex,collapse=','),'}',sep='')
-	if(!is.null(unrep.latex))unrep.latex <- paste('{\\em',paste(unrep.latex,collapse=','),'}',sep='')
-	if(!is.null(absent.latex))absent.latex <- paste('{\\fx',paste(absent.latex,collapse=','),'}',sep='')
+	# previous key was italic(actually 'emphasis') for unreplicated, a box (fx) for absent
+	#if(!is.null(unrep.latex))unrep.latex <- paste('{\\em',paste(unrep.latex,collapse=','),'}',sep='')
+	#if(!is.null(absent.latex))absent.latex <- paste('{\\fx',paste(absent.latex,collapse=','),'}',sep='')
+	# new assignments are consistent with rtf reports
+	#if(!is.null(unrep.latex))unrep.latex <- paste('{\\rm',paste(unrep.latex,collapse=','),'}',sep='')
+	#if(!is.null(absent.latex))absent.latex <- paste('{\\it',paste(absent.latex,collapse=','),'}',sep='')
 	latex <- paste(c(rep.latex,unrep.latex,absent.latex),collapse=',')
 
 return(list(rtf=rtf,latex=latex,rep=length(rep),unrep=length(unrep)))}
