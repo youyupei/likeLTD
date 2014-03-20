@@ -310,13 +310,15 @@ return(list(filename=filename,title=title))}
 #--------------------------------------------------------------------------------------------------------------------
 hyp.P <- function(genetics){
 	Q <- paste(genetics$nameQ,'(Q)') 
-	HP <- paste('Prosecution Hypothesis:',paste(c(Q,genetics$nameK),collapse=' + ')  )
+	U <- paste(genetics$P.hyp$nUnknowns,'U',sep='')
+	HP <- paste('Prosecution Hypothesis:',paste(c(Q,genetics$nameK,U),collapse=' + ')  )
 	if(is.null(genetics$nameK))HP <- NULL # genetics object is different for allele report or final report
 return(HP)}
 
 hyp.D <- function(genetics){
 	X <- 'Unknown (X)'
-	HD <- paste('Defence Hypothesis:',paste(c(X,genetics$nameK),sep=' + ') )
+	U <- paste(genetics$D.hyp$nUnknowns-1,'U',sep='')
+	HD <- paste('Defence Hypothesis:',paste(c(X,genetics$nameK,U),collapse=' + ') )
 	if(is.null(genetics$nameK))HD <- NULL # genetics object is different for allele report or final report
 return(HD)}
 
@@ -376,6 +378,7 @@ pack.genetics.for.output.report <- function(P.hyp,D.hyp){
 	QvK <- queried.vs.known(P.hyp$refFile)
 	nameQ <- row.names(refData)[QvK]
 	nameK <- row.names(refData)[!QvK]
+
 	output.report.genetics <- list( 
 	cspData = cspData, 
 	uncData = uncData,
