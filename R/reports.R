@@ -229,7 +229,7 @@ csp.table.reformatter <- function(genetics){
 		table <- rbind(table,table.unc[n,])
 		}
 	colnames(table) <- colnames(genetics$cspData)
-	extra <- data.frame(rep=rep(1:genetics$nrep,each=2),status=rep(c("certain","uncertain"),genetics$nrep))
+	extra <- data.frame(run=rep(1:genetics$nrep,each=2),status=rep(c("certain","uncertain"),genetics$nrep))
 	combined <- cbind(extra,table)
 return(combined)}
 
@@ -262,6 +262,7 @@ hypothesis.generator <- function(genetics){
 	unknowns <- minU:maxU
 	N <- length(unknowns)
 	dropins <- numeric(N)
+	dropins.logic <- character(N)
 	recommendation <- character(N)
 	for(n in 1:N){
 		dropins[n] <- sum(pmax(0,rep+unrep-2*unknowns[n]))
@@ -269,8 +270,10 @@ hypothesis.generator <- function(genetics){
 		if(dropins[n]==3)recommendation[n]<- "worth considering"
 		if(unknowns[n]==3)recommendation[n]<-"Can only be evaluated by removing the additional U from defence"
 		if(unknowns[n]>3)recommendation[n]<-"Too many U's to evaluate"
+		if(dropins[n]==0)dropins.logic <- 'F'
+		if(dropins[n]>0)dropins.logic <- 'T'
 		}
-	result <- data.frame(nUnknowns=unknowns, doDropin=dropins, Recommendation=recommendation)
+	result <- data.frame(nUnknowns=unknowns, doDropin=dropins.logic, Recommendation=recommendation)
 return(result)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -446,10 +449,10 @@ estimate.csp <- function(refData, cspData) {
 			}
   		}
 	if(nrep==1)  result[, nrep+1] <- result[, nrep]
-	else         result[, nrep+1] <- round.1(rowSums(result)/nrep)
+	else         result[, nrep+1] <- round.0(rowSums(result)/nrep)
    
 	# Reorders rows 
-	result <- round.1(result[order(result[, nrep+1], decreasing=T), ])
+	result <- round.0(result[order(result[, nrep+1], decreasing=T), ])
 return(result)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -518,20 +521,18 @@ summary.helper <- function(refAlleles,cspAlleles){
 	unrep.rtf <- unrep.latex <- unrep
 	absent.rtf <- absent.latex <- absent
 	
-	# separate by commas, and apply rtf, such that replicated=bold, and unreplicated=italic
+	# separate by commas, and apply latex, such that replicated=bold, and unreplicated=italic, absent=box
+
+	# rtf
 	if(!is.null(rep.rtf))rep.rtf <- paste('{\\b ',paste(rep.rtf,collapse=','),'}',sep='')
-	if(!is.null(unrep.rtf))unrep.rtf <- paste(unrep.rtf,collapse=',')
-	if(!is.null(absent.rtf))absent.rtf <- paste('{\\i ',paste(absent.rtf,collapse=','),'}',sep='')
+	if(!is.null(unrep.rtf))unrep.rtf <- paste('{\\i ',paste(absent.rtf,collapse=','),'}',sep='')
+	if(!is.null(absent.rtf))absent.rtf <- paste('{\\chbrdr\\brdrs\\brdrw10\\brsp20\\brdrcf3 ',paste(absent.rtf,collapse=','),'}',sep='')
 	rtf <- paste(c(rep.rtf,unrep.rtf,absent.rtf),collapse=',')
 
-	# separate by commas, and apply latex, such that replicated=bold, and unreplicated=italic
+	# latex
 	if(!is.null(rep.latex))rep.latex <- paste('{\\bf',paste(rep.latex,collapse=','),'}',sep='')
-	# previous key was italic(actually 'emphasis') for unreplicated, a box (fx) for absent
-	#if(!is.null(unrep.latex))unrep.latex <- paste('{\\em',paste(unrep.latex,collapse=','),'}',sep='')
-	#if(!is.null(absent.latex))absent.latex <- paste('{\\fx',paste(absent.latex,collapse=','),'}',sep='')
-	# new assignments are consistent with rtf reports
-	#if(!is.null(unrep.latex))unrep.latex <- paste('{\\rm',paste(unrep.latex,collapse=','),'}',sep='')
-	#if(!is.null(absent.latex))absent.latex <- paste('{\\it',paste(absent.latex,collapse=','),'}',sep='')
+	if(!is.null(unrep.latex))unrep.latex <- paste('{\\it',paste(unrep.latex,collapse=','),'}',sep='')
+	if(!is.null(absent.latex))absent.latex <- paste('{\\fx',paste(absent.latex,collapse=','),'}',sep='')
 	latex <- paste(c(rep.latex,unrep.latex,absent.latex),collapse=',')
 
 return(list(rtf=rtf,latex=latex,rep=length(rep),unrep=length(unrep)))}
@@ -603,7 +604,7 @@ dropDeg <- function(hypothesis,results,genetics){
 	if(nU>0)for(n in 1:nU)Names <- c(Names,paste('U',n,sep=''))
 
 	# column names for the table
-	runNames = c();for(rName in 1:genetics$nrep)runNames[rName]=paste('Dropout',paste('(Rep ',rName,')',sep=''))
+	runNames = c();for(rName in 1:genetics$nrep)runNames[rName]=paste('Dropout',paste('(Run ',rName,')',sep=''))
 
 	# dropout values
 	h <- h1 <- round.3(calc.dropout(results, hypothesis))	
@@ -690,7 +691,8 @@ spacer <- function(doc,n=1) for(x in 1:n)addNewLine(doc) # adds blank lines
 fs0 <- 26 # font size for header (main)
 fs1 <- 20 # font size for header (sub1)
 fs2 <- 15 # font size for header (sub2)
-
+fs3 <- 10 # for all other standard text
+fs4 <- 8 # needs to be tiny for the first page, as tables will need 16 loci
 #--------------------------------------------------------------------------------------------------------------------
 common.report.section <- function(names,genetics){
 	# objects common to both the allele report and the final output report are done once here, for consistency, and saves repeating code
@@ -707,32 +709,32 @@ common.report.section <- function(names,genetics){
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 
 	addTOC(doc)
-	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1),font.size=fs4 )
 
 	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
-	addTable(doc, csp.table.reformatter(genetics),col.justify='C', header.col.justify='C',font.size=8)
+	addTable(doc, csp.table.reformatter(genetics),col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
-	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C',font.size=8)
+	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C')
 	spacer(doc,1)
 	addParagraph( doc, "Assessed using the 'certain' allelic designations only." )
 	addParagraph(doc, "{\\b replicated alleles}" )
-	addParagraph(doc, "unreplicated alleles" )
-	addParagraph(doc, "{\\i absent alleles}" )
-	addPageBreak( doc, width=11,height=8.5,omi=c(1,1,1,1))
+	addParagraph(doc, "{\\i unreplicated alleles}" )
+	addParagraph(doc, "{\\chbrdr\\brdrs\\brdrw10\\brsp20\\brdrcf3 absent alleles}" )
+	addPageBreak( doc, width=11,height=8.5,omi=c(1,1,1,1),font.size=fs3)
 
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Unattributable alleles", TOC.level=2, font.size=fs2)
 	plot.function <- unattributable.plot.maker(genetics)
-	addPlot( doc, plot.fun = print, width = 10, height = 3.5, x = plot.function )
-
+	addPlot( doc, plot.fun = print, width = 9, height = 2.8, x = plot.function )
 	addParagraph( doc, "The number of 'certain' alleles that cannot be attributed to a known profile.")
 	spacer(doc,3)
 
 	addHeader(doc, "Unusual alleles", TOC.level=2, font.size=fs2 )
 	addTable(doc, unusual.alleles(genetics), col.justify='C', header.col.justify='C')
+	addParagraph( doc, "Alleles are automatically checked against the database. An error will be reported if an allele is absent from the database, or present more than once, or if a locus is absent.")
 	spacer(doc,3)
 
 	addHeader(doc, "Approximate representation", TOC.level=2, font.size=fs2)
