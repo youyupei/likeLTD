@@ -290,19 +290,19 @@ filename.maker <- function(outputPath,caseName,filename,type=NULL){
 	# type: report type, one of 'allele' or 'results'
 
 	# construct title 
-	if(is.null(type)) title <- 'Report' # shouldn't be possible to remain as NULL, but just incase
-	if(type=='allele')title <- 'Allele Report'
-	if(type=='results')title <- 'DNA profile evaluation report'
+	if(is.null(type)) title <- 'Report-' # shouldn't be possible to remain as NULL, but just incase
+	if(type=='allele')title <- 'Allele-Report-'
+	if(type=='results')title <- 'DNA-profile-evaluation-report-'
 
 	# assign a filename, if NULL was handed down
 	if(is.null(filename)){
 		n <- 1
-		filename <- file.path(outputPath,paste(title,n,'doc',sep='.'))
+		filename <- file.path(outputPath,paste(title,n,'.doc',sep=''))
 	
 		# prevent overwriting
 		while(file.exists(filename)){
 			n <- n + 1
-			filename <- file.path(outputPath,paste(title,n,'doc',sep='.'))
+			filename <- file.path(outputPath,paste(title,n,'.doc',sep=''))
 			}
 		}
 return(list(filename=filename,title=title))}
