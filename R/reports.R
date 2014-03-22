@@ -93,7 +93,7 @@ latex.table.footer <- function(){
 	text <- c('
 	\n
 	\\end{tabular}\n
-	\\caption{Alleles that are \\bf replicated \\rm unreplicated and \\it absent \\rm in the crime scene profile}\n
+	\\caption{Alleles that are \\textbf{replicated} \\textit{unreplicated} and \\fbox{absent} in the crime scene profile}\n
 	\\end{center}\n
 	\\end{sidewaystable}\n
 	\\end{document}\n
@@ -216,7 +216,7 @@ unusual.alleles <- function(genetics){
 	t3.tmp <- unusual.alleles.per.table(genetics$uncData,genetics$afreq)
 	t3 <- cbind(data.frame(source=rep('Crime scene uncertain',nrow(t3.tmp))),t3.tmp)
 	table <- rbind(t1,t2,t3)
-	if(nrow(table)==0)table <- data.frame(status='No unusual alleles present')
+	if(nrow(table)==0)table <- data.frame(status='no unusual alleles present')
 return(table)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -266,13 +266,12 @@ hypothesis.generator <- function(genetics){
 	recommendation <- character(N)
 	for(n in 1:N){
 		dropins[n] <- sum(pmax(0,rep+unrep-2*unknowns[n]))
-		if(dropins[n]<=2)recommendation[n]<-"strongly recommended"
+		if(dropins[n]<=2)recommendation[n]<-"recommended"
 		if(dropins[n]==3)recommendation[n]<- "worth considering"
 		if(unknowns[n]==3)recommendation[n]<-"Can only be evaluated by removing the additional U from defence"
 		if(unknowns[n]>3)recommendation[n]<-"Too many U's to evaluate"
-		if(dropins[n]==0)dropins.logic <- 'F'
-		if(dropins[n]>0)dropins.logic <- 'T'
 		}
+	dropins.logic <- as.character(dropins!=0)
 	result <- data.frame(nUnknowns=unknowns, doDropin=dropins.logic, Recommendation=recommendation)
 return(result)}
 
@@ -515,27 +514,49 @@ summary.helper <- function(refAlleles,cspAlleles){
 		if(condition==1)unrep <- c(unrep,allele)
 		if(condition==0)absent <- c(absent,allele)
 		}
-
-	# copy objects to avoid cascading changes
-	rep.rtf <- rep.latex <- rep
-	unrep.rtf <- unrep.latex <- unrep
-	absent.rtf <- absent.latex <- absent
 	
-	# separate by commas, and apply latex, such that replicated=bold, and unreplicated=italic, absent=box
+	# separate by commas, add escape functions such that replicated=bold, and unreplicated=italic, absent=box (underline in rtf)
+	# different codes for rtf and latex
+	rep.rtf <- rep.latex <- unrep.rtf <- unrep.latex <- absent.rtf <- absent.latex <- NULL
 
-	# rtf
-	if(!is.null(rep.rtf))rep.rtf <- paste('{\\b ',paste(rep.rtf,collapse=','),'}',sep='')
-	if(!is.null(unrep.rtf))unrep.rtf <- paste('{\\i ',paste(absent.rtf,collapse=','),'}',sep='')
-	if(!is.null(absent.rtf))absent.rtf <- paste('{\\chbrdr\\brdrs\\brdrw10\\brsp20\\brdrcf3 ',paste(absent.rtf,collapse=','),'}',sep='')
+	if(!is.null(rep)){
+		rep.rtf <- paste('\\B',paste(rep,collapse=','),'}',sep='')
+		rep.latex <- paste('\\textbf{',paste(rep,collapse=','),'}',sep='')
+		}
+	if(!is.null(unrep)){
+		unrep.rtf <- paste('\\I',paste(unrep,collapse=','),'}',sep='')
+		unrep.latex <- paste('\\textit{',paste(unrep,collapse=','),'}',sep='')
+		}
+	if(!is.null(absent)){
+		absent.rtf <- paste('\\X',paste(absent,collapse=','),'}',sep='')
+		absent.latex <- paste('\\fbox{',paste(absent,collapse=','),'}',sep='')
+		}
+
 	rtf <- paste(c(rep.rtf,unrep.rtf,absent.rtf),collapse=',')
-
-	# latex
-	if(!is.null(rep.latex))rep.latex <- paste('{\\bf',paste(rep.latex,collapse=','),'}',sep='')
-	if(!is.null(unrep.latex))unrep.latex <- paste('{\\it',paste(unrep.latex,collapse=','),'}',sep='')
-	if(!is.null(absent.latex))absent.latex <- paste('{\\fx',paste(absent.latex,collapse=','),'}',sep='')
 	latex <- paste(c(rep.latex,unrep.latex,absent.latex),collapse=',')
 
 return(list(rtf=rtf,latex=latex,rep=length(rep),unrep=length(unrep)))}
+
+#--------------------------------------------------------------------------------------------------------------------
+rtf.formater <- function(file){
+	# Think of this function as a debugger for the rtf functions.
+	# 1. 'TRUE' and 'FALSE' are irritatingly converted into 'Yes' and 'No'
+	# 2. the addTable() function in package rtf uses the text length to choose the column width. This means that the 
+	# additional escape characters to encode bold or italic or boxes causes havoc, making those columns too wide.
+	# This inelegant solution uses my own invented escape characters \B for bold, \I for italic and \X for box, 
+	# to keep the extra text to a minimum. This function then converts to the correct rtf coding AFTER the document is created.
+	# note the additional '\' is required in R to escape the '\' in rtf
+	data <- readLines(file)
+	for(n in 1:length(data)){
+		line <- data[n]
+		line <- gsub('\\B','{\\b ',line,fixed=T)
+		line <- gsub('\\I','{\\i ',line,fixed=T)
+		line <- gsub('\\X','{\\chbrdr\\brdrs ',line,fixed=T)
+		line <- gsub('Yes','TRUE',line,fixed=T)
+		line <- gsub('No','FALSE',line,fixed=T)
+		data[n] <- line
+		}
+	write(data,file=file)}
 
 #--------------------------------------------------------------------------------------------------------------------
 overall.likelihood.table.reformatter <- function(prosecutionResults,defenceResults){
@@ -691,8 +712,7 @@ spacer <- function(doc,n=1) for(x in 1:n)addNewLine(doc) # adds blank lines
 fs0 <- 26 # font size for header (main)
 fs1 <- 20 # font size for header (sub1)
 fs2 <- 15 # font size for header (sub2)
-fs3 <- 10 # for all other standard text
-fs4 <- 8 # needs to be tiny for the first page, as tables will need 16 loci
+
 #--------------------------------------------------------------------------------------------------------------------
 common.report.section <- function(names,genetics){
 	# objects common to both the allele report and the final output report are done once here, for consistency, and saves repeating code
@@ -709,7 +729,7 @@ common.report.section <- function(names,genetics){
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 
 	addTOC(doc)
-	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1),font.size=fs4 )
+	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 
 	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
@@ -719,11 +739,8 @@ common.report.section <- function(names,genetics){
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
 	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C')
 	spacer(doc,1)
-	addParagraph( doc, "Assessed using the 'certain' allelic designations only." )
-	addParagraph(doc, "{\\b replicated alleles}" )
-	addParagraph(doc, "{\\i unreplicated alleles}" )
-	addParagraph(doc, "{\\chbrdr\\brdrs\\brdrw10\\brsp20\\brdrcf3 absent alleles}" )
-	addPageBreak( doc, width=11,height=8.5,omi=c(1,1,1,1),font.size=fs3)
+	addParagraph(doc, "Alleles that are \\Breplicated}, \\Iunreplicated} or \\Xabsent} in the crime scene profile, using the allelic designations only." ) # will use rtf.formater() to convert '\\B','\\I' and '\\X' into rtf encoding
+	spacer(doc,3)
 
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Unattributable alleles", TOC.level=2, font.size=fs2)
@@ -734,6 +751,7 @@ common.report.section <- function(names,genetics){
 
 	addHeader(doc, "Unusual alleles", TOC.level=2, font.size=fs2 )
 	addTable(doc, unusual.alleles(genetics), col.justify='C', header.col.justify='C')
+	spacer(doc,1)
 	addParagraph( doc, "Alleles are automatically checked against the database. An error will be reported if an allele is absent from the database, or present more than once, or if a locus is absent.")
 	spacer(doc,3)
 
@@ -766,14 +784,16 @@ allele.report <- function(admin,file=NULL){
 	addTable(doc, hypothesis.generator(genetics), col.justify='C', header.col.justify='C')
 	spacer(doc,1)
 	addParagraph( doc, "Recommended values for 'nUnknowns', choose from 0,1 or 2 (likeLTD automatically adds and additional unknown X to the defence hypothesis in place of the queried profile Q).")
-	addParagraph( doc, "Recommended values for 'doDropin', choose from T or F.")
+	addParagraph( doc, "Recommended values for 'doDropin', choose from 'TRUE' or 'FALSE'.")
 	addParagraph( doc, "All the attributable alleles must either come from an unknown or dropin.")
 	spacer(doc,3)
 
 	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
 	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
 
-done(doc)}
+done(doc)
+rtf.formater(names$filename)
+}
 
 #--------------------------------------------------------------------------------------------------------------------
 output.report <- function(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults,file=NULL){
@@ -827,7 +847,9 @@ output.report <- function(prosecutionHypothesis,defenceHypothesis,prosecutionRes
 	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
 	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
 
-done(doc)}
+done(doc)
+rtf.formater(names$filename)	
+}
 #--------------------------------------------------------------------------------------------------------------------
 
 
