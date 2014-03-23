@@ -229,7 +229,7 @@ csp.table.reformatter <- function(genetics){
 		table <- rbind(table,table.unc[n,])
 		}
 	colnames(table) <- colnames(genetics$cspData)
-	extra <- data.frame(run=rep(1:genetics$nrep,each=2),status=rep(c("certain","uncertain"),genetics$nrep))
+	extra <- data.frame(run=c(rbind(1:genetics$nrep,rep(NA,genetics$nrep))),status=rep(c("certain","uncertain"),genetics$nrep))
 	combined <- cbind(extra,table)
 return(combined)}
 
@@ -739,14 +739,14 @@ common.report.section <- function(names,genetics){
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
 	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C')
 	spacer(doc,1)
-	addParagraph(doc, "Alleles that are \\Breplicated}, \\Iunreplicated} or \\Xabsent} in the crime scene profile, using the allelic designations only." ) # will use rtf.formater() to convert '\\B','\\I' and '\\X' into rtf encoding
+	addParagraph(doc, "Alleles that are \\Breplicated}, \\Iunreplicated} or \\Xabsent} in the crime scene profile, using the certain designations only." ) # will use rtf.formater() to convert '\\B','\\I' and '\\X' into rtf encoding
 	spacer(doc,3)
 
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Unattributable alleles", TOC.level=2, font.size=fs2)
 	plot.function <- unattributable.plot.maker(genetics)
 	addPlot( doc, plot.fun = print, width = 9, height = 2.8, x = plot.function )
-	addParagraph( doc, "The number of 'certain' alleles that cannot be attributed to a known profile.")
+	addParagraph( doc, "The number of 'certain' alleles that cannot be attributed to the known profile(s).")
 	spacer(doc,3)
 
 	addHeader(doc, "Unusual alleles", TOC.level=2, font.size=fs2 )
