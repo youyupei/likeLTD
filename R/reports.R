@@ -181,7 +181,7 @@ unusual.alleles.per.table <- function(table,afreq){
 		{
 		if(!locus%in%afreq$Marker)
 			{ # check the loci are even in the database
-			frame <- matrix(c(locus,NA,rep(NA,times=length(pop),"Entire locus missing from database")),ncol=3+length(pops))
+			frame <- matrix(c(locus,NA,rep(NA,times=length(pops),"Entire locus missing from database")),ncol=3+length(pops))
 			colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
 		        rare <- rbind(rare, frame)
 			}
@@ -212,13 +212,13 @@ unusual.alleles.per.table <- function(table,afreq){
         					}
 					if(nrow(x)==0)
 						{ # if the allele is absent from database it is probably a typo	
-						frame <- matrix(c(locus,allele,rep(NA,times=length(pop),"Allele absent from database,check for typo")),ncol=3+length(pops))
+						frame <- matrix(c(locus,allele,rep(NA,times=length(pops),"Allele absent from database,check for typo")),ncol=3+length(pops))
 						colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
             					rare <- rbind(rare, frame)
           					}
 					if(nrow(x)>1)
 						{ # if the allele is more than once there is a problem with the database!
-						frame <- matrix(c(locus,allele,rep(NA,times=length(pop),"Allele present multiple times in database")),ncol=3+length(pops))
+						frame <- matrix(c(locus,allele,rep(NA,times=length(pops),"Allele present multiple times in database")),ncol=3+length(pops))
 						colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
             					rare <- rbind(rare, frame)
           					}
