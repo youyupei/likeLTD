@@ -174,69 +174,54 @@ unusual.alleles.per.table <- function(table,afreq){
 	# finds unusual alleles in any specific table, (provided in original listed format)
 	# Get names of populations in database
 	pops = colnames(afreq)[4:ncol(afreq)]	# first 3 columns are Marker, Allele, BP
-	rare <- data.frame(locus=NULL,allele=NULL)
-	# Make frequency columns within rare data frame
-	for(i in 1:length(pops))
-		{
-		eval(parse(text=paste("rare$",pops[i],".freq=NULL",sep="")))
-		}
-	rare$error = NULL
+	rare <- matrix(ncol=3+length(pops),nrow=0)
+	colnames(rare) = c("locus","allele",paste(pops,".freq",sep=""),"error")
 	loci <- colnames(table); loci <- loci[loci!='queried']# ref table has a unwanted column 'queried'
-
-	for(locus in loci){
-		if(!locus%in%afreq$Marker){ # check the loci are even in the database
-			frame <- data.frame(locus=locus, allele=NA)
-			# Make frequency columns within frame data frame
-			for(i in 1:length(pops))
-				{
-				eval(parse(text=paste("frame$",pops[i],".freq=NA",sep="")))
-				}
-			frame$error = 'Entire locus missing from database'
+	for(locus in loci)
+		{
+		if(!locus%in%afreq$Marker)
+			{ # check the loci are even in the database
+			frame <- matrix(c(locus,NA,rep(NA,times=length(pop),"Entire locus missing from database")),ncol=3+length(pops))
+			colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
 		        rare <- rbind(rare, frame)
 			}
 
-		if(locus%in%afreq$Marker){ # only continue if the locus is in the database
-			for(row in 1:nrow(table)){
+		if(locus%in%afreq$Marker)
+			{ # only continue if the locus is in the database
+			for(row in 1:nrow(table))
+				{
 				alleles <- unique(unlist(table[row,locus]))
-				for(allele in alleles[!is.na(alleles)]){ # ignore NAs in the csv file
+				for(allele in alleles[!is.na(alleles)])
+					{ # ignore NAs in the csv file
 					condition <- afreq$Marker==locus & afreq$Allele==allele
 					x <- afreq[condition,]
-					if(nrow(x)==1){ # if the allele is present once in the database (should be!)
+					if(nrow(x)==1)
+						{ # if the allele is present once in the database (should be!)
 						# get whether each population is less than 2
 						sizeCondition = NULL
 						for(i in 1:length(pops))
 							{
 							eval(parse(text=paste("sizeCondition = c(sizeCondition, x$",pops[i],"<2)",sep="")))
 							}
-						if(any(sizeCondition)) {
-            					frame <- data.frame(locus=locus, allele=allele)
-						for(i in 1:length(pops))
+						if(any(sizeCondition)) 
 							{
-							eval(parse(text=paste("frame$",pops[i],".freq=x[",i+3,"]",sep="")))
+							frame <- matrix(c(locus,allele,x[4:length(x)],'NA'),ncol=3+length(pops))
+							colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
+        	    					rare <- rbind(rare, frame)
 							}
-						frame$error = 'NA'
-            					rare <- rbind(rare, frame)}
-          						}
-					if(nrow(x)==0){ # if the allele is absent from database it is probably a typo	
-							frame <- data.frame(locus=locus, allele=allele)
-							# Make frequency columns within frame data frame
-							for(i in 1:length(pops))
-								{
-								eval(parse(text=paste("frame$",pops[i],".freq=NA",sep="")))
-								}
-							frame$error = 'Allele absent from database,check for typo'
-            						rare <- rbind(rare, frame)
-          						}
-					if(nrow(x)>1){ # if the allele is more than once there is a problem with the database!	
-							frame <- data.frame(locus=locus,allele=allele)
-							# Make frequency columns within frame data frame
-							for(i in 1:length(pops))
-								{
-								eval(parse(text=paste("frame$",pops[i],".freq=NA",sep="")))
-								}
-							frame$error = 'Allele present multiple times in database'
-            						rare <- rbind(rare, frame)
-          						}
+        					}
+					if(nrow(x)==0)
+						{ # if the allele is absent from database it is probably a typo	
+						frame <- matrix(c(locus,allele,rep(NA,times=length(pop),"Allele absent from database,check for typo")),ncol=3+length(pops))
+						colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
+            					rare <- rbind(rare, frame)
+          					}
+					if(nrow(x)>1)
+						{ # if the allele is more than once there is a problem with the database!
+						frame <- matrix(c(locus,allele,rep(NA,times=length(pop),"Allele present multiple times in database")),ncol=3+length(pops))
+						colnames(frame) = c("locus","allele",paste(pops,".freq",sep=""),"error")
+            					rare <- rbind(rare, frame)
+          					}
         				}  # loop over alleles
      				} # loop over replicates
 			}} # loop over loci				
