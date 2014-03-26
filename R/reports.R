@@ -734,7 +734,7 @@ spacer <- function(doc,n=1) for(x in 1:n)addNewLine(doc) # adds blank lines
 fs0 <- 26 # font size for header (main)
 fs1 <- 20 # font size for header (sub1)
 fs2 <- 15 # font size for header (sub2)
-
+fs3 <- 8 # tiny, for the big tables
 #--------------------------------------------------------------------------------------------------------------------
 common.report.section <- function(names,genetics){
 	# objects common to both the allele report and the final output report are done once here, for consistency, and saves repeating code
@@ -755,11 +755,11 @@ common.report.section <- function(names,genetics){
 
 	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
-	addTable(doc, csp.table.reformatter(genetics),col.justify='C', header.col.justify='C')
+	addTable(doc, csp.table.reformatter(genetics),col.justify='C', header.col.justify='C',font.size=fs3)
 	spacer(doc,3)
 
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
-	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C')
+	addTable(doc, reference.table.reformatter(genetics), col.justify='C', header.col.justify='C',font.size=fs3)
 	spacer(doc,1)
 	addParagraph(doc, "Alleles that are \\Breplicated}, \\Iunreplicated} or \\Xabsent} in the crime scene profile, using the certain designations only." ) # will use rtf.formater() to convert '\\B','\\I' and '\\X' into rtf encoding
 	spacer(doc,3)
