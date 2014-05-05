@@ -315,9 +315,35 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6)
 	results$optim$nfeval = sum(nfevalOut)
 	return(results)
 	}
+#----------------------------------------------------------------------------------------------------
+# In preparation for a GUI built in tcltk, we first want:
+# 1. Progess estimates: start value, end value and current value. Eventually will use tkProgressBar.
+# 2. Output LR.
 
+# This requires a new DEoptimLoop function called evaluate() that handles both hyps at once, regularly alternating between them so they progress together.
+# These values can first be output to the screen, to ensure it all works properly, before integrating into the GUI
 
+# Other changes required will be:
+# - remove verbose from optimisation.params()
+# - fix bug: set itermax default of 50 inside optimisation.params(). Currently this parameter is ignored and set by DEoptimLoop
+# NOTE: any changes to optimisation.params() will probably also require sanity.check() to be adapted, and unit tests, and the help pages
 
+# Strategy:
+# currently DEoptimLoop deals with one hyp, looping until convergence is smaller than tolerance
+# Solution: chop up tolerance into n tolerance chunks on the log scale between 100 and required tolerance
+
+tolerance.chunks <- function(start=100,end,n=100){ # hand 'tolerance' to 'end'
+	if(end>start)end <- start
+	span <- start/end
+	inc <- exp(log(span)/n)
+	chunks <- start/cumprod(rep(inc,n))
+return(chunks)}
+
+# hand each tolerance chunk first to P then D, all within evaluate(), calculate the current LR, and use the chunk to update the status bar.
+# for the time being, print the tolerence chunk, and the proportion of chunks completed. ie:
+# likelihood ratio = ??, convergence = ??, approximately ??% complete
+
+#----------------------------------------------------------------------------------------------------
 get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
 	{
 	# Function to return likely genotypes for each individual
