@@ -485,7 +485,6 @@ return(result)}
 
 #--------------------------------------------------------------------------------------------------------------------
 summary.generator <- function(refData, cspData){
-
 	# summary table for Q and K, showing which of their alleles are replicated, unreplicated, or absent
 	table <- as.data.frame(array(,c(nrow(refData)+1,ncol(cspData))))
 	colnames(table) <- colnames(cspData)
@@ -502,7 +501,7 @@ summary.generator <- function(refData, cspData){
 		# for unattributable alleles are rep, unrep, absent
 		cspAlleles <- unlist(cspData[,locus])
 		cspAlleles <- cspAlleles[!is.na(cspAlleles)] # remove NAs
-		refAlleles <- refData[,locus][[1]]
+		refAlleles <- unique(unlist(refData[,locus]))
 		unattributableAlleles <- cspAlleles[!cspAlleles%in%refAlleles]
 		table.rtf['Unattributable',locus] <- summary.helper(unattributableAlleles,cspAlleles)$rtf
 		table.latex['Unattributable',locus] <- summary.helper(unattributableAlleles,cspAlleles)$latex
