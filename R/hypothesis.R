@@ -27,7 +27,9 @@ read.unc.profile = function(path) {
   	profile = read.table(path, header=T, colClasses='character', sep=',')
   	}
   result = sapply(profile, function (n) strsplit(n, "(\\s*,|\\s)\\s*"))
-  result[result[, "X"] == "Uncertain", 5:ncol(result), drop=FALSE]
+  result = result[result[, "X"] == "Uncertain", 5:ncol(result), drop=FALSE]
+  allNA = apply(result, 2, function(n) !all(is.na(n)))
+  result[, allNA, drop=FALSE]
 }
 
 # Reads known profiles from file.
