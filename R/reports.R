@@ -749,8 +749,8 @@ common.report.section <- function(names,genetics){
 	addParagraph(doc, line)
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 
-	addTOC(doc)
-	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+#	addTOC(doc)
+#	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 
 	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
