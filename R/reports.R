@@ -457,7 +457,7 @@ estimate.csp <- function(refData, cspData) {
 			# number of alleles in common for given person and CSP replicate, across all loci
 			represented <- c()
 			for(locus in 1:ncol(cspData)){
-				if(!is.null(cspData[rep,locus])) {
+				if(!is.na(cspData[rep,locus])) {
 					# figure out unique alleles in reference 
 					ref.alleles  <- unique(unlist(refData[person,locus+1]))# +1 ignores first column(queried)
 					csp.alleles <- unique(unlist(cspData[rep,locus]))
