@@ -102,7 +102,7 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
   locusAdjustment = rep(0.5, length(arguments$locusAdjustment))
   degradation = if(logDegradation) { -20 } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
-  dropout     = rep(0, length(arguments$dropout))
+  dropout     = rep(zero, length(arguments$dropout))
   rcont       = rep(zero, length(arguments$rcont))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -118,7 +118,7 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
 
 optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-                                arguments=NULL, zero=0, throwError=FALSE,
+                                arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=50, likeMatrix=FALSE,...) {
   # Creates the optimisation parameters for optim.
   #
