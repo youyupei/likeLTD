@@ -261,6 +261,10 @@ create.likelihood.per.locus <- function(hypothesis, addAttr=FALSE, likeMatrix = 
     # Nothing is returned by this function. Works directly on allEPG. 
     .Call(.cpp.powerAdjustment, allEPG, cons$zeroAll, locusAdjustment,
           power, PACKAGE="likeLTD")
+          
+    # If any allEPG are infinite change to zero
+    # so unlikely that probability might as well be zero
+    allEPG[which(is.infinite(allEPG))] = 0
 
     # res: (Partial) Likelihood per allele.
     res = array(1, length(cons$factors))
