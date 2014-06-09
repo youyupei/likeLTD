@@ -67,7 +67,7 @@ relistArguments <- function( parameters, hypothesis, fixed=NULL,
 
 
 
-upper.bounds = function(arguments, zero=1e-6) { 
+upper.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -77,7 +77,8 @@ upper.bounds = function(arguments, zero=1e-6) {
   #         an epsilon to simulate the first case.
   locusAdjustment = rep(1.5, length(arguments$locusAdjustment))
   dropout     = rep(1-zero, length(arguments$dropout))
-  degradation = rep(0-zero, length(arguments$degradation))
+  degradation = if(logDegradation) { 0-zero } else { 1-zero }
+  degradation = rep(degradation, length(arguments$degradation))
   rcont       = rep(100, length(arguments$rcont))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
@@ -206,7 +207,7 @@ if(likeMatrix==TRUE) return(result)
   }
   
   lower = lower.bounds(args, zero, logDegradation)
-  upper = upper.bounds(args, zero)
+  upper = upper.bounds(args, zero, logDegradation)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
