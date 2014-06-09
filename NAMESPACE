@@ -30,7 +30,7 @@ export(locus.likes)
 export(output.report)
 
 export(DEoptimLoop)
-
+export(evaluate)
 export(get.likely.genotypes)
 
 importFrom(DEoptim, DEoptim)
