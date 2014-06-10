@@ -314,9 +314,9 @@ filename.maker <- function(outputPath,caseName,filename,type=NULL){
 	# type: report type, one of 'allele' or 'results'
 
 	# construct title 
-	if(is.null(type)) title <- 'Report-' # shouldn't be possible to remain as NULL, but just incase
-	if(type=='allele')title <- 'Allele-Report-'
-	if(type=='results')title <- 'DNA-profile-evaluation-report-'
+	if(is.null(type)) title <- paste0(caseName,'-Report-') # shouldn't be possible to remain as NULL, but just incase
+	if(type=='allele')title <- paste0(caseName,'-Allele-Report-')
+	if(type=='results')title <- paste0(caseName,'-Evaluation-Report-')
 
 	# assign a filename, if NULL was handed down
 	if(is.null(filename)){
@@ -711,6 +711,23 @@ return(combined)}
 
 #--------------------------------------------------------------------------------------------------------------------
 
+file.inputs.table.reformatter <- function(prosecutionHypothesis)
+	{
+	cspFile = prosecutionHypothesis$cspFile
+	refFile = prosecutionHypothesis$refFile
+	if(is.null(prosecutionHypothesis$databaseFile))
+		{
+		databaseFile = "lgc-allele-freqs-wbp.txt (Default)"
+		} else {
+		databaseFile = prosecutionHypothesis$databaseFile
+		}
+	table = dataframe(file=c("CSP","Reference","Database"),input=c(cspFile,refFile,databaseFile))
+	colnames(table) = c("File","Used")
+	return(table)
+	}
+
+#--------------------------------------------------------------------------------------------------------------------
+
 
 # homozygous match probability
 hom <- function(pa, fst=0.02)
@@ -908,6 +925,10 @@ output.report <- function(prosecutionHypothesis,defenceHypothesis,results,file=N
 
 	addHeader(doc, "User defined parameters", TOC.level=1, font.size=fs1)
 	addTable(doc, chosen.parameter.table.reformatter(prosecutionHypothesis), col.justify='L', header.col.justify='L')
+	spacer(doc,3)
+
+	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
+	addTable(doc, file.inputs.table.reformatter(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
