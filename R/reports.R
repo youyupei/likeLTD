@@ -815,7 +815,7 @@ common.report.section <- function(names,genetics){
 
 	addParagraph(doc, line)
 	spacer(doc,3)
-	addHeader( doc, title=names$title, subtitle=names$subtitle, font.size=fs0 )
+	addHeader( doc, title=substr(names$title,1,nchar(names$title)-1), subtitle=names$subtitle, font.size=fs0 )
 	addHeader( doc, hyp.P(genetics), font.size=fs2 )
 	addHeader( doc, hyp.D(genetics), font.size=fs2 )
 	addParagraph(doc, line)
