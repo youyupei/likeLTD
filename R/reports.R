@@ -713,15 +713,18 @@ return(combined)}
 
 file.inputs.table.reformatter <- function(prosecutionHypothesis)
 	{
-	cspFile = prosecutionHypothesis$cspFile
-	refFile = prosecutionHypothesis$refFile
+	tmp = strsplit(prosecutionHypothesis$cspFile,split="/")[[1]]
+	cspFile = tmp[length(tmp)]
+	tmp = strsplit(prosecutionHypothesis$refFile,split="/")[[1]]
+	refFile = tmp[length(tmp)]
 	if(is.null(prosecutionHypothesis$databaseFile))
 		{
 		databaseFile = "lgc-allele-freqs-wbp.txt (Default)"
 		} else {
-		databaseFile = prosecutionHypothesis$databaseFile
+		tmp = strsplit(prosecutionHypothesis$databaseFile,split="/")[[1]]
+		databaseFile = tmp[length(tmp)]
 		}
-	table = dataframe(file=c("CSP","Reference","Database"),input=c(cspFile,refFile,databaseFile))
+	table = data.frame(file=c("CSP","Reference","Database"),input=c(cspFile,refFile,databaseFile))
 	colnames(table) = c("File","Used")
 	return(table)
 	}
