@@ -543,13 +543,8 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
 
 optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
-<<<<<<< HEAD
                                 arguments=NULL, zero=0, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
-=======
-                                arguments=NULL, zero=1e-6, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=50, likeMatrix=FALSE,...) {
->>>>>>> 08b1389aeb639f68d579de427060bd163640d703
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -871,7 +866,7 @@ geometric.series <- function(start,end,n){
 return(chunks)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20, progBar = TRUE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last chunk)
 	# number of convergence thresholds
@@ -890,6 +885,10 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20){
 	P.bestvalit <- D.bestvalit <- NULL
 	P.iter <- D.iter <- NULL
 	P.nfeval <- D.nfeval <- NULL
+
+	# intialise progress bar
+	if(progBar) pb = tkProgressBar(title="% Progress",min=0,max=n.chunks)
+
 
 	for(n in 1:n.chunks){
 		# change DEoptim parameters
@@ -919,12 +918,21 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20){
 		# calculate the weight of evidence. Note, results are + rather than -, so D-P
 		WoE[n] <- D.chunk$optim$bestval - P.chunk$optim$bestval
 
-		# percentage progress
-		progress <- round(100*n/n.chunks)
-
-		# print progress
-		print(paste('Weight of evidence:',WoE[n],'Progress:',progress,'%'))
+		# progress bar
+		if(progBar) 
+			{
+			# update progress bar
+			setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
+			} else {
+			# percentage progress
+			progress <- round(100*n/n.chunks)
+			# print progress
+			print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
+			}
 		}
+
+	# close progress bar
+	if(progBar) close(pb)
 
 	# update final Pros results
 	P.results <- P.chunk
