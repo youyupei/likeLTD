@@ -866,19 +866,12 @@ geometric.series <- function(start,end,n){
 return(chunks)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20, progBar = TRUE){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TRUE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last chunk)
 	# number of convergence thresholds
 	
 	# for each chunk, run a DEoptimLoop both for P and D, until each converges at that chunk's accuracy
-	tol.chunks <- geometric.series(10,tolerance,n.chunks)
-	
-	# adjust DEoptim parameters gradually, so search space is confined more at the end
-	CR.chunks <- geometric.series(0.1,0.7,n.chunks)
-	
-	# retain all the likelihood ratios
-	WoE <- numeric(n.chunks)
 
 	# combine the outputs outside the loop
 	P.bestmemit <- D.bestmemit <- NULL
@@ -886,48 +879,103 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=20, progBar = TRUE
 	P.iter <- D.iter <- NULL
 	P.nfeval <- D.nfeval <- NULL
 
-	# intialise progress bar
-	if(progBar) pb = tkProgressBar(title="% Progress",min=0,max=n.chunks)
+	# run first chunk
+	n = 1
 
-
-	for(n in 1:n.chunks){
-		# change DEoptim parameters
-		P.pars$control$CR <- CR.chunks[n]
-		D.pars$control$CR <- CR.chunks[n]
+	# change DEoptim parameters
+	P.pars$control$CR <- 0.1
+	D.pars$control$CR <- 0.1
 		
-		# run DEoptimLoop until convergence at the required chunk
-		P.chunk <- DEoptimLoop(P.pars,tol.chunks[n])
-		D.chunk <- DEoptimLoop(D.pars,tol.chunks[n])
+	# run DEoptimLoop until convergence at the required chunk
+	P.chunk <- DEoptimLoop(P.pars,10)
+	D.chunk <- DEoptimLoop(D.pars,10)
 
-		# put the Pros outputs into the combined output
-		P.bestmemit <- rbind(P.bestmemit, P.chunk$member$bestmemit)
-		P.bestvalit <- rbind(P.bestvalit, P.chunk$member$bestvalit)
-		P.iter <- c(P.iter, P.chunk$optim$iter)
-		P.nfeval <- c(P.nfeval, P.chunk$optim$nfeval)
+	# put the Pros outputs into the combined output
+	P.bestmemit <- rbind(P.bestmemit, P.chunk$member$bestmemit)
+	P.bestvalit <- rbind(P.bestvalit, P.chunk$member$bestvalit)
+	P.iter <- c(P.iter, P.chunk$optim$iter)
+	P.nfeval <- c(P.nfeval, P.chunk$optim$nfeval)
 
-		# put the Def outputs into the combined output	
-		D.bestmemit <- rbind(D.bestmemit, D.chunk$member$bestmemit)
-		D.bestvalit <- rbind(D.bestvalit, D.chunk$member$bestvalit)
-		D.iter <- c(D.iter, D.chunk$optim$iter)
-		D.nfeval <- c(D.nfeval, D.chunk$optim$nfeval)	
+	# put the Def outputs into the combined output	
+	D.bestmemit <- rbind(D.bestmemit, D.chunk$member$bestmemit)
+	D.bestvalit <- rbind(D.bestvalit, D.chunk$member$bestvalit)
+	D.iter <- c(D.iter, D.chunk$optim$iter)
+	D.nfeval <- c(D.nfeval, D.chunk$optim$nfeval)	
 
-		# recycle the current pop into the next loop
-		P.pars$control$initialpop <- P.chunk$member$pop
-		D.pars$control$initialpop <- D.chunk$member$pop
+	# recycle the current pop into the next loop
+	P.pars$control$initialpop <- P.chunk$member$pop
+	D.pars$control$initialpop <- D.chunk$member$pop
 
-		# calculate the weight of evidence. Note, results are + rather than -, so D-P
-		WoE[n] <- D.chunk$optim$bestval - P.chunk$optim$bestval
+	# calculate the weight of evidence. Note, results are + rather than -, so D-P
+	WoEtmp <- D.chunk$optim$bestval - P.chunk$optim$bestval
 
-		# progress bar
-		if(progBar) 
-			{
-			# update progress bar
-			setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
-			} else {
-			# percentage progress
-			progress <- round(100*n/n.chunks)
-			# print progress
-			print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
+	# decide how many chunks to run
+	if(is.null(n.chunks)) n.chunks = ceiling(log2(mean(c(sd(P.chunk$member$bestvalit[1:75]),sd(D.chunk$member$bestvalit[1:75])))))*4+length(grep("rcont",names(D.pars$upper)))
+
+	# retain all the likelihood ratios
+	WoE <- numeric(n.chunks)
+	WoE[n] <- WoEtmp
+
+	# intialise progress bar
+	if(progBar) 
+		{
+		pb = tkProgressBar(title="% Progress",min=0,max=n.chunks)
+		setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
+		} else {
+		# percentage progress
+		progress <- round(100*n/n.chunks)
+		# print progress
+		print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
+		}
+
+	# if more than one chunk, start loop
+	if(n.chunks>1)
+		{
+		# adjust tolerance gradually
+		tol.chunks <- geometric.series(10,tolerance,n.chunks)
+	
+		# adjust DEoptim parameters gradually, so search space is confined more at the end
+		CR.chunks <- geometric.series(0.1,0.7,n.chunks)
+
+		for(n in 2:n.chunks){
+			# change DEoptim parameters
+			P.pars$control$CR <- CR.chunks[n]
+			D.pars$control$CR <- CR.chunks[n]
+		
+			# run DEoptimLoop until convergence at the required chunk
+			P.chunk <- DEoptimLoop(P.pars,tol.chunks[n])
+			D.chunk <- DEoptimLoop(D.pars,tol.chunks[n])
+
+			# put the Pros outputs into the combined output
+			P.bestmemit <- rbind(P.bestmemit, P.chunk$member$bestmemit)
+			P.bestvalit <- rbind(P.bestvalit, P.chunk$member$bestvalit)
+			P.iter <- c(P.iter, P.chunk$optim$iter)
+			P.nfeval <- c(P.nfeval, P.chunk$optim$nfeval)
+
+			# put the Def outputs into the combined output	
+			D.bestmemit <- rbind(D.bestmemit, D.chunk$member$bestmemit)
+			D.bestvalit <- rbind(D.bestvalit, D.chunk$member$bestvalit)
+			D.iter <- c(D.iter, D.chunk$optim$iter)
+			D.nfeval <- c(D.nfeval, D.chunk$optim$nfeval)	
+
+			# recycle the current pop into the next loop
+			P.pars$control$initialpop <- P.chunk$member$pop
+			D.pars$control$initialpop <- D.chunk$member$pop
+
+			# calculate the weight of evidence. Note, results are + rather than -, so D-P
+			WoE[n] <- D.chunk$optim$bestval - P.chunk$optim$bestval
+
+			# progress bar
+			if(progBar) 
+				{
+				# update progress bar
+				setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
+				} else {
+				# percentage progress
+				progress <- round(100*n/n.chunks)
+				# print progress
+				print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
+				}
 			}
 		}
 
