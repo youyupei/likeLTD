@@ -202,6 +202,8 @@ if(likeMatrix==TRUE) return(result)
       print(x)
       stop("Objective function over/underflow")
     }
+    # if result is infinite make sure it returns -Inf
+    if(is.infinte(result)&sign(result)==1) result = -result
     # return result
     -result
   }
@@ -626,6 +628,8 @@ if(likeMatrix==TRUE) return(result)
       print(x)
       stop("Objective function over/underflow")
     }
+    # If result is infinite make sure it is -Inf
+    if(is.infinite(result)) result = -Inf 
     # return result
     -result
   }
