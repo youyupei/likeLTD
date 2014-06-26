@@ -913,8 +913,13 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TR
 	# calculate the weight of evidence. Note, results are + rather than -, so D-P
 	WoEtmp <- D.chunk$optim$bestval - P.chunk$optim$bestval
 
+	# get standard mean standard deviation of initial optimisation phase
+	sdChunk = mean(c(sd(P.chunk$member$bestvalit[1:75]),sd(D.chunk$member$bestvalit[1:75])))
+	# sometimes sd is very low (below 1 e.g. 3locus test)
+	# if so set sd to >1 so log2(sd) is positive
+	if(sdChunk<1) sdChunk = 1.5
 	# decide how many chunks to run
-	if(is.null(n.chunks)) n.chunks = ceiling(log2(mean(c(sd(P.chunk$member$bestvalit[1:75]),sd(D.chunk$member$bestvalit[1:75])))))*4+length(grep("rcont",names(D.pars$upper)))
+	if(is.null(n.chunks)) n.chunks = ceiling(log2(sdChunk))*4+length(grep("rcont",names(D.pars$upper)))
 
 	# retain all the likelihood ratios
 	WoE <- numeric(n.chunks)
