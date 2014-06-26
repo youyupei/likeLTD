@@ -543,7 +543,7 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
 }
 
 
-optimisation.params <- function(hypothesis, verbose=TRUE, fixed=NULL,
+optimisation.params <- function(hypothesis, verbose=FALSE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=0, throwError=FALSE,
                                 withPenalties=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
@@ -975,16 +975,13 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TR
 			WoE[n] <- D.chunk$optim$bestval - P.chunk$optim$bestval
 
 			# progress bar
-			if(progBar) 
-				{
+			if(progBar){
 				# update progress bar
 				setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
-				} else {
-				# percentage progress
-				progress <- round(100*n/n.chunks)
-				# print progress
-				print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
-				}
+				} 
+			# percentage progress
+			progress <- round(100*n/n.chunks)
+			print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
 			}
 		}
 
