@@ -1,10 +1,10 @@
 \name{optimisation.params} 
 \alias{optimisation.params} 
 \title{likeLTD::optimisation.params} 
-\usage{optimisation.params(hypothesis, verbose=TRUE, fixed=NULL,
+\usage{optimisation.params(hypothesis, verbose=FALSE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=0, throwError=FALSE,
-                           withPenalties=TRUE, objective=NULL, iterMax=NULL, 
+                           withPenalties=TRUE, objective=NULL, iterMax=75, 
                            likeMatrix=FALSE,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
