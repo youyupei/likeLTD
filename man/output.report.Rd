@@ -2,12 +2,11 @@
 \alias{output.report}
 \title{likeLTD::output.report}
 \usage{output.report(prosecutionHypothesis,defenceHypothesis, 
-                      prosecutionResults,defenceResults,file=NULL)}
+                      results,file=NULL)}
 \arguments{
   \item{prosecutionHypothesis}{The output from prosecution.hypothesis().}
   \item{defenceHypothesis}{The output from defence.hypothesis().}
-  \item{prosecutionResults}{The output from do.call(DEoptim, prosecutionParameters).}
-  \item{defenceResults}{The output from do.call(DEoptim, defenceParameters).}
+  \item{results}{The output from evaluate(prosecutionParameters,defenceParameters).}
   \item{file}{A file name for the output report. By default a filename is created to avoid over writing a previous file.}
 }
 \description{Outputs a docx report of results.}
