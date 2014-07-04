@@ -16,11 +16,14 @@ be set to FALSE is the user does not have graphical capabilities e.g. if running
 line on a server.}
 
 }
-\value{List.} 
-\description{
+\value{
+A list containing three elements:
 \item{Pros}{Prosecution results, structured as results from DEoptim::DEoptim.}
 \item{Def}{Defence results, structured as results from DEoptim::DEoptim.}
 \item{WoE}{WoE for each chunk. The final value if the final WoE.}
+} 
+\description{
+Optimize both prosecution and defence likelihoods, returning the weight of evidence.
 }
 \details{
   Optimize over parameter space, using a geometric progression of crossover rate and tolerance.
