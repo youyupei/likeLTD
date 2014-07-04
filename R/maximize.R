@@ -215,8 +215,6 @@ if(likeMatrix==TRUE) return(result)
 
  # population size for optimisation
   searchPop = 4*length(unlist(upper))
-  # increases for relatedness
-  searchPop = round(searchPop * relFactor(hypothesis$relatedness))
 
 
   list(#par     = unlist(template), 
@@ -229,15 +227,6 @@ if(likeMatrix==TRUE) return(result)
        #hessian = FALSE )
        )
 }
-
-
-# factor by which to increase the population size for optimisation when taking into account relatedness
-# optimisation seems more difficult when related, so need a more thorough search
-relFactor = function(relatedness,base=1,fac1=9,fac2=4,fac3=2)
-	{
-	base + fac1*relatedness[1] + fac2*relatedness[2] + fac3*prod(relatedness)
-	}
-	
 
 getMaxAF <- function(hypothesis)
 	{
