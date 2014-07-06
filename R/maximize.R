@@ -846,8 +846,8 @@ subGens = function(genotypes,probabilities,rotate=FALSE,prob=0.1)
 # - remove verbose from optimisation.params()
 # Strategy:
 # currently DEoptimLoop deals with one hyp, looping until convergence is smaller than a tolerance threshold of 1e-06
-# Solution: chop up the tolerance threshold into n tolerance chunks between 10 and 1e-5, using a geometric series
-# this gives the additional benefit of allowing other DEoptim parmameters to be adjusted at each chunk. 
+# Solution: chop up the tolerance threshold into n tolerance steps between 10 and 1e-5, using a geometric series
+# this gives the additional benefit of allowing other DEoptim parmameters to be adjusted at each step. 
 # Specifically, we adjust CR, starting at 0.1, ending at 0.7 (again a geometric series), which allows a broader search at the beginning, and a more detailed local serach at the end, a bit like a cooling schedule in a simulated annealing algorithm, wrapped around DEoptim.
 
 geometric.series <- function(start,end,n){ 
@@ -855,16 +855,16 @@ geometric.series <- function(start,end,n){
 	# start: end: Doesn't matter which way around. Values will always be closer to the smaller one, and thin out towards the larger.
 	span <- start/end
 	inc <- exp(log(span)/(n-1))
-	chunks <- c(start,start/cumprod(rep(inc,(n-1))))
-return(chunks)}
+	steps <- c(start,start/cumprod(rep(inc,(n-1))))
+return(steps)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TRUE){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE){
 	# P.pars D.pars: parameter object created by optimisation.params()
-	# the smallest convergence threshold (ie for the last chunk)
+	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
 	
-	# for each chunk, run a DEoptimLoop both for P and D, until each converges at that chunk's accuracy
+	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
 
 	# combine the outputs outside the loop
 	P.bestmemit <- D.bestmemit <- NULL
@@ -872,96 +872,99 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TR
 	P.iter <- D.iter <- NULL
 	P.nfeval <- D.nfeval <- NULL
 
-	# run first chunk
+	# run first step
 	n = 1
 
 	# change DEoptim parameters
 	P.pars$control$CR <- 0.1
 	D.pars$control$CR <- 0.1
 		
-	# run DEoptimLoop until convergence at the required chunk
-	P.chunk <- DEoptimLoop(P.pars,10)
-	D.chunk <- DEoptimLoop(D.pars,10)
+	# run DEoptimLoop until convergence at the required step
+	P.step <- DEoptimLoop(P.pars,10)
+	D.step <- DEoptimLoop(D.pars,10)
 
 	# put the Pros outputs into the combined output
-	P.bestmemit <- rbind(P.bestmemit, P.chunk$member$bestmemit)
-	P.bestvalit <- rbind(P.bestvalit, P.chunk$member$bestvalit)
-	P.iter <- c(P.iter, P.chunk$optim$iter)
-	P.nfeval <- c(P.nfeval, P.chunk$optim$nfeval)
+	P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+	P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+	P.iter <- c(P.iter, P.step$optim$iter)
+	P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
 
 	# put the Def outputs into the combined output	
-	D.bestmemit <- rbind(D.bestmemit, D.chunk$member$bestmemit)
-	D.bestvalit <- rbind(D.bestvalit, D.chunk$member$bestvalit)
-	D.iter <- c(D.iter, D.chunk$optim$iter)
-	D.nfeval <- c(D.nfeval, D.chunk$optim$nfeval)	
+	D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+	D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+	D.iter <- c(D.iter, D.step$optim$iter)
+	D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
 
 	# recycle the current pop into the next loop
-	P.pars$control$initialpop <- P.chunk$member$pop
-	D.pars$control$initialpop <- D.chunk$member$pop
+	P.pars$control$initialpop <- P.step$member$pop
+	D.pars$control$initialpop <- D.step$member$pop
 
 	# calculate the weight of evidence. Note, results are + rather than -, so D-P
-	WoEtmp <- D.chunk$optim$bestval - P.chunk$optim$bestval
+	WoEtmp <- D.step$optim$bestval - P.step$optim$bestval
 
 	# get standard mean standard deviation of initial optimisation phase
-	sdChunk = mean(c(sd(P.chunk$member$bestvalit[1:75]),sd(D.chunk$member$bestvalit[1:75])))
+	sdStep = mean(c(sd(P.step$member$bestvalit[1:75]),sd(D.step$member$bestvalit[1:75])))
 	# sometimes sd is very low (below 1 e.g. 3locus test)
 	# if so set sd to >1 so log2(sd) is positive
-	if(sdChunk<1) sdChunk = 1.5
-	# decide how many chunks to run
-	if(is.null(n.chunks)) n.chunks = ceiling(log2(sdChunk))*4+length(grep("rcont",names(D.pars$upper)))
+	if(sdStep<1) sdStep = 1.5
+	# decide how many steps to run
+	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*4+length(grep("rcont",names(D.pars$upper)))
 
 	# retain all the likelihood ratios
-	WoE <- numeric(n.chunks)
+	WoE <- numeric(n.steps)
 	WoE[n] <- WoEtmp
 
 	# intialise progress bar
 	if(progBar) 
 		{
-		pb = tkProgressBar(title="% Progress",min=0,max=n.chunks)
+		pb = tkProgressBar(title="% Progress",min=0,max=n.steps)
 		setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
 		} else {
 		# percentage progress
-		progress <- round(100*n/n.chunks)
+		progress <- round(100*n/n.steps)
 		# print progress
 		print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
 		}
 
-	# if more than one chunk, start loop
-	if(n.chunks>1)
+	# if more than one step, start loop
+	if(n.steps>1)
 		{
 		# adjust tolerance gradually
-		tol.chunks <- geometric.series(10,tolerance,n.chunks)
+		tol.steps <- geometric.series(10,tolerance,n.steps)
 	
 		# adjust DEoptim parameters gradually, so search space is confined more at the end
-		CR.chunks <- geometric.series(0.1,0.7,n.chunks)
+		CR.steps <- geometric.series(0.1,0.7,n.steps)
 
-		for(n in 2:n.chunks){
+		for(n in 2:n.steps){
 			# change DEoptim parameters
-			P.pars$control$CR <- CR.chunks[n]
-			D.pars$control$CR <- CR.chunks[n]
+			P.pars$control$CR <- CR.steps[n]
+			D.pars$control$CR <- CR.steps[n]
 		
-			# run DEoptimLoop until convergence at the required chunk
-			P.chunk <- DEoptimLoop(P.pars,tol.chunks[n])
-			D.chunk <- DEoptimLoop(D.pars,tol.chunks[n])
+			# run DEoptimLoop until convergence at the required step
+			P.step <- DEoptimLoop(P.pars,tol.steps[n])
+			D.step <- DEoptimLoop(D.pars,tol.steps[n])
+
+			# generate outputs if interim = TRUE
+			#if(interim==TRUE) 
 
 			# put the Pros outputs into the combined output
-			P.bestmemit <- rbind(P.bestmemit, P.chunk$member$bestmemit)
-			P.bestvalit <- rbind(P.bestvalit, P.chunk$member$bestvalit)
-			P.iter <- c(P.iter, P.chunk$optim$iter)
-			P.nfeval <- c(P.nfeval, P.chunk$optim$nfeval)
+			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.iter <- c(P.iter, P.step$optim$iter)
+			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
 
 			# put the Def outputs into the combined output	
-			D.bestmemit <- rbind(D.bestmemit, D.chunk$member$bestmemit)
-			D.bestvalit <- rbind(D.bestvalit, D.chunk$member$bestvalit)
-			D.iter <- c(D.iter, D.chunk$optim$iter)
-			D.nfeval <- c(D.nfeval, D.chunk$optim$nfeval)	
+			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.iter <- c(D.iter, D.step$optim$iter)
+			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
 
 			# recycle the current pop into the next loop
-			P.pars$control$initialpop <- P.chunk$member$pop
-			D.pars$control$initialpop <- D.chunk$member$pop
+			P.pars$control$initialpop <- P.step$member$pop
+			D.pars$control$initialpop <- D.step$member$pop
 
 			# calculate the weight of evidence. Note, results are + rather than -, so D-P
-			WoE[n] <- D.chunk$optim$bestval - P.chunk$optim$bestval
+			WoE[n] <- D.step$optim$bestval - P.step$optim$bestval
 
 			# progress bar
 			if(progBar){
@@ -969,7 +972,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TR
 				setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
 				} 
 			# percentage progress
-			progress <- round(100*n/n.chunks)
+			progress <- round(100*n/n.steps)
 			print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
 			}
 		}
@@ -978,14 +981,14 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.chunks=NULL, progBar = TR
 	if(progBar) close(pb)
 
 	# update final Pros results
-	P.results <- P.chunk
+	P.results <- P.step
 	P.results$member$bestmemit <- P.bestmemit
 	P.results$member$bestvalit <- P.bestvalit
 	P.results$optim$iter <- P.iter
 	P.results$optim$nfeval <- P.nfeval
 
 	# update final Pros results
-	D.results <- D.chunk
+	D.results <- D.step
 	D.results$member$bestmemit <- D.bestmemit
 	D.results$member$bestvalit <- D.bestvalit
 	D.results$optim$iter <- D.iter
