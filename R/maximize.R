@@ -859,7 +859,7 @@ geometric.series <- function(start,end,n){
 return(steps)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -882,6 +882,9 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	# run DEoptimLoop until convergence at the required step
 	P.step <- DEoptimLoop(P.pars,10)
 	D.step <- DEoptimLoop(D.pars,10)
+
+	# generate outputs if interim = TRUE
+	if(interim==TRUE) interim(P.step,D.step)
 
 	# put the Pros outputs into the combined output
 	P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -945,7 +948,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 			D.step <- DEoptimLoop(D.pars,tol.steps[n])
 
 			# generate outputs if interim = TRUE
-			#if(interim==TRUE) 
+			if(interim==TRUE) interim(P.step,D.step)
 
 			# put the Pros outputs into the combined output
 			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -996,4 +999,21 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 
 # return all results
 return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+
+# function to output interim report
+interim = function(resultsP,resultsD)
+	{
+	# title
+	write.table(c("Interim results"),"Interim.csv",append=FALSE,sep=",",row.names=FALSE,col.names=FALSE)
+	# WoE
+	write.table(t(c("WoE",resultsD$optim$bestval-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	# Lp
+	write.table(t(c("Lp",-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	# Ld
+	write.table(t(c("Ld",-resultsD$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	# paramsP
+	write.table(t(c("paramsP",resultsP$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE)
+	# paramsD
+	write.table(t(c("paramsD",resultsD$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE)
+	}
 
