@@ -884,7 +884,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	D.step <- DEoptimLoop(D.pars,10)
 
 	# generate outputs if interim = TRUE
-	if(interim==TRUE) interim(P.step,D.step)
+	if(interim==TRUE) interim(P.step,D.step,n,NA)
 
 	# put the Pros outputs into the combined output
 	P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -948,7 +948,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 			D.step <- DEoptimLoop(D.pars,tol.steps[n])
 
 			# generate outputs if interim = TRUE
-			if(interim==TRUE) interim(P.step,D.step)
+			if(interim==TRUE) interim(P.step,D.step,n,n.steps)
 
 			# put the Pros outputs into the combined output
 			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -1001,19 +1001,26 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 return(list(Pros =P.results,Def =D.results, WoE =WoE))}
 
 # function to output interim report
-interim = function(resultsP,resultsD)
+interim = function(resultsP,resultsD,step,n.steps)
 	{
 	# title
-	write.table(c("Interim results"),"Interim.csv",append=FALSE,sep=",",row.names=FALSE,col.names=FALSE)
+	suppressWarnings(write.table(c("Interim results"),"Interim.csv",append=FALSE,sep=",",row.names=FALSE,col.names=FALSE))
+	# step
+	if(step==1)
+	    {
+	    suppressWarnings(write.table(t(c("Step",step)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE))
+	    } else {
+        suppressWarnings(write.table(t(c("Step",paste(step,n.steps,sep="/"))),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE))
+	    }
 	# WoE
-	write.table(t(c("WoE",resultsD$optim$bestval-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	suppressWarnings(write.table(t(c("WoE",resultsD$optim$bestval-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE))
 	# Lp
-	write.table(t(c("Lp",-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	suppressWarnings(write.table(t(c("Lp",-resultsP$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE))
 	# Ld
-	write.table(t(c("Ld",-resultsD$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE)
+	suppressWarnings(write.table(t(c("Ld",-resultsD$optim$bestval)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE,col.names=FALSE))
 	# paramsP
-	write.table(t(c("paramsP",resultsP$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE)
+	suppressWarnings(write.table(t(c("paramsP",resultsP$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE))
 	# paramsD
-	write.table(t(c("paramsD",resultsD$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE)
+	suppressWarnings(write.table(t(c("paramsD",resultsD$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE))
 	}
 
