@@ -597,19 +597,24 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 			}
 		}
 
+	changeFlag=FALSE
 	# if global result is better than result from last chunk
 	if(P.step$optim$bestval>GlobalPval)
 		{
 		P.step$optim$bestval = GlobalPval
 		P.step$optim$bestmem = GlobalPmem
 		print("*** Final prosecution result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
 		}
 	if(D.step$optim$bestval>GlobalDval)
 		{
 		D.step$optim$bestval = GlobalDval
 		D.step$optim$bestmem = GlobalDmem
 		print("*** Final defence result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
 		}
+
+	if(changeFlag) WoE <- c(WoE,D.step$optim$bestval - P.step$optim$bestval)
 
 	# close progress bar
 	if(progBar) close(pb)
