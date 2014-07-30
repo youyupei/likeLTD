@@ -297,7 +297,7 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6){
 		iterOut <- c(iterOut, results$optim$iter)
 		nfevalOut <- c(results$optim$nfeval) 
 		# Check if result is the same as the pervious one (50 iterations before)
-		tocheck = min(globalBestVal, results$optim$bestval)
+		tocheck = ifelse(globalBestVal==999,globalBestVal,min(globalBestVal, results$optim$bestval))
 		condition = abs((results$optim$bestval-tocheck)/tocheck)<tolerance
 		if(condition) flag=TRUE
 		# If not set the initial population to the last population from the last result
