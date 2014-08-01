@@ -3,7 +3,6 @@
 #include "genetics.h"
 #include "objectives.h"
 #include "openmp.h"
-#include "maximizePeaks.h"
 
 R_CallMethodDef callMethods[]  = {
        {"allGenotypesPerLocus", (DL_FUNC) &allGenotypesPerLocus, 2},

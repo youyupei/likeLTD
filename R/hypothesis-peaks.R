@@ -1,0 +1,356 @@
+#pack.admin.input
+#read.csp.profile
+#prosecution.hypotheses
+#defence.hypothesis
+#optimisation.params
+#allele.report
+#output.report
+
+# function to subset data
+subsetData = function(data,search)
+	{
+	# subset columns by search parameter
+	dataout = data[,grep(search,colnames(data))]
+	# add first column (for replicate names etc)
+	# can add this back in if necessary
+	#dataout = cbind(data[,1],dataout)
+	#colnames(dataout)[1] = "info"
+	# set rownames to marker names
+	rownames(dataout) = data$Marker
+	# remove columns that have no data
+	index = apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x)))
+	dataout = dataout[,-which(index)]
+	# remove AMEL data
+	index = which(rownames(dataout)=="AMEL")
+	if(length(index)!=0) dataout = dataout[-index,]
+	return(dataout)
+	}
+
+# function to check that the data make sense
+checkData1 = function(alleles,heights,sizes)
+	{
+	# check if dimensions are all the same
+	check1 = identical(dim(alleles),dim(heights),dim(sizes))
+	# check if all have same loci
+	check2 = all(mapply(FUN=function(a,b,c) a==b&b==c,rownames(alleles),rownames(heights),rownames(sizes)))
+	return(all(check1,check2))
+	}
+
+# function to check data makes sense between replicates
+checkData2 = function(alleleReps,heightReps=NULL,sizeReps=NULL)
+	{
+	# loci names for each replicate
+	lociReps = sapply(alleleReps,FUN=function(x) rownames(x),simplify=FALSE)
+	foo = function(a,b) all(a==b)
+	check1 = all(sapply(lociReps,FUN=function(x) identical(lociReps[[1]],x)))
+	return(all(check1))
+	}
+
+
+
+
+# function to read in peak height data
+read.peaks.profile = function(FILE)
+	{
+	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
+	# get data
+	data = read.csv(file=FILE,as.is=TRUE,na.strings="")
+	# get replicate names
+	conditions = names(table(data[,1]))
+	# get allele data
+	alleles = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
+	# get height data
+	heights = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
+	# get size data
+	# not sure if this is needed
+	sizes = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
+	# checks
+	check1 = !mapply(FUN=checkData1,alleles,heights,sizes)
+	if(any(check1)) stop(paste("Error in the CSP provided - replicates ",paste(which(check1),collapse=",")))
+	check2 = !checkData2(alleles,heights,sizes)
+	if(check2) stop(paste("Error in the CSP provided - replicates do not match"))
+	# return data
+	return(list(alleles=alleles,heights=heights,sizes=sizes))
+	}
+
+# function to read in allele calls
+# 0=non-allelic, 1=allelic
+read.allelic.calls = function(FILE)
+	{
+	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
+	# get data
+	data = read.csv(file=FILE,as.is=TRUE,na.strings="")
+	# get replicate names
+	conditions = names(table(data[,1]))
+	# get allele data
+	calls = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
+	# perform checks
+	check = !checkData2(alleleReps=calls)
+	if(check) stop(paste("Error in the allele calls provided - replicates do not match"))
+	# return data
+	return(calls)
+	}
+
+# Function to convert from peak heights designation to binary designation
+# Requires separate input of designations
+# This function is strictly for a single replicate
+# Parameters:
+# data = CSP alleles (csp$alleles[[x]])
+# allelicCalls = alleles designations from file input
+# (Coding: 0=nonallelic,1=allelic)
+convert.to.binary = function(data,allelicCalls)
+	{
+	# get rid of spaces
+	data = as.matrix(data)
+	data = gsub(" ","",data)
+	# replace .0 with nothing
+	data = gsub("[.]0","",data)
+	allelicCalls = as.matrix(allelicCalls)
+	allelicCalls = gsub(" ","",allelicCalls)
+	# allelic calls
+	allelic = mapply(FUN=function(a,b) a[which(b==1)], split(data,row(data)), split(allelicCalls,row(allelicCalls)))
+	names(allelic) = rownames(data)
+	return(allelic)
+	}
+
+# function to get rhoS and rhoA values
+read.rho.values = function(FILE=NULL)
+    {
+    if(is.null(FILE)) FILE = file.path(system.file("extdata", package="likeLTD"),"rho")
+    if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
+    # get data
+    rho = as.matrix(read.csv(FILE,as.is=TRUE,row.names=1))
+    # return rho
+    return(rho)
+    }
+
+
+agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
+                                queriedProfile, alleleDb, ethnic='EA1',
+                                adj=1e0, fst=0.02) {
+  # Helper function to figure out the input of most hypothesis.
+  #
+  # Basically, this groups operations that are done the same by defence and
+  # prosection. 
+
+  # Read database and filter it down to requisite ethnicity and locus. 
+  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+
+  # Adjust database to contain all requisite alleles
+  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
+                                 queriedProfile[1, colnames(cspProfile), 
+                                                drop=FALSE],
+                                 adj=adj, fst=fst )
+
+  # Construct all profiles as arrays of  
+  list(binaryProfile=cspProfile,
+       alleleDb=alleleDb,
+       queriedProfile=queriedProfile[1, colnames(cspProfile), drop=FALSE],
+       knownProfs=knownProfiles) 
+}
+
+
+
+# Creates prosecution hypothesis.
+# Documentation is in man directory.
+prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=NULL, ethnic='EA1',
+                                   nUnknowns=0, adj=1e0, fst=0.02,
+                                   databaseFile=NULL, relatedness=c(0,0), 
+                                   doDropin=FALSE, ...) {
+  alleleDb = load.allele.database(databaseFile)
+  peaksProfile = read.peaks.profile(peaksFile)
+  allelicCalls = read.allelic.calls(callsFile)
+  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+  cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+  knownProfiles = read.known.profiles(refFile)
+  if(sum(unlist(knownProfiles[, "queried"])) != 1)
+    stop("Expect one queried profile on input.")
+  qIndices = which(unlist(knownProfiles[, "queried"]))
+  uIndices = which(!unlist(knownProfiles[, "queried"]))
+  queriedProfile = knownProfiles[qIndices, , drop=FALSE]  
+  # Puts queried profile at the end.
+  knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
+
+  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+                               queriedProfile, alleleDb, ethnic=ethnic,
+                               adj=adj, fst=fst)
+
+   # get rho values
+   rho = read.rho.values(stutterFile)
+
+
+  	# refIndiv is queried
+  	nameRef = rownames(result$queriedProfile)
+  	result[["refIndiv"]] = which(rownames(result$knownProfs)==nameRef)
+
+
+  result = append(result, list(...))
+  result[["peaksProfile"]] = peaksProfile$alleles
+  result[["heightsProfile"]] = peaksProfile$heights
+  result[["sizesProfile"]] = peaksProfile$sizes
+  result[["stutterRho"]] = rho
+  result[["knownProfs"]] = knownProfiles
+  result[["nUnknowns"]] = nUnknowns
+  result[["hypothesis"]] = "prosecution"
+  result[["ethnic"]] = ethnic  
+  result[["adj"]] = adj
+  result[["fst"]] = fst
+  result[["relatedness"]] = relatedness
+  result[["doDropin"]] = doDropin
+  result[["peaksFile"]] = peaksFile
+  result[["callsFile"]] = callsFile
+  result[["refFile"]] = refFile
+  result[["databaseFile"]] = databaseFile
+
+  sanity.check.peaks(result) # makes sure hypothesis has right type.
+  result
+}
+
+
+# Creates defence hypothesis
+# Documentation is in man directory.
+defence.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=NULL, ethnic='EA1',  nUnknowns=0,
+                               adj=1e0, fst=0.02, databaseFile=NULL, 
+                               relatedness=c(0,0), doDropin=FALSE, ...) {
+  
+  alleleDb = load.allele.database(databaseFile)
+  peaksProfile = read.peaks.profile(peaksFile)
+  allelicCalls = read.allelic.calls(callsFile)
+  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+  cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+  knownProfiles = read.known.profiles(refFile)
+  if(sum(unlist(knownProfiles[, "queried"])) != 1)
+    stop("Expect one queried profile on input.")
+  queriedProfile = knownProfiles[unlist(knownProfiles[, "queried"]), ,
+                                 drop=FALSE]
+  # Removing queried individual from knownProfiles. 
+  knownProfiles = knownProfiles[!unlist(knownProfiles[, "queried"]), ,
+                                drop=FALSE]
+
+  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+                               queriedProfile, alleleDb, ethnic=ethnic,
+                               adj=adj, fst=fst) 
+
+     # get rho values
+   rho = read.rho.values(stutterFile)
+   
+  result[["refIndiv"]] = 1
+
+  result = append(result, list(...))
+  result[["peaksProfile"]] = peaksProfile$alleles
+  result[["heightsProfile"]] = peaksProfile$heights
+  result[["sizesProfile"]] = peaksProfile$sizes
+  result[["stutterRho"]] = rho
+  result[["knownProfs"]] = knownProfiles
+  result[["nUnknowns"]] = nUnknowns + 1
+  result[["hypothesis"]] = "defence"
+  result[["ethnic"]] = ethnic 
+  result[["adj"]] = adj
+  result[["fst"]] = fst
+  result[["relatedness"]] = relatedness
+  result[["doDropin"]] = doDropin
+  result[["peaksFile"]] = peaksFile
+  result[["refFile"]] = refFile
+  result[["callsFile"]] = callsFile
+  result[["databaseFile"]] = databaseFile
+
+
+  sanity.check.peaks(result) # makes sure hypothesis has right type.
+  result
+}
+
+
+missing.alleles.peaks = function(alleleDb, cspProfile, queriedProfile, knownProfiles) {
+  # Adds missing alleles to database
+  #
+  # There may be alleles in the crime-scene profile, in the queried individual,
+  # or in the individuals subject to dropout, which are not present in the
+  # database. Theses alleles are added into the database with count 1 and
+  # fragment length 0.
+  if(!is.matrix(cspProfile)) stop("input should be a matrix.")
+  if(is.null(colnames(cspProfile)))
+    stop("input matrix does not have column names.")
+  if(!is.matrix(knownProfiles)) stop("input should be a matrix.")
+  if(!is.matrix(queriedProfile)) stop("input should be a matrix.")
+  for(locus in colnames(cspProfile)) {
+    dbAlleles = rownames(alleleDb[[locus]])
+    cspAlleles = unique(unlist(cspProfile[, locus]))
+    qAlleles = unique(unlist(queriedProfile[, locus]))
+    knownAlleles = unique(unlist(knownProfiles[, locus]))
+    allAlleles = unique(c(cspAlleles,qAlleles, knownAlleles)) 
+    missingAlleles = allAlleles[!allAlleles%in%dbAlleles]
+    # At this point, some of the missingAlleles might just be saying move
+    # along, nothing to see.
+    missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
+    # Now add new rows to database. 
+    if(length(missingAlleles)) {
+      newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+                       byrow=TRUE)
+      rownames(newrows) = missingAlleles
+      alleleDb[[locus]] = rbind(alleleDb[[locus]], newrows)
+    }
+  }
+  alleleDb
+}
+
+
+# Should check that hypothesis is syntactically correct
+# This means matrices as opposed to lists, so on and so forth.
+# It does not mean it the input should make any sort of sense.
+sanity.check.peaks = function(hypothesis) {
+  errors = c()
+  if(!is.matrix(hypothesis$binaryProfile)) 
+     errors = c(errors, "binaryProfile should be a matrix 'replicates' x 'loci'.")
+  if(!is.matrix(hypothesis$queriedProfile))
+     errors = c(errors, "queriedProfile should be a matrix 'profiles' x 'loci'.")
+  if(length(errors) == 0) {
+    if(ncol(hypothesis$binaryProfile) != ncol(hypothesis$queriedProfile))
+      errors = c( errors,
+                  "Number of loci of binaryProf and queriedProf do not match." )
+  }
+  if(length(errors) != 0) {
+    cat("There seems to be an error with the input hypothesis.\n")
+    for(error in errors) cat(paste(c(error, "\n")))
+    stop()
+  }
+}
+
+
+transform.to.locus.centric.peaks = function(hypothesis) {
+  # Transform hypothesis to locus centric modes.
+  # 
+  # This means we reorganise the data to be in lists of the loci.
+  result = list()
+  for(locus in colnames(hypothesis$binaryProfile)) {
+    # Value of the resulting list for a given locus 
+    locusValue = list()
+    # Loop over all items in original list.
+    for(key in names(hypothesis)) {
+      value = hypothesis[[key]]
+      # special treatment for peaks profiles (peaks, heights and sizes)
+      if(key%in%c("peaksProfile","heightsProfile","sizesProfile"))
+        {
+        locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE])
+        } else {
+      # If a matrix and locus is either in rows or columns, then add only locus
+      # part of the matrix. 
+      # If a list, then add only the locus specific part of the list.
+      if(is.matrix(value)) {
+        if(locus %in% colnames(value)) 
+          locusValue[[key]] = value[, locus, drop=FALSE]
+        else if(locus %in% rownames(value))
+          locusValue[[key]] = value[locus, , drop=FALSE]
+      } else if(is.list(value) && (locus %in% names(value))) 
+        locusValue[[key]] = value[[locus]]
+        }
+      # If has not been added yet, then not locus dependent, and add it as a
+      # whole. 
+      if(!key %in% names(locusValue)) locusValue[[key]] = value 
+    }
+    # Only locus to result if not empty.
+    if(length(locusValue) > 0) result[[locus]] = locusValue
+  }
+  result
+}
+

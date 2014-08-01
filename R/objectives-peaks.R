@@ -1,0 +1,470 @@
+
+
+
+# Creates a likelihood function from the input hypothesis
+# Documentation is in man directory.
+create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE, likeMatrix=FALSE, ...) {
+
+  hypothesis = likeLTD:::add.args.to.hypothesis(hypothesis, ...)
+
+  sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
+  locusCentric = transform.to.locus.centric.peaks(hypothesis)
+
+  functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
+                      MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix))
+
+
+  if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
+  if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
+
+
+  likelihood.vectors <- function(degradation=NULL, rcont=NULL, sigma=NULL, stutter=NULL, dropin=NULL,
+                                 degradationPenalty=hypothesis$degradationPenalty, ...) {
+    # Call each and every function in the array.
+    arguments = list(degradation=degradation, rcont=rcont,
+                     sigma = sigma,
+                     degradationPenalty=degradationPenalty, dropin=dropin)
+    ARGUMENTS <<- arguments
+    callme <- function(objective,stut) {
+    args = append(arguments, list(stutter=stut))
+      do.call(objective, args)
+    }
+PRESTUTTER <<- stutter
+    if(length(stutter) == 1)
+      stutter = rep(stutter, length(functions))
+#    if(setequal(names(stutter), colnames(hypothesis$cspProfile)))
+#      stutter <- stutter[colnames(hypothesis$cspProfile)]
+POSTSTUTTER <<- stutter
+CALLME <<- callme
+FUNCTIONS <<- functions
+    objectives = mapply(callme, functions, stutter)
+    arguments = append(arguments, list(...))
+    # NOT SURE IF NEED PENALTIES CURRENTLY
+    pens <- do.call(penalties.peaks, append(arguments,list(nloc=ncol(hypothesis$queriedProfile))))
+    PENS <<- pens
+    list(objectives=objectives, penalties=pens)
+  }
+  if(addAttr) {
+    attr(likelihood.vectors, "hypothesis") <- hypothesis
+    attr(likelihood.vectors, "functions") <- functions
+  }
+  return(likelihood.vectors)
+}
+
+
+create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMatrix = FALSE) {
+  # Creates a likelyhood function for a given hypothesis and locus
+  #
+  # A hypothesis is given by the number of unknown contributors, whether to model
+  # dropin, so on and so forth.
+
+  cons = likelihood.constructs.per.locus.peaks(hypothesis)
+  doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
+
+  result.function <- function(sigma,stutter,
+                              degradation=NULL, rcont=NULL, dropin=NULL, ...) {
+    # Likelihood function for a given hypothesis and locus
+    #
+    # This function is specific to the hypothesis for which it was created.
+    # It hides everything except the nuisance parameters over which to
+    # optimize.
+    #
+    # Parameters:
+    #   power: a scalar floating point value.
+    #   dropout: the dropout rate for each replicate.
+    #   degradation: relative degradation from each profiled individual in this
+    #                hypothesis
+    #   rcont: relative contribution from each profiled individual and unknown
+    #          contributor in this hypothesis If it is one less than that, then
+    #          an additional 1 is inserted at a position given by
+    #          hypothesis$refIndiv. In general, this means either the queried
+    #          individual (if subject to dropout and prosecution hypothesis) or
+    #          the first individual subject to droput is the reference individual.
+    #   ...: Any other parameter, e.g. for penalty functions. 
+    #        These parameters are ignored here.
+    # Returns: A scalar value giving the likelihood for this locus and
+    #          hypothesis
+    PRERCONT <<- rcont
+    if(is.null(degradation)) degradation = c()
+    if(is.null(rcont)) rcont = c()
+    if(length(rcont) + 1 == hypothesis$nUnknowns
+                            + ncol(cons$knownPresence)) {
+      if(hypothesis$refIndiv == 1) rcont = c(1, rcont)
+      else if(hypothesis$refIndiv > length(rcont)) rcont = c(rcont, 1)
+      else rcont = c(rcont[1:hypothesis$refIndiv-1], 1,
+                     rcont[hypothesis$refIndiv:length(rcont)])
+    }
+    RCONT <<- rcont
+    if(length(rcont) != hypothesis$nUnknowns + ncol(cons$knownPresence))
+      stop(sprintf("rcont should be %d long.",
+                   hypothesis$nUnknowns + ncol(cons$knownPresence)))
+    if(length(degradation) != hypothesis$nUnknowns +
+                              ncol(cons$knownPresence))
+      stop(sprintf("degradation should be %d long.",
+                   hypothesis$nUnknowns + ncol(cons$knownPresence)))
+    if(any(rcont < 0)) stop("found negative relative contribution.")
+    if(any(degradation < 0)) stop("found negative degradation parameter.")
+    if(hypothesis$doDropin && is.null(dropin)) 
+      stop("Model requires missing argument 'dropin'")
+    else if(is.null(dropin)) dropin = 0
+    if(hypothesis$doDropin && dropin < 0) 
+      stop("Dropin rate should be between 0 and 1 (included).")
+
+    # NEED TO IMPLEMENT LOCUS ADJUSTMENT AND DEGRADATION 
+    # NOT SURE IF LOCUS ADJUSTMENT APPLIES ANYMORE
+
+    repRes <- peaks.probabilities(hypothesis=hypothesis, cons=cons, rcont=rcont, 
+				sigma=sigma, stutter=stutter, degradation=degradation, 
+				doR=TRUE)
+
+REPRES <<- repRes
+    
+    # combine replicates
+    res = likeLTD:::prod.matrix.col(t(repRes))
+
+RES <<- res
+
+    # multiply by allele probs
+    factorsRes = res*cons$factors
+
+FACRES <<- factorsRes
+    
+    if(is.na(sum(factorsRes))|is.infinite(sum(factorsRes))) 
+        {
+        REPRES <<- repRes
+        RES <<- res
+        FACS <<- cons$factors
+        FACRES <<- factorsRes
+    
+        HYPOTHESIS <<- hypothesis
+        CONS <<- cons
+        RCONT <<- rcont
+        SIGMA <<- sigma
+	STUTTER <<- stutter
+        DEGRADATION <<- degradation
+        }
+    # Figure out likelihood for good and return.
+    if(likeMatrix==FALSE)
+	{
+    	return(sum(factorsRes))
+	} else {
+	return(factorsRes)
+	}
+  }
+
+  if(addAttr) {
+    attr(result.function, "hypothesis") <- hypothesis
+    attr(result.function, "constructs") <- cons
+  }
+  result.function
+}
+
+
+likelihood.constructs.per.locus.peaks = function(hypothesis) {
+  # Creates the locus-specific data needed by each likehood function.
+  #
+  # Parameters:
+  #   hypothesis: A hypothesis, for instance one returned by
+  #               prosecution.hypothesis(...) or defence.hypothesis(...)
+  alleles = rownames(hypothesis$alleleDb)
+  if(is.null(alleles)) stop("Could not figure out alleles names.")
+  alleles.vector = function(n) alleles %in% unlist(n)
+  cspPresence     = apply(hypothesis$binaryProfile, 1, alleles.vector)
+  knownPresence = apply(hypothesis$knownProfs, 1, alleles.vector)
+  if(!is.matrix(cspPresence))
+    cspPresence = matrix(ncol=0, nrow=length(alleles))
+  if(!is.matrix(knownPresence))
+    knownPresence = matrix(ncol=0, nrow=length(alleles))
+
+  missingReps = apply(hypothesis$binaryProfile, 1, is.na)
+
+  genotypes <- compatible.genotypes.peaks(cspPresence, knownPresence, hypothesis$knownProfs,alleles,
+                                    hypothesis$nUnknowns, hypothesis$doDropin,
+                                    missingReps)
+
+# get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
+if(nrow(hypothesis$knownProfs)>0) 
+	{
+	kIndex = 1:(2*nrow(hypothesis$knownProfs))
+	} else {
+	kIndex = c()
+	}
+
+# multiply by matching factor for known genotypes (1+fst, 1+2fst, ...)
+if(length(kIndex>0)) {
+
+  # Only take into account relatedness between Q and X under Hd 
+  if(hypothesis$hypothesis=="defence")
+	{
+	# exclude known genotypes
+  	factors = likeLTD:::genotype.factors(genotypes[-kIndex,], hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             hypothesis$relatedness) 
+	} else {
+  	factors = likeLTD:::genotype.factors(genotypes[-kIndex,], hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             c(0,0))
+	}
+ #factors = factors * prod(1+(kIndex*hypothesis$fst))
+} else {
+  # Only take into account relatedness between Q and X under Hd 
+  if(hypothesis$hypothesis=="defence")
+	{
+	# exclude known genotypes
+  	factors = likeLTD:::genotype.factors(genotypes, hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             hypothesis$relatedness) 
+	} else {
+  	factors = likeLTD:::genotype.factors(genotypes, hypothesis$alleleDb,
+                             hypothesis$nUnknowns, hypothesis$doDropin,
+                             hypothesis$queriedProfile,
+                             c(0,0))
+	}
+
+
+}
+
+
+
+  list(cspPresence=cspPresence, knownPresence=knownPresence,
+        missingReps=missingReps,
+       genotypes=genotypes, factors=factors,
+       freqMat=hypothesis$alleleDb[, 1])
+}
+
+
+# function to be called at each iteration of maximisation
+peaks.probabilities = function(hypothesis,cons,rcont,sigma,stutter,degradation,doR=TRUE)
+    {
+    # return a function that computes the 
+    if(hypothesis$doDropin==TRUE)
+        {
+        stop("Cannot handle dropin")
+        } else {
+        genotypes = matrix(rownames(hypothesis$alleleDb)[cons$genotypes],ncol=ncol(cons$genotypes))
+        # probabilities for each replicate
+        probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],rcont,stutter,sigma=sigma,degradation=degradation,fragLengths=hypothesis$alleleDb[,2]))
+        }
+    return(probs)
+    }
+
+
+
+
+
+# Function to run peak heights per locus
+# Parameters:
+# genotypeArray = Matrix of genotype combinations for this locus
+# alleles = CSP alleles for this locus
+# heights = CSP peak heights for this locus
+# sizes = CSP allele sizes for this locus
+# rcont = current rcont value
+# rhoA = allelic constant parameter, single value
+# rhoS = stutter constant parameter, single value
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths,parallel=TRUE)
+	{
+	index = !is.na(alleles)
+	alleles = alleles[index]
+	heights = heights[index]
+	sizes = sizes[index]
+	# result vector
+if(parallel==FALSE) {
+    Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths))
+} else {
+    Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths),mc.cores=cores)
+}
+	return(unlist(Probs))
+	}
+
+
+
+# Function to get probability of observed peak heights for a 
+# single genotype combination when there is no dropout required
+# to explain the genotype combination
+# Parameters:
+# genotype = single genotype combination (vector of 2*NU)
+# alleles = CSP alleles for this locus
+# heights = CSP peak heights for this locus
+# sizes = CSP allele sizes for this locus
+# rcont = current rcont value
+# rhoA = allelic constant parameter, single value
+# rhoS = stutter constant parameter, single value
+probability.peaks = function(genotype,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths)
+	{
+	genotype = as.numeric(genotype)
+	# get alphas
+	gammaMu = peak.height.dose(genotype,alleles,heights,sizes,rcont,stutter,degradation,fragLengths)
+	names(heights) = alleles
+	# give peak heights to dropout alleles
+	peakHeights = unlist(heights)
+	gammaMus = gammaMu
+	dropoutIndex = which(!genotype%in%names(peakHeights))
+	if(length(dropoutIndex)!=0)
+	    {
+        allelesToAdd = unique(genotype[dropoutIndex])
+        toAdd = rep(0,times=length(allelesToAdd))
+        names(toAdd) = allelesToAdd
+        peakHeights = c(peakHeights,toAdd)
+        peakHeights = peakHeights[order(names(peakHeights))]
+	    }
+	# subset alphas to those that correspont to peaks
+	gammaMus = gammaMus[which(names(gammaMus)%in%names(peakHeights))]
+	# sort
+	gammaMus = gammaMus[order(names(gammaMus))]
+	peakHeights = peakHeights[order(names(peakHeights))]
+
+
+
+	# scale = variance/mu
+	# scale = (stanDev^2)/mu
+	# alpha = (mu^2)/variance
+	# alpha = (mu^2)/(stanDev^2)
+	scalesVec = (sigma^2)/gammaMus
+	shapesVec = (gammaMus^2)/(sigma^2) 
+
+	MU <<- gammaMus
+	HEIGHTS <<- peakHeights 
+	SIGMA <<- sigma
+	SCALES <<- scalesVec
+	SHAPES <<- shapesVec
+	
+	# probability densities
+	pdf = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), x=peakHeights, k=shapesVec+0.001, t=scalesVec+0.001)
+
+	if(is.na(prod(pdf)))
+	    {
+	MU <<- gammaMus
+	HEIGHTS <<- peakHeights 
+	SIGMA <<- sigma
+	SCALES <<- scalesVec
+	SHAPES <<- shapesVec
+
+	#mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), x=HEIGHTS, k=SHAPES+0.001, t=SCALES+0.001)
+	    }
+
+    # set impossible values to 0 likelihood
+	pdf[which(is.infinite(pdf))] = 0
+	
+	return(prod(pdf))
+	}
+
+
+# get "dose" (alpha values) for a single locus and single genotype
+# dropout alleles are given an alpha value of 0
+# Parameter:
+# genotype = genotypes of hypothesised contributors  (from genotype matrix)
+# alleles = alleles observed in CSP (including stutters etc)
+# heights = peak heights from CSP
+# sizes = base pair sizes of CSP peaks
+# rcont = relative DNA contribution of contributors
+# DNAproxy = Assumed total amount of DNA in the sample (usually the sum of peak heights at this locus)
+# rhoA = allelic constant parameter
+# rhoS = stutter constant parameter
+# sigma = stanDev constant parameter for gamma
+peak.height.dose = function(genotype,alleles,heights,sizes,rcont,stutter,degradation,fragLengths)
+	{
+	# positions of stutter alleles
+	stutterPos = genotype-1
+	# all positions
+	# round is needed because of floating point error
+	# e.g. 31.2 != 32.2-1
+	allPos = sort(unique(round(c(stutterPos,genotype),1)))
+	# add sizes of genotyp alleles that are not in the CSP (dropout alleles)
+	names(sizes) = alleles
+	#allSizes = sizes
+	#if(any(!genotype%in%alleles)) allSizes = fillSizes(sizes,alleles,genotype,allPos)
+	# changes sizes to order of genotype rather than order of CSP
+	#sizesGen = sapply(genotype,FUN=function(x) allSizes[which(names(allSizes)==x)])
+	fragLengthIndex = sapply(genotype,FUN=function(x) which(names(fragLengths)==x))
+    	# degradation adjustment
+	degAdjust = rep(rcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
+	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
+	# allelic alpha
+	#alphaA = degAdjust * rhoA * DNAproxy / sizesGen
+	muA = degAdjust * (1 - stutter) #* DNAproxy / sizesGen
+	names(muA) = genotype
+	# stutter alpha
+	#alphaS = degAdjust * rhoS * DNAproxy / sizesGen
+	muS = degAdjust * stutter #* DNAproxy / sizesGen
+	names(muS) = stutterPos
+	# get total alphas for each position
+	muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]))
+	names(muX) = allPos
+	return(muX)
+	} 
+
+
+# function to add sizes for positions in the hypothesised
+# genotype that were not observed in the CSP
+# useful when there is stutter and/or dropout
+# Parameter:
+# sizes = base pair sizes of CSP peaks
+# alleles = alleles observed in CSP (including stutters etc)
+# genotype = genotypes of hypothesised contributors (from genotype matrix)
+# allPos = allelic positions including stutter and dropout etc
+fillSizes = function(sizes,alleles,genotype,allPos)
+	{
+	# which alleles are missing from sizes
+	index = unique(allPos[which(!allPos%in%names(sizes))])
+	newsizes = unlist(sizes)
+	for(i in 1:length(index)) newsizes = addMissingAlleleSize(index[i],newsizes)
+	return(newsizes[order(names(newsizes))])
+	}
+
+# function to add sizes for missing alleles based on their allele name difference
+# from the nearest allele with a size
+# e.g. the size of allele 16 is the size of allele 18 - (2*4)
+# need to fix this for .2 if nearet is not .2
+addMissingAlleleSize = function(index,sizes)
+	{
+	# size difference between missing alleles and sizes
+	diffSizes = index - as.numeric(names(sizes))
+	# get which size allele is closest to the missing allele
+	closestIndex = which.min(abs(diffSizes))
+	# get the new size
+	newSizes = sizes[closestIndex] + (4*diffSizes[closestIndex]) 
+	# add to sizes
+	outsizes = c(newSizes,sizes)
+	names(outsizes)[1] = index
+	return(outsizes)
+	}
+
+
+
+
+
+
+
+
+
+# Penalties to apply to the likelihood.
+# Documentation is in man directory.
+penalties.peaks <- function(nloc, degradation=NULL,
+                       degradationPenalty=50, ...) {
+  result = 1
+  # Normalizes by number of loci so product of penalties same as in old code.
+  # Some penalties are per locus and other for all locus. Hence this bit of run
+  # around.
+  normalization = 1.0 / max(nloc, 1)
+
+  if(!missing(degradation) & !is.null(degradation))
+    result = result * exp(-sum(degradation) * degradationPenalty 
+                           * normalization )
+
+
+  return(result)
+}
+
+
+
+
+
+
+
+
+
+
+    
