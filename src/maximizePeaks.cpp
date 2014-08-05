@@ -18,13 +18,6 @@
 #endif
 
 
-struct peakStruct
-	{
-	double allele;
-	double height;
-	double size;
-	} ;
-
 struct genoStruct
 	{
 	double genotype;
@@ -34,10 +27,10 @@ struct genoStruct
 //std::vector<double> peakMeanDose(SEXP genotype,SEXP alleles,SEXP heights,SEXP sizes,SEXP rcont,SEXP stutter,SEXP degradation,SEXP fragLengths, SEXP fragNames)
 SEXP peakMeanDose(SEXP genotype,SEXP alleles,SEXP heights,SEXP sizes,SEXP rcont,SEXP stutter,SEXP degradation,SEXP fragLengths, SEXP fragNames)
 	{
-	int const nGen = INTEGER(GET_DIM(genotype))[0];
-	int const nCSP = INTEGER(GET_DIM(alleles))[0];
-	int const nCont = INTEGER(GET_DIM(rcont))[0];
-	int const nFrag = INTEGER(GET_DIM(fragNames))[0];
+	int const nGen = length(genotype);
+	int const nCSP = length(alleles);
+	int const nCont = length(rcont);
+	int const nFrag = length(fragNames);
 	double const * const genotype_ptr     = REAL(genotype);
 	double const * const allele_ptr     = REAL(alleles);
 	double const * const height_ptr     = REAL(heights);
@@ -52,38 +45,28 @@ SEXP peakMeanDose(SEXP genotype,SEXP alleles,SEXP heights,SEXP sizes,SEXP rcont,
 	//double * stutterPos_ptr     = REAL(stutterPos);
 	//SEXP allPos = allocVector(REALSXP, 2*nGen);
 	//double * allPos_ptr     = REAL(allPos);
-	double fragSub;
-	std::vector<double> stutterPosVec, allPosVec, outMu, fragVec;
-	std::vector<double>::iterator itFlt;
-	peakStruct tmpPeak;
-	std::vector<peakStruct> peaks;
+	float fragSub;
+	std::vector<double> outMu;
+	std::vector<float> genotypeVec, stutterPosVec, allPosVec, fragVecN, fragVecL, debug;
+	std::vector<float>::iterator itFlt,itFlt2;
 	genoStruct tmpMu;
 	std::vector<genoStruct> muA, muS;
-	// fill peaks vector
-	//for(int i=0; i<nCSP; i++)
-	//	{
-	//	tmpPeak.allele = allele_ptr[i]; 
-	//	tmpPeak.height = height_ptr[i];
-	//	tmpPeak.size = size_ptr[i];
-	//	peaks.push_back();
-	//	}
 	// convert fragLengths to vector
 	for(int i=0; i<nFrag; i++)
 		{
-		fragVec.push_back(fragL_ptr[i]);
+		fragVecN.push_back(std::floor(fragN_ptr[i]*10.0f)/10.0f);
+		fragVecL.push_back(fragL_ptr[i]);
 		}
 
 	for(int i=0; i<nGen; i++)
 		{
+		// round genotypes
+		genotypeVec.push_back(std::floor(genotype_ptr[i]*10.0f)/10.0f);
 		// get stutter positions
-		//stutterPos_ptr[i] = genotype_ptr[i]-1.0;
-		stutterPosVec.push_back(genotype_ptr[i]-1.0);
-		// get all positions
+		stutterPosVec.push_back(std::floor((genotypeVec[i]-1.0)*10.0f)/10.0f);
+		// get all positions, while rounding to 1dp
 		allPosVec.push_back(stutterPosVec[i]);
-		allPosVec.push_back(genotype_ptr[i]);
-		// get all positions
-		//allPos_ptr[i+nGen] = stutterPos_ptr[i];
-		//allPos_ptr[i] = genotype_ptr[i];
+		allPosVec.push_back(genotypeVec[i]);
 		}
 	//SEXP outSexp 
 	// sort and unique allPos
@@ -96,24 +79,27 @@ SEXP peakMeanDose(SEXP genotype,SEXP alleles,SEXP heights,SEXP sizes,SEXP rcont,
 		// rcont and deg
 		if(i%2!=0)
 			{
-			rcontSub = rcont_ptr[(i+1)/2];
-			degSub = deg_ptr[(i+1)/2];
+			rcontSub = rcont_ptr[(i-1)/2];
+			degSub = deg_ptr[(i-1)/2];
 			} else {
 			rcontSub = rcont_ptr[i/2];
 			degSub = deg_ptr[i/2];
 			}
 		// fragLengths
-		itFlt = std::find(fragVec.begin(),fragVec.end(),genotype_ptr[i]);
-		fragSub = fragVec[std::distance(fragVec.begin(),itFlt)];
+		itFlt2 = std::find(fragVecN.begin(),fragVecN.end(),genotypeVec[i]);
+		fragSub = fragVecL[std::distance(fragVecN.begin(),itFlt2)];
 		// effective dose
 		tmpDose = rcontSub*std::pow((1+degSub),fragSub);
+
 		// stutter adjusted effective dose
-		tmpMu.genotype = genotype_ptr[i];
+		tmpMu.genotype = genotypeVec[i];
 		tmpMu.dose = tmpDose * (1-stutter_ptr[0]);
 		muA.push_back(tmpMu);
+		debug.push_back(tmpMu.dose);
 		tmpMu.genotype = stutterPosVec[i];
 		tmpMu.dose = tmpDose * stutter_ptr[0];
 		muS.push_back(tmpMu);
+
 		}
 	// combine doses at each allelic position
 	for(int i=0; i<allPosVec.size(); i++)
@@ -127,13 +113,17 @@ SEXP peakMeanDose(SEXP genotype,SEXP alleles,SEXP heights,SEXP sizes,SEXP rcont,
 		outMu.push_back(tmpDose);
 		}
 	
-
+	// convert outMu into SEXP object (for debugging etc)
 	SEXP outsexp = allocVector(REALSXP, allPosVec.size());
 	double * outsexp_ptr     = REAL(outsexp);
 	for(int i=0; i<allPosVec.size(); i++)
 		{
 		outsexp_ptr[i] = outMu[i];
 		}
+//	for(int i=0; i<debug.size(); i++)
+//		{
+//		outsexp_ptr[i] = debug[i];
+//		}
 	//return outMu;
 	return outsexp;
 	}
