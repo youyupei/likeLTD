@@ -318,3 +318,180 @@ selective.col.prod <- function(condition, input) {
   return(output)
 }
 
+
+
+# heterozygote matrix needed for linked locus match probability
+hetLinked = function(pA,pB,fst)
+	{
+	C = 2*(1-fst)*pA*pB
+	AB1 = C *  (((2*fst)+(1-fst)*(pA+pB))/(2*(1+fst)))
+	AB0 = C * het(pA, pB, fst=fst)
+	return(c(AB0,AB1,C))
+	}
+
+# homozygote matrix needed for linked locus match probability
+homLinked = function(pA,fst)
+	{
+	D = pA*(fst+(1-fst)*pA)
+	AB1 = D * ((2*fst)+(1-fst)*pA)/(1+fst)
+	AB0 = AB1 * ((3*fst)+(1-fst)*pA)/(1+(2*fst))
+	return(c(AB0,AB1,D))
+	}
+
+
+# Z matrix needed for linked locus match pobability
+Z = function(R)
+	{
+	X = R^2+(1-R)^2
+	Y = 2*R*(1-R)
+	out = matrix(c(
+			(X^2)/4,
+			(X*Y)/2,
+			(Y^2)/4,
+			(X*Y)/2,
+			(X^2+Y^2)/2,
+			(X*Y)/2,
+			(Y^2)/4,
+			(X*Y)/2,
+			(X^2)/4
+			),ncol=3,nrow=3)
+	return(out)
+	}
+
+# function to find the match probability including linked loci
+linkedMatchProb = function(hypothesis,linkedIndex,R)
+    {
+	rr = hypothesis$relatedness
+	fst = hypothesis$fst
+	ideal.match <- c()
+	for(j in 1:ncol(hypothesis$cspProfile))
+		{
+		
+		if(j%in%c(linkedIndex)) next
+		af = hypothesis$alleleDb[j][[1]]
+		kn = hypothesis$queriedProfile[,j][[1]]
+		p1 = af[row.names(af)==kn[1],1]
+		p2 = af[row.names(af)==kn[2],1]
+
+        	# undo most of fst adjustment
+	        p1 = (p1*(1+fst))-fst
+        	p2 = (p2*(1+fst))-fst
+
+
+        	if(kn[1]==kn[2])
+        	    {
+        	    # undo last bit of fst adjustment
+        	    p1 = (p1-fst)/(1-fst)
+        	    p2 = (p2-fst)/(1-fst)
+        	    # get match new fst adjusted match prob
+        	    ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*hom(p1,fst=fst))
+        	    } else {
+        	    # undo last bit of fst adjustment
+        	    p1 = p1/(1-fst)
+        	    p2 = p2/(1-fst)
+        	    # get match new fst adjusted match prob
+        	    ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*het(p1,p2,fst=fst))
+        	    }
+		}
+	# joint probabilities for linked loci
+	for(j in 1:nrow(linkedIndex))
+		{
+		# allele probabilities for first locus
+		af1 = hypothesis$alleleDb[linkedIndex[j,1]][[1]]
+		kn1 = hypothesis$queriedProfile[,linkedIndex[j,1]][[1]]
+		p1 = af1[row.names(af1)==kn1[1],1]
+		p2 = af1[row.names(af1)==kn1[2],1]
+		# allele probabilities for second locus	
+		af2 = hypothesis$alleleDb[linkedIndex[j,2]][[1]]
+		kn2 = hypothesis$queriedProfile[,linkedIndex[j,2]][[1]]
+		p3 = af2[row.names(af2)==kn2[1],1]
+		p4 = af2[row.names(af2)==kn2[2],1]
+
+		# undo most of fst adjustment
+	        p1 = (p1*(1+fst))-fst
+        	p2 = (p2*(1+fst))-fst	
+	        p3 = (p3*(1+fst))-fst
+        	p4 = (p4*(1+fst))-fst
+
+		# Z matrix
+		Ztmp = Z(R[j])
+
+        	if(kn1[1]==kn1[2])
+			{
+        	    	# undo last bit of fst adjustment
+        	    	p1 = (p1-fst)/(1-fst)
+        	    	p2 = (p2-fst)/(1-fst)
+			# A matrix
+			A = matrix(homLinked(p1,fst=fst),ncol=3)
+			# genotype probability
+			factor1 = p1*(fst+(1-fst)*p1)
+			} else {
+        	    	# undo last bit of fst adjustment
+        	    	p1 = p1/(1-fst)
+        	    	p2 = p2/(1-fst)
+			# A matrix
+			A = matrix(hetLinked(p1,p2,fst=fst),ncol=3)
+			# genotype probability
+			factor1 = 2*(1-fst)*p1*p2
+			}
+		if(kn2[1]==kn2[2])
+			{
+			# undo last bit of fst adjustment
+        	    	p3 = (p3-fst)/(1-fst)
+        	    	p4 = (p4-fst)/(1-fst)
+			# B matrix
+			B = matrix(homLinked(p3,fst=fst),nrow=3)
+			# genotype probability
+			factor2 = p3*(fst+(1-fst)*p3)
+			} else {
+			# undo last bit of fst adjustment
+        	    	p3 = p3/(1-fst)
+        	    	p4 = p4/(1-fst)
+			# B matrix
+			B = matrix(hetLinked(p3,p4,fst=fst),nrow=3)
+			# genotype probability
+			factor2 = 2*(1-fst)*p3*p4
+			}
+
+		out = (A%*%Ztmp%*%B)/prod(c(factor1,factor2))
+		ideal.match = c(ideal.match,out)
+		}
+	ideal.match = 1/prod(ideal.match)
+    return(ideal.match)
+    }
+
+
+# Function to find the difference between the match probability with/without linkage
+linkage = function(hypothesis)
+	{
+	# combinations of CSP markers
+	combs = combinations(length(hypothesis$alleleDb),2) 
+	# recombination fractions for each combination
+	R = apply(combs,MARGIN=1,FUN=function(x) hypothesis$linkageInfo[which(toupper(rownames(hypothesis$linkageInfo))==toupper(names(hypothesis$alleleDb))[x[1]]),which(toupper(colnames(hypothesis$linkageInfo))==toupper(names(hypothesis$alleleDb))[x[2]])])
+	# find which recombinations actually happen
+	index = suppressWarnings(sapply(R,FUN=function(x) !is.na(unlist(x))&length(unlist(x)!=0)))
+	# replace zero length with FALSE or NA
+	zeroIndex = which(sapply(index,FUN=function(x) length(x)==0))
+	for(i in 1:length(zeroIndex)) 
+	    {
+	    index[[zeroIndex[i]]] = FALSE
+	    R[[zeroIndex[i]]] = NA
+	    }
+	# matrix of linked loci
+	toLink = combs[unlist(index),,drop=FALSE]
+	if(any(table(toLink)>1)) stop("A locus is linked to more than one other locus")
+	R = unlist(R)[!is.na(unlist(R))]
+    # get linked match probability
+	if(nrow(toLink)==0)
+	    {
+        linked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+	    } else {
+        linked = linkedMatchProb(hypothesis,toLink,R)
+	    }
+	# get non-linked match probability
+	nonLinked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+	# return 
+	out = linked/nonLinked
+    return(out)
+	}
+

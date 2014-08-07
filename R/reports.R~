@@ -115,12 +115,11 @@ latex.maker <- function(genetics,filename){
 	close(file)}
 
 #--------------------------------------------------------------------------------------------------------------------
-pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, linkageFile=NULL, outputPath=getwd() ) {
+pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(cspFile, refFile) 
 	if(!is.null(databaseFile)) paths <- c(databaseFile, paths, recursive=TRUE)
-	if(!is.null(linkageFile)) paths <- c(linkageFile, paths, recursive=TRUE)
 	for(path in paths) {
 		if(!file.exists(path))
 			stop(paste(path, "does not exist."))
@@ -133,7 +132,6 @@ pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NUL
 	stop(paste(outputPath, " exists and is not a directory."))
 	admin <- list( caseName=caseName,
                 databaseFile=databaseFile,
-                linkageFile=linkageFile,
                 cspFile=cspFile,
                 refFile=refFile,
                 outputPath=outputPath )
@@ -763,10 +761,10 @@ het <- function(pa, pb, fst=0.02)
 
     }
 
-#singleFst = function(p,fst)
-#	{
-#	(fst+(1-fst)*p)/(1+fst)
-#	}
+singleFst = function(p,fst)
+	{
+	(fst+(1-fst)*p)/(1+fst)
+	}
 
 matchProb = function(hypothesis,rr,fst=0.02)
     {

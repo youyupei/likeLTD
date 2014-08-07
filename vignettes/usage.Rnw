@@ -42,6 +42,7 @@ maximization of the likelihood nor any information which needs to be computed.
                        caseName)
   args = list(
     databaseFile = NULL,
+    linkageFile = NULL,
     cspFile    = file.path(datapath, 'hammer-CSP.csv'),
     refFile      = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns    = 0,

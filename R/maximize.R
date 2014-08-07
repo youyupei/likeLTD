@@ -120,7 +120,7 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
 optimisation.params <- function(hypothesis, verbose=FALSE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=0, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
+                                withPenalties=TRUE, doLinkage=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -159,6 +159,15 @@ optimisation.params <- function(hypothesis, verbose=FALSE, fixed=NULL,
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
 
+    # Linkage adjustment if brothers
+    linkBool = doLinkage&identical(hypothesis$relatedness,c(0.5,0.25))&hypothesis$hypothesis=="prosecution"
+  if(linkBool)
+    {
+    linkFactor = linkage(hypothesis)
+    if(logObjective) linkFactor = log10(linkFactor)
+    }
+
+    # result function
   result.function <- function(x) {
     # If a flat vector, reconstruct list. 
     if(typeof(x) == "double")
@@ -204,9 +213,22 @@ if(likeMatrix==TRUE) return(result)
     }
     # If result is infinite make sure it is -Inf
     if(is.infinite(result)) result = -Inf 
+    
+    # Linkage adjustment
+    if(linkBool)
+        {
+        if(logObjective==TRUE) 
+            {
+            result = result+linkFactor
+            } else {
+            result = result*linkFactor
+            }
+        }
     # return result
     -result
   }
+
+
   
   lower = lower.bounds(args, zero, logDegradation)
   upper = upper.bounds(args, zero, logDegradation)

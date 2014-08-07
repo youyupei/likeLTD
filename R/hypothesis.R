@@ -55,6 +55,20 @@ read.known.profiles = function(path) {
   result
 }
 
+# Reads linkage information from file.
+# Documentation is in man directory
+load.linkage.info <- function(path=NULL) {
+	# Loads allele database
+	# Documentation is in man directory.
+	if(is.null(path)) { # Load default database
+	dummyEnv <- new.env()
+	data('linkage', package='likeLTD', envir=dummyEnv)
+	return(dummyEnv[['linkage']])
+	}
+	if(!file.exists(path)) stop(paste(path, "does not exist."))
+	read.table(path, sep="\t", header=TRUE,as.is=TRUE)
+	}
+
 # Should check that hypothesis is syntactically correct
 # This means matrices as opposed to lists, so on and so forth.
 # It does not mean it the input should make any sort of sense.
@@ -237,11 +251,16 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 # Documentation is in man directory.
 prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
-                                   databaseFile=NULL, relatedness=c(0,0), 
+                                   databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
                                    doDropin=FALSE, ...) {
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
+  linkageInfo = load.linkage.info(linkageFile)
+  rownames(linkageInfo) = linkageInfo[,1]
+  linkageInfo = linkageInfo[,-1]
+  linkIndex = which(colnames(linkageInfo)%in%colnames(cspProfile))
+  linkageInfo = linkageInfo[linkIndex,linkIndex]
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
@@ -277,6 +296,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   result[["cspFile"]] = cspFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
+  result[["linkageInfo"]] = linkageInfo
 
   sanity.check(result) # makes sure hypothesis has right type.
   result
@@ -285,12 +305,17 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 # Creates defence hypothesis
 # Documentation is in man directory.
 defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
-                               adj=1e0, fst=0.02, databaseFile=NULL, 
+                               adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
                                relatedness=c(0,0), doDropin=FALSE, ...) {
   
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
+  linkageInfo = load.linkage.info(linkageFile)
+  rownames(linkageInfo) = linkageInfo[,1]
+  linkageInfo = linkageInfo[,-1]
+  linkIndex = which(colnames(linkageInfo)%in%colnames(cspProfile))
+  linkageInfo = linkageInfo[linkIndex,linkIndex]
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")
@@ -316,6 +341,7 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
   result[["cspFile"]] = cspFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
+  result[["linkageInfo"]] = linkageInfo
 
   sanity.check(result) # makes sure hypothesis has right type.
   result
