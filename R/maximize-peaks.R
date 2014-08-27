@@ -8,16 +8,18 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   #         an epsilon to simulate the first case.
   degradation = if(logDegradation) { 0-zero } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
-  rcont       = rep(100, length(arguments$rcont))
-  sigma        = 10000
+  DNAcont       = rep(5000, length(arguments$DNAcont))
+  scale        = 10000
   dropin      = NULL
   stutter     = rep(.3,nloc)
+  repAdjust   = rep(10,length(arguments$repAdjust))
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
 
   list(degradation     = degradation,
-       rcont           = rcont,
-       sigma           = sigma,
+       DNAcont           = DNAcont,
+       scale           = scale,
        stutter         = stutter,
+       repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -34,16 +36,18 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   #                   10.
   degradation = if(logDegradation) { -20 } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
-  rcont       = rep(zero, length(arguments$rcont))
-  sigma       = 1
+  DNAcont       = rep(zero, length(arguments$DNAcont))
+  scale       = 1
   stutter     = rep(0+zero,nloc)
+  repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
 
   list(degradation     = degradation,
-       rcont           = rcont, 
-       sigma           = sigma,
+       DNAcont           = DNAcont, 
+       scale           = scale,
        stutter         = stutter,
+       repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -120,6 +124,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # Compute objective function.
     result <- do.call(objective, x)
 
+
     tmpResult = result
 
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
@@ -189,21 +194,23 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   hypothesis = likeLTD:::add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # -1 because relative to first.
-  nrcont          = max(nrow(hypothesis$knownProfs)
-                        + hypothesis$nUnknowns - 1, 0)
+  nDNAcont          = max(nrow(hypothesis$knownProfs)
+                        + hypothesis$nUnknowns, 0)
   degradation     = rep( 3e-3, 
                          nrow(hypothesis$knownProfs) + hypothesis$nUnknowns )
-  rcont           = runif(nrcont, min=0.5, max=1.5)
+  DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
-  sigma           = 1/4
+  scale           = 1/4
   stutter         = rep(0.08,times=ncol(hypothesis$queriedProfile))
+  repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
 
 
   list(degradation     = degradation,
-       rcont           = rcont,
-       sigma           = sigma,
+       DNAcont           = DNAcont,
+       scale           = scale,
        stutter         = stutter,
+       repAdjust       = repAdjust,
        dropin          = dropin)
 }
 
@@ -282,11 +289,11 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,joint=FALSE,prob
 	# get marginal and subset at every locus for every individual
 	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
 	# order by dropout rate
-	rcont = vector(length=ncont)
-	rcont[hypothesis$refIndiv] = 1
-	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
-	index = (1:ncont)[rev(order(rcont))]
-	out = out[index]
+	#DNAcont = vector(length=ncont)
+	#DNAcont[hypothesis$refIndiv] = 1
+	#DNAcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("DNAcont",names(results$optim$bestmem))]
+	#index = (1:ncont)[rev(order(DNAcont))]
+	#out = out[index]
 	# get top genotypes for marginals
 	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	

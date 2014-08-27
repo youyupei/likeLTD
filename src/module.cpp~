@@ -3,6 +3,7 @@
 #include "genetics.h"
 #include "objectives.h"
 #include "openmp.h"
+#include "maximizePeaks.h"
 
 R_CallMethodDef callMethods[]  = {
        {"allGenotypesPerLocus", (DL_FUNC) &allGenotypesPerLocus, 2},
@@ -16,7 +17,7 @@ R_CallMethodDef callMethods[]  = {
        {"relatednessFactors", (DL_FUNC) &relatednessFactors, 5},
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {"set_nbthreads", (DL_FUNC) &set_nbthreads, 1},
-	{"peakMeanDose", (DL_FUNC) &peakMeanDose, 9},
+	{"peakMeanDose", (DL_FUNC) &peakMeanDose, 10},
        {NULL, NULL, 0},
        {NULL, NULL, 0},
 };

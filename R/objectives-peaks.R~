@@ -18,18 +18,17 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE, likeMatri
   if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
 
 
-  likelihood.vectors <- function(degradation=NULL, rcont=NULL, sigma=NULL, stutter=NULL, dropin=NULL,
-                                 degradationPenalty=hypothesis$degradationPenalty, ...) {
+  likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, sigma=NULL, stutter=NULL, dropin=NULL,
+                                 repAdjust=NULL, degradationPenalty=hypothesis$degradationPenalty, ...) {
     # Call each and every function in the array.
-    arguments = list(degradation=degradation, rcont=rcont,
-                     sigma = sigma,
+    arguments = list(degradation=degradation, DNAcont=DNAcont,
+                     sigma = sigma, repAdjust=repAdjust,
                      degradationPenalty=degradationPenalty, dropin=dropin)
     callme <- function(objective,stut) {
     args = append(arguments, list(stutter=stut))
       do.call(objective, args)
     }
-    if(length(stutter) == 1)
-      stutter = rep(stutter, length(functions))
+    if(length(stutter) == 1) stutter = rep(stutter, length(functions))
 #    if(setequal(names(stutter), colnames(hypothesis$cspProfile)))
 #      stutter <- stutter[colnames(hypothesis$cspProfile)]
     objectives = mapply(callme, functions, stutter)
@@ -52,11 +51,11 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
   # A hypothesis is given by the number of unknown contributors, whether to model
   # dropin, so on and so forth.
 
-  cons = likelihood.constructs.per.locus.peaks(hypothesis)
+  cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
-  result.function <- function(sigma,stutter,
-                              degradation=NULL, rcont=NULL, dropin=NULL, ...) {
+  result.function <- function(sigma,stutter,repAdjust=NULL,
+                              degradation=NULL, DNAcont=NULL, dropin=NULL, ...) {
     # Likelihood function for a given hypothesis and locus
     #
     # This function is specific to the hypothesis for which it was created.
@@ -78,23 +77,16 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          hypothesis
+    repAdjust = c(1,repAdjust)
     if(is.null(degradation)) degradation = c()
-    if(is.null(rcont)) rcont = c()
-    if(length(rcont) + 1 == hypothesis$nUnknowns
-                            + ncol(cons$knownPresence)) {
-      if(hypothesis$refIndiv == 1) rcont = c(1, rcont)
-      else if(hypothesis$refIndiv > length(rcont)) rcont = c(rcont, 1)
-      else rcont = c(rcont[1:hypothesis$refIndiv-1], 1,
-                     rcont[hypothesis$refIndiv:length(rcont)])
-    }
-    if(length(rcont) != hypothesis$nUnknowns + ncol(cons$knownPresence))
-      stop(sprintf("rcont should be %d long.",
+    if(length(DNAcont) != hypothesis$nUnknowns + ncol(cons$knownPresence))
+      stop(sprintf("DNAcont should be %d long.",
                    hypothesis$nUnknowns + ncol(cons$knownPresence)))
     if(length(degradation) != hypothesis$nUnknowns +
                               ncol(cons$knownPresence))
       stop(sprintf("degradation should be %d long.",
                    hypothesis$nUnknowns + ncol(cons$knownPresence)))
-    if(any(rcont < 0)) stop("found negative relative contribution.")
+    if(any(DNAcont < 0)) stop("found negative DNA contribution.")
     if(any(degradation < 0)) stop("found negative degradation parameter.")
     if(hypothesis$doDropin && is.null(dropin)) 
       stop("Model requires missing argument 'dropin'")
@@ -102,17 +94,20 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
     if(hypothesis$doDropin && dropin < 0) 
       stop("Dropin rate should be between 0 and 1 (included).")
 
-    # NEED TO IMPLEMENT LOCUS ADJUSTMENT AND DEGRADATION 
-    # NOT SURE IF LOCUS ADJUSTMENT APPLIES ANYMORE
 
-    repRes <- peaks.probabilities(hypothesis=hypothesis, cons=cons, rcont=rcont, 
+
+    repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				sigma=sigma, stutter=stutter, degradation=degradation, 
-				doR=TRUE)
+				repAdjust=repAdjust,doR=TRUE),ncol=length(hypothesis$peaksProfile))
 
-    
+    REPRES <<- repRes
     # combine replicates
-    res = likeLTD:::prod.matrix.col(t(repRes))
-
+    if(ncol(repRes)>1)
+	{
+	res = likeLTD:::prod.matrix.col(t(repRes))
+	} else {
+	res = repRes	
+	}
 
     # multiply by allele probs
     factorsRes = res*cons$factors
@@ -160,7 +155,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
 # get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
 if(nrow(hypothesis$knownProfs)>0) 
 	{
-	kIndex = 1:(2*nrow(hypothesis$knownProfs))
+	kIndex = (hypothesis$nUnknowns*2)+(1:(2*nrow(hypothesis$knownProfs)))
 	} else {
 	kIndex = c()
 	}
@@ -172,12 +167,12 @@ if(length(kIndex>0)) {
   if(hypothesis$hypothesis=="defence")
 	{
 	# exclude known genotypes
-  	factors = likeLTD:::genotype.factors(genotypes[-kIndex,], hypothesis$alleleDb,
+  	factors = genotype.factors(genotypes[-kIndex,,drop=FALSE], hypothesis$alleleDb,
                              hypothesis$nUnknowns, hypothesis$doDropin,
                              hypothesis$queriedProfile,
                              hypothesis$relatedness) 
 	} else {
-  	factors = likeLTD:::genotype.factors(genotypes[-kIndex,], hypothesis$alleleDb,
+  	factors = genotype.factors(genotypes[-kIndex,,drop=FALSE], hypothesis$alleleDb,
                              hypothesis$nUnknowns, hypothesis$doDropin,
                              hypothesis$queriedProfile,
                              c(0,0))
@@ -188,12 +183,12 @@ if(length(kIndex>0)) {
   if(hypothesis$hypothesis=="defence")
 	{
 	# exclude known genotypes
-  	factors = likeLTD:::genotype.factors(genotypes, hypothesis$alleleDb,
+  	factors = genotype.factors(genotypes, hypothesis$alleleDb,
                              hypothesis$nUnknowns, hypothesis$doDropin,
                              hypothesis$queriedProfile,
                              hypothesis$relatedness) 
 	} else {
-  	factors = likeLTD:::genotype.factors(genotypes, hypothesis$alleleDb,
+  	factors = genotype.factors(genotypes, hypothesis$alleleDb,
                              hypothesis$nUnknowns, hypothesis$doDropin,
                              hypothesis$queriedProfile,
                              c(0,0))
@@ -212,20 +207,38 @@ if(length(kIndex>0)) {
 
 
 # function to be called at each iteration of maximisation
-peaks.probabilities = function(hypothesis,cons,rcont,sigma,stutter,degradation,doR=TRUE)
+peaks.probabilities = function(hypothesis,cons,DNAcont,sigma,stutter,degradation,repAdjust,doR=FALSE)#,doC=TRUE)
     {
+
+repADJUST.PEAKS <<- repAdjust
+
+PEAKS.PEAKS<<-hypothesis$peaksProfile
+HEIGHT.PEAKS<<-hypothesis$heightsProfile
+SIZES.PEAKS<<-hypothesis$sizesProfile
+DNACONT.PEAKS<<-DNAcont
+STUTTER.PEAKS<<-stutter
+SIGMA.PEAKS<<-sigma
+DEG.PEAKS<<-degradation
+FRAG.PEAKS<<-hypothesis$alleleDb[,2]
     # return a function that computes the 
     if(hypothesis$doDropin==TRUE)
         {
         stop("Cannot handle dropin")
         } else {
         genotypes = matrix(rownames(hypothesis$alleleDb)[cons$genotypes],ncol=ncol(cons$genotypes))
-        # probabilities for each replicate
-        probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],rcont,stutter,sigma=sigma,degradation=degradation,fragLengths=hypothesis$alleleDb[,2]))
+	genotypes = matrix(as.numeric(genotypes),ncol=ncol(genotypes))
+GENOTYPES.PEAKS<<-genotypes
+	#if(doC==FALSE)
+	#	{
+        	# probabilities for each replicate
+        	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],DNAcont,stutter,sigma=sigma,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x]))
+	#	} else {
+	#	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksCPP,genotypes,as.numeric(hypothesis$peaksProfile[[x]]),unlist(as.numeric(hypothesis$heightsProfile[[x]])),unlist(hypothesis$sizesProfile[[x]]),DNAcont,stutter,sigma=sigma,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],fragNames=as.numeric(rownames(hypothesis$alleleDb)),repAdjust=repAdjust[x]))
+	#	}
+	probs[is.na(probs)] = 0
         }
     return(probs)
     }
-
 
 
 
@@ -239,21 +252,24 @@ peaks.probabilities = function(hypothesis,cons,rcont,sigma,stutter,degradation,d
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths,parallel=TRUE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutter,sigma,degradation,fragLengths,repAdjust,parallel=TRUE)
 	{
-	index = !is.na(alleles)
-	alleles = alleles[index]
-	heights = heights[index]
-	sizes = sizes[index]
+	#index = !is.na(alleles)
+	#alleles = alleles[index]
+	#heights = heights[index]
+	#sizes = sizes[index]
+	
 	# result vector
-if(parallel==FALSE) {
-    Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths))
-} else {
-    Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths),mc.cores=cores)
-}
+	if(parallel==FALSE)
+		{
+	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,stutter,sigma,degradation,fragLengths,repAdjust))
+		} else {
+	        Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,DNAcont,stutter,sigma,degradation,fragLengths,repAdjust),mc.cores=cores)
+		}
+	Probs = unlist(Probs)
+	Probs[is.na(Probs)] = 0
 	return(unlist(Probs))
 	}
-
 
 
 # Function to get probability of observed peak heights for a 
@@ -267,25 +283,30 @@ if(parallel==FALSE) {
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-probability.peaks = function(genotype,alleles,heights,sizes,rcont,stutter,sigma,degradation,fragLengths,doC=TRUE)
+probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,sigma,degradation,fragLengths,repAdjust,doC=TRUE)
 	{
+	GENOTYPE.SUB <<- genotype
+	ALLELES.SUB <<- alleles
+	HEIGHTS.SUB <<- heights
+	SIZES.SUB <<- sizes
+	DNACONT.SUB <<- DNAcont
+	STUTTER.SUB <<- stutter
+	SIGMA.SUB <<- sigma
+	DEG.SUB <<- degradation
+	FRAGLENGTHS.SUB <<- fragLengths
+	REPADJUST.SUB <<- repAdjust
+	
 	genotype = as.numeric(genotype)
-	GENOTYPE <<- genotype
-	ALLELES <<- alleles
-	HEIGHTS <<- heights
-	SIZES <<- sizes
-	RCONT <<- rcont
-	STUTTER <<- stutter
-	DEGRADATION <<- degradation
-	FRAGLENGTHS <<- fragLengths 
+
 	# get means
 	if(doC==TRUE) 
 		{
-		gammaMu = .Call(.cpp.peakMeanDose, genotype,as.numeric(alleles),as.numeric(heights),sizes,rcont,stutter,degradation,fragLengths,as.numeric(names(fragLengths)))
+		gammaMu = .Call(.cpp.peakMeanDose, genotype,unlist(as.numeric(alleles)),unlist(as.numeric(heights)),unlist(as.numeric(sizes)),DNAcont,stutter,degradation,fragLengths,as.numeric(names(fragLengths)),repAdjust)
 		names(gammaMu) = sort(unique(round(c(genotype-1,genotype),1)))
 		} else {
-		gammaMu = peak.height.dose(genotype,alleles,heights,sizes,rcont,stutter,degradation,fragLengths)
+		gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,stutter,degradation,fragLengths,repAdjust)
 		}
+	m <<- gammaMu
 	names(heights) = alleles
 	# give peak heights to dropout alleles
 	peakHeights = unlist(heights)
@@ -299,8 +320,14 @@ probability.peaks = function(genotype,alleles,heights,sizes,rcont,stutter,sigma,
         peakHeights = c(peakHeights,toAdd)
         peakHeights = peakHeights[order(names(peakHeights))]
 	    }
-	# subset alphas to those that correspont to peaks
-	gammaMus = gammaMus[which(names(gammaMus)%in%names(peakHeights))]
+	# give means to peaks that are not hypothesised (all means should be zero)
+	unhypIndex = which(!names(peakHeights)%in%names(gammaMus))
+	if(length(unhypIndex)!=0)
+		{
+		toAdd = rep(0,times=length(unhypIndex))
+		names(toAdd) = names(peakHeights)[unhypIndex]
+		gammaMus = c(gammaMus, toAdd)
+		}
 	# sort
 	gammaMus = gammaMus[order(names(gammaMus))]
 	peakHeights = peakHeights[order(names(peakHeights))]
@@ -311,11 +338,18 @@ probability.peaks = function(genotype,alleles,heights,sizes,rcont,stutter,sigma,
 	# scale = (stanDev^2)/mu
 	# alpha = (mu^2)/variance
 	# alpha = (mu^2)/(stanDev^2)
-	scalesVec = (sigma^2)/gammaMus
-	shapesVec = (gammaMus^2)/(sigma^2) 
+
+	# shape = mu/scale
+	shapesVec = gammaMus/sigma
+	scalesVec = rep(sigma,times=length(shapesVec)) 
 
 	
 	# probability densities
+	M <<- gammaMus
+	S <<- sigma
+	X <<- peakHeights
+	SHAPES <<- shapesVec+0.001
+	SCALES <<- scalesVec+0.001
 	pdf = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), x=peakHeights, k=shapesVec+0.001, t=scalesVec+0.001)
 
 
@@ -333,12 +367,12 @@ probability.peaks = function(genotype,alleles,heights,sizes,rcont,stutter,sigma,
 # alleles = alleles observed in CSP (including stutters etc)
 # heights = peak heights from CSP
 # sizes = base pair sizes of CSP peaks
-# rcont = relative DNA contribution of contributors
+# DNAcont = relative DNA contribution of contributors
 # DNAproxy = Assumed total amount of DNA in the sample (usually the sum of peak heights at this locus)
 # rhoA = allelic constant parameter
 # rhoS = stutter constant parameter
 # sigma = stanDev constant parameter for gamma
-peak.height.dose = function(genotype,alleles,heights,sizes,rcont,stutter,degradation,fragLengths)
+peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutter,degradation,fragLengths,repAdjust)
 	{
 	# positions of stutter alleles
 	stutterPos = genotype-1
@@ -354,7 +388,7 @@ peak.height.dose = function(genotype,alleles,heights,sizes,rcont,stutter,degrada
 	#sizesGen = sapply(genotype,FUN=function(x) allSizes[which(names(allSizes)==x)])
 	fragLengthIndex = sapply(genotype,FUN=function(x) which(names(fragLengths)==x))
     	# degradation adjustment
-	degAdjust = rep(rcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
+	degAdjust = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
 	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
 	# allelic alpha
 	#alphaA = degAdjust * rhoA * DNAproxy / sizesGen
@@ -369,6 +403,15 @@ peak.height.dose = function(genotype,alleles,heights,sizes,rcont,stutter,degrada
 	allPos = round(allPos,1)
 	stutterPos = round(stutterPos,1)
 	genotype = round(genotype,1)
+ALLPOS <<- allPos
+STUTTERPOS <<- stutterPos
+GENOTYPE <<- genotype
+MUA <<- muA
+MUS <<- muS
+REPADJUST <<- repAdjust
+DNACONT <<- rep(DNAcont,each=2)
+DEG <<- rep(1+degradation,each=2)
+FRAGLENGTHS <<- fragLengths[fragLengthIndex]
 
 	# get total alphas for each position
 	muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]))

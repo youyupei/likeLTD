@@ -113,17 +113,6 @@ convert.to.binary = function(data,allelicCalls)
 	return(allelic)
 	}
 
-# function to get rhoS and rhoA values
-read.rho.values = function(FILE=NULL)
-    {
-    if(is.null(FILE)) FILE = file.path(system.file("extdata", package="likeLTD"),"rho")
-    if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
-    # get data
-    rho = as.matrix(read.csv(FILE,as.is=TRUE,row.names=1))
-    # return rho
-    return(rho)
-    }
-
 
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
@@ -176,9 +165,6 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterF
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst)
 
-   # get rho values
-   rho = read.rho.values(stutterFile)
-
 
   	# refIndiv is queried
   	nameRef = rownames(result$queriedProfile)
@@ -189,7 +175,6 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterF
   result[["peaksProfile"]] = peaksProfile$alleles
   result[["heightsProfile"]] = peaksProfile$heights
   result[["sizesProfile"]] = peaksProfile$sizes
-  result[["stutterRho"]] = rho
   result[["knownProfs"]] = knownProfiles
   result[["nUnknowns"]] = nUnknowns
   result[["hypothesis"]] = "prosecution"
@@ -231,9 +216,6 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=
   result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst) 
-
-     # get rho values
-   rho = read.rho.values(stutterFile)
    
   result[["refIndiv"]] = 1
 
@@ -241,7 +223,6 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=
   result[["peaksProfile"]] = peaksProfile$alleles
   result[["heightsProfile"]] = peaksProfile$heights
   result[["sizesProfile"]] = peaksProfile$sizes
-  result[["stutterRho"]] = rho
   result[["knownProfs"]] = knownProfiles
   result[["nUnknowns"]] = nUnknowns + 1
   result[["hypothesis"]] = "defence"
@@ -331,7 +312,14 @@ transform.to.locus.centric.peaks = function(hypothesis) {
       # special treatment for peaks profiles (peaks, heights and sizes)
       if(key%in%c("peaksProfile","heightsProfile","sizesProfile"))
         {
-        locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE])
+        locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE],simplify=FALSE)
+	for(i in 1:length(locusValue[[key]]))
+		{
+		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
+		rownames(tmp) = locus
+		colnames(tmp) = paste("Allele",1:3,sep=".")
+		locusValue[[key]][[i]] = tmp
+		}
         } else {
       # If a matrix and locus is either in rows or columns, then add only locus
       # part of the matrix. 

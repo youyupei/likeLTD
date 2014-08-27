@@ -17,7 +17,8 @@ R_CallMethodDef callMethods[]  = {
        {"relatednessFactors", (DL_FUNC) &relatednessFactors, 5},
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {"set_nbthreads", (DL_FUNC) &set_nbthreads, 1},
-	{"peakMeanDose", (DL_FUNC) &peakMeanDose, 9},
+	{"peakMeanDose", (DL_FUNC) &peakMeanDose, 10},
+//		{"probabilityPeaksCPP", (DL_FUNC) &probabilityPeaksCPP, 11},
        {NULL, NULL, 0},
        {NULL, NULL, 0},
 };
