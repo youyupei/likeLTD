@@ -332,6 +332,12 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scal
 	gammaMus = gammaMus[order(names(gammaMus))]
 	peakHeights = peakHeights[order(names(peakHeights))]
 
+if(any(gammaMus==0))
+	{
+GAMMAMUS <<- gammaMus
+PEAKHEIGHTS <<- peakHeights
+	}
+
 
 
 	# scale = variance/mu

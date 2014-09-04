@@ -348,7 +348,7 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6){
 	return(results)
 	}
 
-get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
+get.likely.genotypes = function(hypothesis,params,results,posterior=FALSE,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
 	{
 	# Function to return likely genotypes for each individual
 	# Finds the marginal probabilities of genotypes, and then
@@ -376,6 +376,8 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 	likes = newParams$fn(results$optim$bestmem)$objectives
 	# convert to probabilities
 	likes = lapply(likes,FUN=function(x) x/sum(x))
+	# if want posterior, return
+	if(posterior==TRUE) return(list(genotypes=genotypes,probabilities=likes))
 	# if we only want the joint distributions
 	if(joint==TRUE) 
 		{
@@ -389,9 +391,9 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 		return(list(joint=outJoint,topGenotypes=list(genotype=topGenotypes,probability=topProbability)))
 		}
 	# function to get marginal probabilities and subset to those with prob>prob
-	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1,top=FALSE)
+	marginalProbs = function(gens,probs,indiv=1,prob=0.1,top=FALSE)
 		{
-		marginals = marginal(genotypes,probabilities,indiv)
+		marginals = marginal(gens,probs,indiv)
 		if(top==TRUE)	
 			{
 			topMarginals = marginals$genotypes[which.max(marginals$probabilities),,drop=FALSE]
@@ -404,7 +406,7 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 	# number of contributors
 	ncont = nrow(genotypes[[1]])/2
 	# get marginal and subset at every locus for every individual
-	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
+	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
 	# order by dropout rate
 	rcont = vector(length=ncont)
 	rcont[hypothesis$refIndiv] = 1
@@ -412,7 +414,7 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 	index = (1:ncont)[rev(order(rcont))]
 	out = out[index]
 	# get top genotypes for marginals
-	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
+	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	
 	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
 	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)
@@ -429,7 +431,7 @@ get.likely.genotypes = function(hypothesis,params,results,joint=FALSE,prob=ifels
 marginal = function(genotypes,probabilities,indiv=1)
 	{
 	# genotypes for just 1 contributor
-	allGen1 = genotypes[(((2*indiv)-1):(2*indiv)),]
+	allGen1 = genotypes[(((2*indiv)-1):(2*indiv)),,drop=FALSE]
 	# remove duplicate genotypes
 	outGens = unique(t(allGen1))
 	# sum probabilities for each identical single genotype
@@ -452,10 +454,10 @@ getMatching = function(singleGens,matchGen)
 subGens = function(genotypes,probabilities,rotate=FALSE,prob=0.1)
 	{
 	if(rotate==TRUE) genotypes = t(genotypes)
-	genotypes = genotypes[rev(order(probabilities)),]
+	genotypes = genotypes[rev(order(probabilities)),,drop=FALSE]
 	probabilities = sort(probabilities,decreasing=TRUE)
 	index = which(probabilities>prob)
-	genotypes = genotypes[index,]
+	genotypes = genotypes[index,,drop=FALSE]
 	probabilities = probabilities[index]
 	return(list(genotypes=genotypes,probabilities=probabilities))
 	}
