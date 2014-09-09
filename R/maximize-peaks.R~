@@ -9,7 +9,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = if(logDegradation) { 0-zero } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
-  sigma        = 10000
+  scale        = 10000
   dropin      = NULL
   stutter     = rep(.3,nloc)
   repAdjust   = rep(10,length(arguments$repAdjust))
@@ -17,7 +17,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
-       sigma           = sigma,
+       scale           = scale,
        stutter         = stutter,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
@@ -37,7 +37,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = if(logDegradation) { -20 } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
-  sigma       = 1
+  scale       = 1
   stutter     = rep(0+zero,nloc)
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
@@ -45,7 +45,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
-       sigma           = sigma,
+       scale           = scale,
        stutter         = stutter,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
@@ -55,7 +55,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
 optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
+                                withPenalties=TRUE, objective=NULL, iterMax=75, 
+				likeMatrix=FALSE,diagnose=FALSE,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -76,7 +77,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
   # make the objective function
-  if(is.null(objective)) objective = create.likelihood.vectors.peaks(hypothesis, likeMatrix=likeMatrix,...)
+  if(is.null(objective)) objective = create.likelihood.vectors.peaks(hypothesis, likeMatrix=likeMatrix, diagnose=diagnose,...)
 
 
   # Get maximum allele fraction
@@ -128,8 +129,8 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     tmpResult = result
 
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
-
-if(likeMatrix==TRUE) return(result)
+print("optimisation.params.peaks")
+if(likeMatrix==TRUE|diagnose==TRUE) return(result)
     # Compute as log if requested, otherwise as product.
     if(withPenalties) {
       if(logObjective)
@@ -200,7 +201,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
                          nrow(hypothesis$knownProfs) + hypothesis$nUnknowns )
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
-  sigma           = 1/4
+  scale           = 1/4
   stutter         = rep(0.08,times=ncol(hypothesis$queriedProfile))
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
@@ -208,7 +209,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
-       sigma           = sigma,
+       scale           = scale,
        stutter         = stutter,
        repAdjust       = repAdjust,
        dropin          = dropin)

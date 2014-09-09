@@ -55,7 +55,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
 optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=75, likeMatrix=FALSE,...) {
+                                withPenalties=TRUE, objective=NULL, iterMax=75, 
+				likeMatrix=FALSE,diagnose=FALSE,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -76,7 +77,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
   # make the objective function
-  if(is.null(objective)) objective = create.likelihood.vectors.peaks(hypothesis, likeMatrix=likeMatrix,...)
+  if(is.null(objective)) objective = create.likelihood.vectors.peaks(hypothesis, likeMatrix=likeMatrix, diagnose=diagnose,...)
 
 
   # Get maximum allele fraction
@@ -128,8 +129,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     tmpResult = result
 
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
-
-if(likeMatrix==TRUE) return(result)
+if(likeMatrix==TRUE|diagnose==TRUE) return(result)
     # Compute as log if requested, otherwise as product.
     if(withPenalties) {
       if(logObjective)
