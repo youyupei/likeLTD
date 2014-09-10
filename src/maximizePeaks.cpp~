@@ -212,7 +212,8 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	cspStruct tmpCSP;
 	std::vector<cspStruct> csp, cspModify;
 	SEXP gammaMu;
-	std::vector<genoStruct> gammaMuVec, tmpGeno;
+	std::vector<genoStruct> gammaMuVec;
+	genoStruct tmpGeno;
 	std::vector<genoStruct>::iterator genoIt;
 	int nondropoutFlag, unhypFlag;
 	bool removeFlag;
@@ -240,6 +241,8 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	SEXP fragNvec = PROTECT(duplicate(fragNames));
 	double * fragNvec_ptr     = REAL(fragNvec);
 
+
+
     	SEXP tmpVal;
 	tmpVal = allocVector(REALSXP,1);
 	double *tmp_ptr = REAL(tmpVal);
@@ -252,7 +255,6 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		}
 
 	// fill csp
-	// THERE IS A PROBLEM HERE - NEED TO KEEP EVERYTHING IN SEXP FORMAT
 	SEXP roundedAlleles = PROTECT(allocVector(REALSXP, nCSP));
 	double       * const rounded_ptr  = REAL(roundedAlleles);
 	for(int i=0; i<nCSP; i++)
@@ -264,7 +266,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	       	csp.push_back(tmpCSP);   	        	
 		}
 
-			SEXP result, input;
+	SEXP result, input;
 	PROTECT(result = allocVector(REALSXP, nCombs));
   	double       * const out_ptr  = REAL(result);
 
@@ -344,11 +346,6 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 				cspModify.push_back(tmpCSP); 
 				}
 			}
-
-		for(int i=0; i<gammaMuVec.size(); i++)
-			{
-			if(i==0) {debug = gammaMuVec[i].dose;} else {debug = debug*gammaMuVec[i].dose;}
-			}
 	
 		// Sort CSP by allele name
 		sort(cspModify.begin(), cspModify.end(), sortByAlleleNameCSP());
@@ -374,6 +371,8 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 			}
 			}
 
+
+
 		//Rprintf("Before density");
     		// get density
 	   	for(int i=0; i<gammaMuVec.size(); i++)
@@ -381,15 +380,13 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		    tmpScale = scale_ptr[0];
 		    shape = gammaMuVec[i].dose/scale_ptr[0];
 		    height = cspModify[i].heights;
-		    tmpDensity = gammaDensity(height, shape+0.01, tmpScale+0.01);
-		//tmpDensity = gammaPdf(cspModify[i].heights, shape+0.01, 1/(tmpScale+0.01));
+		    tmpDensity = gammaPdf(height, shape+0.001, 1/(tmpScale+0.001));
+//debugVec.push_back(tmpDensity);
 		//if(tmpDensity==DBL_MIN) tmpDensity = 0;
 		    if(i==0) 
 			{
-			debug = height;
 			outDensity = tmpDensity;
 			} else {
-			debug = debug*height;
 	    	    	outDensity = outDensity*tmpDensity;
 			}
 	   	    }
@@ -399,8 +396,14 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		out_ptr[x] = outDensity;
 		UNPROTECT(1);
 		}
+
+	// debug output vector
+	//SEXP debugSEXP = PROTECT(allocVector(REALSXP, debugVec.size()));
+	//double const * const debug_ptr     = REAL(debugSEXP);
+	//for(int i=0; i<debugVec.size(); i++) REAL(debugSEXP)[i] = debugVec[i];
 	//Rprintf("After main loop");
-	UNPROTECT(3);
+	UNPROTECT(4);
+	//return debugSEXP; 
 	return result;
 	// get into sexp format
 //    	SEXP outsexp = allocVector(REALSXP, debugVec.size());

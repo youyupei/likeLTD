@@ -227,7 +227,17 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutter,degradation
         genotypes = matrix(rownames(hypothesis$alleleDb)[cons$genotypes],ncol=ncol(cons$genotypes))
 	genotypes = matrix(as.numeric(genotypes),ncol=ncol(genotypes))
 
-	ALLGENOTYPES <<- genotypes
+GENOTYPE<<-genotypes
+ALLELES<<-hypothesis$peaksProfile
+HEIGHTS<<-hypothesis$heightsProfile
+SIZES<<-hypothesis$sizesProfile
+DNACONT<<-DNAcont
+STUTTER<<-stutter
+SCALE<<-scale
+DEG<<-degradation
+FRAGLENGTHS<<-hypothesis$alleleDb[,2]
+REPADJUST<<-repAdjust
+
 
 	#if(doC==FALSE)
 	#	{
@@ -290,17 +300,7 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,st
 probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose=FALSE,doC=TRUE)
 	{	
 	genotype = as.numeric(genotype)
-GENOTYPE<<-genotype
-ALLELES<<-alleles
-HEIGHTS<<-heights
-SIZES<<-sizes
-DNACONT<<-DNAcont
-STUTTER<-stutter
-SCALE<<-scale
-DEG<<-degradation
-FRAGLENGTHS<<-fragLengths
-REPADJUST<<-repAdjust
-DIAG<<-diagnose
+
 
 	# get means
 	if(doC==TRUE) 
@@ -344,12 +344,13 @@ DIAG<<-diagnose
 	shapesVec = gammaMus/scale
 	scalesVec = rep(scale,times=length(shapesVec)) 
 
+	
+
 	if(diagnose==TRUE) return(list(height=peakHeights,mu=gammaMus,sigma=sqrt(shapesVec*scalesVec^2)))#shapes=shapesVec,scales=scalesVec))
 
 	
 	# probability densities
 	pdf = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), x=peakHeights, k=shapesVec+0.001, t=scalesVec+0.001)
-
 
     # set impossible values to 0 likelihood
 	pdf[which(is.infinite(pdf))] = 0

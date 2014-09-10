@@ -44,9 +44,6 @@ extern "C" {
 
     //! \brief probability of peaks
         SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust);
-
-    //! \brief density of gamma distribution
-        double gammaDensity(double x,double k,double theta);
 	
 	//! \brief gamma function
 	double gamm(double x);
