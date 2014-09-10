@@ -140,7 +140,7 @@ struct sortByAlleleNameCSP
     {
     bool operator()(cspStruct const  &a, cspStruct const &b)
         {
-        return(a.alleles>b.alleles);
+        return(a.alleles<b.alleles);
         }
     };
 
@@ -148,7 +148,7 @@ struct sortByAlleleNameGeno
     {
     bool operator()(genoStruct const  &a, genoStruct const &b)
         {
-        return(a.genotype>b.genotype);
+        return(a.genotype<b.genotype);
         }
     };
 
@@ -197,6 +197,10 @@ double gammaPdf(double x, double a, double b)
 
 SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust)
 	{
+	# ifdef OPENMP_STACK
+	//    uintptr_t const oldstack = R_CStackLimit;
+	//    R_CStackLimit = (uintptr_t) - 1;
+	# endif
 	cspStruct tmpCSP;
 	std::vector<cspStruct> csp, cspModify;
 	SEXP gammaMu;
@@ -209,8 +213,10 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 
 	genotypeArray = coerceVector(genotypeArray,REALSXP);
 
-	int const nGen = length(DNAcont)*2; // rows
-	int const nCombs = length(genotypeArray)/nGen;  // cols
+	//int const nGen = length(DNAcont)*2; // rows
+	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
+	//int const nCombs = length(genotypeArray)/nGen;  // cols
+	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nFrag = length(fragNames);
 	int const nCSP = length(alleles);
 	int row, column;
@@ -259,7 +265,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
   	double       * const out_ptr  = REAL(result);
 
 	// sort csp by allele name
-    	sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
+    	std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
     	//Rprintf("%i %i\n",nCombs,nGen);
 
@@ -268,6 +274,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 
 	//Rprintf("Before Main Loop");
 	// Loop over genotype combinations
+	//# pragma omp parallel for 
 	for(int x=0; x<nCombs; x++)
 		{
 		//Rprintf("Before clearing");
@@ -283,7 +290,9 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		for(int y=0; y<nGen; y++)
 			{
 			// fill genotype vector
-			REAL(genotype)[y] = genotypeArray_ptr[(x*nCombs)+y];
+			REAL(genotype)[y] = genotypeArray_ptr[(x*nGen)+y];
+			//REAL(genotype)[y] = genotypeArray_ptr[(y*nGen)+x];
+//debugVec.push_back(genotypeArray_ptr[(x*nCombs)+y]);
 		        // round genotypes
 			genotypeVec.push_back(std::floor(genotype_ptr[y]*10.0f)/10.0f);
 			// get stutter positions
@@ -318,14 +327,16 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 			gammaMuVec.push_back(tmpGeno);
 			}
 
+//for(int i=0; i<cspModify.size(); i++) debugVec.push_back(cspModify[i].alleles);
 		// Add dropout alleles to peak heights, with peak height 0
 		for(int i=0; i<allPosVec.size(); i++)
 			{
 			nondropoutFlag = 0;
 			for(int j=0; j<cspModify.size(); j++)
 				{
-				if(cspModify[j].alleles==allPosVec[i]) nondropoutFlag += 1; 
+				if((std::floor(cspModify[j].alleles*10.0f)/10.0f)==(std::floor(allPosVec[i]*10.0f)/10.0f)) nondropoutFlag += 1; 
 				}
+			//debugVec.push_back(nondropoutFlag);
 			if(nondropoutFlag==0)
 				{
 				tmpCSP.alleles = allPosVec[i];
@@ -337,6 +348,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	
 		// Sort CSP by allele name
 		sort(cspModify.begin(), cspModify.end(), sortByAlleleNameCSP());
+
 
 		//Rprintf("Before toRemove");
 		// Remove means for alleles that are not being considered		
@@ -369,7 +381,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		    shape = gammaMuVec[i].dose/scale_ptr[0];
 		    height = cspModify[i].heights;
 		    tmpDensity = gammaPdf(height, shape+0.001, 1/(tmpScale+0.001));
-//debugVec.push_back(tmpDensity);
+
 		//if(tmpDensity==DBL_MIN) tmpDensity = 0;
 		    if(i==0) 
 			{
@@ -384,6 +396,9 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		out_ptr[x] = outDensity;
 		UNPROTECT(1);
 		}
+	# ifdef OPENMP_STACK
+	//    R_CStackLimit = oldstack;
+	# endif
 
 	// debug output vector
 	//SEXP debugSEXP = PROTECT(allocVector(REALSXP, debugVec.size()));
@@ -393,16 +408,6 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	UNPROTECT(4);
 	//return debugSEXP; 
 	return result;
-	// get into sexp format
-//    	SEXP outsexp = allocVector(REALSXP, debugVec.size());
- //   	Rprintf("%i",debugVec.size());
- //   	double * outsexp_ptr     = REAL(outsexp);
-//	for(int i=0; i<debugVec.size(); i++)
-//		{
-//		outsexp_ptr[i] = debugVec[i];
-//		}
-    	
- //   	return(outsexp);
 	}
 //*/
 

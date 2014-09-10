@@ -100,13 +100,13 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
 	{
 	repRes <- likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale, stutter=stutter, degradation=degradation, 
-				repAdjust=repAdjust,doR=TRUE,diagnose=diagnose)
+				repAdjust=repAdjust,doR=doR,diagnose=diagnose)
 	return(repRes)
 	}
 
     repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale, stutter=stutter, degradation=degradation, 
-				repAdjust=repAdjust,doR=TRUE),ncol=length(hypothesis$peaksProfile))
+				repAdjust=repAdjust,doR=doR),ncol=length(hypothesis$peaksProfile))
 
     # combine replicates
     if(ncol(repRes)>1)
@@ -239,13 +239,13 @@ FRAGLENGTHS<<-hypothesis$alleleDb[,2]
 REPADJUST<<-repAdjust
 
 
-	#if(doC==FALSE)
-	#	{
+	if(doR==TRUE|diagnose==TRUE)
+		{
         	# probabilities for each replicate
         	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],DNAcont,stutter,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],diagnose=diagnose))
-	#	} else {
-	#	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksCPP,genotypes,as.numeric(hypothesis$peaksProfile[[x]]),unlist(as.numeric(hypothesis$heightsProfile[[x]])),unlist(hypothesis$sizesProfile[[x]]),DNAcont,stutter,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],fragNames=as.numeric(rownames(hypothesis$alleleDb)),repAdjust=repAdjust[x]))
-	#	}
+		} else {
+		probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaks,genotypes,as.numeric(hypothesis$peaksProfile[[x]]),unlist(as.numeric(hypothesis$heightsProfile[[x]])),unlist(hypothesis$sizesProfile[[x]]),DNAcont,stutter,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],fragNames=as.numeric(rownames(hypothesis$alleleDb)),repAdjust=repAdjust[x]))
+		}
 	if(diagnose==TRUE) return(probs)
 	probs[is.na(probs)] = 0
         }
@@ -264,7 +264,7 @@ REPADJUST<<-repAdjust
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose=FALSE,parallel=TRUE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose=FALSE)
 	{
 	#index = !is.na(alleles)
 	#alleles = alleles[index]
@@ -273,12 +273,12 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,st
 
 
 	# result vector
-	if(parallel==FALSE)
-		{
+	#if(parallel==FALSE)
+	#	{
 	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose))
-		} else {
-	        Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose),mc.cores=cores)
-		}
+	#	} else {
+	#        Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose),mc.cores=cores)
+	#	}
 	if(diagnose==TRUE) return(Probs)
 	Probs = unlist(Probs)
 	Probs[is.na(Probs)] = 0
@@ -300,7 +300,6 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,st
 probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scale,degradation,fragLengths,repAdjust,diagnose=FALSE,doC=TRUE)
 	{	
 	genotype = as.numeric(genotype)
-
 
 	# get means
 	if(doC==TRUE) 
@@ -348,12 +347,12 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scal
 
 	if(diagnose==TRUE) return(list(height=peakHeights,mu=gammaMus,sigma=sqrt(shapesVec*scalesVec^2)))#shapes=shapesVec,scales=scalesVec))
 
-	
 	# probability densities
 	pdf = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), x=peakHeights, k=shapesVec+0.001, t=scalesVec+0.001)
 
     # set impossible values to 0 likelihood
 	pdf[which(is.infinite(pdf))] = 0
+
 	
 	return(prod(pdf))
 	}
