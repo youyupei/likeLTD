@@ -302,13 +302,13 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scal
 	genotype = as.numeric(genotype)
 
 	# get means
-	if(doC==TRUE) 
-		{
-		gammaMu = .Call(.cpp.peakMeanDose, genotype,unlist(as.numeric(alleles)),unlist(as.numeric(heights)),unlist(as.numeric(sizes)),DNAcont,stutter,degradation,fragLengths,as.numeric(names(fragLengths)),repAdjust)
-		names(gammaMu) = sort(unique(round(c(genotype-1,genotype),1)))
-		} else {
+	#if(doC==TRUE) 
+	#	{
+	#	gammaMu = .Call(.cpp.peakMeanDose, genotype,unlist(as.numeric(alleles)),unlist(as.numeric(heights)),unlist(as.numeric(sizes)),DNAcont,stutter,degradation,fragLengths,as.numeric(names(fragLengths)),repAdjust)
+	#	names(gammaMu) = sort(unique(round(c(genotype-1,genotype),1)))
+	#	} else {
 		gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,stutter,degradation,fragLengths,repAdjust)
-		}
+	#	}
 	names(heights) = alleles
 	# give peak heights to dropout alleles
 	peakHeights = unlist(heights)
@@ -353,7 +353,8 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutter,scal
     # set impossible values to 0 likelihood
 	pdf[which(is.infinite(pdf))] = 0
 
-	
+
+
 	return(prod(pdf))
 	}
 
@@ -387,17 +388,18 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutter,degra
 	fragLengthIndex = sapply(genotype,FUN=function(x) which(names(fragLengths)==x))
     	# degradation adjustment
 	degAdjust = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
+#return(DNAcont)
 	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
 	# allelic alpha
 	#alphaA = degAdjust * rhoA * DNAproxy / sizesGen
 	muA = degAdjust * (1 - stutter) #* DNAproxy / sizesGen
 	names(muA) = genotype
 
+
 	# stutter alpha
 	#alphaS = degAdjust * rhoS * DNAproxy / sizesGen
 	muS = degAdjust * stutter #* DNAproxy / sizesGen
 	names(muS) = stutterPos
-
 	allPos = round(allPos,1)
 	stutterPos = round(stutterPos,1)
 	genotype = round(genotype,1)

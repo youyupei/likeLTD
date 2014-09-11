@@ -15,23 +15,28 @@ extern "C" {
 	//! \brief structure to contain genotype and associated variable
         struct genoStruct
 	        {
-	        double genotype;
-	        double dose;
+	        float genotype;
+	        float dose;
 	        } ;
 
 	//! \brief structure to contain all data associated with a CSP peak
 	struct cspStruct
 		{
-		double alleles;
-		double heights;
-		double sizes;
+		float alleles;
+		float heights;
+		float sizes;
 		} ;
 	
 	//! \brief peak mean dose
-        SEXP peakMeanDose(SEXP genotype, SEXP alleles,SEXP heights,SEXP sizes,SEXP DNAcont,SEXP stutter,SEXP degradation,SEXP fragL, SEXP fragN,SEXP repAdjust);
+        //SEXP peakMeanDose(SEXP genotype, SEXP alleles,SEXP heights,SEXP sizes,SEXP DNAcont,SEXP stutter,SEXP degradation,SEXP fragL, SEXP fragN,SEXP repAdjust);
+	std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutter,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN,double repAdjust, int nGen, int nCSP, int nCont, int nFrag);
 
     	//! \brief probability of peaks
         SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust);
+
+	//! \brief probability of a single genotype
+	//double singleGenotype(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, std::vector<cspStruct> csp, int comb);
+	//double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
 	
 	//! \brief gamma function
 	double gamm(double x);
