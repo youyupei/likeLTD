@@ -35,14 +35,20 @@ extern "C" {
         SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust);
 
 	//! \brief probability of a single genotype
-	//double singleGenotype(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, std::vector<cspStruct> csp, int comb);
-	//double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
+	double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
+	//std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
 	
 	//! \brief gamma function
 	double gamm(double x);
 
-	// brief pdf of gamma distribution
+	//! \brief log gamma function
+	double gammln(double xx);
+
+	//! \brief pdf of gamma distribution
 	double gammaPdf(double x, double a, double b);
+
+	//! \brief log pdf of gamma distribution
+	double gammalog(double x, double a, double b);
 
     //! \brief function to know which of gammaMu to not include
 	bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp);

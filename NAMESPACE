@@ -41,6 +41,7 @@ export(prosecution.hypothesis.peaks)
 export(optimisation.params.peaks)
 export(peak.height.dose)
 export(probability.peaks)
+export(get.likely.genotypes.peaks)
 
 importFrom(DEoptim, DEoptim)
 importFrom(gdata, read.xls)

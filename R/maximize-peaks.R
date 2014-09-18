@@ -9,7 +9,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = if(logDegradation) { 0-zero } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
-  scale        = 10000
+  scale        = 1000
   dropin      = NULL
   stutter     = rep(.3,nloc)
   repAdjust   = rep(10,length(arguments$repAdjust))
@@ -37,7 +37,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = if(logDegradation) { -20 } else { 0 }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
-  scale       = 1
+  scale       = 0+zero
   stutter     = rep(0+zero,nloc)
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
@@ -128,36 +128,52 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 
     tmpResult = result
 
+
+
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
-if(likeMatrix==TRUE|diagnose==TRUE) return(result)
-    # Compute as log if requested, otherwise as product.
-    if(withPenalties) {
-      if(logObjective)
-        result <- sum(log10(result$objectives) + log10(result$penalties))
-      else result <- prod(result$objectives) * prod(result$penalties)
-    } else if(logObjective) {
-      result <- sum(log10(result$objectives))
-    } else result <- prod(result$objectives) 
-    # Print out if requested.
-    if(verbose) {
-      # print(unlist(append(x, list(result=result))))
-      print(result)
-    }
-    # If result is infinite, do throw
-    if(throwError == TRUE && is.infinite(result)) {
-      cat("Objective function is over/underflow: ", result, "\n")
-      print(x)
-      stop("Objective function over/underflow")
-    }
-    if(is.na(result))
-        {
-        OVERALLRES <<- tmpResult
-        }
-    # if result is infinite make sure it returns -Inf
-    if(is.infinite(result)|is.na(result)) result = -Inf
-    # return result
-    -result
-  }
+	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
+
+if(any(result$objectives==0)) ZERORES <<- result
+if(is.infinite(sum(log10(result$objectives) + log10(result$penalties)))) INFRES <<- result
+
+    	# Compute as log if requested, otherwise as product.
+	if(withPenalties) 
+		{
+		if(logObjective)
+			{
+			result <- sum(log10(result$objectives) + log10(result$penalties))
+			} else {
+			result <- prod(result$objectives) * prod(result$penalties)
+			}
+		} else {
+		if(logObjective) {
+			result <- sum(log10(result$objectives))
+			} else {
+			result <- prod(result$objectives)
+			}
+		} 
+		# Print out if requested.
+		if(verbose) 
+			{
+			# print(unlist(append(x, list(result=result))))
+			print(result)
+			}
+		# If result is infinite, do throw
+		if(throwError == TRUE && is.infinite(result)) 
+			{
+			cat("Objective function is over/underflow: ", result, "\n")
+			print(x)
+			stop("Objective function over/underflow")
+			}
+		if(is.na(result))
+			{
+			OVERALLRES <<- tmpResult
+			}
+		# if result is infinite make sure it returns -Inf
+		if(is.infinite(result)|is.na(result)) result = -Inf
+		# return result
+		-result
+	}
 
 
   
@@ -231,7 +247,7 @@ relistArguments.peaks <- function( parameters, hypothesis, fixed=NULL,
 }
 
 
-get.likely.genotypes.peaks = function(hypothesis,params,results,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
+get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))
 	{
 	# Function to return likely genotypes for each individual
 	# Finds the marginal probabilities of genotypes, and then
@@ -259,11 +275,13 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,joint=FALSE,prob
 	likes = newParams$fn(results$optim$bestmem)$objectives
 	# convert to probabilities
 	likes = lapply(likes,FUN=function(x) x/sum(x))
+	# if want posterior, return
+	if(posterior==TRUE) return(list(genotypes=genotypes,probabilities=likes))
 	# if we only want the joint distributions
 	if(joint==TRUE) 
 		{
 		# joint genotypes
-		outJoint = mapply(FUN=likeLTD:::subGens,genotypes,likes,rotate=TRUE,prob=prob,SIMPLIFY=FALSE)
+		outJoint = mapply(FUN=subGens,genotypes,likes,rotate=TRUE,prob=prob,SIMPLIFY=FALSE)
 		# top genotype combination
 		topGenotypes = mapply(FUN=function(a,b) a[,which.max(b)],genotypes,likes,SIMPLIFY=TRUE)
 		topGenotypes = t(topGenotypes)
@@ -272,30 +290,30 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,joint=FALSE,prob
 		return(list(joint=outJoint,topGenotypes=list(genotype=topGenotypes,probability=topProbability)))
 		}
 	# function to get marginal probabilities and subset to those with prob>prob
-	marginalProbs = function(genotypes,probabilities,indiv=1,prob=0.1,top=FALSE)
+	marginalProbs = function(gens,probs,indiv=1,prob=0.1,top=FALSE)
 		{
-		marginals = likeLTD:::marginal(genotypes,probabilities,indiv)
+		marginals = marginal(gens,probs,indiv)
 		if(top==TRUE)	
 			{
 			topMarginals = marginals$genotypes[which.max(marginals$probabilities),,drop=FALSE]
 			topProbability = max(marginals$probabilities)		
 			return(list(genotype=topMarginals,probability=topProbability))
 			}
-		subMarginals = likeLTD:::subGens(marginals$genotypes,marginals$probabilities,prob)
+		subMarginals = subGens(marginals$genotypes,marginals$probabilities,prob)
 		return(subMarginals)
 		}
 	# number of contributors
 	ncont = nrow(genotypes[[1]])/2
 	# get marginal and subset at every locus for every individual
-	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
+	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
 	# order by dropout rate
-	#DNAcont = vector(length=ncont)
-	#DNAcont[hypothesis$refIndiv] = 1
-	#DNAcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("DNAcont",names(results$optim$bestmem))]
-	#index = (1:ncont)[rev(order(DNAcont))]
-	#out = out[index]
+	rcont = vector(length=ncont)
+	rcont[hypothesis$refIndiv] = 1
+	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
+	index = (1:ncont)[rev(order(rcont))]
+	out = out[index]
 	# get top genotypes for marginals
-	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
+	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	
 	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
 	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)
