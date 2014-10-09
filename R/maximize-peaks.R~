@@ -125,14 +125,12 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # Compute objective function.
     result <- do.call(objective, x)
 
-
-    tmpResult = result
-
-#if(any(result$objectives==0)) ZERORES <<- result
-#if(is.infinite(sum(log10(result$objectives) + log10(result$penalties)))) INFRES <<- result
-
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
+
+if(any(result$objectives==0)) ZERORES <<- result
+if(is.infinite(sum(log10(result$objectives) + log10(result$penalties)))) INFRES <<- result
+
     	# Compute as log if requested, otherwise as product.
 	if(withPenalties) 
 		{
@@ -303,21 +301,51 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	ncont = nrow(genotypes[[1]])/2
 	# get marginal and subset at every locus for every individual
 	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
-	# order by dropout rate
-	rcont = vector(length=ncont)
-	rcont[hypothesis$refIndiv] = 1
-	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
-	index = (1:ncont)[rev(order(rcont))]
-	out = out[index]
 	# get top genotypes for marginals
 	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	
 	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
 	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)
-	topGenotypes = topGenotypes[index]	
 	topGenotypes = lapply(topGenotypes,FUN=t)
-	topProbabilities = topProbabilities[index]
 	#return(list(genotypes=genotypes,probabilities=likes))
 	return(list(out,topGenotypes=list(genotypes=topGenotypes,probabilities=topProbabilities)))
+	}
+
+
+plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
+	{
+	# mean & sd from results
+	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
+	info = diagParams$fn(res$optim$bestmem)
+	# genotype likelihoods from results
+	likesParams = optimisation.params.peaks(hyp,likeMatrix=TRUE)
+	likes = likesParams$fn(res$optim$bestmem)
+	maxIndex = sapply(likes$objectives, FUN=which.max)
+
+	# plot for each locus
+	pdf(fileName)
+	par(mfrow=rep(ceiling(sqrt(length(hyp$alleleDb))),times=2),mar=c(3,2,2,0))
+	for(i in 1:length(hyp$alleleDb))
+		{
+		# results from top genotype at this locus
+		if(is.matrix(info[[i]])) 
+			{
+			topGenoInfo = info[[i]][maxIndex[i],replicate][[1]]
+			} else {
+			topGenoInfo = info[[i]]
+			}
+		
+		heights = topGenoInfo$height[order(as.numeric(names(topGenoInfo$height)))]
+		scale = res$optim$bestmem[grep("scale",names(res$optim$bestmem))]
+		shapes = topGenoInfo$mu/scale
+		shapes = shapes[order(as.numeric(names(shapes)))]
+		#  confidence intervals
+		CIs = sapply(shapes,FUN=function(x) qgamma(p=c(0.025,0.25,0.5,0.75,0.975),shape=x,scale=scale))
+		YLIM = c(0,max(c(CIs,heights)))
+		# plot
+		boxplot(CIs,ylim=YLIM,range=0,main=names(hyp$alleleDb)[i])
+		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE)
+		}
+	dev.off()
 	}
 

@@ -1,3 +1,44 @@
+allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames)
+	{
+	genotypeAlleles = as.numeric(alleleNames[genotype])
+genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
+	all(cspAlleles%in%c(genWithStutter,knownWithStutter))
+	}
+
+explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns)
+	{
+  	# Catch early. Shouldn't be a problem here, but will be at some point. 
+	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
+	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
+	# get known alleles
+	knownIndex = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
+	knownAlleles = as.numeric(alleleNames[knownIndex])
+	# include stuttered known alleles
+	knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
+	# get csp Alleles
+	cspAlleles = alleleNames[row(cspPresence)[which(cspPresence)]]
+	# if no unknowns return knowns
+	if(nUnknowns==0) 
+		{
+		if(!all(cspAlleles%in%knownWithStutter)) stop("Not enough contributors to explain CSP")
+		return(matrix(knownIndex,ncol=1))
+		}
+	# get all genotype combinations for unknowns
+	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)
+	# find which combinations explain all peaks
+	index = apply(genCombs,MARGIN=2,FUN=function(x) allExplained(x,cspAlleles,knownWithStutter,alleleNames))
+	if(length(which(index))==0) stop("Not enough contributors to explain CSP")
+	genCombs = genCombs[,index]
+
+	# add known profiles as last contributors
+	if(length(knownIndex)!=0) 
+		{
+		genCombs = rbind(genCombs,matrix(rep(knownIndex,times=ncol(genCombs)),ncol=ncol(genCombs)))
+		}
+	return(genCombs)
+	}
+
+
 # Profiles of unknown contributors for given locus.
 compatible.genotypes.peaks = function(cspPresence, profPresence, knownProfs,alleleNames,
                                 nUnknowns, dropin=FALSE, missingReps=NULL) {

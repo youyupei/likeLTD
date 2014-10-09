@@ -29,14 +29,14 @@ extern "C" {
 	
 	//! \brief peak mean dose
         //SEXP peakMeanDose(SEXP genotype, SEXP alleles,SEXP heights,SEXP sizes,SEXP DNAcont,SEXP stutter,SEXP degradation,SEXP fragL, SEXP fragN,SEXP repAdjust);
-	std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutter,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN,double repAdjust, int nGen, int nCSP, int nCont, int nFrag);
+	std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN,double repAdjust, int nGen, int nCSP, int nCont, int nFrag);
 
     	//! \brief probability of peaks
-        SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP logBool);
+        SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP threshold);
 
 	//! \brief probability of a single genotype
-	double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
-	//std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
+	double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double threshold, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
+	//std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double threshold, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
 	
 	//! \brief gamma function
 	double gamm(double x);
@@ -50,8 +50,28 @@ extern "C" {
 	//! \brief log pdf of gamma distribution
 	double gammalog(double x, double a, double b);
 
-    //! \brief function to know which of gammaMu to not include
+	//! \brief function to know which of gammaMu to not include
 	bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp);
+
+	//! \brief  lower incomplete gamma function
+	double incgamma (double x, double a);
+
+	//! \brief  log lower incomplete gamma function
+	double lnIncGamma (double x, double a);
+
+	//! \brief  gamma distribution CDF
+	double gammaCdf (double x, double shape, double scale);
+
+	//! \brief  log gamma distribution CDF
+	double lnGammaCdf (double x, double shape, double scale);
+
+	//! \brief log gamma function (new)
+	double kf_lgamma(double z);
+
+	//! \brief regularized lower incomplete gamma function, by series expansion
+	static double kf_gammap(double s, double z);
+
+
 #ifdef __cplusplus
 }
 #endif

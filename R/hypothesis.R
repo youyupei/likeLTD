@@ -256,11 +256,14 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
-  linkageInfo = load.linkage.info(linkageFile)
-  rownames(linkageInfo) = linkageInfo[,1]
-  linkageInfo = linkageInfo[,-1]
-  linkIndex = which(colnames(linkageInfo)%in%colnames(cspProfile))
-  linkageInfo = linkageInfo[linkIndex,linkIndex]
+  if(identical(relatedness,c(0.5,0.25)))
+	{
+  	linkageInfo = load.linkage.info(linkageFile)
+	rownames(linkageInfo) = linkageInfo[,1]
+	linkageInfo = linkageInfo[,-1]
+	linkIndex = which(colnames(linkageInfo)%in%colnames(cspProfile))
+	linkageInfo = linkageInfo[linkIndex,linkIndex]
+	}
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
     stop("Expect one queried profile on input.")

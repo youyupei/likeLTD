@@ -771,7 +771,7 @@ het <- function(pa, pb, fst=0.02)
 matchProb = function(hypothesis,rr,fst=0.02)
     {
 	ideal.match <- c()
-	for(j in 1:ncol(hypothesis$cspProfile))
+	for(j in 1:ncol(hypothesis$queriedProfile))
 	    {
 		af = hypothesis$alleleDb[j][[1]]
 		kn = hypothesis$queriedProfile[,j][[1]]

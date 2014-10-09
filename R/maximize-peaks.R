@@ -11,14 +11,16 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 1000
   dropin      = NULL
-  stutter     = rep(.3,nloc)
+  stutterMean = 0.15
+  stutterAdjust     = rep(10,nloc)
   repAdjust   = rep(10,length(arguments$repAdjust))
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutter         = stutter,
+       stutterMean      = stutterMean,
+       stutterAdjust         = stutterAdjust,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
@@ -38,7 +40,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
-  stutter     = rep(0+zero,nloc)
+  stutterMean = 0
+  stutterAdjust     = rep(0.1,nloc)
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -46,7 +49,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
        scale           = scale,
-       stutter         = stutter,
+       stutterMean      = stutterMean,
+       stutterAdjust         = stutterAdjust,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
@@ -122,13 +126,16 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	        }
 	    }
 
+    # if stutter is >100% or <0% return negative likelihood
+    if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
+	    {
+	    if(logObjective) result = log10(0) else result = 0
+	    if(verbose) print(result)
+	    return(-result)
+	    }
+
     # Compute objective function.
     result <- do.call(objective, x)
-
-
-    tmpResult = result
-
-
 
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
@@ -217,7 +224,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
   scale           = 1/4
-  stutter         = rep(0.08,times=ncol(hypothesis$queriedProfile))
+  stutterMean     = 10 
+  stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
 
@@ -225,7 +233,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutter         = stutter,
+       stutterMean     = stutterMean,
+       stutterAdjust         = stutterAdjust,
        repAdjust       = repAdjust,
        dropin          = dropin)
 }
@@ -306,21 +315,52 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	ncont = nrow(genotypes[[1]])/2
 	# get marginal and subset at every locus for every individual
 	out = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,SIMPLIFY=FALSE),simplify=FALSE)
-	# order by dropout rate
-	rcont = vector(length=ncont)
-	rcont[hypothesis$refIndiv] = 1
-	rcont[-hypothesis$refIndiv] = results$optim$bestmem[grep("rcont",names(results$optim$bestmem))]
-	index = (1:ncont)[rev(order(rcont))]
-	out = out[index]
 	# get top genotypes for marginals
 	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	
 	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
 	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)
-	topGenotypes = topGenotypes[index]	
 	topGenotypes = lapply(topGenotypes,FUN=t)
-	topProbabilities = topProbabilities[index]
 	#return(list(genotypes=genotypes,probabilities=likes))
 	return(list(out,topGenotypes=list(genotypes=topGenotypes,probabilities=topProbabilities)))
+	}
+
+
+plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
+	{
+	# mean & sd from results
+	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
+	info = diagParams$fn(res$optim$bestmem)
+	# genotype likelihoods from results
+	likesParams = optimisation.params.peaks(hyp,likeMatrix=TRUE)
+	likes = likesParams$fn(res$optim$bestmem)
+	maxIndex = sapply(likes$objectives, FUN=which.max)
+
+	# plot for each locus
+	pdf(fileName)
+	par(mfrow=rep(ceiling(sqrt(length(hyp$alleleDb))),times=2),mar=c(3,2,2,0))
+	for(i in 1:length(hyp$alleleDb))
+		{
+		# results from top genotype at this locus
+		if(is.matrix(info[[i]])) 
+			{
+			topGenoInfo = info[[i]][maxIndex[i],replicate][[1]]
+			} else {
+			topGenoInfo = info[[i]]
+			}
+		if(length(topGenoInfo)==1) topGenoInfo = topGenoInfo[[1]]
+		
+		heights = topGenoInfo$height[order(as.numeric(names(topGenoInfo$height)))]
+		scale = res$optim$bestmem[grep("scale",names(res$optim$bestmem))]
+		shapes = topGenoInfo$mu/scale
+		shapes = shapes[order(as.numeric(names(shapes)))]
+		#  confidence intervals
+		CIs = sapply(shapes,FUN=function(x) qgamma(p=c(0.025,0.25,0.5,0.75,0.975),shape=x,scale=scale))
+		YLIM = c(0,max(c(CIs,heights)))
+		# plot
+		boxplot(CIs,ylim=YLIM,range=0,main=names(hyp$alleleDb)[i])
+		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE)
+		}
+	dev.off()
 	}
 

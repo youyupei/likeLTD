@@ -18,8 +18,8 @@ subsetData = function(data,search)
 	# set rownames to marker names
 	rownames(dataout) = data$Marker
 	# remove columns that have no data
-	index = apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x)))
-	dataout = dataout[,-which(index)]
+	index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
+	if(length(index!=0)) dataout = dataout[,-index]
 	# remove AMEL data
 	index = which(rownames(dataout)=="AMEL")
 	if(length(index)!=0) dataout = dataout[-index,]
@@ -54,7 +54,7 @@ read.peaks.profile = function(FILE)
 	{
 	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
 	# get data
-	data = read.csv(file=FILE,as.is=TRUE,na.strings="")
+	data = read.csv(file=FILE,as.is=TRUE,na.strings="NA")
 	# get replicate names
 	conditions = names(table(data[,1]))
 	# get allele data
@@ -98,17 +98,30 @@ read.allelic.calls = function(FILE)
 # data = CSP alleles (csp$alleles[[x]])
 # allelicCalls = alleles designations from file input
 # (Coding: 0=nonallelic,1=allelic)
-convert.to.binary = function(data,allelicCalls)
+#convert.to.binary = function(data,allelicCalls)
+#	{
+#	# get rid of spaces
+#	data = as.matrix(data)
+#	data = matrix(gsub(" ","",data),ncol=ncol(data),dimnames=list(rownames(data),colnames(data)))
+#	# replace .0 with nothing
+#	data = gsub("[.]0","",data)
+#	allelicCalls = as.matrix(allelicCalls)
+#	allelicCalls = matrix(gsub(" ","",allelicCalls),ncol=ncol(allelicCalls),dimnames=list(rownames(allelicCalls),colnames(allelicCalls)))
+#	# allelic calls
+#	allelic = mapply(FUN=function(a,b) a[which(b==1)], split(data,row(data)), split(allelicCalls,row(allelicCalls)))
+#	names(allelic) = rownames(data)
+#	return(allelic)
+#	}
+
+convert.to.binary = function(data)
 	{
 	# get rid of spaces
 	data = as.matrix(data)
 	data = matrix(gsub(" ","",data),ncol=ncol(data),dimnames=list(rownames(data),colnames(data)))
 	# replace .0 with nothing
 	data = gsub("[.]0","",data)
-	allelicCalls = as.matrix(allelicCalls)
-	allelicCalls = matrix(gsub(" ","",allelicCalls),ncol=ncol(allelicCalls),dimnames=list(rownames(allelicCalls),colnames(allelicCalls)))
 	# allelic calls
-	allelic = mapply(FUN=function(a,b) a[which(b==1)], split(data,row(data)), split(allelicCalls,row(allelicCalls)))
+	allelic = apply(data,MARGIN=1,FUN=function(x) x[which(!is.na(x))])
 	names(allelic) = rownames(data)
 	return(allelic)
 	}
@@ -139,18 +152,59 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
        knownProfs=knownProfiles) 
 }
 
+# function to automatically make allele calls
+make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
+    {
+    out = peaksProfile$alleles
+    for(i in 1:length(out))
+        {
+        tmpAlleles = out[[i]]
+        tmpHeights = peaksProfile$heights[[i]]
+        for(j in 1:nrow(tmpAlleles))
+            {
+            for(k in 1:ncol(tmpHeights))
+               {
+               if(is.na(tmpAlleles[j,k])) break;
+               if(k==ncol(tmpHeights)) tmpAlleles[j,k] = 1;
+               parentIndex = which(round(as.numeric(tmpAlleles[j,]),1)==round(as.numeric(tmpAlleles[j,k])+1,1))
+               if(length(parentIndex)==0)
+                    {
+                    tmpHeights[j,k] = 1
+                    next
+                    }
+               if(tmpHeights[j,k]<stutterPercent*tmpHeights[j,parentIndex])
+                    {
+                    tmpHeights[j,k] = 0
+                    } else {
+                    tmpHeights[j,k] = 1
+                    }
+               }
+            
+            }
+        out[[i]] = tmpHeights
+
+        }
+    return(out)
+    }
 
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=NULL, ethnic='EA1',
+prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
-                                   databaseFile=NULL, relatedness=c(0,0), 
+                                   databaseFile=NULL, stutterPercent=NULL, relatedness=c(0,0), detectionThresh=30, 
                                    doDropin=FALSE, ...) {
   alleleDb = load.allele.database(databaseFile)
   peaksProfile = read.peaks.profile(peaksFile)
-  allelicCalls = read.allelic.calls(callsFile)
-  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+#  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
+#  if(is.null(callsFile))
+#    {
+#    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
+#    } else {
+#    allelicCalls = read.allelic.calls(callsFile)
+#    }
+#  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,SIMPLIFY=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
@@ -187,6 +241,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterF
   result[["callsFile"]] = callsFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
+  result[["detectionThresh"]] = detectionThresh
 
   sanity.check.peaks(result) # makes sure hypothesis has right type.
   result
@@ -195,14 +250,20 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterF
 
 # Creates defence hypothesis
 # Documentation is in man directory.
-defence.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=NULL, ethnic='EA1',  nUnknowns=0,
-                               adj=1e0, fst=0.02, databaseFile=NULL, 
-                               relatedness=c(0,0), doDropin=FALSE, ...) {
+defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
+                               adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, 
+                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, ...) {
   
   alleleDb = load.allele.database(databaseFile)
   peaksProfile = read.peaks.profile(peaksFile)
-  allelicCalls = read.allelic.calls(callsFile)
-  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
+  if(is.null(callsFile))
+    {
+    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
+    } else {
+    allelicCalls = read.allelic.calls(callsFile)
+    }
+  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,SIMPLIFY=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
@@ -235,6 +296,8 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile, refFile, stutterFile=
   result[["refFile"]] = refFile
   result[["callsFile"]] = callsFile
   result[["databaseFile"]] = databaseFile
+  result[["detectionThresh"]] = detectionThresh
+  result[["stutterPercent"]] = stutterPercent
 
 
   sanity.check.peaks(result) # makes sure hypothesis has right type.
@@ -285,11 +348,22 @@ sanity.check.peaks = function(hypothesis) {
      errors = c(errors, "binaryProfile should be a matrix 'replicates' x 'loci'.")
   if(!is.matrix(hypothesis$queriedProfile))
      errors = c(errors, "queriedProfile should be a matrix 'profiles' x 'loci'.")
-  if(length(errors) == 0) {
-    if(ncol(hypothesis$binaryProfile) != ncol(hypothesis$queriedProfile))
+  if(ncol(hypothesis$binaryProfile) != ncol(hypothesis$queriedProfile))
       errors = c( errors,
                   "Number of loci of binaryProf and queriedProf do not match." )
-  }
+  if(!is.null(hypothesis$stutterPercent))
+    {
+    if(hypothesis$stutterPercent<0|hypothesis$stutterPercent>1)
+        errors = c( errors,
+            "stutterPercent must be between 0 and 1." )
+    if(hypothesis$stutterPercent>0.3)
+      print("Warning: stutterPercent is set unusually high.")   
+    }
+  if(hypothesis$detectionThresh<0)
+        errors = c( errors,
+            "Detection threshold should not be set lower than 0." )
+  if(hypothesis$detectionThresh<0)
+    print("Detection threshold set unusually high.")
   if(length(errors) != 0) {
     cat("There seems to be an error with the input hypothesis.\n")
     for(error in errors) cat(paste(c(error, "\n")))
@@ -317,7 +391,7 @@ transform.to.locus.centric.peaks = function(hypothesis) {
 		{
 		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
 		rownames(tmp) = locus
-		colnames(tmp) = paste("Allele",1:3,sep=".")
+		colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
 		locusValue[[key]][[i]] = tmp
 		}
         } else {
