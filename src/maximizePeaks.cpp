@@ -188,8 +188,8 @@ static double kf_gammap(double s, double z)
 
 std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN,double repAdjust, int nGen, int nCSP, int nCont, int nFrag)
 	{
-	double DNAcontSub, degSub, tmpDose;
-	float fragSub;
+	double DNAcontSub, degSub, tmpDose, fragSub;
+	//float fragSub;
 	std::vector<double> outMu;
 	std::vector<float>::iterator itFlt,itFlt2;
 	std::vector<double>::iterator itDbl; 
