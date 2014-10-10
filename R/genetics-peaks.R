@@ -10,11 +10,17 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
   	# Catch early. Shouldn't be a problem here, but will be at some point. 
 	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
 	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
-	# get known alleles
-	knownIndex = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
-	knownAlleles = as.numeric(alleleNames[knownIndex])
-	# include stuttered known alleles
-	knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
+	if(ncol(profPresence)!=0)
+	    {
+	    # get known alleles
+    	knownIndex = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
+    	knownAlleles = as.numeric(alleleNames[knownIndex])
+    	# include stuttered known alleles
+    	knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
+	    } else {
+        knownIndex = c()
+        knownWithStutter = c()
+	    }
 	# get csp Alleles
 	cspAlleles = alleleNames[row(cspPresence)[which(cspPresence)]]
 	# if no unknowns return knowns

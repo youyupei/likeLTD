@@ -299,7 +299,10 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   result[["cspFile"]] = cspFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
-  result[["linkageInfo"]] = linkageInfo
+  if(identical(relatedness,c(0.5,0.25)))
+	{
+    result[["linkageInfo"]] = linkageInfo
+    }
 
   sanity.check(result) # makes sure hypothesis has right type.
   result

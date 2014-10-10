@@ -256,14 +256,15 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   
   alleleDb = load.allele.database(databaseFile)
   peaksProfile = read.peaks.profile(peaksFile)
-  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
-  if(is.null(callsFile))
-    {
-    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
-    } else {
-    allelicCalls = read.allelic.calls(callsFile)
-    }
-  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,SIMPLIFY=FALSE)
+#  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
+#  if(is.null(callsFile))
+#    {
+#    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
+#    } else {
+#    allelicCalls = read.allelic.calls(callsFile)
+#    }
+#  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   knownProfiles = read.known.profiles(refFile)
   if(sum(unlist(knownProfiles[, "queried"])) != 1)
