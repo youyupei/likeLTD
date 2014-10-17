@@ -364,3 +364,168 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 	dev.off()
 	}
 
+
+
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE){
+	# P.pars D.pars: parameter object created by optimisation.params()
+	# the smallest convergence threshold (ie for the last step)
+	# number of convergence thresholds
+	
+	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
+
+	# combine the outputs outside the loop
+	P.bestmemit <- D.bestmemit <- NULL
+	P.bestvalit <- D.bestvalit <- NULL
+	P.iter <- D.iter <- NULL
+	P.nfeval <- D.nfeval <- NULL
+
+	# run first step
+	n = 1
+
+	# change DEoptim parameters
+	P.pars$control$CR <- 0.1
+	D.pars$control$CR <- 0.1
+		
+	# run DEoptimLoop until convergence at the required step
+	D.step <- DEoptimLoop(D.pars,10)
+
+	# set global results
+	GlobalDval = D.step$optim$bestval
+	GlobalDmem = D.step$optim$bestmem
+
+	# put the Def outputs into the combined output	
+	D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+	D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+	D.iter <- c(D.iter, D.step$optim$iter)
+	D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+
+	# recycle the current pop into the next loop
+	D.pars$control$initialpop <- D.step$member$pop
+
+	# get standard mean standard deviation of initial optimisation phase
+	sdStep = sd(D.step$member$bestvalit[1:75])
+	# sometimes sd is very low (below 1 e.g. 3locus test)
+	# if so set sd to >1 so log2(sd) is positive
+	if(sdStep<1) sdStep = 1.5
+	# decide how many steps to run
+	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*4+length(grep("cont",names(D.pars$upper)))
+
+	# retain all the likelihood ratios
+	WoE <- numeric(n.steps)
+	Ld <- numeric(n.steps)
+	Lp <- numeric(n.steps)
+
+	Ld[n] = -D.step$optim$bestval
+
+	# if more than one step, start loop
+	if(n.steps>1)
+		{
+		# adjust tolerance gradually
+		tol.steps <- geometric.series(10,tolerance,n.steps)
+	
+		# adjust DEoptim parameters gradually, so search space is confined more at the end
+		CR.steps <- geometric.series(0.1,0.7,n.steps)
+
+		for(n in 2:n.steps){
+			# change DEoptim parameters
+			D.pars$control$CR <- CR.steps[n]
+		
+			# run DEoptimLoop until convergence at the required step
+			D.step <- DEoptimLoop(D.pars,tol.steps[n])
+            Ld[n] = -D.step$optim$bestval
+
+			# set global results
+			if(D.step$optim$bestval<GlobalDval)
+				{
+				GlobalDval = D.step$optim$bestval
+				GlobalDmem = D.step$optim$bestmem
+				}
+
+			# put the Def outputs into the combined output	
+			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.iter <- c(D.iter, D.step$optim$iter)
+			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+
+			# recycle the current pop into the next loop
+			D.pars$control$initialpop <- D.step$member$pop
+		}
+		}
+
+		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]
+		P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]
+
+		for(n in 1:n.steps){
+			# change DEoptim parameters
+			P.pars$control$CR <- CR.steps[n]
+
+		
+			# run DEoptimLoop until convergence at the required step
+			P.step <- DEoptimLoop(P.pars,tol.steps[n])
+			Lp[n] = -P.step$optim$bestval
+
+			WoE[n] = Lp[n]-Ld[n]
+
+			if(n==1)
+				{
+	            GlobalPval = P.step$optim$bestval
+	            GlobalPmem = P.step$optim$bestmem
+				} else {
+			    # set global results
+			    if(P.step$optim$bestval<GlobalPval)
+				    {
+				    GlobalPval = P.step$optim$bestval
+				    GlobalPmem = P.step$optim$bestmem
+				    }
+				}
+
+			# generate outputs if interim = TRUE
+			if(interim==TRUE) interim(P.step,D.step,n,n.steps)
+
+			# put the Pros outputs into the combined output
+			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.iter <- c(P.iter, P.step$optim$iter)
+			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
+
+			# recycle the current pop into the next loop
+			P.pars$control$initialpop <- P.step$member$pop
+			}
+
+	changeFlag=FALSE
+	# if global result is better than result from last chunk
+	if(P.step$optim$bestval>GlobalPval)
+		{
+		P.step$optim$bestval = GlobalPval
+		P.step$optim$bestmem = GlobalPmem
+		print("*** Final prosecution result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+	if(D.step$optim$bestval>GlobalDval)
+		{
+		D.step$optim$bestval = GlobalDval
+		D.step$optim$bestmem = GlobalDmem
+		print("*** Final defence result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+
+	if(changeFlag) WoE <- c(WoE,D.step$optim$bestval - P.step$optim$bestval)
+
+
+	# update final Pros results
+	P.results <- P.step
+	P.results$member$bestmemit <- P.bestmemit
+	P.results$member$bestvalit <- P.bestvalit
+	P.results$optim$iter <- P.iter
+	P.results$optim$nfeval <- P.nfeval
+
+	# update final Pros results
+	D.results <- D.step
+	D.results$member$bestmemit <- D.bestmemit
+	D.results$member$bestvalit <- D.bestvalit
+	D.results$optim$iter <- D.iter
+	D.results$optim$nfeval <- D.nfeval
+
+# return all results
+return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+

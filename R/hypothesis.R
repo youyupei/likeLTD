@@ -209,17 +209,39 @@ transform.to.locus.centric = function(hypothesis) {
   result
 }
 
+# combine rare alleles into one joined allele for a single locus
+combine.rares.locus = function(alleleDb,cspProfile,uncProfile,knownProfiles,queriedProfile,rareThreshold=0.05)
+    {
+    # index of alleles not in csp, unc, knowns or queried, and also probability < rareThreshold
+    index = which(!rownames(alleleDb)%in%c(unlist(uncProfile),unlist(cspProfile),unlist(knownProfiles),unlist(queriedProfile))&alleleDb[,1]<rareThreshold)
+    if(length(index)>0)
+        {
+        # remove indexed alleles, new allele has sum of probabilities, and mean of BP
+        alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]))) 
+        rownames(alleleDb)[nrow(alleleDb)] = "rares"
+        }
+    return(alleleDb)   
+    }
+
+# combine rare alleles into one joined allele for all loci
+combine.rares = function(alleleDb, cspProfile, uncProfile, knownProfiles, queriedProfile,rareThreshold=0.05)
+    {
+    loci = colnames(cspProfile)
+    sapply(loci,FUN=function(x) combine.rares.locus(alleleDb[[x]],cspProfile[,x],uncProfile[,x],knownProfiles[,x],queriedProfile[,x],rareThreshold=rareThreshold),simplify=FALSE)
+    }
+
 
 agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
-                                adj=1e0, fst=0.02) {
+                                adj=1e0, fst=0.02, combineRare=FALSE, 
+                                rareThreshold=0.05) {
   # Helper function to figure out the input of most hypothesis.
   #
   # Basically, this groups operations that are done the same by defence and
   # prosection. 
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
  
   # Figure out which profiles show dropout.
   dropout = determine.dropout(knownProfiles, cspProfile)
@@ -229,18 +251,21 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   noDropoutProfs = knownProfiles[!dropout, colnames(cspProfile), drop=FALSE]
 
   # Adjust uncertain profile to also contain masking (no-dropout) profiles.
-  uncProf = masking.and.uncertain.profile(uncProfile, noDropoutProfs)
+  uncProf = likeLTD:::masking.and.uncertain.profile(uncProfile, noDropoutProfs)
 
   # Remove masked alleles from  CSP.
-  cspProf = masking.profile(cspProfile, noDropoutProfs)
+  cspProf = likeLTD:::masking.profile(cspProfile, noDropoutProfs)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = missing.alleles(alleleDb, cspProfile, queriedProfile, dropoutProfs)
-  alleleDb = adjust.frequencies( alleleDb, 
+  alleleDb = likeLTD:::missing.alleles(alleleDb, cspProfile, queriedProfile, dropoutProfs)
+  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
+  # combine rare alleles into a single allele
+  if(combineRare) alleleDb = combine.rares(alleleDb, cspProf, uncProf, knownProfiles, queriedProfile, rareThreshold)
 
+    
   # Construct all profiles as arrays of  
   list(cspProfile=cspProf, uncProf=uncProf, dropoutProfs=dropoutProfs,
        alleleDb=alleleDb,
@@ -252,7 +277,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
-                                   doDropin=FALSE, ...) {
+                                   doDropin=FALSE, combineRare=TRUE,...) {
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
@@ -275,7 +300,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst)
+                               adj=adj, fst=fst, combineRare=combineRare)
 
   # If queried profile is subject to dropout, then it should be the reference
   # individual. Otherwise, the first individual subject to dropout will be set
@@ -312,7 +337,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 # Documentation is in man directory.
 defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
-                               relatedness=c(0,0), doDropin=FALSE, ...) {
+                               relatedness=c(0,0), doDropin=FALSE, combineRare=TRUE, ...) {
   
   alleleDb = load.allele.database(databaseFile)
   cspProfile = read.csp.profile(cspFile)
@@ -336,7 +361,7 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
 
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst) 
+                               adj=adj, fst=fst, combineRare=combineRare) 
 
 
   result[["refIndiv"]] = nrow(result[["dropoutProfs"]]) + 1

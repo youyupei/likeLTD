@@ -474,7 +474,7 @@ addMissingAlleleSize = function(index,sizes)
 # Documentation is in man directory.
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, stutterAdjust=NULL,
-                       stutterSD=0.4, scale=NULL, scaleSD=1, ...) {
+                       stutterSD=0.2, scale=NULL, scaleSD=1, ...) {
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
   # Some penalties are per locus and other for all locus. Hence this bit of run
@@ -493,7 +493,7 @@ penalties.peaks <- function(nloc, degradation=NULL,
         result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterSD)
         }
 
-   result = result * dnorm(log(scale),0,sd=scaleSD) * normalization
+   #result = result * dnorm(log(scale),0,sd=scaleSD) * normalization
     
   return(result)
 }
