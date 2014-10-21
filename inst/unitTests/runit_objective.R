@@ -55,7 +55,8 @@ test_regression1 <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(0.0, 0)
+    relatedness  = c(0.0, 0),
+    combineRare  = FALSE
   )
   if(! "defence.hypothesis" %in% ls(.GlobalEnv))
     defence.hypothesis <- getFromNamespace("defence.hypothesis", "likeLTD")
@@ -99,7 +100,8 @@ test_regression.zerounknown <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(0.0, 0)
+    relatedness  = c(0.0, 0),
+    combineRare  = FALSE
   )
   defenceHypothesis = do.call(defence.hypothesis, args)
   prosecutionHypothesis = do.call(prosecution.hypothesis, args)
@@ -152,7 +154,8 @@ test_regression.oneunknown <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(0.0, 0)
+    relatedness  = c(0.0, 0),
+    combineRare  = FALSE
   )
   defenceHypothesis = do.call(defence.hypothesis, args)
   prosecutionHypothesis = do.call(prosecution.hypothesis, args)
@@ -206,7 +209,8 @@ test_regression.relatedness <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(1, 1)/4
+    relatedness  = c(1, 1)/4,
+    combineRare  = FALSE
   )
   defenceHypothesis = do.call(defence.hypothesis, args)
   prosecutionHypothesis = do.call(prosecution.hypothesis, args)

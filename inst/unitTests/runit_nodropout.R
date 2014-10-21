@@ -58,7 +58,8 @@ test_dropout_regression_prosecution <- svTest(function() {
     ethnic = "EA1",
     adj = 1.0,
     fst = 0.02,
-    relatedness = c(0, 0)/4
+    relatedness = c(0, 0)/4,
+    combineRare  = FALSE
   )
 
   # Create hypothesis for defence and prosecution.
@@ -99,7 +100,8 @@ test_dropout_regression_defence <- svTest(function() {
     ethnic = "EA1",
     adj = 1.0,
     fst = 0.02,
-    relatedness = c(0, 0)/4
+    relatedness = c(0, 0)/4,
+    combineRare  = FALSE
   )
 
   # Create hypothesis for defence and prosecution.
