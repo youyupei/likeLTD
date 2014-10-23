@@ -115,7 +115,7 @@ latex.maker <- function(genetics,filename){
 	close(file)}
 
 #--------------------------------------------------------------------------------------------------------------------
-pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, linkageFile=NULL, outputPath=getwd() ) {
+pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(cspFile, refFile) 
@@ -136,17 +136,19 @@ pack.admin.input <- function(cspFile, refFile, caseName='dummy',databaseFile=NUL
                 linkageFile=linkageFile,
                 cspFile=cspFile,
                 refFile=refFile,
-                outputPath=outputPath )
+                outputPath=outputPath,
+		kit=kit )
 	return(admin)}
 
 #--------------------------------------------------------------------------------------------------------------------
-load.allele.database <- function(path=NULL) {
+load.allele.database <- function(path=NULL,kit=NULL) {
 	# Loads allele database
 	# Documentation is in man directory.
 	if(is.null(path)) { # Load default database
+	if(is.null(kit)) kit = "DNA17"
 	dummyEnv <- new.env()
-	data('lgc-allele-freqs-wbp', package='likeLTD', envir=dummyEnv)
-	return(dummyEnv[['lgc-allele-freqs-wbp']])
+	data(list=paste0(kit,'-db'), package='likeLTD', envir=dummyEnv)
+	return(dummyEnv[[paste0(kit,'-db')]])
 	}
 	if(!file.exists(path)) stop(paste(path, "does not exist."))
 	read.table(path, sep="\t", header=TRUE)
@@ -368,7 +370,7 @@ pack.genetics.for.allele.report <- function(admin){
 	cspData <- read.csp.profile(admin$cspFile)
 	uncData <- read.unc.profile(admin$cspFile)
 	refData <- read.known.profiles(admin$refFile)
-	afreq <- load.allele.database(admin$databaseFile)
+	afreq <- load.allele.database(admin$databaseFile,admin$kit)
 
 	# secondary objects
 	summary <- summary.generator(refData, cspData)
@@ -395,7 +397,7 @@ pack.genetics.for.output.report <- function(P.hyp,D.hyp){
 	cspData <- read.csp.profile(P.hyp$cspFile)
 	uncData <- read.unc.profile(P.hyp$cspFile)
 	refData <- read.known.profiles(P.hyp$refFile)
-	afreq <- load.allele.database(P.hyp$databaseFile)
+	afreq <- load.allele.database(P.hyp$databaseFile,P.hyp$kit)
 
 	# secondary objects
 	summary <- summary.generator(refData, cspData)
@@ -721,7 +723,7 @@ file.inputs.table.reformatter <- function(prosecutionHypothesis)
 	refFile = tmp[length(tmp)]
 	if(is.null(prosecutionHypothesis$databaseFile))
 		{
-		databaseFile = "lgc-allele-freqs-wbp.txt (Default)"
+		databaseFile = "DNA17-db.txt (Default)"
 		} else {
 		tmp = strsplit(prosecutionHypothesis$databaseFile,split="/")[[1]]
 		databaseFile = tmp[length(tmp)]

@@ -51,6 +51,7 @@ test_dropin_genotype_sizes <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
+    kit = "SGMplus",
     cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
@@ -69,14 +70,14 @@ test_dropin_genotype_sizes <- svTest(function() {
   model <- create.likelihood.vectors(hypothesis, addAttr=TRUE)
   functions <- attr(model, "functions")
   
-  checkEquals(ncol(attr(functions[["D3"]],   "constructs")$genotypes),  512) 
+  checkEquals(ncol(attr(functions[["D3S1358"]],   "constructs")$genotypes),  512) 
   checkEquals(ncol(attr(functions[["vWA"]],  "constructs")$genotypes),  512) 
-  checkEquals(ncol(attr(functions[["D16"]],  "constructs")$genotypes),  169) 
-  checkEquals(ncol(attr(functions[["D2"]],   "constructs")$genotypes),  397) 
-  checkEquals(ncol(attr(functions[["D8"]],   "constructs")$genotypes), 1331) 
-  checkEquals(ncol(attr(functions[["D21"]],  "constructs")$genotypes),   72) 
-  checkEquals(ncol(attr(functions[["D18"]],  "constructs")$genotypes),   78) 
-  checkEquals(ncol(attr(functions[["D19"]],  "constructs")$genotypes),   72) 
+  checkEquals(ncol(attr(functions[["D16S539"]],  "constructs")$genotypes),  169) 
+  checkEquals(ncol(attr(functions[["D2S1338"]],   "constructs")$genotypes),  397) 
+  checkEquals(ncol(attr(functions[["D8S1179"]],   "constructs")$genotypes), 1331) 
+  checkEquals(ncol(attr(functions[["D21S11"]],  "constructs")$genotypes),   72) 
+  checkEquals(ncol(attr(functions[["D18S51"]],  "constructs")$genotypes),   78) 
+  checkEquals(ncol(attr(functions[["D19S433"]],  "constructs")$genotypes),   72) 
   checkEquals(ncol(attr(functions[["TH01"]], "constructs")$genotypes),  127) 
   checkEquals(ncol(attr(functions[["FGA"]],  "constructs")$genotypes), 2744) 
 })
@@ -86,6 +87,7 @@ test_dropin_regression_prosecution <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
+    kit = "SGMplus",
     cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
@@ -120,8 +122,8 @@ test_dropin_regression_prosecution <- svTest(function() {
              1.32857835412624e-04, 5.23329092369162e-01, 1.40904975902118e-02,
              1.63050400130066e-07, 1.76168459367054e-01, 4.17460002336186e-01,
              6.47510311051041e-02)
-  names(checks) = c("D3", "vWA", "D16", "D2", "D8", "D21", "D18", "D19",
-                    "TH01", "FGA")
+  names(checks) = c("D3S1358", "vWA", "D16S539", "D2S1338", "D8S1179", "D21S11", "D18S51", "D19S433",
+                        "TH01", "FGA")
   checkEquals(newP, checks)
 })
 
@@ -130,6 +132,7 @@ test_dropin_regression_defence <- svTest(function() {
   datapath = file.path(system.file("extdata", package="likeLTD"), "nodropin")
   args = list(
     databaseFile = NULL,
+    kit = "SGMplus",
     cspFile = file.path(datapath, 'hammer-CSP.csv'),
     refFile = file.path(datapath, 'hammer-reference.csv'),
     nUnknowns = 1,
@@ -164,7 +167,7 @@ test_dropin_regression_defence <- svTest(function() {
              1.64066893120773e-07, 6.89490152498635e-02, 7.27356001552238e-04,
              1.87654288015654e-04, 4.10268638515752e-04, 9.86365555197756e-02,
              2.81428078288624e-03)
-  names(checks) = c("D3", "vWA", "D16", "D2", "D8", "D21", "D18", "D19",
-                    "TH01", "FGA")
+  names(checks) = c("D3S1358", "vWA", "D16S539", "D2S1338", "D8S1179", "D21S11", "D18S51", "D19S433",
+                        "TH01", "FGA")
   checkEquals(newD, checks)
 })

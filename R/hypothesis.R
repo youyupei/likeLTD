@@ -277,8 +277,10 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
-                                   doDropin=FALSE, combineRare=TRUE,...) {
-  alleleDb = load.allele.database(databaseFile)
+                                   doDropin=FALSE, combineRare=TRUE,
+				   rareThreshold=0.05, kit=NULL,...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  alleleDb = load.allele.database(databaseFile,kit)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
   if(identical(relatedness,c(0.5,0.25)))
@@ -300,7 +302,8 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst, combineRare=combineRare)
+                               adj=adj, fst=fst, combineRare=combineRare,
+				rareThreshold=rareThreshold)
 
   # If queried profile is subject to dropout, then it should be the reference
   # individual. Otherwise, the first individual subject to dropout will be set
@@ -337,9 +340,10 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 # Documentation is in man directory.
 defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
-                               relatedness=c(0,0), doDropin=FALSE, combineRare=TRUE, ...) {
-  
-  alleleDb = load.allele.database(databaseFile)
+                               relatedness=c(0,0), doDropin=FALSE, combineRare=TRUE, 
+			       rareThreshold=0.05, kit=NULL, ...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  alleleDb = load.allele.database(databaseFile,kit)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
   if(identical(relatedness,c(0.5,0.25)))
@@ -361,7 +365,8 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
 
   result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst, combineRare=combineRare) 
+                               adj=adj, fst=fst, combineRare=combineRare,
+				rareThreshold=rareThreshold) 
 
 
   result[["refIndiv"]] = nrow(result[["dropoutProfs"]]) + 1

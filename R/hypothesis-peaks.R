@@ -223,7 +223,7 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, stutterPercent=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, combineRare=TRUE, ...) {
+                                   doDropin=FALSE, combineRare=TRUE, rareThreshold=0.05, ...) {
   alleleDb = load.allele.database(databaseFile)
   peaksProfile = read.peaks.profile(peaksFile)
 #  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
@@ -247,7 +247,8 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 
   result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst, combineRare=combineRare)
+                               adj=adj, fst=fst, combineRare=combineRare,
+			       rareThreshold=rareThreshold)
 
 
   	# refIndiv is queried
@@ -282,7 +283,8 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, 
-                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, combineRare=TRUE, ...) {
+                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, combineRare=TRUE, 
+			       rareThreshold=0.05, ...) {
   
   alleleDb = load.allele.database(databaseFile)
   peaksProfile = read.peaks.profile(peaksFile)
@@ -307,7 +309,8 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
 
   result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
-                               adj=adj, fst=fst, combineRare=combineRare) 
+                               adj=adj, fst=fst, combineRare=combineRare,
+			       rareThreshold=rareThreshold) 
    
   result[["refIndiv"]] = 1
 

@@ -50,6 +50,7 @@ export(make.allelic.calls)
 export(relistArguments.peaks)
 export(create.likelihood.vectors.peaks)
 export(evaluate.peaks)
+export(plot.CSP.heights)
 
 importFrom(DEoptim, DEoptim)
 importFrom(gdata, read.xls)

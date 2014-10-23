@@ -114,7 +114,7 @@ checkNoException <- function(expr, msg="") {
 
   # Checks it packs the data as expected.
   admin <- correct()
-  checkEquals(length(admin), 7)
+  checkEquals(length(admin), 6)
   checkEquals(admin$caseName, caseName)
   checkEquals(admin$databaseFile, databaseFile)
   checkEquals(admin$cspFile, cspFile)
