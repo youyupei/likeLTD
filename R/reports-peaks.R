@@ -33,34 +33,113 @@ locus.likes.peaks <- function(hypothesis,results,...){
 	}
 
 
-plot.CSP.heights = function(cspFile,detectThresh=NULL)
+getPeakContributors = function(locusPeaks,locusRefs)
 	{
-	csp = read.peaks.profile(cspFile)
-	# loop over replicates
-	for(i in 1:length(csp$alleles))
+	conts = list()
+	for(i in 1:length(locusPeaks))
 		{
-		# set plotting parameters that are constant across loci
-		par(mfrow=rep(ceiling(sqrt(nrow(csp$alleles[[i]]))),times=2),mar=c(2,2,2,0))
-		YLIM = c(0,range(unlist(csp$heights),na.rm=TRUE)[2])
-		YLIM = YLIM + c(0,YLIM[2]/10)
-		# loop over loci
-		for(j in 1:nrow(csp$alleles[[i]]))
+		conts[[length(conts)+1]] = which(sapply(locusRefs,FUN=function(x) any(x%in%locusPeaks[i])))
+		}
+	return(conts)
+	}
+
+plotline = function(height,size,contributors,colours)
+	{
+	if(length(contributors)==0) 
+		{
+		lines(c(size,size),c(0,height),col="black",lwd=3,lend=1)
+		} else {
+		# solid line
+		lines(c(size,size),c(0,height),col=colours[contributors[1]],lwd=3,lend=1)
+		if(length(contributors)>1)
 			{
-			# set plotting parameters that are specific to a locus
-			XLIM = range(as.numeric(csp$sizes[[i]][j,]),na.rm=TRUE)
-			XLIM = XLIM + c(-2,2)
-			flag = (j-1)%%4==0
-			# make an empty plot
-			plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=rownames(csp$alleles[[i]])[j],yaxt=ifelse(flag,'s','n'))
-			# add baseline
-			abline(h=0)
-			# add detection threshold
-			if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
-			# add peaks
-			mapply(as.numeric(csp$sizes[[i]][j,]),as.numeric(csp$heights[[i]][j,]),FUN=function(x,y) lines(c(x,x),c(0,y),col="blue"))
-			# add peak labels
-			mapply(as.numeric(csp$sizes[[i]][j,]),as.numeric(csp$heights[[i]][j,]),csp$alleles[[i]][j,],FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
+			# hexadecimal goes to 15
+			max = 15
+			# number of contributors at this peak
+			ncont = length(contributors)
+			# how large we can make each subline
+			factor = floor(max/(ncont-1))
+			factor = 2
+			for(i in 1:(ncont-1))
+				{
+				# hexadecimal code for lines on/off scheme for each contributor
+				lineScheme = paste(c(toString(as.hexmode((ncont-i)*factor)),toString(as.hexmode(i*factor))),collapse="",sep="")
+				# plot the subline for this individual
+				lines(c(size,size),c(0,height),col=colours[contributors[i+1]],lwd=3,lend=1,lty=lineScheme)
+				}
 			}
-		
 		}
 	}
+
+
+plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh=NULL,replicate=1)
+	{
+	# get CSP
+	csp = read.peaks.profile(cspFile)
+	# get K profiles
+	if(!is.null(refFile)) 
+		{
+		# get reference profiles
+		refs = read.known.profiles(refFile)
+		Q = refs[which(unlist(refs[,1])),-1]
+		# make Q the first individual
+		refIndex = which(unlist(refs[,1]))
+		refs = rbind(refs[refIndex,],refs[-refIndex,])
+		# colours
+		contColours = rainbow(nrow(refs))
+		nK = length(contColours)
+		}
+	# locus names
+	loci = rownames(csp$alleles[[replicate]])
+	# stutter calls 
+	if(!is.null(stutterThresh)) 
+		{
+		stutters = make.allelic.calls(csp,stutterThresh)
+		}
+	# set plotting parameters that are constant across loci
+	par(mfrow=rep(ceiling(sqrt(nrow(csp$alleles[[replicate]]))),times=2),mar=c(2,2,2,0))
+	YLIM = c(0,range(unlist(csp$heights),na.rm=TRUE)[2])
+	YLIM = YLIM + c(0,YLIM[2]/10)
+	# loop over loci
+	for(j in 1:nrow(csp$alleles[[replicate]]))
+		{
+		# set plotting parameters that are specific to a locus
+		XLIM = range(as.numeric(csp$sizes[[replicate]][j,]),na.rm=TRUE)
+		XLIM = XLIM + c(-2,2)
+		flag = (j-1)%%4==0
+		# make an empty plot
+		plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=rownames(csp$alleles[[replicate]])[j],yaxt=ifelse(flag,'s','n'))
+		# add baseline
+		abline(h=0)
+		# add detection threshold
+		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
+		if(!is.null(refFile))
+			{
+			# add which K contributes to each peak
+			peakContributors = getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
+			# add peaks
+			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
+			} else {
+			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="blue"))
+			}
+		# add peak labels
+		if(is.null(stutterThresh))
+			{
+			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
+			} else {
+			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],stutters[[replicate]][j,],FUN=function(x,y,a,b) text(x,y+(YLIM[2]/12),a,col=ifelse(b,"blue","gray")))
+			}
+		}		
+	}
+
+
+
+
+
+
+
+
+
+
+
+

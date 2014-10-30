@@ -59,7 +59,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
 optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
-                                withPenalties=TRUE, objective=NULL, iterMax=75, 
+                                withPenalties=TRUE, doLinkage=TRUE, objective=NULL, iterMax=75, 
 				likeMatrix=FALSE,diagnose=FALSE,...) {
   # Creates the optimisation parameters for optim.
   #
@@ -101,6 +101,14 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     fixedstuff = args[fixed]
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
+
+    # Linkage adjustment if brothers
+    linkBool = doLinkage&identical(hypothesis$relatedness,c(0.5,0.25))&hypothesis$hypothesis=="prosecution"
+  if(linkBool)
+    {
+    linkFactor = linkage(hypothesis)
+    if(logObjective) linkFactor = log10(linkFactor)
+    }
 
   result.function <- function(x) {
     # If a flat vector, reconstruct list. 
@@ -178,6 +186,17 @@ if(is.infinite(sum(log10(result$objectives) + log10(result$penalties)))) INFRES 
 			}
 		# if result is infinite make sure it returns -Inf
 		if(is.infinite(result)|is.na(result)) result = -Inf
+
+    		# Linkage adjustment
+		if(linkBool)
+		    {
+		    if(logObjective==TRUE) 
+		        {
+		        result = result+linkFactor
+		        } else {
+		        result = result*linkFactor
+		        }
+		    }
 		# return result
 		-result
 	}
@@ -366,7 +385,7 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 
 
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, stutterMeanLimit=1, progBar = TRUE, interim=FALSE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -452,8 +471,8 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar
 		}
 		}
 
-		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]
-		P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]
+		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
+		P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]*stutterMeanLimit
 
 		for(n in 1:n.steps){
 			# change DEoptim parameters
