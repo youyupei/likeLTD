@@ -51,23 +51,6 @@ bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp)
 	return removeFlag;
 	}
 
-// Lanczos approximation to the gamma function. 
-// 
-// found on http://www.rskey.org/gamma.htm   
-//
-double gamm(double x) 
-{
-    double ret = (1.000000000190015 + 
-                 76.18009172947146 / (x + 1) +  
-                 -86.50532032941677 / (x + 2) + 
-                 24.01409824083091 / (x + 3) +  
-                 -1.231739572450155 / (x + 4) + 
-                 1.208650973866179e-3 / (x + 5) + 
-                 -5.395239384953e-6 / (x + 6));
-    
-    return ret * sqrt(2*M_PI)/x * pow(x + 5.5, x+.5) * exp(-x-5.5);
-}
-
 /* natural log of the gamma function
    gammln as implemented in the
  * first edition of Numerical Recipes in C */
@@ -90,15 +73,6 @@ double gammln(double xx)
     return -tmp+log(2.5066282746310005*ser);
 }
 
-// the gamma distribution PDF
-double gammaPdf(double x, double a, double b)
-{
-    if (x <= 0 || a <= 0 || b <= 0)
-        return 0.0;
-    else
-        return exp(-x * b) * pow(x, a - 1.0) * pow(b, a) / gamm(a);
-}
-
 // natural log of the gamma distribution PDF
 double gammalog(double x, double a, double b)
 {
@@ -108,49 +82,6 @@ double gammalog(double x, double a, double b)
         return -x * b + (a - 1.0) * log(x) + a * log(b) - gammln(a);
 }
 
-// lower incomplete gamma function
-// see:  https://en.wikipedia.org/wiki/Incomplete_gamma_function
-double incgamma (double x, double a)
-	{
-	double sum=0;
-	double term=1.0/a;
-	int n=1;
-	while (term != 0)
-		{
-		sum = sum + term;
-		term = term*(x/(a+n));
-		n++;
-		}
-	return pow(x,a)*exp(-1*x)*sum;
-	}
-
-// log lower incomplete gamma function
-double lnIncGamma (double x, double a)
-	{
-	double sum=0;
-	double term=1.0/a;
-	int n=1;
-	while (term != 0)
-		{
-		sum = sum + term;
-		term = term*(x/(a+n));
-		n++;
-		}
-	return (a*log(x))+(-1*x)+log(sum);
-	}
-
-// gamma distribution CDF
-// see: https://en.wikipedia.org/wiki/Gamma_distribution#Characterization
-double gammaCdf (double x, double shape, double scale)
-	{
-	return(1/gamm(shape)*incgamma(shape,x/scale));
-	}
-
-// log gamma distribution CDF
-double lnGammaCdf (double x, double shape, double scale)
-	{
-	return(log(1)-gammln(shape)+lnIncGamma(shape,x/scale));
-	}
 
 /* Log gamma function
  * \log{\Gamma(z)}
@@ -195,7 +126,6 @@ std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<flo
 	std::vector<double>::iterator itDbl; 
 	genoStruct tmpMu;
 	std::vector<genoStruct> muA, muS, outRes;
-	std::vector<double> debug;
 	int matchIndex;
 	double diff;
 
@@ -223,8 +153,6 @@ std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<flo
                 break;
 			    }
 			}
-
-		debug.push_back(matchIndex);
 
 		fragSub = fragVecL[matchIndex];
 
@@ -258,7 +186,6 @@ std::vector<double> peakMeanDose(std::vector<float> genotypeVec, std::vector<flo
 		tmpMu.dose = tmpDose;
 		outRes.push_back(tmpMu);
 		}
-	//return(debug);
 	return outMu;
 	}
 
@@ -276,7 +203,6 @@ double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> 
 	std::vector<float> genotypeVec, stutterPosVec, allPosVec;
 	std::vector<float>::iterator itFlt;
 	std::vector<double> gammaMu;
-	std::vector<double> debug;
 
 	// Loop over members of genotype
 	for(int y=0; y<nGen; y++)
@@ -310,7 +236,6 @@ double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> 
 		tmpGeno.genotype = allPosVec[i];
 		tmpGeno.dose = gammaMu[i];
 		gammaMuVec.push_back(tmpGeno);
-		debug.push_back(gammaMu[i]);
 		}
 
 	// Add dropout alleles to peak heights, with peak height 0
@@ -382,7 +307,6 @@ double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> 
 
 
 	return(outDensity);
-	//return debug;
 	}
 
 
@@ -517,17 +441,8 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 		{
 		out_ptr[i] = outDouble[i];
 		}
-	//SEXP debugOut;
-	//PROTECT(debugOut = allocVector(REALSXP, outDouble.size()));
-  	//double       * const debug_ptr  = REAL(debugOut);
-	//for(int i=0; i<outDouble.size(); i++)
-	//	{
-	//	debug_ptr[i] = outDouble[i];
-	//	}
 	UNPROTECT(12);
 	return result;
-	//return debugOut;
-
 	}
 
 

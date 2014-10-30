@@ -37,33 +37,15 @@ extern "C" {
 	//! \brief probability of a single genotype
 	double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double detectionThresh, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
 	//std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double detectionThresh, int currentComb, int nGen, int nCSP, int nCont, int nFrag);
-	
-	//! \brief gamma function
-	double gamm(double x);
 
 	//! \brief log gamma function
 	double gammln(double xx);
-
-	//! \brief pdf of gamma distribution
-	double gammaPdf(double x, double a, double b);
 
 	//! \brief log pdf of gamma distribution
 	double gammalog(double x, double a, double b);
 
 	//! \brief function to know which of gammaMu to not include
 	bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp);
-
-	//! \brief  lower incomplete gamma function
-	double incgamma (double x, double a);
-
-	//! \brief  log lower incomplete gamma function
-	double lnIncGamma (double x, double a);
-
-	//! \brief  gamma distribution CDF
-	double gammaCdf (double x, double shape, double scale);
-
-	//! \brief  log gamma distribution CDF
-	double lnGammaCdf (double x, double shape, double scale);
 
 	//! \brief log gamma function (new)
 	double kf_lgamma(double z);

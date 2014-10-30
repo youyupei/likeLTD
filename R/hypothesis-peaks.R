@@ -164,11 +164,11 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   # prosection. 
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
-  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
+  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -223,8 +223,9 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, combineRare=TRUE, rareThreshold=0.05, ...) {
-  alleleDb = load.allele.database(databaseFile)
+                                   doDropin=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
 #  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
 #  if(is.null(callsFile))
@@ -234,7 +235,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 #    allelicCalls = read.allelic.calls(callsFile)
 #    }
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   if(identical(relatedness,c(0.5,0.25)))
 	{
@@ -296,9 +297,9 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, linkageFile=NULL,
                                relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, combineRare=TRUE, 
-			       rareThreshold=0.05, ...) {
-  
-  alleleDb = load.allele.database(databaseFile)
+			       rareThreshold=0.05, kit=NULL,...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
 #  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
 #  if(is.null(callsFile))
