@@ -324,9 +324,22 @@ cspModify = modifyCSP(csp,allPosVec);
 			}
 		}
 
+	//double outDensity=1, tmpDensity;
+    	// get density
+	for(int i=0; i<gammaMuVec.size(); i++)
+		{
+		if(i==gammaMuVec.size()) break;
+		if(cspModify[i].heights==0)
+			{
+			tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,detectionThresh/scale);
+			} else {
+			tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, 1/(scale)));
+			}
+		outDensity = outDensity * tmpDensity;
+	   	}
 
     	// get density
-	outDensity = getDensity(gammaMuVec,cspModify,scale,detectionThresh);
+//	outDensity = getDensity(gammaMuVec,cspModify,scale,detectionThresh);
 
 	return(outDensity);
 	}
