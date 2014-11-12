@@ -148,8 +148,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
    #if(any(is.infinite(result$objectives))) TOTALRES <<- result
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
 
-if(any(result$objectives==0)) ZERORES <<- result
-if(is.infinite(sum(log10(result$objectives) + log10(result$penalties)))) INFRES <<- result
+
 
     	# Compute as log if requested, otherwise as product.
 	if(withPenalties) 

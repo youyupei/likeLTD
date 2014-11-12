@@ -35,16 +35,16 @@ struct sortByAlleleNameGeno
         }
     };
 
-int myRound(double d)
+inline int myRound(double d)
     {
         return static_cast<int>(d + 0.5);
     }
 
-bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp) 
+inline bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp) 
 	{
 	int index;
 	bool removeFlag = false;
-	for(int j=0; j<csp.size(); j++)
+	for(unsigned int j=0; j<csp.size(); ++j)
 	    {
             if(g.genotype==csp[j].alleles) 
                 {
@@ -59,7 +59,7 @@ bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp)
 /* natural log of the gamma function
    gammln as implemented in the
  * first edition of Numerical Recipes in C */
-double gammln(double xx)
+inline double gammln(double xx)
 {
     double x, tmp, ser;
     const static double cof[6]={76.18009172947146,    -86.50532032941677,
@@ -79,7 +79,8 @@ double gammln(double xx)
 }
 
 // natural log of the gamma distribution PDF
-double gammalog(double x, double a, double b)
+// see: http://compbio.mit.edu/spimap/pub/spimap/src/gamma.cpp
+inline double gammalog(double x, double a, double b)
 {
     if (x <= 0 || a <= 0 || b <= 0)
         return 0.0;
@@ -87,12 +88,11 @@ double gammalog(double x, double a, double b)
         return -x * b + (a - 1.0) * log(x) + a * log(b) - gammln(a);
 }
 
-
 /* Log gamma function
  * \log{\Gamma(z)}
  * AS245, 2nd algorithm, http://lib.stat.cmu.edu/apstat/245
  */
-double kf_lgamma(double z)
+inline double kf_lgamma(double z)
 {
 	double x = 0;
 	x += 0.1659470187408462e-06 / (z+7);
@@ -110,6 +110,7 @@ double kf_lgamma(double z)
 #define KF_GAMMA_EPS 1e-14
 
 // regularized lower incomplete gamma function, by series expansion
+// see: http://barricklab.org/hg/breseq/file/9ab26de12a0b/extern/samtools-0.1.15/bcftools/kfunc.c
 static double kf_gammap(double s, double z)
 {
 	double sum, x;
@@ -121,32 +122,52 @@ static double kf_gammap(double s, double z)
 	return exp(s * log(z) - z - kf_lgamma(s + 1.) + log(sum));
 }
 
+static double ln_kf_gammap(double s, double z)
+{
+	double sum, x;
+	int k;
+	for (k = 1, sum = x = 1.; k < 100; ++k) {
+		sum += (x *= z / (s + k));
+		if (x / sum < KF_GAMMA_EPS) break;
+	}
+	return s * log(z) - z - kf_lgamma(s + 1.) + log(sum);
+}
 
-std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN,double repAdjust, int nGen, int nCSP, int nCont, int nFrag)
+std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
 	{
-	double DNAcontSub, degSub, tmpDose, fragSub;
-	std::vector<float>::iterator itFlt,itFlt2;
-	std::vector<double>::iterator itDbl; 
+	genoStruct tmpMu; 
+	std::vector<genoStruct> outRes(allPosVec.size(),tmpMu);
+	double tmpDose;
+	// combine doses at each allelic position
+	for(unsigned int i=0; i<allPosVec.size(); ++i)
+		{
+		tmpDose = 0;
+		for(unsigned int j=0; j<muA.size(); ++j)
+			{
+			if(muA[j].genotype==allPosVec[i]) tmpDose = tmpDose+muA[j].dose;
+			if(muS[j].genotype==allPosVec[i]) tmpDose = tmpDose+muS[j].dose;
+			}
+		tmpMu.genotype = allPosVec[i];
+		tmpMu.dose = tmpDose;
+		outRes[i] = tmpMu;
+		}
+	return(outRes);
+	}
+
+std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterTrue, double stutterFalse,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, int nGen, int nCSP, int nCont, int nFrag)
+	{
+	double tmpDose, fragSub;
 	genoStruct tmpMu;
-	std::vector<genoStruct> muA, muS, outRes;
+	std::vector<genoStruct> muA(genotypeVec.size(),tmpMu),muS(genotypeVec.size(),tmpMu);
 	int matchIndex;
 	double diff;
 
 	// effective dose for stutter and allelic
-	for(int i=0; i<nGen; i++)
+	for(int i=0; i<nGen; ++i)
 		{
-		// DNAcont and deg
-		if(i%2!=0)
-			{
-			DNAcontSub = DNAcontVec[(i-1)/2];
-			degSub = degVec[(i-1)/2];
-			} else {
-			DNAcontSub = DNAcontVec[i/2];
-			degSub = degVec[i/2];
-			}
 		// fragLengths
 		matchIndex = 0;
-		for(int q=0; q<fragVecN.size(); q++)
+		for(unsigned int q=0; q<fragVecN.size(); ++q)
 			{
 			diff = std::abs(genotypeVec[i]-fragVecN[q]);
 			
@@ -163,18 +184,19 @@ std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector
 		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
 
 		// effective dose
-		tmpDose = repAdjust*DNAcontSub*std::pow((1+degSub),fragSub);
+		tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub);
 
 
 		// stutter adjusted effective dose
 		tmpMu.genotype = genotypeVec[i];
-		tmpMu.dose = tmpDose * (1-(stutterMean*stutterAdjust));
-		muA.push_back(tmpMu);
+		tmpMu.dose = tmpDose * stutterFalse;
+		muA[i] = tmpMu;
 		tmpMu.genotype = stutterPosVec[i];
-		tmpMu.dose = tmpDose * (stutterMean*stutterAdjust);
-		muS.push_back(tmpMu);
+		tmpMu.dose = tmpDose * stutterTrue;
+		muS[i] = tmpMu;
 		}
 
+/*
 	// combine doses at each allelic position
 	for(int i=0; i<allPosVec.size(); i++)
 		{
@@ -188,24 +210,28 @@ std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector
 		tmpMu.dose = tmpDose;
 		outRes.push_back(tmpMu);
 		}
+*/
+	std::vector<genoStruct> outRes = combineDoses(allPosVec,muA,muS);
 	return outRes;
 	}
 
 
-double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double detectionThresh)
+double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg)
 	{
-	double outDensity=1, tmpDensity;
+	double outDensity=1, tmpDensity=0;
+	unsigned int vecSize = gammaMuVec.size();
     	// get density
-	for(int i=0; i<gammaMuVec.size(); i++)
+	for(unsigned int i=0; i<vecSize; ++i)
 		{
-		if(i==gammaMuVec.size()) break;
+		//if(i==gammaMuVec.size()) break;
 		if(cspModify[i].heights==0)
 			{
-			tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,detectionThresh/scale);
+			tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
 			} else {
-			tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, 1/(scale)));
+			tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg));
 			}
-		outDensity = outDensity * tmpDensity;
+		//outDensity = outDensity * tmpDensity;
+		outDensity *= tmpDensity;
 	   	}
 	return(outDensity);
 	}
@@ -217,10 +243,10 @@ std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> a
 	tmpCSP.sizes=999;
 	int nondropoutFlag, initSize=csp.size();
 	// Add dropout alleles to peak heights, with peak height 0
-	for(int i=0; i<allPosVec.size(); i++)
+	for(unsigned int i=0; i<allPosVec.size(); ++i)
 		{
 		nondropoutFlag = 0;
-		for(int j=0; j<csp.size(); j++)
+		for(unsigned int j=0; j<csp.size(); ++j)
 			{
 			if((myRound(csp[j].alleles*10.0f)/10.0f)==(myRound(allPosVec[i]*10.0f)/10.0f)) 
 				{
@@ -242,28 +268,27 @@ std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> a
 	}
 
 
-double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double detectionThresh, int currentComb, int nGen, int nCSP, int nCont, int nFrag)
+double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterTrue, double stutterFalse, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, int nFrag, double cdfArg, double pdfArg)
 //std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double detectionThresh, int currentComb, int nGen, int nCSP, int nCont, int nFrag)
 	{
 	std::vector<cspStruct> cspModify;
 	std::vector<genoStruct> gammaMuVec;
-	double outDensity=1, tmpDensity;
 	std::vector<int> toRemove;
-	std::vector<float> genotypeVec, stutterPosVec, allPosVec;
+	std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), allPosVec(nGen*2,0);
 	std::vector<float>::iterator itFlt;
-	std::vector<double> debug;
+	//std::vector<double> debug;
 
 	// Loop over members of genotype
-	for(int y=0; y<nGen; y++)
+	for(int y=0; y<nGen; ++y)
 		{
 	        // round genotypes
-		genotypeVec.push_back(myRound(genotypeArray[(currentComb*nGen)+y]*10.0f)/10.0f);
+		genotypeVec[y] = myRound(genotypeArray[(currentComb*nGen)+y]*10.0f)/10.0f;
 		// get stutter positions
-		stutterPosVec.push_back(myRound((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f);
-debug.push_back(((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f);
+		stutterPosVec[y] = myRound((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f;
+//debug.push_back(((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f);
 		// get all positions, while rounding to 1dp
-		allPosVec.push_back(genotypeVec[y]);
-		allPosVec.push_back(stutterPosVec[y]);
+		allPosVec[y] = genotypeVec[y];
+		allPosVec[y+nGen] = stutterPosVec[y];
 		}
 	// sort and unique allPos
 	std::sort(allPosVec.begin(),allPosVec.end());
@@ -272,7 +297,7 @@ debug.push_back(((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f);
 		
 	//Rprintf("Before mean");
     	// get peak gamma means 
-	gammaMuVec = peakMeanDose(genotypeVec, stutterPosVec, allPosVec, csp, DNAcont, stutterMean, stutterAdjust, degradation, fragLengths, fragNames, repAdjust, nGen, nCSP, nCont, nFrag);
+	gammaMuVec = peakMeanDose(genotypeVec, stutterPosVec, allPosVec, csp, DNAcont, stutterTrue, stutterFalse, degradation, fragLengths, fragNames, nGen, nCSP, nCont, nFrag);
 
 /*
 	//Rprintf("Before copying");
@@ -306,7 +331,9 @@ debug.push_back(((genotypeArray[(currentComb*nGen)+y]-1.0)*10.0f)/10.0f);
 // add dropout alleles to the CSP
 cspModify = modifyCSP(csp,allPosVec);
 
-
+/*
+// This section removes alleles that require dropin to explain the CSP
+// Currently do not allow dropin, so do not need this section
 	//Rprintf("Before toRemove");
 	// Remove means for alleles that are not being considered		
 	for(int i=0; i<gammaMuVec.size(); i++)
@@ -327,7 +354,9 @@ cspModify = modifyCSP(csp,allPosVec);
 			gammaMuVec.pop_back();
 			}
 		}
+*/
 
+/*
 	//double outDensity=1, tmpDensity;
     	// get density
 	for(int i=0; i<gammaMuVec.size(); i++)
@@ -341,9 +370,10 @@ cspModify = modifyCSP(csp,allPosVec);
 			}
 		outDensity = outDensity * tmpDensity;
 	   	}
+*/
 
     	// get density
-//	outDensity = getDensity(gammaMuVec,cspModify,scale,detectionThresh);
+	double outDensity = getDensity(gammaMuVec,cspModify,scale,cdfArg,pdfArg);
 
 //	return(debug);
 	return(outDensity);
@@ -354,14 +384,12 @@ cspModify = modifyCSP(csp,allPosVec);
 
 
 
-SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes, SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
+SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
 	{
 	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
 	//    R_CStackLimit = (uintptr_t) - 1;
 	# endif
-	cspStruct tmpCSP;
-	std::vector<cspStruct> csp;
 	//genotypeArray = coerceVector(genotypeArray,REALSXP);
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
@@ -369,6 +397,8 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	int const nCont = length(DNAcont);
 	int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
+	cspStruct tmpCSP;
+	std::vector<cspStruct> csp(nCSP,tmpCSP);
 	std::vector<double> outDouble (nCombs);
 
 
@@ -377,17 +407,17 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
 	double const * const genotypeArray_ptr     = REAL(GENOTYPEARRAY);
-	std::vector<double> genotypeArrayVec;
-	for(int i=0; i<nCombs*nGen; i++)
+	std::vector<double> genotypeArrayVec(nCombs*nGen,0);
+	for(int i=0; i<nCombs*nGen; ++i)
 		{
-		genotypeArrayVec.push_back(genotypeArray_ptr[i]);
+		genotypeArrayVec[i] = genotypeArray_ptr[i];
 		}
 
 	// convert DNAcont to vector
 	SEXP DNACONT = PROTECT(duplicate(DNAcont));
 	double const * const dnacont_ptr     = REAL(DNACONT);
 	std::vector<double> DNAcontVec;
-	for(int i=0; i<nCont; i++)
+	for(int i=0; i<nCont; ++i)
 		{
 		DNAcontVec.push_back(dnacont_ptr[i]);
 		}	
@@ -411,7 +441,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
 	double const * const deg_ptr     = REAL(DEGRADATION);
 	std::vector<double> degVec;
-	for(int i=0; i<nDeg; i++)
+	for(int i=0; i<nDeg; ++i)
 		{
 		degVec.push_back(deg_ptr[i]);
 		}
@@ -422,7 +452,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	SEXP fragLvec = PROTECT(duplicate(fragLengths));
 	double * fragLvec_ptr     = REAL(fragLvec);
 	std::vector<double> fragVecN, fragVecL;
-	for(int i=0; i<nFrag; i++)
+	for(int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(myRound(fragNvec_ptr[i]*10.0f)/10.0f);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -443,28 +473,31 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 	double const * const allele_ptr     = REAL(ALLELES);
 	SEXP HEIGHTS = duplicate(heights);
 	double const * const height_ptr     = REAL(HEIGHTS);
-	SEXP SIZES = duplicate(sizes);
-	double const * const size_ptr     = REAL(SIZES);
 	SEXP roundedAlleles = PROTECT(allocVector(REALSXP, nCSP));
 	double       * const rounded_ptr  = REAL(roundedAlleles);
-	for(int i=0; i<nCSP; i++)
+	for(int i=0; i<nCSP; ++i)
 		{
 		REAL(roundedAlleles)[i] = myRound(allele_ptr[i]*10.0f)/10.0f;
         	tmpCSP.alleles = rounded_ptr[i];
         	tmpCSP.heights = height_ptr[i];
-        	tmpCSP.sizes = size_ptr[i];
-	       	csp.push_back(tmpCSP);   	        	
+	       	csp[i] = tmpCSP;   	        	
 		}
 
 	// sort csp by allele name
     	std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
+	double stutterTrue = stutterMeanDouble*stutterAdjustDouble*repadjust;
+	double stutterFalse = (1-(stutterMeanDouble*stutterAdjustDouble))*repadjust;
+
+	double cdfArg = detectThresh/scaleDouble;
+	double pdfArg = 1/scaleDouble; 
+
 	//Rprintf("Before Main Loop");
 	// Loop over genotype combinations
-	//# pragma omp parallel for 
-	for(int x=0; x<nCombs; x++)
+	# pragma omp parallel for 
+	for(int x=0; x<nCombs; ++x)
 		{
-		outDouble[x] = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterMeanDouble, stutterAdjustDouble, scaleDouble, degVec, fragVecL, fragVecN, repadjust, detectThresh, x, nGen, nCSP, nCont, nFrag);
+		outDouble[x] = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterTrue, stutterFalse, scaleDouble, degVec, fragVecL, fragVecN, x, nGen, nCSP, nCont, nFrag, cdfArg, pdfArg);
 		//outDouble = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterMeanDouble, stutterAdjustDouble, scaleDouble, degVec, fragVecL, fragVecN, repadjust, detectThresh, x, nGen, nCSP, nCont, nFrag);
 		}
 	//Rprintf("After main loop");
@@ -487,10 +520,9 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP sizes
 
 
 	// Make and return output object
-	SEXP result;
-	PROTECT(result = allocVector(REALSXP, nCombs));
+	SEXP result = PROTECT(allocVector(REALSXP, nCombs));
   	double       * const out_ptr  = REAL(result);
-	for(int i=0; i<nCombs; i++)
+	for(int i=0; i<nCombs; ++i)
 		{
 		out_ptr[i] = outDouble[i];
 		}

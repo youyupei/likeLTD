@@ -26,14 +26,14 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 	# if no unknowns return knowns
 	if(nUnknowns==0) 
 		{
-		if(!all(cspAlleles%in%knownWithStutter)) stop("Not enough contributors to explain CSP")
+		if(!all(cspAlleles%in%knownWithStutter)) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 		return(matrix(knownIndex,ncol=1))
 		}
 	# get all genotype combinations for unknowns
 	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)
 	# find which combinations explain all peaks
 	index = apply(genCombs,MARGIN=2,FUN=function(x) allExplained(x,cspAlleles,knownWithStutter,alleleNames))
-	if(length(which(index))==0) stop("Not enough contributors to explain CSP")
+	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 	genCombs = genCombs[,index]
 
 	# add known profiles as last contributors
@@ -96,4 +96,15 @@ if(ncol(genotypes)==0) genotypes = matrix(ncol=1,nrow=0)
   if(length(knownAlleles)!=0) genotypes = rbind(genotypes,matrix(rep(knownAlleles,times=ncol(genotypes)),ncol=ncol(genotypes)))
 
 return(genotypes) 
+}
+
+# Defines prod.matrix from R.
+prod.matrix.row <- function(x) {
+  # Fast column-wise product.
+  #
+  # Sadly, this is faster than apply(x, 1, prod)
+  y=x[,1]
+  for(i in 2:ncol(x))
+  y=y*x[, i]
+  return(y)
 }
