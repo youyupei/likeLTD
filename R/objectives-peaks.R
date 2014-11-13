@@ -166,7 +166,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
  #                                   hypothesis$nUnknowns, hypothesis$doDropin,
   #                                  missingReps)
 
-genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns)
+genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile)
 
 # get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
 if(nrow(hypothesis$knownProfs)>0) 

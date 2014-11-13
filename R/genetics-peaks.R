@@ -5,8 +5,15 @@ genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
 	all(cspAlleles%in%c(genWithStutter,knownWithStutter))
 	}
 
-explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns)
+explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights)
 	{
+	CSPPRESENCE <<- cspPresence
+PROFPRESENCE <<- profPresence
+KNOWNPROFS <<- knownProfs
+ALLELENAMES <<- alleleNames
+NUNKNOWNS <<- nUnknowns
+CSPALLELES <<- cspAlleles
+CSPHEIGHTS <<- cspHeights
   	# Catch early. Shouldn't be a problem here, but will be at some point. 
 	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
 	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
@@ -32,7 +39,7 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 	# get all genotype combinations for unknowns
 	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)
 	# find which combinations explain all peaks
-	index = apply(genCombs,MARGIN=2,FUN=function(x) allExplained(x,cspAlleles,knownWithStutter,alleleNames))
+	index = apply(genCombs,MARGIN=2,FUN=function(x) likeLTD:::allExplained(x,cspAlleles,knownWithStutter,alleleNames))
 	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 	genCombs = genCombs[,index]
 
@@ -41,9 +48,23 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 		{
 		genCombs = rbind(genCombs,matrix(rep(knownIndex,times=ncol(genCombs)),ncol=ncol(genCombs)))
 		}
+	# remove very unlikely genotype combinations
+	index = apply(matrix(as.numeric(alleleNames[genCombs]),ncol=ncol(genCombs)),MARGIN=2,FUN=function(x) any(likeLTD:::unlikelyGenotypes(x,cspAlleles,cspHeights)))
+	#print(paste0(length(which(index))," removed out of ", ncol(genCombs)))
+	if(length(which(index))!=0&length(which(index))!=ncol(genCombs)) genCombs = genCombs[,index]
 	return(genCombs)
 	}
 
+unlikelyGenotypes = function(genotype,cspAlleles,cspHeights)
+	{
+	checkRemove = function(gen,genotype,cspAlleles,cspHeights)
+		{
+		if(gen==-1) return(FALSE)
+		if(!gen%in%cspAlleles&(gen-1)%in%cspAlleles&!(gen-1)%in%genotype) return(TRUE) else return(FALSE)
+		}
+	out = sapply(genotype,FUN=function(x) checkRemove(x,genotype,cspAlleles,cspHeights))
+	return(out)
+	}
 
 # Profiles of unknown contributors for given locus.
 compatible.genotypes.peaks = function(cspPresence, profPresence, knownProfs,alleleNames,
