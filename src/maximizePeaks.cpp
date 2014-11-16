@@ -134,7 +134,7 @@ static double ln_kf_gammap(double s, double z)
 	return s * log(z) - z - kf_lgamma(s + 1.) + log(sum);
 }
 
-std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
+inline std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
 	{
 	genoStruct tmpMu; 
 	std::vector<genoStruct> outRes(allPosVec.size(),tmpMu);
@@ -155,7 +155,7 @@ std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::vector<ge
 	return(outRes);
 	}
 
-std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterTrue, double stutterFalse,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, int nGen, int nCSP, int nCont, int nFrag)
+inline std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterTrue, double stutterFalse,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, int nGen, int nCSP, int nCont, int nFrag)
 	{
 	double tmpDose, fragSub;
 	genoStruct tmpMu;
@@ -217,7 +217,7 @@ std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector
 	}
 
 
-double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg)
+inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg)
 	{
 	double outDensity=1, tmpDensity=0;
 	unsigned int vecSize = gammaMuVec.size();
@@ -237,7 +237,7 @@ double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> csp
 	return(outDensity);
 	}
 
-std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> allPosVec)
+inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> allPosVec)
 	{
 	cspStruct tmpCSP;
 	tmpCSP.heights=0;
@@ -269,7 +269,7 @@ std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> a
 	}
 
 
-double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterTrue, double stutterFalse, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, int nFrag, double cdfArg, double pdfArg)
+inline double singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterTrue, double stutterFalse, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, int nFrag, double cdfArg, double pdfArg)
 //std::vector<double> singleGenotype(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, std::vector<double> fragNames, double repAdjust, double detectionThresh, int currentComb, int nGen, int nCSP, int nCont, int nFrag)
 	{
 	std::vector<cspStruct> cspModify;
@@ -495,7 +495,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAco
 
 	//Rprintf("Before Main Loop");
 	// Loop over genotype combinations
-	# pragma omp parallel for 
+	# pragma omp parallel for schedule(dynamic)
 	for(int x=0; x<nCombs; ++x)
 		{
 		outDouble[x] = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterTrue, stutterFalse, scaleDouble, degVec, fragVecL, fragVecN, x, nGen, nCSP, nCont, nFrag, cdfArg, pdfArg);
