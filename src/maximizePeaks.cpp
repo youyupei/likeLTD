@@ -1,3 +1,4 @@
+
 #include "config.h"
 #include "openmp.h"
 #include "maximizePeaks.h"
