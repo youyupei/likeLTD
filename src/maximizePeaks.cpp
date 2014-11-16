@@ -385,7 +385,7 @@ cspModify = modifyCSP(csp,allPosVec);
 
 
 
-SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
+SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAcont, SEXP stutter, SEXP scale, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
 	{
 	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -424,14 +424,14 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAco
 		}	
 
 	// convert stutter to double
-	SEXP STUTTERMEAN = PROTECT(duplicate(stutterMean));
-	double const * const stutterMean_ptr     = REAL(STUTTERMEAN);
-	double stutterMeanDouble = stutterMean_ptr[0];
+	SEXP STUTTER = PROTECT(duplicate(stutter));
+	double const * const stutter_ptr     = REAL(STUTTER);
+	double stutterDouble = stutter_ptr[0];
 
 	// convert stutter to double
-	SEXP STUTTERADJUST = PROTECT(duplicate(stutterAdjust));
-	double const * const stutterAdjust_ptr     = REAL(STUTTERADJUST);
-	double stutterAdjustDouble = stutterAdjust_ptr[0];
+	//SEXP STUTTERADJUST = PROTECT(duplicate(stutterAdjust));
+	//double const * const stutterAdjust_ptr     = REAL(STUTTERADJUST);
+	//double stutterAdjustDouble = stutterAdjust_ptr[0];
 
 	// convert scale to double
 	SEXP SCALE = PROTECT(duplicate(scale));
@@ -485,10 +485,10 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAco
 		}
 
 	// sort csp by allele name
-    	std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
+    std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
-	double stutterTrue = stutterMeanDouble*stutterAdjustDouble*repadjust;
-	double stutterFalse = (1-(stutterMeanDouble*stutterAdjustDouble))*repadjust;
+	double stutterTrue = stutterDouble*repadjust;
+	double stutterFalse = (1-stutterDouble)*repadjust;
 
 	double cdfArg = detectThresh/scaleDouble;
 	double pdfArg = 1/scaleDouble; 
@@ -527,7 +527,7 @@ SEXP probabilityPeaks(SEXP genotypeArray, SEXP alleles, SEXP heights, SEXP DNAco
 		{
 		out_ptr[i] = outDouble[i];
 		}
-	UNPROTECT(12);
+	UNPROTECT(11);
 	return result;
 
 	}
