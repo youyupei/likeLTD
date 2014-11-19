@@ -155,9 +155,43 @@ inline std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::ve
 	return(outRes);
 	}
 
+/*
+inline std::vector<genoStruct> combineDoses(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
+	{
+	genoStruct tmpMu;
+	tmpMu.dose = 0;
+	std::vector<genoStruct> outRes(allPosVec.size(),tmpMu);
+	int flag;
+	// combine doses at each allelic position
+    for(unsigned int j=0; j<muA.size(); ++j)
+		{
+		flag = 0;
+		for(unsigned int i=0; i<allPosVec.size(); ++i)
+			{
+			if(j==1) 
+			    {
+			    outRes[i].genotype = allPosVec[i];
+			    }
+			if(muA[j].genotype==allPosVec[i]) 
+			    {
+			    outRes[i].dose += muA[j].dose;
+			    flag++;
+			    }
+			if(muS[j].genotype==allPosVec[i]) 
+			    {
+			    outRes[i].dose += muS[j].dose;
+                flag++;
+			    }
+			if(flag==2) break;
+			}
+		}
+	return(outRes);
+	}
+*/
+
 inline std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterTrue, double stutterFalse,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, int nGen, int nCSP, int nCont, int nFrag)
 	{
-	double tmpDose, fragSub;
+	double tmpDose, fragSub, stutterDose, nonstutterDose;
 	genoStruct tmpMu;
 	std::vector<genoStruct> muA(genotypeVec.size(),tmpMu),muS(genotypeVec.size(),tmpMu);
 	int matchIndex;
@@ -166,34 +200,43 @@ inline std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std:
 	// effective dose for stutter and allelic
 	for(int i=0; i<nGen; ++i)
 		{
-		// fragLengths
-		matchIndex = 0;
-		for(unsigned int q=0; q<fragVecN.size(); ++q)
+		// Do not compute dose again if homozygote
+		if((genotypeVec[i]==genotypeVec[i-1])&&(i%2!=0)&&(i>0))
 			{
-			diff = std::abs(genotypeVec[i]-fragVecN[q]);
 			
-			if(diff<0.0001) 
-			    {
-			    matchIndex = q;
-                break;
-			    }
-			}
+			} else {
+			// get fragLengths
+			matchIndex = 0;
+			for(unsigned int q=0; q<fragVecN.size(); ++q)
+				{
+				diff = std::abs(genotypeVec[i]-fragVecN[q]);
+				
+				if(diff<0.0001) 
+				    {
+				    matchIndex = q;
+	                break;
+				    }
+				}
 
-		fragSub = fragVecL[matchIndex];
+			fragSub = fragVecL[matchIndex];
 
 		//itDbl = std::find(fragVecN.begin(),fragVecN.end(),std::floor(genotypeVec[i]*10.0f)/10.0f);
 		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
 
-		// effective dose
-		tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub);
-
+			// compute effective dose
+			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub);
+			stutterDose = tmpDose * stutterTrue;
+			nonstutterDose =  tmpDose * stutterFalse;
+			}
 
 		// stutter adjusted effective dose
 		tmpMu.genotype = genotypeVec[i];
-		tmpMu.dose = tmpDose * stutterFalse;
+		//tmpMu.dose = tmpDose * stutterFalse;
+		tmpMu.dose = nonstutterDose;
 		muA[i] = tmpMu;
 		tmpMu.genotype = stutterPosVec[i];
-		tmpMu.dose = tmpDose * stutterTrue;
+		//tmpMu.dose = tmpDose * stutterTrue;
+		tmpMu.dose = stutterDose;
 		muS[i] = tmpMu;
 		}
 
@@ -219,6 +262,7 @@ inline std::vector<genoStruct> peakMeanDose(std::vector<float> genotypeVec, std:
 
 inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg)
 	{
+	//double outDensity=0, tmpDensity=0;
 	double outDensity=1, tmpDensity=0;
 	unsigned int vecSize = gammaMuVec.size();
     	// get density
@@ -227,13 +271,16 @@ inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStru
 		//if(i==gammaMuVec.size()) break;
 		if(cspModify[i].heights==0)
 			{
+			//tmpDensity = ln_kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
 			tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
 			} else {
+			//tmpDensity = gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg);
 			tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg));
 			}
-		//outDensity = outDensity * tmpDensity;
+		//outDensity += tmpDensity;
 		outDensity *= tmpDensity;
 	   	}
+	//return(exp(outDensity));
 	return(outDensity);
 	}
 
