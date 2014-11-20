@@ -176,6 +176,9 @@ if(nrow(hypothesis$knownProfs)>0)
 	kIndex = c()
 	}
 
+GENS <<- genotypes
+KINDEX <<- kIndex
+
 # multiply by matching factor for known genotypes (1+fst, 1+2fst, ...)
 if(length(kIndex>0)) {
 

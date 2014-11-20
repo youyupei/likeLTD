@@ -41,7 +41,7 @@ CSPHEIGHTS <<- cspHeights
 	# find which combinations explain all peaks
 	index = apply(genCombs,MARGIN=2,FUN=function(x) likeLTD:::allExplained(x,cspAlleles,knownWithStutter,alleleNames))
 	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
-	genCombs = genCombs[,index]
+	genCombs = genCombs[,index,drop=FALSE]
 
 	# add known profiles as last contributors
 	if(length(knownIndex)!=0) 
@@ -51,7 +51,7 @@ CSPHEIGHTS <<- cspHeights
 	# remove very unlikely genotype combinations
 	index = apply(matrix(as.numeric(alleleNames[genCombs]),ncol=ncol(genCombs)),MARGIN=2,FUN=function(x) any(likeLTD:::unlikelyGenotypes(x,cspAlleles,cspHeights)))
 	#print(paste0(length(which(index))," removed out of ", ncol(genCombs)))
-	if(length(which(index))!=0&length(which(index))!=ncol(genCombs)) genCombs = genCombs[,index]
+	if(length(which(index))!=0&length(which(index))!=ncol(genCombs)) genCombs = genCombs[,index,drop=FALSE]
 	return(genCombs)
 	}
 

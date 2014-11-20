@@ -166,7 +166,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
  #                                   hypothesis$nUnknowns, hypothesis$doDropin,
   #                                  missingReps)
 
-genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns)
+genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile)
 
 # get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
 if(nrow(hypothesis$knownProfs)>0) 
@@ -213,7 +213,7 @@ if(length(kIndex>0)) {
 
 }
 
-
+genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=ncol(genotypes))
 
   list(cspPresence=cspPresence, knownPresence=knownPresence,
         missingReps=missingReps,
@@ -230,9 +230,11 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutter
         {
         stop("Cannot handle dropin")
         } else {
-        genotypes = matrix(rownames(hypothesis$alleleDb)[cons$genotypes],ncol=ncol(cons$genotypes))
-	genotypes = matrix(as.numeric(genotypes),ncol=ncol(genotypes))
+    #genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[cons$genotypes],ncol=ncol(cons$genotypes))
+	#genotypes = matrix(as.numeric(genotypes),ncol=ncol(genotypes))
 
+	
+CONS <<- cons
 #	GENOTYPES <<- genotypes
 #	PEAKS <<- as.numeric(hypothesis$peaksProfile[[1]])
 #	HEIGHTS <<- unlist(as.numeric(hypothesis$heightsProfile[[1]]))
@@ -247,13 +249,15 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutter
 #	REPADJUST <<- repAdjust[1]
 #	THRESHOLD <<- threshold
 
+stutter = stutterMean*stutterAdjust
+
 	if(doR==TRUE|diagnose==TRUE)
 		{
         	# probabilities for each replicate
-        	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],DNAcont,stutterMean,stutterAdjust,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],detectionThresh=detectionThresh,diagnose=diagnose))
+        	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(cons$genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],DNAcont,stutterMean,stutterAdjust,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],detectionThresh=detectionThresh,diagnose=diagnose))
 #sapply(1:length(ALLELES), FUN=function(x) likeLTD:::peak.heights.per.locus(GENOTYPE,ALLELES[[x]],HEIGHTS[[x]],SIZES[[x]],DNACONT,STUTTER,SCALE,DEG,fragLengths=FRAGLENGTHS,repAdjust=REPADJUST[x]))
 		} else {
-		probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaks,genotypes,as.numeric(hypothesis$peaksProfile[[x]]),unlist(as.numeric(hypothesis$heightsProfile[[x]])),rep(DNAcont,each=2),stutterMean,stutterAdjust,scale=scale,degradation=rep(1+degradation,each=2),fragLengths=hypothesis$alleleDb[,2],fragNames=as.numeric(rownames(hypothesis$alleleDb)),repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+		probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaks,cons$genotypes,as.numeric(hypothesis$peaksProfile[[x]]),unlist(as.numeric(hypothesis$heightsProfile[[x]])),rep(DNAcont,each=2),stutter,scale=scale,degradation=rep(1+degradation,each=2),fragLengths=hypothesis$alleleDb[,2],fragNames=as.numeric(rownames(hypothesis$alleleDb)),repAdjust=repAdjust[x],detectionThresh=detectionThresh))
 #sapply(1:length(ALLELES), FUN=function(x) .Call(.cpp.probabilityPeaks,GENOTYPE,as.numeric(ALLELES[[x]]),unlist(as.numeric(HEIGHTS[[x]])),unlist(SIZES[[x]]),DNACONT,STUTTER,SCALE,DEG,fragLengths=FRAGLENGTHS,fragNames=as.numeric(rownames(FRAGLENGTHS)),repAdjust=REPADJUST[x]))
 		}
 	if(diagnose==TRUE) return(probs)
