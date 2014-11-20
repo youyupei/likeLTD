@@ -290,6 +290,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 	tmpCSP.heights=0;
 	tmpCSP.sizes=999;
 	int nondropoutFlag, initSize=csp.size();
+	//int nondropoutFlag;
 	// Add dropout alleles to peak heights, with peak height 0
 	for(unsigned int i=0; i<allPosVec.size(); ++i)
 		{
@@ -311,6 +312,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 	
 	// Sort CSP by allele name
 	if(csp.size()!=initSize) sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
+	//sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
 	return(csp);
 	}
@@ -377,7 +379,12 @@ inline double singleGenotype(std::vector<double> genotypeArray, std::vector<cspS
 */
 
 // add dropout alleles to the CSP
-cspModify = modifyCSP(csp,allPosVec);
+//if(csp.size()!=allPosVec.size())
+//    {
+    cspModify = modifyCSP(csp,allPosVec);
+//    } else {
+//    cspModify = csp;
+//    }
 
 /*
 // This section removes alleles that require dropin to explain the CSP
@@ -420,7 +427,7 @@ cspModify = modifyCSP(csp,allPosVec);
 	   	}
 */
 
-    	// get density
+    // get density
 	double outDensity = getDensity(gammaMuVec,cspModify,scale,cdfArg,pdfArg);
 
 //	return(debug);
