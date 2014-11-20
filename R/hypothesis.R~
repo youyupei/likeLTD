@@ -278,7 +278,8 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
                                    doDropin=FALSE, combineRare=TRUE,
-				   rareThreshold=0.05, kit="DNA17",...) {
+				   rareThreshold=0.05, kit=NULL,...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   alleleDb = load.allele.database(databaseFile,kit)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)

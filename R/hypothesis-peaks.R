@@ -21,7 +21,7 @@ subsetData = function(data,search)
 	index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
 	if(length(index!=0)) dataout = dataout[,-index]
 	# remove AMEL data
-	index = which(rownames(dataout)=="AMEL")
+	index = which(rownames(dataout)%in%c("AMEL","amel","Amel"))
 	if(length(index)!=0) dataout = dataout[-index,]
 	return(dataout)
 	}
@@ -54,16 +54,16 @@ read.peaks.profile = function(FILE)
 	{
 	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
 	# get data
-	data = read.csv(file=FILE,as.is=TRUE,na.strings="NA")
+	data = read.csv(file=FILE,as.is=TRUE)
 	# get replicate names
 	conditions = names(table(data[,1]))
 	# get allele data
-	alleles = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
+	alleles = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
 	# get height data
-	heights = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
+	heights = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
 	# get size data
 	# not sure if this is needed
-	sizes = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
+	sizes = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
 	# checks
 	check1 = !mapply(FUN=checkData1,alleles,heights,sizes)
 	if(any(check1)) stop(paste("Error in the CSP provided - replicates ",paste(which(check1),collapse=",")))
@@ -163,6 +163,8 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   # Basically, this groups operations that are done the same by defence and
   # prosection. 
 
+  if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
+
   # Read database and filter it down to requisite ethnicity and locus. 
   alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
@@ -254,7 +256,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold)

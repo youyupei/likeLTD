@@ -240,6 +240,8 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   # Basically, this groups operations that are done the same by defence and
   # prosection. 
 
+ if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
+
   # Read database and filter it down to requisite ethnicity and locus. 
   alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
  
