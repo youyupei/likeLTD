@@ -449,7 +449,7 @@ transform.to.locus.centric.peaks = function(hypothesis) {
 		{
 		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
 		rownames(tmp) = locus
-		colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
+		if(ncol(tmp)>0) colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
 		locusValue[[key]][[i]] = tmp
 		}
         } else {

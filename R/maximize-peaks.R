@@ -9,7 +9,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = if(logDegradation) { 0-zero } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
-  scale        = 1000
+  scale        = 10000
   dropin      = NULL
   stutterMean = 0.15
   stutterAdjust     = rep(10,nloc)
