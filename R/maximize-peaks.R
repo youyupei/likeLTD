@@ -13,6 +13,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   dropin      = NULL
   stutterMean = 0.15
   stutterAdjust     = rep(10,nloc)
+#  stutterGradient = 1.2
   repAdjust   = rep(10,length(arguments$repAdjust))
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
 
@@ -21,6 +22,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
+#       stutterGradient   = stutterGradient,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
@@ -42,6 +44,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   stutterMean = 0
   stutterAdjust     = rep(0.1,nloc)
+#  stutterGradient  = 0.8
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -51,6 +54,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
+#       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        dropin          = dropin)[names(arguments)]
 }
@@ -135,7 +139,10 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
-    if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
+    #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
+#condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient>1)|any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient<0))
+condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
+    if(any(condition))
 	    {
 	    if(logObjective) result = log10(0) else result = 0
 	    if(verbose) print(result)
@@ -244,6 +251,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   scale           = 1/4
   stutterMean     = 10 
   stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
+#  stutterGradient = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
 
@@ -253,6 +261,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        scale           = scale,
        stutterMean     = stutterMean,
        stutterAdjust         = stutterAdjust,
+#       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        dropin          = dropin)
 }

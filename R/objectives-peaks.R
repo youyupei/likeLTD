@@ -20,12 +20,15 @@ likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, l
   if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
 
 
-  likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, stutterMean=NULL, stutterAdjust=NULL, dropin=NULL,
+  likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, stutterMean=NULL, stutterAdjust=NULL, dropin=NULL, #stutterGradient=NULL, dropin=NULL,
                                  repAdjust=NULL, detectionThresh=hypothesis$detectionThresh, degradationPenalty=hypothesis$degradationPenalty, ...) {
     # Call each and every function in the array.
     arguments = list(degradation=degradation, DNAcont=DNAcont,
                      scale = scale, repAdjust=repAdjust,
-		     stutterMean=stutterMean, detectionThresh = detectionThresh,
+		     #
+stutterMean=stutterMean,
+#stutterGradient=stutterGradient, 
+detectionThresh = detectionThresh,
                      degradationPenalty=degradationPenalty, dropin=dropin)
     callme <- function(objective,stut) {
     args = append(arguments, list(stutterAdjust=stut))
@@ -58,7 +61,9 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
   cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
-  result.function <- function(scale,stutterMean,stutterAdjust,repAdjust=NULL,
+  result.function <- function(scale,stutterMean,stutterAdjust,
+#stutterGradient,
+repAdjust=NULL,
                               degradation=NULL, DNAcont=NULL, 
 			      detectionThresh = NULL, dropin=NULL, ...) {
     # Likelihood function for a given hypothesis and locus
@@ -102,13 +107,15 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
     if(diagnose==TRUE)
 	{
 	repRes <- likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
-				scale=scale, stutterMean=stutterMean, stutterAdjust=stutterAdjust, degradation=degradation, 
+				scale=scale, stutterMean=stutterMean, stutterAdjust=stutterAdjust, #stutterGradient=stutterGradient, 
+degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR,diagnose=diagnose)
 	return(repRes)
 	}
 
     repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
-				scale=scale, stutterMean=stutterMean,stutterAdjust=stutterAdjust, degradation=degradation, 
+				scale=scale, stutterMean=stutterMean,stutterAdjust=stutterAdjust, #stutterGradient=stutterGradient, 
+degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR),ncol=length(hypothesis$peaksProfile))
 
     # combine replicates
@@ -226,7 +233,8 @@ genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=nco
 
 
 # function to be called at each iteration of maximisation
-peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutterAdjust,degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
+peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutterAdjust,#stutterGradient,
+degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
     {
     # return a function that computes the 
     if(hypothesis$doDropin==TRUE)

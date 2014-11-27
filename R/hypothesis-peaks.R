@@ -283,6 +283,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   result[["callsFile"]] = callsFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
+  result[["kit"]] = kit
   result[["detectionThresh"]] = detectionThresh
   if(identical(relatedness,c(0.5,0.25)))
 	{
@@ -353,6 +354,7 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   result[["refFile"]] = refFile
   result[["callsFile"]] = callsFile
   result[["databaseFile"]] = databaseFile
+  result[["kit"]] = kit
   result[["detectionThresh"]] = detectionThresh
   result[["stutterPercent"]] = stutterPercent
   if(identical(relatedness,c(0.5,0.25))) result[["linkageInfo"]] = linkageInfo

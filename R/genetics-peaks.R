@@ -1,7 +1,7 @@
 allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames)
 	{
 	genotypeAlleles = as.numeric(alleleNames[genotype])
-genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
+    genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
 	all(cspAlleles%in%c(genWithStutter,knownWithStutter))
 	}
 

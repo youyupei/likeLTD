@@ -163,6 +163,8 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   # Basically, this groups operations that are done the same by defence and
   # prosection. 
 
+  if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
+
   # Read database and filter it down to requisite ethnicity and locus. 
   alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
@@ -254,7 +256,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold)
@@ -447,7 +449,7 @@ transform.to.locus.centric.peaks = function(hypothesis) {
 		{
 		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
 		rownames(tmp) = locus
-		colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
+		if(ncol(tmp)>0) colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
 		locusValue[[key]][[i]] = tmp
 		}
         } else {
