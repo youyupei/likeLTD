@@ -11,9 +11,9 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
   dropin      = NULL
-  stutterMean = 0.15
+  stutterMean = 0.30
   stutterAdjust     = rep(10,nloc)
-  stutterGradient = 1.2
+  stutterGradient = 1.05
   repAdjust   = rep(10,length(arguments$repAdjust))
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
 
@@ -44,7 +44,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   stutterMean = 0
   stutterAdjust     = rep(0.1,nloc)
-  stutterGradient  = 0.8
+  stutterGradient  = 0.95
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -139,9 +139,12 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
+    HYP <<- hypothesis
+    X <<- x
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-#condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient>1)|any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient<0))
-condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
+condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient>1)|any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient<0))
+#mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
+#condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
 	    {
 	    if(logObjective) result = log10(0) else result = 0
@@ -429,8 +432,9 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLi
 	# recycle the current pop into the next loop
 	D.pars$control$initialpop <- D.step$member$pop
 
+TMP <<- D.step
 	# get standard mean standard deviation of initial optimisation phase
-	sdStep = sd(D.step$member$bestvalit[1:75])
+	sdStep = sd(D.step$member$bestvalit[1:75],na.rm=TRUE)
 	# sometimes sd is very low (below 1 e.g. 3locus test)
 	# if so set sd to >1 so log2(sd) is positive
 	if(sdStep<1) sdStep = 1.5

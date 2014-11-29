@@ -302,7 +302,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
+  result = likeLTD:::agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 				rareThreshold=rareThreshold)

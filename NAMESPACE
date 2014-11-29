@@ -1,8 +1,8 @@
 useDynLib(likeLTD, .registration=TRUE, .fixes=".cpp.") 
 export(.cpp.nbthreads)
 export(.cpp.set_nbthreads)
-#export(.cpp.peakMeanDose)
-export(.cpp.probabilityPeaks)
+export(.cpp.probabilityPeaksSingleStutter)
+export(.cpp.probabilityPeaksDoubleStutter)
 export(pack.admin.input)
 export(allele.report)
 

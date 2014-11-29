@@ -1,11 +1,16 @@
-allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames)
+allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter=FALSE)
 	{
 	genotypeAlleles = as.numeric(alleleNames[genotype])
-    genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
+    if(doDoubleStutter)
+        {
+        genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1,genotypeAlleles-2))
+        } else {
+        genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
+        }
 	all(cspAlleles%in%c(genWithStutter,knownWithStutter))
 	}
 
-explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights)
+explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights, doDoubleStutter=FALSE)
 	{
 	CSPPRESENCE <<- cspPresence
 PROFPRESENCE <<- profPresence
@@ -39,7 +44,7 @@ CSPHEIGHTS <<- cspHeights
 	# get all genotype combinations for unknowns
 	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)
 	# find which combinations explain all peaks
-	index = apply(genCombs,MARGIN=2,FUN=function(x) likeLTD:::allExplained(x,cspAlleles,knownWithStutter,alleleNames))
+	index = apply(genCombs,MARGIN=2,FUN=function(x) likeLTD:::allExplained(x,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter))
 	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 	genCombs = genCombs[,index,drop=FALSE]
 
@@ -49,18 +54,21 @@ CSPHEIGHTS <<- cspHeights
 		genCombs = rbind(genCombs,matrix(rep(knownIndex,times=ncol(genCombs)),ncol=ncol(genCombs)))
 		}
 	# remove very unlikely genotype combinations
-	index = apply(matrix(as.numeric(alleleNames[genCombs]),ncol=ncol(genCombs)),MARGIN=2,FUN=function(x) any(likeLTD:::unlikelyGenotypes(x,cspAlleles,cspHeights)))
+	#index = apply(matrix(as.numeric(alleleNames[genCombs]),ncol=ncol(genCombs)),MARGIN=2,FUN=function(x) any(likeLTD:::unlikelyGenotypes(x,cspAlleles,cspHeights)))
 	#print(paste0(length(which(index))," removed out of ", ncol(genCombs)))
-	if(length(which(index))!=0&length(which(index))!=ncol(genCombs)) genCombs = genCombs[,index,drop=FALSE]
+	#if(length(which(index))!=0&length(which(index))!=ncol(genCombs)) genCombs = genCombs[,index,drop=FALSE]
 	return(genCombs)
 	}
 
 unlikelyGenotypes = function(genotype,cspAlleles,cspHeights)
 	{
+	# gen = single allele in genotype, genotype = total genotype
 	checkRemove = function(gen,genotype,cspAlleles,cspHeights)
 		{
 		if(gen==-1) return(FALSE)
-		if(!gen%in%cspAlleles&(gen-1)%in%cspAlleles&!(gen-1)%in%genotype) return(TRUE) else return(FALSE)
+		if(!gen%in%cspAlleles&(gen-1)%in%cspAlleles&!(gen-1)%in%genotype) return(TRUE) 
+		# taking into account double stutter
+		if(!gen%in%cspAlleles&(gen-2)%in%cspAlleles&!(gen-1)%in%cspAlleles&!(gen-2)%in%genotype) return(TRUE) else return(FALSE)
 		}
 	out = sapply(genotype,FUN=function(x) checkRemove(x,genotype,cspAlleles,cspHeights))
 	return(out)

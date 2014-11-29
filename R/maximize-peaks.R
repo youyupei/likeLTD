@@ -10,11 +10,13 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
-  dropin      = NULL
-  stutterMean = 0.15
+  stutterMean = 0.30
   stutterAdjust     = rep(10,nloc)
-#  stutterGradient = 1.2
+#  stutterGradient = 1.05
+  doubleStutterRate = NULL
+  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
+  dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
 
   list(degradation     = degradation,
@@ -24,6 +26,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        stutterAdjust         = stutterAdjust,
 #       stutterGradient   = stutterGradient,
        repAdjust       = repAdjust,
+       doubleStutterRate = doubleStutterRate,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -44,7 +47,9 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   stutterMean = 0
   stutterAdjust     = rep(0.1,nloc)
-#  stutterGradient  = 0.8
+#  stutterGradient  = 0.95
+  doubleStutterRate = NULL
+  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -56,6 +61,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        stutterAdjust         = stutterAdjust,
 #       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
+       doubleStutterRate = doubleStutterRate,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -139,8 +145,11 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
+    HYP <<- hypothesis
+    X <<- x
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-#condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient>1)|any(as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient<0))
+#condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient>1)|any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient<0))
+#mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
 	    {
@@ -248,12 +257,14 @@ initial.arguments.peaks <- function(hypothesis, ...) {
                          nrow(hypothesis$knownProfs) + hypothesis$nUnknowns )
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
+  doubleStutterRate    = NULL
   scale           = 1/4
   stutterMean     = 10 
   stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
 #  stutterGradient = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
+  if(hypothesis$doDoubleStutter) doubleStutterRate = 0.02
 
 
   list(degradation     = degradation,
@@ -263,6 +274,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        stutterAdjust         = stutterAdjust,
 #       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
+       doubleStutterRate = doubleStutterRate,
        dropin          = dropin)
 }
 
@@ -429,8 +441,9 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLi
 	# recycle the current pop into the next loop
 	D.pars$control$initialpop <- D.step$member$pop
 
+TMP <<- D.step
 	# get standard mean standard deviation of initial optimisation phase
-	sdStep = sd(D.step$member$bestvalit[1:75])
+	sdStep = sd(D.step$member$bestvalit[1:75][!is.infinite(D.step$member$bestvalit[1:75])])
 	# sometimes sd is very low (below 1 e.g. 3locus test)
 	# if so set sd to >1 so log2(sd) is positive
 	if(sdStep<1) sdStep = 1.5

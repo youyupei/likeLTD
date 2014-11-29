@@ -127,7 +127,7 @@ convert.to.binary = function(data)
 	}
 
 # combine rare alleles into one joined allele for a single locus
-combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedProfile,rareThreshold=0.05)
+combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedProfile,rareThreshold=0.05,doDoubleStutter=FALSE)
     {
     # not in any profiles or in overstutter positions of profiles
     inProfile = !rownames(alleleDb)%in%c(unlist(cspProfile),unlist(knownProfiles),unlist(queriedProfile))
@@ -135,7 +135,14 @@ combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedPr
     inUnderStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))-1,as.numeric(unlist(knownProfiles))-1,as.numeric(unlist(queriedProfile))-1)
     isRare = alleleDb[,1]<rareThreshold
     # index of alleles not in csp, unc, knowns or queried, and also probability < rareThreshold
-    index = which(inProfile&inOverStutter&inUnderStutter&isRare)
+    if(doDoubleStutter)
+        {
+        inDoubleOverStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))+1,as.numeric(unlist(knownProfiles))+1,as.numeric(unlist(queriedProfile))+1)
+        inDoubleUnderStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))-1,as.numeric(unlist(knownProfiles))-1,as.numeric(unlist(queriedProfile))-1)
+        index = which(inProfile&inOverStutter&inUnderStutter&isRare&inDoubleOverStutter&inDoubleUnderStutter)
+        } else {
+        index = which(inProfile&inOverStutter&inUnderStutter&isRare)
+        }
     if(length(index)>0)
         {
         # remove indexed alleles, new allele has sum of probabilities, and mean of BP
@@ -146,10 +153,10 @@ combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedPr
     }
 
 # combine rare alleles into one joined allele for all loci
-combine.rares.peaks = function(alleleDb, cspProfile, knownProfiles, queriedProfile,rareThreshold=0.05)
+combine.rares.peaks = function(alleleDb, cspProfile, knownProfiles, queriedProfile,rareThreshold=0.05,doDoubleStutter=FALSE)
     {
     loci = colnames(cspProfile)
-    sapply(loci,FUN=function(x) combine.rares.locus.peaks(alleleDb[[x]],cspProfile[,x],knownProfiles[,x],queriedProfile[,x],rareThreshold=rareThreshold),simplify=FALSE)
+    sapply(loci,FUN=function(x) combine.rares.locus.peaks(alleleDb[[x]],cspProfile[,x],knownProfiles[,x],queriedProfile[,x],rareThreshold=rareThreshold,doDoubleStutter=doDoubleStutter),simplify=FALSE)
     }
 
 
@@ -157,7 +164,7 @@ combine.rares.peaks = function(alleleDb, cspProfile, knownProfiles, queriedProfi
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
                                 adj=1e0, fst=0.02, combineRare=FALSE, 
-                                rareThreshold=0.05) {
+                                rareThreshold=0.05,doDoubleStutter=FALSE) {
   # Helper function to figure out the input of most hypothesis.
   #
   # Basically, this groups operations that are done the same by defence and
@@ -175,7 +182,7 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold)
+  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
 
   # Construct all profiles as arrays of  
   list(binaryProfile=cspProfile,
@@ -225,7 +232,7 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
+                                   doDropin=FALSE, doDoubleStutter=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
@@ -259,7 +266,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
-			       rareThreshold=rareThreshold)
+			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter)
 
 
   	# refIndiv is queried
@@ -279,6 +286,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   result[["fst"]] = fst
   result[["relatedness"]] = relatedness
   result[["doDropin"]] = doDropin
+  result[["doDoubleStutter"]] = doDoubleStutter
   result[["peaksFile"]] = peaksFile
   result[["callsFile"]] = callsFile
   result[["refFile"]] = refFile
@@ -299,7 +307,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, linkageFile=NULL,
-                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, combineRare=TRUE, 
+                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE, combineRare=TRUE, 
 			       rareThreshold=0.05, kit=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   alleleDb = load.allele.database(databaseFile,kit)
@@ -334,7 +342,7 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
-			       rareThreshold=rareThreshold) 
+			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter) 
    
   result[["refIndiv"]] = 1
 
@@ -350,6 +358,7 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   result[["fst"]] = fst
   result[["relatedness"]] = relatedness
   result[["doDropin"]] = doDropin
+  result[["doDoubleStutter"]] = doDoubleStutter
   result[["peaksFile"]] = peaksFile
   result[["refFile"]] = refFile
   result[["callsFile"]] = callsFile
