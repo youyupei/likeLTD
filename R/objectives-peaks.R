@@ -238,7 +238,7 @@ genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=nco
 
 # function to be called at each iteration of maximisation
 peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutterAdjust,#stutterGradient,
-       doubleStutterRate,
+       doubleStutterRate=NULL,
 degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
     {
     # return a function that computes the 
