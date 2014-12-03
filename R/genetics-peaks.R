@@ -27,8 +27,13 @@ CSPHEIGHTS <<- cspHeights
 	    # get known alleles
     	knownIndex = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
     	knownAlleles = as.numeric(alleleNames[knownIndex])
-    	# include stuttered known alleles
-    	knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
+	# include stuttered known alleles
+	if(doDoubleStutter)
+		{
+    		knownWithStutter = unique(c(knownAlleles,knownAlleles-1,knownAlleles-2))
+		} else {
+		knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
+		}
 	    } else {
         knownIndex = c()
         knownWithStutter = c()

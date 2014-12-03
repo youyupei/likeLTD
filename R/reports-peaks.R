@@ -38,7 +38,7 @@ getPeakContributors = function(locusPeaks,locusRefs)
 	conts = list()
 	for(i in 1:length(locusPeaks))
 		{
-		conts[[length(conts)+1]] = which(sapply(locusRefs,FUN=function(x) any(x%in%locusPeaks[i])))
+		conts[[length(conts)+1]] = which(sapply(locusRefs,FUN=function(x) any(as.numeric(x)%in%as.numeric(locusPeaks[i]))))
 		}
 	return(conts)
 	}
@@ -115,18 +115,20 @@ plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh
 		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
 		if(!is.null(refFile))
 			{
-			# add which K contributes to each peak
-			peakContributors = getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
-			# add peaks
+			# get which K contributes to each peak
+			peakContributors = likeLTD:::getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
+			# add peaks to plot
 			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
 			} else {
 			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="blue"))
 			}
-		# add peak labels
+		# add peak labels to plot
 		if(is.null(stutterThresh))
 			{
+			# with no predicted stutter
 			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
 			} else {
+			# with predicted stutter (crude)
 			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],stutters[[replicate]][j,],FUN=function(x,y,a,b) text(x,y+(YLIM[2]/12),a,col=ifelse(b,"blue","gray")))
 			}
 		}		

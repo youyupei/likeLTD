@@ -16,13 +16,14 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE, likeMatri
 likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose)
 
 
-  if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
+  #if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
   if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
+  if(is.null(hypothesis$stutterPenalty)) hypothesis$stutterPenalty = 0.2
 
 
   likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, stutterMean=NULL, stutterAdjust=NULL, dropin=NULL, #stutterGradient=NULL, 
                                 doubleStutterRate = NULL,
-                                 repAdjust=NULL, detectionThresh=hypothesis$detectionThresh, degradationPenalty=hypothesis$degradationPenalty, ...) {
+                                 repAdjust=NULL, detectionThresh=hypothesis$detectionThresh, degradationPenalty=hypothesis$degradationPenalty,stutterPenalty=hypothesis$stutterPenalty, ...) {
     # Call each and every function in the array.
     arguments = list(degradation=degradation, DNAcont=DNAcont,
                      scale = scale, repAdjust=repAdjust,
@@ -30,7 +31,7 @@ stutterMean=stutterMean,
 #stutterGradient=stutterGradient, 
 doubleStutterRate = doubleStutterRate,
 detectionThresh = detectionThresh,
-                     degradationPenalty=degradationPenalty, dropin=dropin)
+                     degradationPenalty=degradationPenalty, stutterPenalty=stutterPenalty, dropin=dropin)
     callme <- function(objective,stut) {
     args = append(arguments, list(stutterAdjust=stut))
       do.call(objective, args)
@@ -266,7 +267,7 @@ CONS <<- cons
 #	THRESHOLD <<- threshold
 
 stutter = stutterMean*stutterAdjust
-
+DSR<<- doubleStutterRate
 	if(doR==TRUE|diagnose==TRUE)
 		{
         	# probabilities for each replicate
@@ -517,7 +518,7 @@ addMissingAlleleSize = function(index,sizes)
 # Documentation is in man directory.
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, stutterAdjust=NULL,
-                       stutterSD = 0.15,# stutterSD=0.2, 
+                       stutterPenalty = 0.2,# stutterSD=0.2, 
 stutterMean=NULL,
 scale=NULL, scaleSD=1, ...) {
   result = 1
@@ -535,7 +536,7 @@ scale=NULL, scaleSD=1, ...) {
     #(see Leclair-et-al (2004) Systematic Analysis of Stutter Percentages and Allele Peak Height and Peak Area Ratios at Heterozygous STR Loci for Forensic Casework and Database Samples)
     if(!missing(stutterAdjust) & !is.null(stutterAdjust))
         {
-        result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterSD)
+        result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
         }
 
 #result = result*dnorm(stutterMean*stutterAdjust,mean=0,sd=0.05)
