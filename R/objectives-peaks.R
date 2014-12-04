@@ -271,7 +271,14 @@ DSR<<- doubleStutterRate
 	if(doR==TRUE|diagnose==TRUE)
 		{
         	# probabilities for each replicate
-        	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(cons$genotypes,hypothesis$peaksProfile[[x]],hypothesis$heightsProfile[[x]],hypothesis$sizesProfile[[x]],DNAcont,stutterMean,stutterAdjust,scale=scale,degradation=degradation,fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],detectionThresh=detectionThresh,diagnose=diagnose))
+        	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypeArray=cons$genotypes,
+										alleles=hypothesis$peaksProfile[[x]],heights=hypothesis$heightsProfile[[x]],
+										sizes=hypothesis$sizesProfile[[x]],DNAcont=DNAcont,
+										stutterMean=stutterMean,stutterAdjust=stutterAdjust,
+										doubleStutterRate=doubleStutterRate,
+										scale=scale,degradation=degradation,
+										fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],
+										detectionThresh=detectionThresh,diagnose=diagnose))
 #sapply(1:length(ALLELES), FUN=function(x) likeLTD:::peak.heights.per.locus(GENOTYPE,ALLELES[[x]],HEIGHTS[[x]],SIZES[[x]],DNACONT,STUTTER,SCALE,DEG,fragLengths=FRAGLENGTHS,repAdjust=REPADJUST[x]))
 		} else {
 		if(!is.null(doubleStutterRate))
@@ -318,7 +325,7 @@ DSR<<- doubleStutterRate
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose=FALSE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,scale,degradation,fragLengths,repAdjust-NULL,detectionThresh,diagnose=FALSE)
 	{
 	#index = !is.na(alleles)
 	#alleles = alleles[index]
@@ -329,7 +336,7 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,st
 	# result vector
 	#if(parallel==FALSE)
 	#	{
-	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose))
+	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose))
 	#	} else {
 	#        Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,scale,degradation,fragLengths,repAdjust,diagnose),mc.cores=cores)
 	#	}
@@ -351,12 +358,12 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,st
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose=FALSE)
+probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
 	{	
 	genotype = as.numeric(genotype)
 
 	# get means
-	gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,degradation,fragLengths,repAdjust)
+	gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate,degradation,fragLengths,repAdjust)
 	names(heights) = alleles
 	# give peak heights to dropout alleles
 	peakHeights = unlist(heights)
@@ -430,14 +437,21 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,
 # rhoA = allelic constant parameter
 # rhoS = stutter constant parameter
 # scale = stanDev constant parameter for gamma
-peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,degradation,fragLengths,repAdjust)
+peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,degradation,fragLengths,repAdjust=NULL)
 	{
 	# positions of stutter alleles
 	stutterPos = genotype-1
+	if(!is.null(doubleStutterRate)) 
+		{
+		doubleStutterPos = genotype-2
+		allPos = sort(unique(round(c(stutterPos,genotype),1)))
+		} else {
+		allPos = sort(unique(round(c(doubleStutterPos,stutterPos,genotype),1)))
+		}
 	# all positions
 	# round is needed because of floating point error
 	# e.g. 31.2 != 32.2-1
-	allPos = sort(unique(round(c(stutterPos,genotype),1)))
+	#allPos = sort(unique(round(c(stutterPos,genotype),1)))
 	# add sizes of genotyp alleles that are not in the CSP (dropout alleles)
 	names(sizes) = alleles
 	#allSizes = sizes
@@ -449,24 +463,39 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,s
 	degAdjust = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
 #return(DNAcont)
 	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
-	# allelic alpha
-	#alphaA = degAdjust * rhoA * DNAproxy / sizesGen
-	muA = degAdjust * (1 - (stutterMean*stutterAdjust)) #* DNAproxy / sizesGen
-	names(muA) = genotype
-
-
+	stutterRate = stutterMean*stutterAdjust
 	# stutter alpha
 	#alphaS = degAdjust * rhoS * DNAproxy / sizesGen
-	muS = degAdjust * (stutterMean*stutterAdjust) #* DNAproxy / sizesGen
+	muS = degAdjust * stutterRate #* DNAproxy / sizesGen
+	if(!is.null(doubleStutterRate))
+		{
+		muSd = degAdjust * doubleStutterRate
+		stutterRate = stutterRate + doubleStutterRate
+		}
+	# allelic alpha
+	#alphaA = degAdjust * rhoA * DNAproxy / sizesGen
+	muA = degAdjust * (1 - stutterRate) #* DNAproxy / sizesGen
+	names(muA) = genotype
 	names(muS) = stutterPos
 	allPos = round(allPos,1)
 	stutterPos = round(stutterPos,1)
 	genotype = round(genotype,1)
+	if(!is.null(doubleStutterRate))
+		{
+		names(muSd) = doubleStutterPos
+		doubleStutterPos = round(doubleStutterPos,1)
+		}
 
 #return(fragLengthIndex-1)
 	# get total alphas for each position
-	muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]))
-	names(muX) = allPos
+	if(!is.null(doubleStutterRate))
+		{
+		muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]+muSd[which(doubleStutterPos==x)])))
+		names(muX) = allPos
+		} else {
+		muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]))
+		names(muX) = allPos
+		}
 	return(muX)
 	} 
 
