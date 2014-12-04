@@ -325,7 +325,7 @@ DSR<<- doubleStutterRate
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,scale,degradation,fragLengths,repAdjust-NULL,detectionThresh,diagnose=FALSE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
 	{
 	#index = !is.na(alleles)
 	#alleles = alleles[index]
@@ -490,7 +490,7 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,s
 	# get total alphas for each position
 	if(!is.null(doubleStutterRate))
 		{
-		muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]+muSd[which(doubleStutterPos==x)])))
+		muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)])+sum(muSd[which(doubleStutterPos==x)]))
 		names(muX) = allPos
 		} else {
 		muX = sapply(allPos,FUN=function(x) sum(muA[which(genotype==x)])+sum(muS[which(stutterPos==x)]))
