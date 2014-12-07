@@ -181,9 +181,9 @@ inline std::vector<genoStruct> combineDosesSingleStutter(std::vector<float> allP
 
 inline std::vector<genoStruct> peakMeanDoseDoubleStutter(std::vector<float> genotypeVec, std::vector<float> stutterPosVec,
                                             std::vector<float> doubleStutterVec,
-                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutter, 
+                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust, 
                                             double doubleStutterRate,
-                                            //double stutterGradient, 
+                                            double stutterGradient, 
                                             double repAdjust,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
                                             int nGen, int nCSP, int nCont, int nFrag)
 	{
@@ -223,12 +223,14 @@ inline std::vector<genoStruct> peakMeanDoseDoubleStutter(std::vector<float> geno
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutter*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
-			stutterDose = tmpDose * stutter;
+			double stutterRate = stutterMean+stutterAdjust*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
+			//stutterDose = tmpDose * stutter;
+			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * doubleStutterRate;
 			//stutterDose = tmpDose * stutterRate;
 			//nonstutterDose = tmpDose * (1-stutter);
-			nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
+			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
+			nonstutterDose = tmpDose * (1-(stutterRate+doubleStutterRate));
 			//nonstutterDose = tmpDose * (1-stutterRate);
 
 			}
@@ -253,8 +255,8 @@ inline std::vector<genoStruct> peakMeanDoseDoubleStutter(std::vector<float> geno
 
 
 inline std::vector<genoStruct> peakMeanDoseSingleStutter(std::vector<float> genotypeVec, std::vector<float> stutterPosVec,
-                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutter, 
-                                            //double stutterGradient, 
+                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust, 
+                                            double stutterGradient, 
                                             double repAdjust,std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
                                             int nGen, int nCSP, int nCont, int nFrag)
 	{
@@ -292,11 +294,11 @@ inline std::vector<genoStruct> peakMeanDoseSingleStutter(std::vector<float> geno
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutter*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
-			stutterDose = tmpDose * stutter;
-			//stutterDose = tmpDose * stutterRate;
-			nonstutterDose = tmpDose * (1-stutter);
-			//nonstutterDose = tmpDose * (1-stutterRate);
+			double stutterRate = stutterMean+stutterAdjust*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
+			//stutterDose = tmpDose * stutter;
+			stutterDose = tmpDose * stutterRate;
+			//nonstutterDose = tmpDose * (1-stutter);
+			nonstutterDose = tmpDose * (1-stutterRate);
 
 			}
 
@@ -373,9 +375,9 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 	}
 
 
-inline double singleGenotypeDoubleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, 
+inline double singleGenotypeDoubleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, 
                             double doubleStutterRate,
-                            //double stutterGradient, 
+                            double stutterGradient, 
                             double repAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
                             std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, int nFrag, 
                             double cdfArg, double pdfArg)
@@ -414,9 +416,9 @@ inline double singleGenotypeDoubleStutter(std::vector<double> genotypeArray, std
     // get peak gamma means 
 	gammaMuVec = peakMeanDoseDoubleStutter(genotypeVec, stutterPosVec, 
 	                                        doubleStutterVec,
-	                                        allPosVec, csp, DNAcont, stutter, 
+	                                        allPosVec, csp, DNAcont, stutterMean, stutterAdjust, 
 	                                        doubleStutterRate,
-	                                        //stutterGradient, 
+	                                        stutterGradient, 
 	                                        repAdjust, degradation, fragLengths, 
 	                                        fragNames, nGen, nCSP, nCont, nFrag);
 
@@ -432,8 +434,8 @@ inline double singleGenotypeDoubleStutter(std::vector<double> genotypeArray, std
 	return(outDensity);
 	}
 
-inline double singleGenotypeSingleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutter, 
-                            //double stutterGradient, 
+inline double singleGenotypeSingleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, std::vector<double> DNAcont, double stutterMean, double stutterAdjust, 
+                            double stutterGradient, 
                             double repAdjust, double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
                             std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, int nFrag, 
                             double cdfArg, double pdfArg)
@@ -466,8 +468,8 @@ inline double singleGenotypeSingleStutter(std::vector<double> genotypeArray, std
 	//Rprintf("Before mean");
     // get peak gamma means 
 	gammaMuVec = peakMeanDoseSingleStutter(genotypeVec, stutterPosVec, 
-	                        allPosVec, csp, DNAcont, stutter, 
-	                        //stutterGradient, 
+	                        allPosVec, csp, DNAcont, stutterMean, stutterAdjust, 
+	                        stutterGradient, 
 	                        repAdjust, degradation, fragLengths, 
 	                        fragNames, nGen, nCSP, nCont, nFrag);
 
@@ -488,8 +490,8 @@ inline double singleGenotypeSingleStutter(std::vector<double> genotypeArray, std
 
 
 SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                    SEXP DNAcont, SEXP stutter, SEXP doubleStutterRate,
-                    //SEXP stutterGradient, 
+                    SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP doubleStutterRate,
+                    SEXP stutterGradient, 
                     SEXP scale, SEXP degradation, SEXP fragLengths, 
                     SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
 	{
@@ -530,9 +532,20 @@ SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 		}	
 
 	// convert stutter to double
-	SEXP STUTTER = PROTECT(duplicate(stutter));
-	double const * const stutter_ptr     = REAL(STUTTER);
-	double stutterDouble = stutter_ptr[0];
+	SEXP STUTTERMEAN = PROTECT(duplicate(stutterMean));
+	double const * const stuttermean_ptr     = REAL(STUTTERMEAN);
+	double stuttermean = stuttermean_ptr[0];
+
+	// convert stutter to double
+	SEXP STUTTERADJUST = PROTECT(duplicate(stutterAdjust));
+	double const * const stutteradjust_ptr     = REAL(STUTTERADJUST);
+	double stutteradjust = stutteradjust_ptr[0];
+
+	// convert stutter to double
+	SEXP STUTTERGRADIENT = PROTECT(duplicate(stutterGradient));
+	double const * const stuttergradient_ptr     = REAL(STUTTERGRADIENT);
+	double stuttergradient = stuttergradient_ptr[0];
+
 
 	// convert doublestutter to double
 	SEXP DOUBLESTUTTERRATE = PROTECT(duplicate(doubleStutterRate));
@@ -594,9 +607,6 @@ SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 	// sort csp by allele name
     std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
-	double stutterTrue = stutterDouble*repadjust;
-	double stutterFalse = (1-stutterDouble)*repadjust;
-
 	double cdfArg = detectThresh/scaleDouble;
 	double pdfArg = 1/scaleDouble; 
 
@@ -605,8 +615,8 @@ SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 	# pragma omp parallel for schedule(dynamic)
 	for(int x=0; x<nCombs; ++x)
 		{
-		outDouble[x] = singleGenotypeDoubleStutter(genotypeArrayVec, csp, DNAcontVec, stutterDouble, 
-		doublestutterRate,//gradientDouble, 
+		outDouble[x] = singleGenotypeDoubleStutter(genotypeArrayVec, csp, DNAcontVec, stuttermean, stutteradjust, 
+		doublestutterRate,stuttergradient, 
 		repadjust, scaleDouble, degVec, fragVecL, fragVecN, x, nGen, nCSP, nCont, nFrag, cdfArg, pdfArg);
 		//outDouble = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterMeanDouble, stutterAdjustDouble, scaleDouble, degVec, fragVecL, fragVecN, repadjust, detectThresh, x, nGen, nCSP, nCont, nFrag);
 		}
@@ -635,7 +645,7 @@ SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(12);
+    UNPROTECT(14);
 	return result;
 
 	}
@@ -654,8 +664,8 @@ SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 
 
 SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                    SEXP DNAcont, SEXP stutter,
-                    //SEXP stutterGradient, 
+                    SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust,
+                    SEXP stutterGradient, 
                     SEXP scale, SEXP degradation, SEXP fragLengths, 
                     SEXP fragNames, SEXP repAdjust, SEXP detectionThresh)
 	{
@@ -696,9 +706,19 @@ SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 		}	
 
 	// convert stutter to double
-	SEXP STUTTER = PROTECT(duplicate(stutter));
-	double const * const stutter_ptr     = REAL(STUTTER);
-	double stutterDouble = stutter_ptr[0];
+	SEXP STUTTERMEAN = PROTECT(duplicate(stutterMean));
+	double const * const stuttermean_ptr     = REAL(STUTTERMEAN);
+	double stuttermean = stuttermean_ptr[0];
+
+	// convert stutter to double
+	SEXP STUTTERADJUST = PROTECT(duplicate(stutterAdjust));
+	double const * const stutteradjust_ptr     = REAL(STUTTERADJUST);
+	double stutteradjust = stutteradjust_ptr[0];
+
+	// convert stutter to double
+	SEXP STUTTERGRADIENT = PROTECT(duplicate(stutterGradient));
+	double const * const stuttergradient_ptr     = REAL(STUTTERGRADIENT);
+	double stuttergradient = stuttergradient_ptr[0];
 
 	// convert scale to double
 	SEXP SCALE = PROTECT(duplicate(scale));
@@ -754,9 +774,6 @@ SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 	// sort csp by allele name
     std::sort(csp.begin(), csp.end(), sortByAlleleNameCSP());
 
-	double stutterTrue = stutterDouble*repadjust;
-	double stutterFalse = (1-stutterDouble)*repadjust;
-
 	double cdfArg = detectThresh/scaleDouble;
 	double pdfArg = 1/scaleDouble; 
 
@@ -765,8 +782,8 @@ SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 	# pragma omp parallel for schedule(dynamic)
 	for(int x=0; x<nCombs; ++x)
 		{
-		outDouble[x] = singleGenotypeSingleStutter(genotypeArrayVec, csp, DNAcontVec, stutterDouble, 
-		//gradientDouble, 
+		outDouble[x] = singleGenotypeSingleStutter(genotypeArrayVec, csp, DNAcontVec, stuttermean, stutteradjust, 
+		stuttergradient, 
 		repadjust, scaleDouble, degVec, fragVecL, fragVecN, x, nGen, nCSP, nCont, nFrag, cdfArg, pdfArg);
 		//outDouble = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterMeanDouble, stutterAdjustDouble, scaleDouble, degVec, fragVecL, fragVecN, repadjust, detectThresh, x, nGen, nCSP, nCont, nFrag);
 		}
@@ -796,7 +813,7 @@ SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP height
 		out_ptr[i] = outDouble[i];
 		}
 
-    UNPROTECT(11);
+    UNPROTECT(13);
 	return result;
 
 	}

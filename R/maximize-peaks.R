@@ -11,8 +11,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
   stutterMean = 0.30
-  stutterAdjust     = rep(10,nloc)
-#  stutterGradient = 1.05
+  stutterAdjust     = rep(2,nloc)
+  stutterGradient = 1
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
@@ -24,7 +24,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
-#       stutterGradient   = stutterGradient,
+       stutterGradient   = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
        dropin          = dropin)[names(arguments)]
@@ -46,8 +46,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
   stutterMean = 0
-  stutterAdjust     = rep(0.1,nloc)
-#  stutterGradient  = 0.95
+  stutterAdjust     = rep(0.0001,nloc)
+  stutterGradient  = 0.0001
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
@@ -59,7 +59,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
-#       stutterGradient = stutterGradient,
+       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
        dropin          = dropin)[names(arguments)]
@@ -148,9 +148,9 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     HYP <<- hypothesis
     X <<- x
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-#condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient>1)|any(abs(as.numeric(rownames(db)))*x$stutterMean*stuttA*x$stutterGradient<0))
+condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(x$stutterMean+abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])*stuttA*x$stutterGradient>1)|any(x$stutterMean+abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])*stuttA*x$stutterGradient<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
-condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
+#condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
 	    {
 	    if(logObjective) result = log10(0) else result = 0
@@ -261,7 +261,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   scale           = 1/4
   stutterMean     = 10 
   stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
-#  stutterGradient = 0
+  stutterGradient = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
   if(hypothesis$doDoubleStutter) doubleStutterRate = 0.02
@@ -272,7 +272,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        scale           = scale,
        stutterMean     = stutterMean,
        stutterAdjust         = stutterAdjust,
-#       stutterGradient = stutterGradient,
+       stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
        dropin          = dropin)

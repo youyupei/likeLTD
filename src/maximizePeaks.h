@@ -31,16 +31,16 @@ extern "C" {
 	inline std::vector<genoStruct> peakMeanDoseDoubleStutter(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, 
 	                                            std::vector<float> doubleStutterVec, 
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec,double stutter, 
+	                                            std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust, 
 	                                            double doubleStutterRate,
-	                                            //double stutterGradient,
+	                                            double stutterGradient,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
 	                                            int nGen, int nCSP, int nCont, int nFrag);
 	//! \brief peak mean dose without double stutter
 	inline std::vector<genoStruct> peakMeanDoseSingleStutter(std::vector<float> genotypeVec, std::vector<float> stutterPosVec,  
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec,double stutter, 
-	                                            //double stutterGradient,
+	                                            std::vector<double> DNAcontVec,double stutterMean, double stutterAdjust, 
+	                                            double stutterGradient,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
 	                                            int nGen, int nCSP, int nCont, int nFrag);	                                            
 	//! \brief combine doses
@@ -51,27 +51,27 @@ extern "C" {
 
     //! \brief probability of peaks with double stutter
     SEXP probabilityPeaksDoubleStutter(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutter, SEXP doubleStutterRate, //SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP doubleStutterRate, SEXP stutterGradient, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
                                 SEXP fragNames, SEXP repAdjust, SEXP detectionThresh);
 
     //! \brief probability of peaks without double stutter
     SEXP probabilityPeaksSingleStutter(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutter, //SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP stutterMean, SEXP stutterAdjust, SEXP stutterGradient, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
                                 SEXP fragNames, SEXP repAdjust, SEXP detectionThresh);
                                 
 
 	//! \brief probability of a single genotype with double sttter
 	inline double singleGenotypeDoubleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutter, double doubleStutterRate, //double stutterGradient, 
+	                            std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double doubleStutterRate, double stutterGradient, 
 	                            double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
 	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);
 
 	//! \brief probability of a single genotype without double stutter
 	inline double singleGenotypeSingleStutter(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutter, //double stutterGradient, 
+	                            std::vector<double> DNAcont, double stutterMean, double stutterAdjust, double stutterGradient, 
 	                            double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
 	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);	                            
