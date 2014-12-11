@@ -145,10 +145,9 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
-    HYP <<- hypothesis
-    X <<- x
+stutterConstant = x$stutterGradient*x$stutterMean
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any(x$stutterMean+abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])*stuttA*x$stutterGradient>1)|any(x$stutterMean+abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])*stuttA*x$stutterGradient<0))
+condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant>1)|any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 #condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
