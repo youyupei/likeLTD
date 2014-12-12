@@ -15,6 +15,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   stutterGradient = 1
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
+  overStutterRate = NULL
+  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
@@ -27,6 +29,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        stutterGradient   = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
+       overStutterRate = overStutterRate,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -50,6 +53,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   stutterGradient  = 0.0001
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0
+  overStutterRate = NULL
+  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -62,6 +67,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
+       overStutterRate = overStutterRate,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -146,8 +152,11 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 
     # if stutter is >100% or <0% return negative likelihood
 stutterConstant = x$stutterGradient*x$stutterMean
+toAdd = 0
+if(hypothesis$doDoubleStutter) toAdd = toAdd + x$doubleStutterRate
+if(hypothesis$doOverStutter) toAdd = toAdd + x$overStutterRate
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant>1)|any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant<0))
+condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant+toAdd>1)|any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant+toAdd<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 #condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
@@ -257,6 +266,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
   doubleStutterRate    = NULL
+  overStutterRate    = NULL
   scale           = 1/4
   stutterMean     = 10 
   stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
@@ -264,6 +274,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
   if(hypothesis$doDoubleStutter) doubleStutterRate = 0.02
+  if(hypothesis$doOverStutter) overStutterRate = 0.02
 
 
   list(degradation     = degradation,
@@ -274,6 +285,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
        doubleStutterRate = doubleStutterRate,
+       overStutterRate = overStutterRate,
        dropin          = dropin)
 }
 

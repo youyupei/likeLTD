@@ -1,16 +1,13 @@
-allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter=FALSE)
+allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter=FALSE,doOverStutter=FALSE)
 	{
 	genotypeAlleles = as.numeric(alleleNames[genotype])
-    if(doDoubleStutter)
-        {
-        genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1,genotypeAlleles-2))
-        } else {
-        genWithStutter = unique(c(genotypeAlleles,genotypeAlleles-1))
-        }
+	genWithStutter = c(genotypeAlleles,genotypeAlleles-1)
+        if(doDoubleStutter) genWithStutter = c(genWithStutter,genotypeAlleles-2)
+	if(doOverStutter) genWithStutter = c(genWithStutter,genotypeAlleles+1)
 	all(cspAlleles%in%c(genWithStutter,knownWithStutter))
 	}
 
-explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights, doDoubleStutter=FALSE)
+explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights, doDoubleStutter=FALSE,doOverStutter=FALSE)
 	{
 	CSPPRESENCE <<- cspPresence
 PROFPRESENCE <<- profPresence
@@ -28,12 +25,9 @@ CSPHEIGHTS <<- cspHeights
     	knownIndex = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
     	knownAlleles = as.numeric(alleleNames[knownIndex])
 	# include stuttered known alleles
-	if(doDoubleStutter)
-		{
-    		knownWithStutter = unique(c(knownAlleles,knownAlleles-1,knownAlleles-2))
-		} else {
-		knownWithStutter = unique(c(knownAlleles,knownAlleles-1))
-		}
+	knownWithStutter = c(knownAlleles,knownAlleles-1)
+	if(doDoubleStutter) knownWithStutter = c(knownWithStutter, knownAlleles-2)
+	if(doOverStutter) knownWithStutter = c(knownWithStutter, knownAlleles+1)
 	    } else {
         knownIndex = c()
         knownWithStutter = c()

@@ -22,14 +22,14 @@ likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, l
 
 
   likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, stutterMean=NULL, stutterAdjust=NULL, dropin=NULL, stutterGradient=NULL, 
-                                doubleStutterRate = NULL,
+                                doubleStutterRate = NULL,overStutterRate = NULL,
                                  repAdjust=NULL, detectionThresh=hypothesis$detectionThresh, degradationPenalty=hypothesis$degradationPenalty,stutterPenalty=hypothesis$stutterPenalty, ...) {
     # Call each and every function in the array.
     arguments = list(degradation=degradation, DNAcont=DNAcont,
                      scale = scale, repAdjust=repAdjust,
 stutterMean=stutterMean,
 stutterGradient=stutterGradient, 
-doubleStutterRate = doubleStutterRate,
+doubleStutterRate = doubleStutterRate,overStutterRate=overStutterRate,
 detectionThresh = detectionThresh,
                      degradationPenalty=degradationPenalty, stutterPenalty=stutterPenalty, dropin=dropin)
     callme <- function(objective,stut) {
@@ -65,7 +65,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
 
   result.function <- function(scale,stutterMean,stutterAdjust,
 stutterGradient,
-doubleStutterRate=NULL,
+doubleStutterRate=NULL,overStutterRate=NULL,
 repAdjust=NULL,
                               degradation=NULL, DNAcont=NULL, 
 			      detectionThresh = NULL, dropin=NULL, ...) {
@@ -111,7 +111,7 @@ repAdjust=NULL,
 	{
 	repRes <- likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale, stutterMean=stutterMean, stutterAdjust=stutterAdjust, stutterGradient=stutterGradient,
-				doubleStutterRate = doubleStutterRate, 
+				doubleStutterRate = doubleStutterRate, overStutterRate=overStutterRate,
 degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR,diagnose=diagnose)
 	return(repRes)
@@ -119,7 +119,7 @@ degradation=degradation,
 
     repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale, stutterMean=stutterMean,stutterAdjust=stutterAdjust, stutterGradient=stutterGradient, 
-				doubleStutterRate = doubleStutterRate,
+				doubleStutterRate = doubleStutterRate,overStutterRate=overStutterRate,
 degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR),ncol=length(hypothesis$peaksProfile))
 
@@ -239,7 +239,7 @@ genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=nco
 
 # function to be called at each iteration of maximisation
 peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutterAdjust,stutterGradient,
-       doubleStutterRate=NULL,
+       doubleStutterRate=NULL,overStutterRate=NULL,
 degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
     {
     # return a function that computes the 
@@ -274,37 +274,63 @@ DSR<<- doubleStutterRate
 										sizes=hypothesis$sizesProfile[[x]],DNAcont=DNAcont,
 										stutterMean=stutterMean,stutterAdjust=stutterAdjust,
 										doubleStutterRate=doubleStutterRate,
+										overStutterRate=overStutterRate,
 										scale=scale,degradation=degradation,
 										fragLengths=hypothesis$alleleDb[,2],repAdjust=repAdjust[x],
 										detectionThresh=detectionThresh,diagnose=diagnose))
-#sapply(1:length(ALLELES), FUN=function(x) likeLTD:::peak.heights.per.locus(GENOTYPE,ALLELES[[x]],HEIGHTS[[x]],SIZES[[x]],DNACONT,STUTTER,SCALE,DEG,fragLengths=FRAGLENGTHS,repAdjust=REPADJUST[x]))
 		} else {
-		if(!is.null(doubleStutterRate))
-		    {
-		    # double stutter
-		    probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksDoubleStutter,genotypeArray=cons$genotypes,
+		if(!is.null(doubleStutterRate)&!is.null(overStutterRate))
+			{
+			# single, double and over stutter
+		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSDO,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
 		                                                                        DNAcont=rep(DNAcont,each=2),stutterMean=stutterMean, stutterAdjust=stutterAdjust,
-		                                                                        stutterGradient,
+		                                                                        stutterGradient=stutterGradient,
+		                                                                        doubleStutterRate=doubleStutterRate,overStutterRate=overStutterRate,
+		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
+		                                                                        fragLengths=hypothesis$alleleDb[,2],
+		                                                                        fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+		                                                                        repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+
+			} else if(is.null(doubleStutterRate)&is.null(overStutterRate)) {
+		   	# single stutter only
+		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksS,genotypeArray=cons$genotypes,
+		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
+		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
+		                                                                        DNAcont=rep(DNAcont,each=2),stutterMean=stutterMean,stutterAdjust=stutterAdjust,
+		                                                                        stutterGradient=stutterGradient,
+		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
+		                                                                        fragLengths=hypothesis$alleleDb[,2],
+		                                                                        fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+		                                                                        repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+			
+			} else if(!is.null(doubleStutterRate)&is.null(overStutterRate)) {
+		    	# single and double stutter
+		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSD,genotypeArray=cons$genotypes,
+		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
+		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
+		                                                                        DNAcont=rep(DNAcont,each=2),stutterMean=stutterMean, stutterAdjust=stutterAdjust,
+		                                                                        stutterGradient=stutterGradient,
 		                                                                        doubleStutterRate=doubleStutterRate,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
 		                                                                        fragLengths=hypothesis$alleleDb[,2],
 		                                                                        fragNames=as.numeric(rownames(hypothesis$alleleDb)),
 		                                                                        repAdjust=repAdjust[x],detectionThresh=detectionThresh))
-		   } else {
-		   # single stutter
-		    probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSingleStutter,genotypeArray=cons$genotypes,
+
+			} else if(is.null(doubleStutterRate)&!is.null(overStutterRate)) {
+		    	# single and over stutter
+		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSO,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                                                                        DNAcont=rep(DNAcont,each=2),stutterMean=stutterMean,stutterAdjust=stutterAdjust,
-		                                                                        stutterGradient,
+		                                                                        DNAcont=rep(DNAcont,each=2),stutterMean=stutterMean, stutterAdjust=stutterAdjust,
+		                                                                        stutterGradient=stutterGradient,
+		                                                                        overStutterRate=overStutterRate,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
 		                                                                        fragLengths=hypothesis$alleleDb[,2],
 		                                                                        fragNames=as.numeric(rownames(hypothesis$alleleDb)),
 		                                                                        repAdjust=repAdjust[x],detectionThresh=detectionThresh))
-		   }
-#sapply(1:length(ALLELES), FUN=function(x) .Call(.cpp.probabilityPeaks,GENOTYPE,as.numeric(ALLELES[[x]]),unlist(as.numeric(HEIGHTS[[x]])),unlist(SIZES[[x]]),DNACONT,STUTTER,SCALE,DEG,fragLengths=FRAGLENGTHS,fragNames=as.numeric(rownames(FRAGLENGTHS)),repAdjust=REPADJUST[x]))
+			}
 		}
 	if(diagnose==TRUE) return(probs)
 	probs[is.na(probs)] = 0
@@ -323,7 +349,7 @@ DSR<<- doubleStutterRate
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,doubleStutterRate=NULL,overStutterRate=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
 	{
 	#index = !is.na(alleles)
 	#alleles = alleles[index]
@@ -546,7 +572,7 @@ addMissingAlleleSize = function(index,sizes)
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, stutterAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
-stutterMean=NULL,
+stutterMean=NULL,doubleStutterRate=NULL,overStutterRate=NULL,
 scale=NULL, scaleSD=1, ...) {
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
@@ -565,6 +591,16 @@ scale=NULL, scaleSD=1, ...) {
         {
         result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
         }
+
+ if(!missing(doubleStutterRate) & !is.null(doubleStutterRate))
+	{
+	result = result * dnorm(doubleStutterRate,mean=0, sd=0.01)
+	}
+
+ if(!missing(overStutterRate) & !is.null(overStutterRate))
+	{
+	result = result * dnorm(overStutterRate,mean=0, sd=0.01)
+	}
 
 #result = result*dnorm(stutterMean*stutterAdjust,mean=0,sd=0.05)
 

@@ -18,8 +18,10 @@ R_CallMethodDef callMethods[]  = {
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {"set_nbthreads", (DL_FUNC) &set_nbthreads, 1},
 	//{"peakMeanDose", (DL_FUNC) &peakMeanDose, 10},
-	{"probabilityPeaksSingleStutter", (DL_FUNC) &probabilityPeaksSingleStutter, 13},
-	{"probabilityPeaksDoubleStutter", (DL_FUNC) &probabilityPeaksDoubleStutter, 14},
+	{"probabilityPeaksS", (DL_FUNC) &probabilityPeaksS, 13},
+	{"probabilityPeaksSD", (DL_FUNC) &probabilityPeaksSD, 14},
+	{"probabilityPeaksSO", (DL_FUNC) &probabilityPeaksSO, 14},
+	{"probabilityPeaksSDO", (DL_FUNC) &probabilityPeaksSDO, 15},
        {NULL, NULL, 0},
        {NULL, NULL, 0},
 };

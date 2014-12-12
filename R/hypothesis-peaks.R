@@ -232,7 +232,7 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
                                    nUnknowns=0, adj=1e0, fst=0.02, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, doDoubleStutter=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
+                                   doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
@@ -287,6 +287,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   result[["relatedness"]] = relatedness
   result[["doDropin"]] = doDropin
   result[["doDoubleStutter"]] = doDoubleStutter
+  result[["doOverStutter"]] = doOverStutter
   result[["peaksFile"]] = peaksFile
   result[["callsFile"]] = callsFile
   result[["refFile"]] = refFile
@@ -307,7 +308,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, linkageFile=NULL,
-                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE, combineRare=TRUE, 
+                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, 
 			       rareThreshold=0.05, kit=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   alleleDb = load.allele.database(databaseFile,kit)
@@ -359,6 +360,7 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   result[["relatedness"]] = relatedness
   result[["doDropin"]] = doDropin
   result[["doDoubleStutter"]] = doDoubleStutter
+  result[["doOverStutter"]] = doOverStutter
   result[["peaksFile"]] = peaksFile
   result[["refFile"]] = refFile
   result[["callsFile"]] = callsFile
