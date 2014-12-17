@@ -16,6 +16,8 @@ ALLELENAMES <<- alleleNames
 NUNKNOWNS <<- nUnknowns
 CSPALLELES <<- cspAlleles
 CSPHEIGHTS <<- cspHeights
+DODOUBLESTUTTER <<- doDoubleStutter
+DOOVERSTUTTER <<- doOverStutter
   	# Catch early. Shouldn't be a problem here, but will be at some point. 
 	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
 	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
@@ -37,8 +39,14 @@ CSPHEIGHTS <<- cspHeights
 	# if no unknowns return knowns
 	if(nUnknowns==0) 
 		{
-		if(!all(cspAlleles%in%knownWithStutter)) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
-		return(matrix(knownIndex,ncol=1))
+		check = !all(as.numeric(cspAlleles)%in%as.numeric(knownWithStutter))
+		CHECK <<- check
+		if(check) 
+		    {
+		    stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
+		    } else {
+		    return(matrix(knownIndex,ncol=1))
+		    }
 		}
 	# get all genotype combinations for unknowns
 	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)

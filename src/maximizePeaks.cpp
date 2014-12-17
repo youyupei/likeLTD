@@ -270,7 +270,7 @@ inline std::vector<genoStruct> peakMeanDoseS(std::vector<float> genotypeVec, std
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			double stutterRate = stutterMean+stutterAdjust*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
+			double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			//nonstutterDose = tmpDose * (1-stutter);

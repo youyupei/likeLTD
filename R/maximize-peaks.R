@@ -10,9 +10,9 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
-  stutterMean = 0.30
+  stutterMean = 1
   stutterAdjust     = rep(2,nloc)
-  stutterGradient = 1
+  stutterGradient = 0.5
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
   overStutterRate = NULL
@@ -48,9 +48,9 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
-  stutterMean = 0
+  stutterMean = 1
   stutterAdjust     = rep(0.0001,nloc)
-  stutterGradient  = 0.0001
+  stutterGradient  = 0
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0
   overStutterRate = NULL

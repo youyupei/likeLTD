@@ -136,8 +136,18 @@ plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh
 
 
 
-
-
+# convert stutterGradient into stutter values for each allele.
+getAlleleStutters = function(hypothesis,results)
+	{
+	res = results$optim$bestmem
+	SMindex = grep("stutterMean",names(res))
+	SGindex = grep("stutterGradient",names(res))
+	SAindex = grep("stutterAdjust",names(res))
+	stutterConstant = res[SGindex]*res[SMindex]
+	out = mapply(res[SAindex],hypothesis$alleleDb,FUN=function(SA,db) (abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*SA*stutterConstant)
+	names(out) = names(hypothesis$alleleDb)
+	return(out)
+	}
 
 
 

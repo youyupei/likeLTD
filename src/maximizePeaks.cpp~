@@ -270,7 +270,7 @@ inline std::vector<genoStruct> peakMeanDoseS(std::vector<float> genotypeVec, std
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			double stutterRate = stutterMean+stutterAdjust*stutterGradient*abs(genotypeVec[i]-fragVecN[0]);
+			double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			//nonstutterDose = tmpDose * (1-stutter);
@@ -1377,7 +1377,7 @@ SEXP probabilityPeaksSDO(SEXP genotypeArray, SEXP alleles, SEXP heights,
 	for(int x=0; x<nCombs; ++x)
 		{
 		outDouble[x] = singleGenotypeSDO(genotypeArrayVec, csp, DNAcontVec, stuttermean, stutteradjust, 
-		doublestutterRate,overStutterRate,stuttergradient, 
+		doublestutterRate,overstutterRate,stuttergradient, 
 		repadjust, scaleDouble, degVec, fragVecL, fragVecN, x, nGen, nCSP, nCont, nFrag, cdfArg, pdfArg);
 		//outDouble = singleGenotype(genotypeArrayVec, csp, DNAcontVec, stutterMeanDouble, stutterAdjustDouble, scaleDouble, degVec, fragVecL, fragVecN, repadjust, detectThresh, x, nGen, nCSP, nCont, nFrag);
 		}
