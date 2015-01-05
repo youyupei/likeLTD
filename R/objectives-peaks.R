@@ -482,7 +482,7 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,s
 		doubleStutterPos = genotype-2
 		allPos = c(allPos,doubleStutterPos)
 		}
-	if(!null(overStutterRate))
+	if(!is.null(overStutterRate))
 		{
 		overStutterPos = genotype+1
 		allPos = c(allPos,overStutterPos)
@@ -503,7 +503,7 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,stutterMean,s
 	degAdjust = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
 #return(DNAcont)
 	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
-	stutterRate = stutterMean*stutterAdjust
+	stutterRate = sapply(genotype,FUN=function(x) stutterMean*stutterAdjust*stutterGradient*(abs(as.numeric(names(fragLengths)[which(round(as.numeric(names(fragLengths)),1)==x)])-as.numeric(names(fragLengths)[1])+1)))
 	# stutter alpha
 	#alphaS = degAdjust * rhoS * DNAproxy / sizesGen
 	muS = degAdjust * stutterRate #* DNAproxy / sizesGen
