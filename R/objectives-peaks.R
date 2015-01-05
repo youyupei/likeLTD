@@ -177,6 +177,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
 #  genotypes <- compatible.genotypes.peaks(cspPresence, knownPresence, hypothesis$knownProfs,alleles,
  #                                   hypothesis$nUnknowns, hypothesis$doDropin,
   #                                  missingReps)
+  HYPOTHESIS <<- hypothesis
 
 genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile,hypothesis$doDoubleStutter,hypothesis$doOverStutter)
 
@@ -594,18 +595,17 @@ scale=NULL, scaleSD=1, ...) {
 
  if(!missing(doubleStutterRate) & !is.null(doubleStutterRate))
 	{
-	result = result * dnorm(doubleStutterRate,mean=0, sd=0.01)
+	#result = result * 10^(log10(alteration)/10)
+	result = result * dnorm(log(doubleStutterRate),mean=-14, sd=4.6)
 	}
 
  if(!missing(overStutterRate) & !is.null(overStutterRate))
 	{
-	result = result * dnorm(overStutterRate,mean=0, sd=0.01)
+	#result = result * 10^(log10(alteration)/10)
+	result = result * dnorm(log(overStutterRate),mean=-14, sd=4.6)
 	}
 
-#result = result*dnorm(stutterMean*stutterAdjust,mean=0,sd=0.05)
 
-   #result = result * dnorm(log(scale),0,sd=scaleSD) * normalization
-    
   return(result)
 }
 

@@ -39,7 +39,7 @@ DOOVERSTUTTER <<- doOverStutter
 	# if no unknowns return knowns
 	if(nUnknowns==0) 
 		{
-		check = !all(as.numeric(cspAlleles)%in%as.numeric(knownWithStutter))
+		check = !all(round(as.numeric(cspAlleles),1)%in%round(as.numeric(knownWithStutter),1))
 		CHECK <<- check
 		if(check) 
 		    {

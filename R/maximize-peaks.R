@@ -1,4 +1,4 @@
-upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) { 
+upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, gradientUpper=NULL) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -12,7 +12,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale        = 10000
   stutterMean = 1
   stutterAdjust     = rep(2,nloc)
-  stutterGradient = 0.5
+  stutterGradient = gradientUpper
   doubleStutterRate = NULL
   if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
   overStutterRate = NULL
@@ -50,11 +50,11 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   stutterMean = 1
   stutterAdjust     = rep(0.0001,nloc)
-  stutterGradient  = 0
+  stutterGradient  = 0+zero
   doubleStutterRate = NULL
-  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0
+  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0+zero
   overStutterRate = NULL
-  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0
+  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0+zero
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -224,10 +224,10 @@ condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) a
 		-result
 	}
 
-
+gradientUpper = 1/max(unlist(sapply(hypothesis$alleleDb,FUN=function(x) as.numeric(rownames(x))-as.numeric(rownames(x))[1])))
   
   lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
-  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
+  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, gradientUpper)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
@@ -576,6 +576,49 @@ TMP <<- D.step
 	D.results$member$bestvalit <- D.bestvalit
 	D.results$optim$iter <- D.iter
 	D.results$optim$nfeval <- D.nfeval
+
+# return all results
+return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+
+
+
+evaluate.peaks2 <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, stutterMeanLimit=1, progBar = TRUE, interim=FALSE){
+	# P.pars D.pars: parameter object created by optimisation.params()
+	# the smallest convergence threshold (ie for the last step)
+	# number of convergence thresholds
+	
+	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
+
+	# combine the outputs outside the loop
+	P.bestmemit <- D.bestmemit <- NULL
+	P.bestvalit <- D.bestvalit <- NULL
+	P.iter <- D.iter <- NULL
+	P.nfeval <- D.nfeval <- NULL
+
+	# change DEoptim parameters
+	#P.pars$control$CR <- 0.1
+	#D.pars$control$CR <- 0.1
+	extraPars = list(reltol=1e-6, steptol=500)
+
+	P.pars$control = append(P.pars$control, extraPars)
+	D.pars$control = append(D.pars$control, extraPars)
+
+	P.pars$control$itermax = 100000000
+	D.pars$control$itermax = 100000000
+		
+	# run DEoptimLoop until convergence at the required step
+	D.results <- do.call(DEoptim,D.pars)
+
+	# set global results
+	GlobalDval = D.results$optim$bestval
+	GlobalDmem = D.results$optim$bestmem
+
+	P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
+	P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]*stutterMeanLimit
+
+	P.results <- do.call(DEoptim,P.pars)
+
+    WoE <- D.results$optim$bestval - P.results$optim$bestval
 
 # return all results
 return(list(Pros =P.results,Def =D.results, WoE =WoE))}
