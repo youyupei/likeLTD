@@ -169,7 +169,11 @@ condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) a
     # Compute objective function.
     result <- do.call(objective, x)
 
-   #if(any(is.infinite(result$objectives))) TOTALRES <<- result
+   if(any(is.infinite(result$objectives)|is.infinite(result$penalties))) 
+	{
+	NAINPUT <<- x
+	TOTALRES <<- result
+	}
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
 
 
