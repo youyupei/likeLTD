@@ -414,7 +414,7 @@ get.likely.genotypes = function(hypothesis,params,results,posterior=FALSE,joint=
 	index = (1:ncont)[rev(order(rcont))]
 	out = out[index]
 	# get top genotypes for marginals
-	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,genotypes=genotypes,probabilities=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
+	topGenotypes = sapply(1:ncont,FUN=function(x) mapply(FUN=marginalProbs,gens=genotypes,probs=likes,indiv=x,prob=prob,top=TRUE,SIMPLIFY=FALSE),simplify=FALSE)
 	# get top probabilities for marginals	
 	topProbabilities = sapply(1:ncont,FUN=function(y) prod(sapply(topGenotypes[[y]],FUN=function(x) x$probability)),simplify=FALSE)
 	topGenotypes = sapply(1:ncont,FUN=function(y) sapply(topGenotypes[[y]],FUN=function(x) x$genotype),simplify=FALSE)

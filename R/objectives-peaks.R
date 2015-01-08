@@ -241,6 +241,8 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,stutterMean,stutter
        doubleStutterRate=NULL,overStutterRate=NULL,
 degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
     {
+    if(rownames(hypothesis$heightsProfile[[1]])[1]=="FGA")
+    {
 HYPOTHESIS<<-hypothesis
 CONS<<-cons
 DNACONT<<-DNAcont
@@ -253,6 +255,7 @@ OVERSTUTTERRATE<<-overStutterRate
 DEGRADATION<<-degradation
 REPADJUST<<-repAdjust
 DETECTIONTHRESH<<-detectionThresh
+    }
     # return a function that computes the 
     if(hypothesis$doDropin==TRUE)
         {
@@ -343,6 +346,7 @@ DSR<<- doubleStutterRate
 		                                                                        repAdjust=repAdjust[x],detectionThresh=detectionThresh))
 			}
 		}
+	if(rownames(hypothesis$heightsProfile[[1]])[1]=="FGA") FGARES <<- probs
 	if(diagnose==TRUE) return(probs)
 	probs[is.na(probs)] = 0
         }

@@ -19,10 +19,10 @@ subsetData = function(data,search)
 	rownames(dataout) = data$Marker
 	# remove columns that have no data
 	index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
-	if(length(index!=0)) dataout = dataout[,-index]
+	if(length(index!=0)) dataout = dataout[,-index,drop=FALSE]
 	# remove AMEL data
 	index = which(rownames(dataout)%in%c("AMEL","amel","Amel"))
-	if(length(index)!=0) dataout = dataout[-index,]
+	if(length(index)!=0) dataout = dataout[-index,,drop=FALSE]
 	return(dataout)
 	}
 
@@ -54,7 +54,7 @@ read.peaks.profile = function(FILE)
 	{
 	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
 	# get data
-	data = read.csv(file=FILE,as.is=TRUE)
+	data = read.csv(file=FILE,as.is=TRUE,na.strings=c("NA",""))
 	# get replicate names
 	conditions = names(table(data[,1]))
 	# get allele data
