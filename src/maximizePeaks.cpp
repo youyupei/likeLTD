@@ -1373,7 +1373,7 @@ SEXP probabilityPeaksSDO(SEXP genotypeArray, SEXP alleles, SEXP heights,
 
 	//Rprintf("Before Main Loop");
 	// Loop over genotype combinations
-	//# pragma omp parallel for schedule(dynamic)
+	# pragma omp parallel for schedule(dynamic)
 	for(int x=0; x<nCombs; ++x)
 		{
 		outDouble[x] = singleGenotypeSDO(genotypeArrayVec, csp, DNAcontVec, stuttermean, stutteradjust, 
