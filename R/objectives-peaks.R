@@ -607,7 +607,7 @@ addMissingAlleleSize = function(index,sizes)
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, stutterAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
-stutterMean=NULL,doubleStutterRate=NULL,overStutterRate=NULL,
+stutterMean=NULL,stutterGradient=NULL,doubleStutterRate=NULL,overStutterRate=NULL,
 scale=NULL, scaleSD=1, ...) {
   result = 1
   # Normalizes by number of loci so product of penalties same as in old code.
@@ -629,15 +629,21 @@ scale=NULL, scaleSD=1, ...) {
 
  if(!missing(doubleStutterRate) & !is.null(doubleStutterRate))
 	{
-	#result = result * 10^(log10(alteration)/10)
-	result = result * dnorm(log(doubleStutterRate),mean=-14, sd=4.6)
+	#result = result * dnorm(log(doubleStutterRate),mean=-14, sd=4.6)
+    # mean = 0.01, sd = 5e-5
+	result = result * dgamma(doubleStutterRate,shape=0.02/0.018,scale=0.018)
 	}
 
  if(!missing(overStutterRate) & !is.null(overStutterRate))
 	{
-	#result = result * 10^(log10(alteration)/10)
-	result = result * dnorm(log(overStutterRate),mean=-14, sd=4.6)
+	#result = result * dnorm(log(overStutterRate),mean=-14, sd=4.6)
+	# mean = 0.01, sd = 5e-5
+	result = result * dgamma(overStutterRate,shape=0.02/0.018,scale=0.018)
 	}
+
+
+  result = result * dnorm(log10(stutterGradient),mean=log10(0.015), sd=abs(log10(0.005)))
+
 
 
   return(result)

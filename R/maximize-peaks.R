@@ -463,7 +463,7 @@ TMP <<- D.step
 	# if so set sd to >1 so log2(sd) is positive
 	if(sdStep<1) sdStep = 1.5
 	# decide how many steps to run
-	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*8+length(grep("cont",names(D.pars$upper)))
+	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*15+length(grep("cont",names(D.pars$upper)))
 
 	# retain all the likelihood ratios
 	WoE <- numeric(n.steps)
