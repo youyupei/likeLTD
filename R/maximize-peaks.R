@@ -10,7 +10,6 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
-  stutterMean = 1
   stutterAdjust     = rep(2,nloc)
   stutterGradient = gradientUpper
   doubleStutterRate = NULL
@@ -24,7 +23,6 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
        stutterGradient   = stutterGradient,
        repAdjust       = repAdjust,
@@ -48,7 +46,6 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
-  stutterMean = 1
   stutterAdjust     = rep(0.0001,nloc)
   stutterGradient  = 0+zero
   doubleStutterRate = NULL
@@ -62,7 +59,6 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
        scale           = scale,
-       stutterMean      = stutterMean,
        stutterAdjust         = stutterAdjust,
        stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
@@ -151,12 +147,12 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
-stutterConstant = x$stutterGradient*x$stutterMean
+stutterConstant = x$stutterGradient
 toAdd = 0
 if(hypothesis$doDoubleStutter) toAdd = toAdd + x$doubleStutterRate
 if(hypothesis$doOverStutter) toAdd = toAdd + x$overStutterRate
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant+toAdd>1)|any((abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*stuttA*stutterConstant+toAdd<0))
+condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd>1)|any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 #condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
@@ -272,7 +268,6 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   doubleStutterRate    = NULL
   overStutterRate    = NULL
   scale           = 1/4
-  stutterMean     = 10 
   stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
   stutterGradient = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
@@ -284,7 +279,6 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutterMean     = stutterMean,
        stutterAdjust         = stutterAdjust,
        stutterGradient = stutterGradient,
        repAdjust       = repAdjust,
@@ -419,8 +413,13 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 	}
 
 
+# check for convergence
+checkConverged = function(new,old,tol)
+    {
+    return(abs((new-old)/old)<tol)
+    }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, stutterMeanLimit=1, progBar = TRUE, interim=FALSE){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, progBar = TRUE, interim=FALSE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -463,10 +462,9 @@ TMP <<- D.step
 	# if so set sd to >1 so log2(sd) is positive
 	if(sdStep<1) sdStep = 1.5
 	# decide how many steps to run
-	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*15+length(grep("cont",names(D.pars$upper)))
+	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*6+length(grep("cont",names(D.pars$upper)))
 
 	# retain all the likelihood ratios
-	WoE <- numeric(n.steps)
 	Ld <- numeric(n.steps)
 	Lp <- numeric(n.steps)
 
@@ -504,11 +502,31 @@ TMP <<- D.step
 
 			# recycle the current pop into the next loop
 			D.pars$control$initialpop <- D.step$member$pop
+		    }
 		}
-		}
+        # check for convergence
+        while(!checkConverged(Ld[n],Ld[n-1],tolerance)|!checkConverged(Ld[n],Ld[n-2],tolerance))
+            {
+            n = n+1
+            D.step <- DEoptimLoop(D.pars,tolerance)
+            Ld[n] = -D.step$optim$bestval
+			# set global results
+			if(D.step$optim$bestval<GlobalDval)
+				{
+				GlobalDval = D.step$optim$bestval
+				GlobalDmem = D.step$optim$bestmem
+				}
+			# put the Def outputs into the combined output	
+			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.iter <- c(D.iter, D.step$optim$iter)
+			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+			# recycle the current pop into the next loop
+			D.pars$control$initialpop <- D.step$member$pop
+            }
+		
 
 		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
-		P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]*stutterMeanLimit
 
 		for(n in 1:n.steps){
 			# change DEoptim parameters
@@ -518,8 +536,6 @@ TMP <<- D.step
 			# run DEoptimLoop until convergence at the required step
 			P.step <- DEoptimLoop(P.pars,tol.steps[n])
 			Lp[n] = -P.step$optim$bestval
-
-			WoE[n] = Lp[n]-Ld[n]
 
 			if(n==1)
 				{
@@ -546,6 +562,45 @@ TMP <<- D.step
 			# recycle the current pop into the next loop
 			P.pars$control$initialpop <- P.step$member$pop
 			}
+	    # check for convergence
+        while(!checkConverged(Lp[n],Lp[n-1],tolerance)|!checkConverged(Lp[n],Lp[n-2],tolerance))
+            {
+            n = n+1
+            P.step <- DEoptimLoop(P.pars,tolerance)
+            Lp[n] = -P.step$optim$bestval
+			# set global results
+			if(P.step$optim$bestval<GlobalPval)
+				{
+				GlobalPval = P.step$optim$bestval
+				GlobalPmem = P.step$optim$bestmem
+				}
+			# put the Def outputs into the combined output	
+			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.iter <- c(P.iter, P.step$optim$iter)
+			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)	
+			# recycle the current pop into the next loop
+			P.pars$control$initialpop <- P.step$member$pop
+            }
+
+    # make prosecution and defence equal lengths
+    if(length(Ld)!=length(Lp))
+        {
+        index = which.min(c(length(Lp),length(Ld)))
+        if(index==1)
+            {
+            difference = length(Ld)-length(Lp)
+            Lp = c(Lp, rep(Lp[length(Lp)],times=difference))
+            } 
+        if(index==2)
+            {
+            difference = length(Lp)-length(Ld)
+            Ld = c(Ld, rep(Ld[length(Ld)],times=difference))
+            }
+        }
+
+    # get WoE
+    WoE = Lp-Ld
 
 	changeFlag=FALSE
 	# if global result is better than result from last chunk
@@ -586,7 +641,7 @@ return(list(Pros =P.results,Def =D.results, WoE =WoE))}
 
 
 
-evaluate.peaks2 <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, stutterMeanLimit=1, progBar = TRUE, interim=FALSE){
+evaluate.peaks2 <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleLimit=1, progBar = TRUE, interim=FALSE){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -618,7 +673,6 @@ evaluate.peaks2 <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, scaleL
 	GlobalDmem = D.results$optim$bestmem
 
 	P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
-	P.pars$upper[grep("stutterMean",names(D.pars$upper))] = GlobalDmem[grep("stutterMean",names(GlobalDmem))]*stutterMeanLimit
 
 	P.results <- do.call(DEoptim,P.pars)
 
