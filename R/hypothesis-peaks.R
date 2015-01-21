@@ -159,6 +159,17 @@ combine.rares.peaks = function(alleleDb, cspProfile, knownProfiles, queriedProfi
     sapply(loci,FUN=function(x) combine.rares.locus.peaks(alleleDb[[x]],cspProfile[,x],knownProfiles[,x],queriedProfile[,x],rareThreshold=rareThreshold,doDoubleStutter=doDoubleStutter),simplify=FALSE)
     }
 
+add.stutter.index = function(alleleDb)
+	{
+ 	# make i
+  	index = which(!as.numeric(rownames(alleleDb))<0)
+  	foo=function(x) 2/(max(x)-min(x))*(x-max(x))+1
+  	outIndex = vector(length=nrow(alleleDb))
+  	outIndex[index] = foo(as.numeric(rownames(alleleDb)[index]))
+  	outIndex[-index] = 0
+	return(cbind(alleleDb,outIndex))
+	}
+
 
 
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
@@ -173,16 +184,19 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
-  alleleDb = adjust.frequencies( alleleDb, 
+  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+  if(combineRare) alleleDb = likeLTD:::combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+
+  # add index for stutter values
+  alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
 
   # Construct all profiles as arrays of  
   list(binaryProfile=cspProfile,
@@ -244,7 +258,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 #    allelicCalls = read.allelic.calls(callsFile)
 #    }
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   if(identical(relatedness,c(0.5,0.25)))
 	{

@@ -29,37 +29,37 @@ extern "C" {
 	//! \brief peak mean dose without single stutter
 	inline std::vector<genoStruct> peakMeanDoseS(std::vector<float> genotypeVec, std::vector<float> stutterPosVec,  
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec, double stutterAdjust, 
-	                                            double stutterGradient,
+	                                            std::vector<double> DNAcontVec, double gradientS, 
+	                                            double meanS,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
-	                                            int nGen, int nCSP, int nCont, int nFrag);
+	                                            std::vector<double> stutterIndex, int nGen, int nCSP, int nCont, int nFrag);
 	//! \brief peak mean dose with single and double stutter
 	inline std::vector<genoStruct> peakMeanDoseSD(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, 
 	                                            std::vector<float> doubleStutterVec, 
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec, double stutterAdjust, 
-	                                            double doubleStutterRate,
-	                                            double stutterGradient,
+	                                            std::vector<double> DNAcontVec, double gradientS, 
+	                                            double meanD,
+	                                            double meanS,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
-	                                            int nGen, int nCSP, int nCont, int nFrag);
+	                                            std::vector<double> stutterIndex, int nGen, int nCSP, int nCont, int nFrag);
 	//! \brief peak mean dose with single and over stutter
 	inline std::vector<genoStruct> peakMeanDoseSO(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, 
 	                                            std::vector<float> overStutterVec, 
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec, double stutterAdjust, 
-	                                            double overStutterRate,
-	                                            double stutterGradient,
+	                                            std::vector<double> DNAcontVec, double gradientS, 
+	                                            double meanO,
+	                                            double meanS,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
-	                                            int nGen, int nCSP, int nCont, int nFrag);
+	                                            std::vector<double> stutterIndex, int nGen, int nCSP, int nCont, int nFrag);
 	//! \brief peak mean dose with single, double and over stutter
 	inline std::vector<genoStruct> peakMeanDoseSDO(std::vector<float> genotypeVec, std::vector<float> stutterPosVec, 
 	                                            std::vector<float> doubleStutterVec, std::vector<float> overStutterVec, 
 	                                            std::vector<float> allPosVec, std::vector<cspStruct> csp, 
-	                                            std::vector<double> DNAcontVec, double stutterAdjust, 
-	                                            double doubleStutterRate, double overStutterRate,
-	                                            double stutterGradient,
+	                                            std::vector<double> DNAcontVec, double gradientS, 
+	                                            double meanD, double meanO,
+	                                            double meanS,
 	                                            std::vector<double> degVec,std::vector<double> fragVecL, std::vector<double> fragVecN, 
-	                                            int nGen, int nCSP, int nCont, int nFrag);
+	                                            std::vector<double> stutterIndex, int nGen, int nCSP, int nCont, int nFrag);
 
     //! \brief combine doses with single stutter
 	inline std::vector<genoStruct> combineDosesS(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS);	                                            
@@ -72,50 +72,50 @@ extern "C" {
 
 	//! \brief probability of a single genotype without single stutter
 	inline double singleGenotypeS(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutterAdjust, double stutterGradient, 
+	                            std::vector<double> DNAcont, double gradientS, double meanS, 
 	                            double repAdjust,double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
-	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
+	                            std::vector<double> fragNames, std::vector<double> stutterIndex, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);	  
 	//! \brief probability of a single genotype with single and double stutter
 	inline double singleGenotypeSD(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutterAdjust, double doubleStutterRate, double stutterGradient, 
+	                            std::vector<double> DNAcont, double gradientS, double meanD, double meanS, 
 	                            double repAdjust,double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
-	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
+	                            std::vector<double> fragNames, std::vector<double> stutterIndex, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);
 	//! \brief probability of a single genotype with single and over stutter
 	inline double singleGenotypeSO(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutterAdjust, double overStutterRate, double stutterGradient,
+	                            std::vector<double> DNAcont, double gradientS, double meanO, double meanS,
 	                            double repAdjust,double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
-	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
+	                            std::vector<double> fragNames, std::vector<double> stutterIndex, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);
 	//! \brief probability of a single genotype with single, double and over stutter
 	inline double singleGenotypeSDO(std::vector<double> genotypeArray, std::vector<cspStruct> csp, 
-	                            std::vector<double> DNAcont, double stutterAdjust, double doubleStutterRate, double overStutterRate, double stutterGradient, 
+	                            std::vector<double> DNAcont, double gradientS, double meanD, double meanO, double meanS, 
 	                            double repAdjust,double scale, std::vector<double> degradation, std::vector<double> fragLengths, 
-	                            std::vector<double> fragNames, int currentComb, int nGen, int nCSP, int nCont, 
+	                            std::vector<double> fragNames, std::vector<double> stutterIndex, int currentComb, int nGen, int nCSP, int nCont, 
 	                            int nFrag, double cdfArg, double pdfArg);
 
     
     //! \brief probability of peaks with single stutter
     SEXP probabilityPeaksS(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutterAdjust, SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP gradientS, SEXP meanS, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
-                                SEXP fragNames, SEXP repAdjust, SEXP detectionThresh); 
+                                SEXP fragNames, SEXP stutterIndex, SEXP repAdjust, SEXP detectionThresh); 
     //! \brief probability of peaks with single and double stutter
     SEXP probabilityPeaksSD(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutterAdjust, SEXP doubleStutterRate, SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanS, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
-                                SEXP fragNames, SEXP repAdjust, SEXP detectionThresh);
+                                SEXP fragNames, SEXP stutterIndex, SEXP repAdjust, SEXP detectionThresh);
     //! \brief probability of peaks with single and over stutter
     SEXP probabilityPeaksSO(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutterAdjust, SEXP overStutterRate, SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP gradientS, SEXP meanO, SEXP meanS, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
-                                SEXP fragNames, SEXP repAdjust, SEXP detectionThresh);
+                                SEXP fragNames, SEXP stutterIndex, SEXP repAdjust, SEXP detectionThresh);
     //! \brief probability of peaks with single, double and over stutter
     SEXP probabilityPeaksSDO(SEXP genotypeArray, SEXP alleles, SEXP heights, 
-                                SEXP DNAcont, SEXP stutterAdjust, SEXP doubleStutterRate, SEXP overStutterRate, SEXP stutterGradient, 
+                                SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP meanS, 
                                 SEXP scale, SEXP degradation, SEXP fragLengths, 
-                                SEXP fragNames, SEXP repAdjust, SEXP detectionThresh);
+                                SEXP fragNames, SEXP stutterIndex, SEXP repAdjust, SEXP detectionThresh);
 
 	//! \brief function to round a number
 	inline int myRound(double d);

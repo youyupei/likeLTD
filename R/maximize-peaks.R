@@ -1,4 +1,4 @@
-upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, gradientUpper=NULL) { 
+upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -10,12 +10,12 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
-  stutterAdjust     = rep(2,nloc)
-  stutterGradient = gradientUpper
-  doubleStutterRate = NULL
-  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0.1
-  overStutterRate = NULL
-  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0.1
+  gradientS     = rep(2,nloc)
+  meanS = 0.3
+  meanD = NULL
+  if(!is.null(arguments[["meanD"]])) meanD = 0.1
+  meanO = NULL
+  if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
@@ -23,11 +23,11 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutterAdjust         = stutterAdjust,
-       stutterGradient   = stutterGradient,
+       gradientS         = gradientS,
+       meanS   = meanS,
        repAdjust       = repAdjust,
-       doubleStutterRate = doubleStutterRate,
-       overStutterRate = overStutterRate,
+       meanD = meanD,
+       meanO = meanO,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -46,12 +46,12 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
-  stutterAdjust     = rep(0.0001,nloc)
-  stutterGradient  = 0+zero
-  doubleStutterRate = NULL
-  if(!is.null(arguments[["doubleStutterRate"]])) doubleStutterRate = 0+zero
-  overStutterRate = NULL
-  if(!is.null(arguments[["overStutterRate"]])) overStutterRate = 0+zero
+  gradientS     = rep(0+zero,nloc)
+  meanS  = 0+zero
+  meanD = NULL
+  if(!is.null(arguments[["meanD"]])) meanD = 0+zero
+  meanO = NULL
+  if(!is.null(arguments[["meanO"]])) meanO = 0+zero
   repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = zero
@@ -59,11 +59,11 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
        scale           = scale,
-       stutterAdjust         = stutterAdjust,
-       stutterGradient = stutterGradient,
+       gradientS         = gradientS,
+       meanS = meanS,
        repAdjust       = repAdjust,
-       doubleStutterRate = doubleStutterRate,
-       overStutterRate = overStutterRate,
+       meanD = meanD,
+       meanO = meanO,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -147,12 +147,12 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	    }
 
     # if stutter is >100% or <0% return negative likelihood
-stutterConstant = x$stutterGradient
+stutterConstant = x$meanS
 toAdd = 0
-if(hypothesis$doDoubleStutter) toAdd = toAdd + x$doubleStutterRate
-if(hypothesis$doOverStutter) toAdd = toAdd + x$overStutterRate
+if(hypothesis$doDoubleStutter) toAdd = toAdd + x$meanD
+if(hypothesis$doOverStutter) toAdd = toAdd + x$meanO
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd>1)|any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd<0))
+condition = mapply(x$gradientS,hypothesis$alleleDb,FUN=function(stuttA,db) any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd>1)|any((1+stuttA*(abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1))*stutterConstant+toAdd<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 #condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition))
@@ -223,11 +223,9 @@ condition = mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) a
 		# return result
 		-result
 	}
-
-gradientUpper = 1/max(unlist(sapply(hypothesis$alleleDb,FUN=function(x) as.numeric(rownames(x))-as.numeric(rownames(x))[1])))
   
   lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
-  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, gradientUpper)
+  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
 
@@ -265,25 +263,25 @@ initial.arguments.peaks <- function(hypothesis, ...) {
                          nrow(hypothesis$knownProfs) + hypothesis$nUnknowns )
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
-  doubleStutterRate    = NULL
-  overStutterRate    = NULL
+  meanD    = NULL
+  meanO    = NULL
   scale           = 1/4
-  stutterAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
-  stutterGradient = 0
+  gradientS   = rep(0.08,times=ncol(hypothesis$queriedProfile))
+  meanS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
-  if(hypothesis$doDoubleStutter) doubleStutterRate = 0.02
-  if(hypothesis$doOverStutter) overStutterRate = 0.02
+  if(hypothesis$doDoubleStutter) meanD = 0.02
+  if(hypothesis$doOverStutter) meanO = 0.02
 
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
-       stutterAdjust         = stutterAdjust,
-       stutterGradient = stutterGradient,
+       gradientS         = gradientS,
+       meanS = meanS,
        repAdjust       = repAdjust,
-       doubleStutterRate = doubleStutterRate,
-       overStutterRate = overStutterRate,
+       meanD = meanD,
+       meanO = meanO,
        dropin          = dropin)
 }
 
