@@ -144,3 +144,40 @@ prod.matrix.row <- function(x) {
   y=y*x[, i]
   return(y)
 }
+
+ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
+  # Reformats allele database to include only given ethnic group and loci.
+  #
+  # Filters database down to a single ethnic group and the loci of interests.
+  # Removes alleles which are not present in given ethnic group. Centers
+  # average length across filtered database.
+  # 
+  # Parameters:
+  #   ethnic: Name of ethnic group. Should correspond to what's in afreq.
+  #   loci: Names of the loci to use. Or use all.
+  #   afreq: Frequency table. If NULL, loads in frequency table provided with
+  #          likeLTD package.
+ 
+  # Load frequency database if needed. 
+  if(is.null(afreq)) afreq <- load.allele.database()
+  # figueres out loci
+  if(is.null(loci)) loci <- t(unique(afreq['Marker']))
+
+  # Function which recreates the input for a single locus.
+  # Input of a locus consists of one row per allele type.
+  # Also filters out alleles with 0 frequencies.
+  filter.locus <- function(n) {
+    locus <- afreq[afreq$Marker == n, ]
+    result <- matrix(c(locus[[ethnic]], locus[["BP"]], locus[["LUS"]]), , 3)
+    result[is.na(result[, 2]), 2] <- 0
+    rownames(result) <- locus$Allele
+    return(result[result[, 1] > 0, ])
+  }
+  # now apply function over all loci.
+  result <- sapply(loci, filter.locus)
+  # Then center around mean fragment length
+  s1 = sum( sapply(result, function(n) sum(n[, 1] * n[, 2], na.rm=TRUE)) )
+  s2 = sum( sapply(result, function(n) sum(n[, 1], na.rm=TRUE)) )
+  for(j in 1:length(result)) result[[j]][, 2] <- result[[j]][, 2] - s1/s2
+  return(result)
+}

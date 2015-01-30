@@ -627,7 +627,7 @@ scale=NULL, scaleSD=1, ...) {
     if(!missing(gradientS) & !is.null(gradientS))
         {
         #result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
-        result = result * dnorm(gradientS,mean=0.5, sd=0.15)
+        result = result * dnorm(gradientS,mean=0.5, sd=4.5)
         }
 
  if(!missing(meanD) & !is.null(meanD))
