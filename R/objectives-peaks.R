@@ -21,28 +21,29 @@ likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, l
   if(is.null(hypothesis$stutterPenalty)) hypothesis$stutterPenalty = 0.2
 
 
-  likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, gradientS=NULL, dropin=NULL, meanS=NULL, 
+  likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, scale=NULL, locusAdjust=NULL, dropin=NULL, gradientS = gradientS, meanS=NULL, 
                                 meanD = NULL,meanO = NULL,
                                  repAdjust=NULL, detectionThresh=hypothesis$detectionThresh, degradationPenalty=hypothesis$degradationPenalty,stutterPenalty=hypothesis$stutterPenalty, ...) {
     # Call each and every function in the array.
     arguments = list(degradation=degradation, DNAcont=DNAcont,
                      scale = scale, repAdjust=repAdjust,
+                     gradientS = gradientS,
 meanS=meanS, 
 meanD = meanD,meanO=meanO,
 detectionThresh = detectionThresh,
                      degradationPenalty=degradationPenalty, stutterPenalty=stutterPenalty, dropin=dropin)
     callme <- function(objective,stut) {
-    args = append(arguments, list(gradientS=stut))
+    args = append(arguments, list(locusAdjust=stut))
       do.call(objective, args)
     }
-    if(length(gradientS) == 1) gradientS = rep(gradientS, length(functions))
+    if(length(locusAdjust) == 1) locusAdjust = rep(locusAdjust, length(functions))
 #    if(setequal(names(stutter), colnames(hypothesis$cspProfile)))
 #      stutterAdjust <- stutterAdjust[colnames(hypothesis$cspProfile)]
-    objectives = mapply(callme, functions, gradientS)
+    objectives = mapply(callme, functions, locusAdjust)
     arguments = append(arguments, list(...))
 if(diagnose==TRUE) return(objectives)
     # calculate penalties
-    pens <- do.call(penalties.peaks, append(arguments,list(gradientS=gradientS,nloc=ncol(hypothesis$queriedProfile))))
+    pens <- do.call(penalties.peaks, append(arguments,list(locusAdjust=locusAdjust,nloc=ncol(hypothesis$queriedProfile))))
     list(objectives=objectives, penalties=pens)
   }
   if(addAttr) {
@@ -62,7 +63,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
   cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
-  result.function <- function(scale,gradientS,
+  result.function <- function(scale,locusAdjust, gradientS, 
 meanS,
 meanD=NULL,meanO=NULL,
 repAdjust=NULL,
@@ -109,7 +110,7 @@ repAdjust=NULL,
     if(diagnose==TRUE)
 	{
 	repRes <- likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
-				scale=scale, gradientS=gradientS, meanS=meanS,
+				scale=scale, gradientS=gradientS, locusAdjust=locusAdjust, meanS=meanS,
 				meanD = meanD, meanO=meanO,
 degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR,diagnose=diagnose)
@@ -117,7 +118,7 @@ degradation=degradation,
 	}
 
     repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
-				scale=scale,gradientS=gradientS, meanS=meanS, 
+				scale=scale,gradientS=gradientS,locusAdjust=locusAdjust, meanS=meanS, 
 				meanD = meanD,meanO=meanO,
 degradation=degradation, 
 				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR),ncol=length(hypothesis$peaksProfile))
@@ -236,7 +237,7 @@ genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=nco
 
 
 # function to be called at each iteration of maximisation
-peaks.probabilities = function(hypothesis,cons,DNAcont,scale,gradientS,meanS,
+peaks.probabilities = function(hypothesis,cons,DNAcont,scale,gradientS,locusAdjust,meanS,
        meanD=NULL,meanO=NULL,
 degradation,repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)#,doC=TRUE)
     {
@@ -247,6 +248,7 @@ CONS<<-cons
 DNACONT<<-DNAcont
 SCALE<<-scale
 GRADIENTS<<-gradientS
+LOCUSADJUST<<-locusAdjust
 MEANS<<-meanS
 MEAND<<-meanD
 MEANO<<-meanO
@@ -284,7 +286,7 @@ DSR<<- meanD
         	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) peak.heights.per.locus(genotypeArray=cons$genotypes,
 										alleles=hypothesis$peaksProfile[[x]],heights=hypothesis$heightsProfile[[x]],
 										sizes=hypothesis$sizesProfile[[x]],DNAcont=DNAcont,
-										gradientS=gradientS,
+										locusAdjust=locusAdjust,
 										meanD=meanD,
 										meanO=meanO,
 										scale=scale,degradation=degradation,
@@ -297,7 +299,7 @@ DSR<<- meanD
 		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSDO,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,
+		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,locusAdjust=locusAdjust,
 		                                                                        meanS=meanS,
 		                                                                        meanD=meanD,meanO=meanO,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
@@ -311,7 +313,7 @@ DSR<<- meanD
 		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksS,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                                                                        DNAcont=rep(DNAcont,each=2),gradientS=gradientS,
+		                                                                        DNAcont=rep(DNAcont,each=2),gradientS=gradientS,locusAdjust=locusAdjust,
 		                                                                        meanS=meanS,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
 		                                                                        fragLengths=hypothesis$alleleDb[,2],
@@ -324,7 +326,7 @@ DSR<<- meanD
 		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSD,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,
+		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,locusAdjust=locusAdjust,
 		                                                                        meanS=meanS,
 		                                                                        meanD=meanD,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
@@ -338,7 +340,7 @@ DSR<<- meanD
 		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) .Call(.cpp.probabilityPeaksSO,genotypeArray=cons$genotypes,
 		                                                                        alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                                                                        heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,
+		                                                                        DNAcont=rep(DNAcont,each=2), gradientS=gradientS,locusAdjust=locusAdjust,
 		                                                                        meanS=meanS,
 		                                                                        meanO=meanO,
 		                                                                        scale=scale,degradation=rep(1+degradation,each=2),
@@ -366,7 +368,7 @@ DSR<<- meanD
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,gradientS,meanD=NULL,meanO=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
+peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,gradientS,locusAdjust,meanS,meanD=NULL,meanO=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
 	{
 	#index = !is.na(alleles)
 	#alleles = alleles[index]
@@ -377,7 +379,7 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,gr
 	# result vector
 	#if(parallel==FALSE)
 	#	{
-	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,gradientS,meanD,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose))
+	        Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(x,alleles,heights,sizes,DNAcont,locusAdjust,meanD,scale,degradation,fragLengths,repAdjust,detectionThresh,diagnose))
 	#	} else {
 	#        Probs = mclapply(1:ncol(genotypeArray),FUN=function(x) probability.peaks(genotypeArray[,x],alleles,heights,sizes,DNAcont,stutterMean,stutterAdjust,scale,degradation,fragLengths,repAdjust,diagnose),mc.cores=cores)
 	#	}
@@ -399,12 +401,12 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,sizes,DNAcont,gr
 # rcont = current rcont value
 # rhoA = allelic constant parameter, single value
 # rhoS = stutter constant parameter, single value
-probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,gradientS,meanD=NULL,meanO=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
+probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,gradientS,locusAdjust,meanS,meanD=NULL,meanO=NULL,scale,degradation,fragLengths,repAdjust=NULL,detectionThresh,diagnose=FALSE)
 	{	
 	genotype = as.numeric(genotype)
 
 	# get means
-	gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,gradientS,meanD,meanO,degradation,fragLengths,repAdjust)
+	gammaMu = peak.height.dose(genotype,alleles,heights,sizes,DNAcont,locusAdjust,meanD,meanO,degradation,fragLengths,repAdjust)
 	names(heights) = alleles
 	# give peak heights to dropout alleles
 	peakHeights = unlist(heights)
@@ -478,7 +480,7 @@ probability.peaks = function(genotype,alleles,heights,sizes,DNAcont,gradientS,me
 # rhoA = allelic constant parameter
 # rhoS = stutter constant parameter
 # scale = stanDev constant parameter for gamma
-peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,gradientS,meanD=NULL,meanO=NULL,degradation,fragLengths,repAdjust=NULL)
+peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,gradientS,locusAdjust,meanS,meanD=NULL,meanO=NULL,degradation,fragLengths,repAdjust=NULL)
 	{
 	# positions of stutter alleles
 	stutterPos = genotype-1
@@ -509,7 +511,7 @@ peak.height.dose = function(genotype,alleles,heights,sizes,DNAcont,gradientS,mea
 	degAdjust = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
 #return(DNAcont)
 	#degAdjust = degAdjust/sum(degAdjust)   # this was previously omega - converts rcont to proportion
-	stutterRate = sapply(genotype,FUN=function(x) meanS*(1+gradientS*(abs(as.numeric(names(fragLengths)[which(round(as.numeric(names(fragLengths)),1)==x)])-as.numeric(names(fragLengths)[1])+1))))
+	stutterRate = sapply(genotype,FUN=function(x) meanS*(1+locusAdjust*(abs(as.numeric(names(fragLengths)[which(round(as.numeric(names(fragLengths)),1)==x)])-as.numeric(names(fragLengths)[1])+1))))
 	# stutter alpha
 	#alphaS = degAdjust * rhoS * DNAproxy / sizesGen
 	muS = degAdjust * stutterRate #* DNAproxy / sizesGen
@@ -607,7 +609,7 @@ addMissingAlleleSize = function(index,sizes)
 # Penalties to apply to the likelihood.
 # Documentation is in man directory.
 penalties.peaks <- function(nloc, degradation=NULL,
-                       degradationPenalty=50, gradientS=NULL,
+                       degradationPenalty=50, gradientS=NULL, locusAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
 meanS=NULL,meanD=NULL,meanO=NULL,
 scale=NULL, scaleSD=1, ...) {
@@ -624,10 +626,10 @@ scale=NULL, scaleSD=1, ...) {
     # gaussian penalty on stutter adjustment
     # sd of stutter percentage ranges from 1.2 to 3.2 (will set penalty based on 3 here)
     #(see Leclair-et-al (2004) Systematic Analysis of Stutter Percentages and Allele Peak Height and Peak Area Ratios at Heterozygous STR Loci for Forensic Casework and Database Samples)
-    if(!missing(gradientS) & !is.null(gradientS))
+    if(!missing(locusAdjust) & !is.null(locusAdjust))
         {
         #result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
-        result = result * dnorm(gradientS,mean=0.5, sd=4.5)
+        result = result * dnorm(log10(locusAdjust),mean=0, sd=0.2)
         }
 
  if(!missing(meanD) & !is.null(meanD))
