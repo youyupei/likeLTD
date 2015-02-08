@@ -27,22 +27,22 @@ likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, l
     # Call each and every function in the array.
     arguments = list(degradation=degradation, DNAcont=DNAcont,
                      scale = scale, repAdjust=repAdjust,
-gradientS=gradientS, 
+meanS=meanS, 
 meanD = meanD,meanO=meanO,
 detectionThresh = detectionThresh,
                      degradationPenalty=degradationPenalty, stutterPenalty=stutterPenalty, dropin=dropin)
     callme <- function(objective,stut) {
-    args = append(arguments, list(meanS=stut))
+    args = append(arguments, list(gradientS=stut))
       do.call(objective, args)
     }
-    if(length(meanS) == 1) meanS = rep(meanS, length(functions))
+    if(length(gradientS) == 1) gradientS = rep(gradientS, length(functions))
 #    if(setequal(names(stutter), colnames(hypothesis$cspProfile)))
 #      stutterAdjust <- stutterAdjust[colnames(hypothesis$cspProfile)]
-    objectives = mapply(callme, functions, meanS)
+    objectives = mapply(callme, functions, gradientS)
     arguments = append(arguments, list(...))
 if(diagnose==TRUE) return(objectives)
     # calculate penalties
-    pens <- do.call(penalties.peaks, append(arguments,list(meanS=meanS,nloc=ncol(hypothesis$queriedProfile))))
+    pens <- do.call(penalties.peaks, append(arguments,list(gradientS=gradientS,nloc=ncol(hypothesis$queriedProfile))))
     list(objectives=objectives, penalties=pens)
   }
   if(addAttr) {
@@ -627,7 +627,7 @@ scale=NULL, scaleSD=1, ...) {
     if(!missing(gradientS) & !is.null(gradientS))
         {
         #result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
-        result = result * dnorm(gradientS,mean=0.5, sd=1)
+        result = result * dnorm(gradientS,mean=0.4, sd=0.3)
         }
 
  if(!missing(meanD) & !is.null(meanD))
@@ -645,8 +645,10 @@ scale=NULL, scaleSD=1, ...) {
 	}
 
 
-  #result = result * dnorm(log10(stutterGradient),mean=log10(0.015), sd=abs(log10(0.005)))
-   result = result * dgamma(meanS,shape=0.10/0.018,scale=0.018)
+   # mean = 10%, sd = 5%
+   # shape = mean^2/var
+   # scale = var/mean
+   result = result * dgamma(meanS,shape=4,scale=0.025)
 
 
   return(result)
