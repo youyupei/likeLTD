@@ -11,7 +11,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
   gradientS = 1
-  gradientAdjust     = rep(5,nloc)
+  gradientAdjust     = rep(10,nloc)
+  stutterAdjust     = rep(10,nloc)
   meanS = 0.3
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
@@ -26,6 +27,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
+       stutterAdjust         = stutterAdjust,
        meanS   = meanS,
        repAdjust       = repAdjust,
        meanD = meanD,
@@ -49,7 +51,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   DNAcont       = rep(zero, length(arguments$DNAcont))
   scale       = 0+zero
   gradientS = 0+zero
-  gradientAdjust     = rep(0.2,nloc)
+  gradientAdjust     = rep(0.1,nloc)
+  stutterAdjust     = rep(0.1,nloc)
   meanS  = 0+zero
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
@@ -64,6 +67,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
+       stutterAdjust         = stutterAdjust,
        meanS = meanS,
        repAdjust       = repAdjust,
        meanD = meanD,
@@ -157,8 +161,8 @@ toAdd = 0
 if(hypothesis$doDoubleStutter) toAdd = toAdd + x$meanD
 if(hypothesis$doOverStutter) toAdd = toAdd + x$meanO
     #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition1 = mapply(x$gradientAdjust,hypothesis$alleleDb,FUN=function(gradA,db) any((1+(x$gradientS*gradA)*db[,3])*x$meanS+toAdd>1)|any((1+(x$gradientS*gradA)*db[,3])*x$meanS+toAdd<0))
-condition2 = mapply(x$gradientAdjust,hypothesis$alleleDb,FUN=function(gradA,db) any((x$meanS*(1+(x$gradientS*gradA)*db[,3]))>1)|any((x$meanS*(1+(x$gradientS*gradA)*db[,3]))<0))
+condition1 = mapply(x$gradientAdjust,x$stutterAdjust,hypothesis$alleleDb,FUN=function(gradA,stuttA,db) any((1+(x$gradientS*gradA)*db[,3])*(x$meanS*stuttA)+toAdd>1)|any((1+(x$gradientS*gradA)*db[,3])*(x$meanS*stuttA)+toAdd<0))
+condition2 = mapply(x$gradientAdjust,x$stutterAdjust,hypothesis$alleleDb,FUN=function(gradA,stuttA,db) any(((x$meanS*stuttA)*(1+(x$gradientS*gradA)*db[,3]))>1)|any(((x$meanS*stuttA)*(1+(x$gradientS*gradA)*db[,3]))<0))
 #mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
 #condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
     if(any(condition1)|any(condition2))
@@ -273,7 +277,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   meanO    = NULL
   scale           = 1/4
   gradientS = 0.08
-  gradientAdjust   = rep(0.08,times=ncol(hypothesis$queriedProfile))
+  gradientAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
+  stutterAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   meanS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
@@ -286,6 +291,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
+       stutterAdjust         = stutterAdjust,
        meanS = meanS,
        repAdjust       = repAdjust,
        meanD = meanD,
