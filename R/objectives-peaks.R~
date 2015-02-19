@@ -614,14 +614,14 @@ scale=NULL, scaleSD=1, ...) {
     #(see Leclair-et-al (2004) Systematic Analysis of Stutter Percentages and Allele Peak Height and Peak Area Ratios at Heterozygous STR Loci for Forensic Casework and Database Samples)
     if(!missing(gradientS) & !is.null(gradientS))
         {
-        result = result * dnorm(gradientS,mean=0.4, sd=0.3)
+#        result = result * dnorm(gradientS,mean=0.4, sd=0.3)
         }
 
-    if(!missing(gradientAdjust) & !is.null(gradientAdjust))
-        {
+#    if(!missing(gradientAdjust) & !is.null(gradientAdjust))
+ #       {
         #result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
         result = result * dnorm(log10(gradientAdjust),mean=0, sd=0.5)
-        }
+  #      }
 
  if(!missing(meanD) & !is.null(meanD))
 	{
@@ -644,11 +644,11 @@ scale=NULL, scaleSD=1, ...) {
    result = result * dgamma(meanS,shape=4,scale=0.025)
 
 
-    if(!missing(stutterAdjust) & !is.null(stutterAdjust))
-        {
+ #   if(!missing(stutterAdjust) & !is.null(stutterAdjust))
+  #      {
         #result = result * dnorm(log10(stutterAdjust),mean=0, sd=stutterPenalty)
         result = result * dnorm(log10(stutterAdjust),mean=0, sd=0.5)
-        }
+   #     }
 
   return(result)
 }

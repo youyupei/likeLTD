@@ -271,8 +271,8 @@ inline std::vector<genoStruct> peakMeanDoseS(std::vector<float> genotypeVec, std
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
-			double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			double stutterRate = meanS+(gradientS*stuttIndSub);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			//nonstutterDose = tmpDose * (1-stutter);
@@ -340,8 +340,8 @@ inline std::vector<genoStruct> peakMeanDoseSD(std::vector<float> genotypeVec, st
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
-			double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			double stutterRate = meanS+(gradientS*stuttIndSub);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * meanD;
@@ -417,8 +417,8 @@ inline std::vector<genoStruct> peakMeanDoseSO(std::vector<float> genotypeVec, st
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
-			double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			double stutterRate = meanS+(gradientS*stuttIndSub);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			overStutterDose = tmpDose * meanO;
@@ -494,8 +494,8 @@ inline std::vector<genoStruct> peakMeanDoseSDO(std::vector<float> genotypeVec, s
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
-			//double stutterRate = stutterMean*stutterAdjust*stutterGradient*(abs(genotypeVec[i]-fragVecN[0])+1);
-			double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			double stutterRate = meanS+(gradientS*stuttIndSub);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * meanD;

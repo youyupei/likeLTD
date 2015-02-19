@@ -147,9 +147,9 @@ combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedPr
         {
         # remove indexed alleles, new allele has sum of probabilities, and mean of BP
         #alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]))) 
-	#if(all(is.na(alleleDb[index,3]))) meanLUS = mean(alleleDb[,3],na.rm=TRUE) else meanLUS = mean(alleleDb[index,3],na.rm=TRUE)
-	#alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]),meanLUS))
-	alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2])))
+	if(all(is.na(alleleDb[index,3]))) meanLUS = mean(alleleDb[,3],na.rm=TRUE) else meanLUS = mean(alleleDb[index,3],na.rm=TRUE)
+	alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]),meanLUS))
+	#alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2])))
         rownames(alleleDb)[nrow(alleleDb)] = "-1"
         }
     return(alleleDb)   
@@ -177,11 +177,36 @@ fill.unknown.LUS = function(alleleDb)
 	{
  	# make i
   	index = which(is.na(alleleDb[,3]))
-	alleleDb[index,3] = mean(alleleDb[,3],na.rm=TRUE) 
+	toadd = sapply(index,FUN=function(x) extrapolateLUS(alleleDb,x))
+	alleleDb[index,3] = toadd
 	return(alleleDb)
 	}
 
-
+extrapolateLUS = function(alleleDb,toFill)
+	{
+	# get allele names
+	alleleNames = as.numeric(rownames(alleleDb))
+	# get allele endings e.g. 9.3 ending is 0.3
+	alleleEndings = alleleNames-floor(alleleNames)
+	# if not partial add one (so not dividing by zero)
+	if(alleleEndings[toFill]==0) alleleEndings = alleleEndings+1
+	# get which db have same partial ending and arent NA
+	sameEndingIndex = which(round(alleleEndings[toFill],1)%%round(alleleEndings,1)==0&!is.na(alleleDb[,3]))
+	# find closest out of those
+	closest = which.min(alleleNames[sameEndingIndex]-alleleNames[toFill])
+	# if none have same partial ending, move to absolute closest e.g. closest to 9.3 will be 9
+	if(length(closest)==0)
+		{
+		difference = abs(alleleNames-alleleNames[toFill])
+		acceptableIndex = !is.na(alleleDb[,3])
+		closestIndex = which.min(difference[acceptableIndex])
+		closest = which(acceptableIndex)[closestIndex]
+		out = alleleDb[closest,3]-(alleleNames[closest]-alleleNames[toFill])
+		} else {
+		out = alleleDb[sameEndingIndex[closest],3]-(alleleNames[sameEndingIndex[closest]]-alleleNames[toFill])
+		}
+	return(out)
+	}
 
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
@@ -195,21 +220,25 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  #alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
-  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
+  #alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
   alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  # remove allele with 0 observations in database
   alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
+
+  #alleleDb2 = sapply(alleleDb,FUN=fill.unknown.LUS,simplify=FALSE)
+
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+  if(combineRare) alleleDb = likeLTD:::combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
 
   # add index for stutter values
-  alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
-  #alleleDb = sapply(alleleDb,FUN=fill.unknown.LUS,simplify=FALSE)
+  #alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
+
 
   # Construct all profiles as arrays of  
   list(binaryProfile=cspProfile,
@@ -427,12 +456,13 @@ missing.alleles.peaks = function(alleleDb, cspProfile, queriedProfile, knownProf
     missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
     # Now add new rows to database. 
     if(length(missingAlleles)) {
-      #newrows = matrix(c(1, 0, NA), nrow=length(missingAlleles), ncol=3,
-      #                 byrow=TRUE)
-      newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+      newrows = matrix(c(1, 0, NA), nrow=length(missingAlleles), ncol=3,
                        byrow=TRUE)
+      #newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+      #                 byrow=TRUE)
       rownames(newrows) = missingAlleles
       alleleDb[[locus]] = rbind(alleleDb[[locus]], newrows)
+      alleleDb[[locus]][nrow(alleleDb[[locus]]),3] = extrapolateLUS(alleleDb[[locus]],nrow(alleleDb[[locus]]))
     }
   }
   alleleDb

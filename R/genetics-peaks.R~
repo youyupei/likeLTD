@@ -145,7 +145,6 @@ prod.matrix.row <- function(x) {
   return(y)
 }
 
-
 ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
   # Reformats allele database to include only given ethnic group and loci.
   #
@@ -169,9 +168,10 @@ ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
   # Also filters out alleles with 0 frequencies.
   filter.locus <- function(n) {
     locus <- afreq[afreq$Marker == n, ]
-    result <- matrix(c(locus[[ethnic]], locus[["BP"]]), , 2)
+    result <- matrix(c(locus[[ethnic]], locus[["BP"]], locus[["LUS"]]), , 3)
     result[is.na(result[, 2]), 2] <- 0
     rownames(result) <- locus$Allele
+    result = fill.unknown.LUS(result)
     return(result[result[, 1] > 0, ])
   }
   # now apply function over all loci.
