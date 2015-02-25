@@ -486,7 +486,8 @@ geometric.series <- function(start,end,n){
 return(steps)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE, CR.start=0.1, CR.end=0.7){
+
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -503,8 +504,8 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	n = 1
 
 	# change DEoptim parameters
-	P.pars$control$CR <- 0.1
-	D.pars$control$CR <- 0.1
+	P.pars$control$CR <- CR.start
+	D.pars$control$CR <- CR.end
 		
 	# run DEoptimLoop until convergence at the required step
 	P.step <- DEoptimLoop(P.pars,10)
@@ -515,9 +516,6 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	GlobalDval = D.step$optim$bestval
 	GlobalPmem = P.step$optim$bestmem
 	GlobalDmem = D.step$optim$bestmem
-
-	# generate outputs if interim = TRUE
-	if(interim==TRUE) interim(P.step,D.step,n,NA)
 
 	# put the Pros outputs into the combined output
 	P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -569,9 +567,16 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 		tol.steps <- geometric.series(10,tolerance,n.steps)
 	
 		# adjust DEoptim parameters gradually, so search space is confined more at the end
-		CR.steps <- geometric.series(0.1,0.7,n.steps)
+		CR.steps <- geometric.series(CR.start,CR.end,n.steps)
 
 		for(n in 2:n.steps){
+
+			# generate outputs if interim = TRUE
+			if(interim==TRUE){
+				interim(P.step,D.step,n,n.steps)
+				save(list=ls(),file='interim.RData')
+				}
+	
 			# change DEoptim parameters
 			P.pars$control$CR <- CR.steps[n]
 			D.pars$control$CR <- CR.steps[n]
@@ -592,8 +597,6 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 				GlobalDmem = D.step$optim$bestmem
 				}
 
-			# generate outputs if interim = TRUE
-			if(interim==TRUE) interim(P.step,D.step,n,n.steps)
 
 			# put the Pros outputs into the combined output
 			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
@@ -687,4 +690,109 @@ interim = function(resultsP,resultsD,step,n.steps)
 	# paramsD
 	suppressWarnings(write.table(t(c("paramsD",resultsD$optim$bestmem)),"Interim.csv",append=TRUE,sep=",",row.names=FALSE))
 	}
+
+
+evaluate.from.interim <- function(file){
+
+	# load the 'interim.RData' file produced by evaluate(..., interim=T)
+	if(!grep(pattern = 'interim.RData', x=file))stop("File must be the 'interim.RData' file produced by evaluate() when interim=T")
+	load(file)
+
+		for(n in n:n.steps){
+
+			# generate outputs if interim = TRUE
+			if(interim==TRUE){
+				interim(P.step,D.step,n,n.steps)
+				save(list=ls(),file='interim.RData')
+				}
+
+			# change DEoptim parameters
+			P.pars$control$CR <- CR.steps[n]
+			D.pars$control$CR <- CR.steps[n]
+		
+			# run DEoptimLoop until convergence at the required step
+			P.step <- DEoptimLoop(P.pars,tol.steps[n])
+			D.step <- DEoptimLoop(D.pars,tol.steps[n])
+
+			# set global results
+			if(P.step$optim$bestval<GlobalPval)
+				{
+				GlobalPval = P.step$optim$bestval
+				GlobalPmem = P.step$optim$bestmem
+				}
+			if(D.step$optim$bestval<GlobalDval)
+				{
+				GlobalDval = D.step$optim$bestval
+				GlobalDmem = D.step$optim$bestmem
+				}
+
+			# put the Pros outputs into the combined output
+			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.iter <- c(P.iter, P.step$optim$iter)
+			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
+
+			# put the Def outputs into the combined output	
+			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.iter <- c(D.iter, D.step$optim$iter)
+			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+
+			# recycle the current pop into the next loop
+			P.pars$control$initialpop <- P.step$member$pop
+			D.pars$control$initialpop <- D.step$member$pop
+
+			# calculate the weight of evidence. Note, results are + rather than -, so D-P
+			WoE[n] <- D.step$optim$bestval - P.step$optim$bestval
+
+			# progress bar
+			if(progBar){
+				# update progress bar
+				setTkProgressBar(pb,n,label=paste0("WoE = ",round(WoE[n],2)," bans"))
+				} 
+			# percentage progress
+			progress <- round(100*n/n.steps)
+			print(paste('Weight of evidence:',round(WoE[n],2),'Progress:',progress,'%'))
+			}
+
+
+	changeFlag=FALSE
+	# if global result is better than result from last chunk
+	if(P.step$optim$bestval>GlobalPval)
+		{
+		P.step$optim$bestval = GlobalPval
+		P.step$optim$bestmem = GlobalPmem
+		print("*** Final prosecution result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+	if(D.step$optim$bestval>GlobalDval)
+		{
+		D.step$optim$bestval = GlobalDval
+		D.step$optim$bestmem = GlobalDmem
+		print("*** Final defence result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+
+	if(changeFlag) WoE <- c(WoE,D.step$optim$bestval - P.step$optim$bestval)
+
+	# close progress bar
+	if(progBar) close(pb)
+
+	# update final Pros results
+	P.results <- P.step
+	P.results$member$bestmemit <- P.bestmemit
+	P.results$member$bestvalit <- P.bestvalit
+	P.results$optim$iter <- P.iter
+	P.results$optim$nfeval <- P.nfeval
+
+	# update final Pros results
+	D.results <- D.step
+	D.results$member$bestmemit <- D.bestmemit
+	D.results$member$bestvalit <- D.bestvalit
+	D.results$optim$iter <- D.iter
+	D.results$optim$nfeval <- D.nfeval
+
+# return all results
+return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+
 

@@ -35,6 +35,7 @@ export(output.report)
 
 export(DEoptimLoop)
 export(evaluate)
+export(evaluate.from.interim)
 export(get.likely.genotypes)
 
 export(pack.admin.input.peaks)
@@ -52,7 +53,6 @@ export(make.allelic.calls)
 export(relistArguments.peaks)
 export(create.likelihood.vectors.peaks)
 export(evaluate.peaks)
-export(evaluate.peaks2)
 export(plot.CSP.heights)
 
 importFrom(DEoptim, DEoptim)
