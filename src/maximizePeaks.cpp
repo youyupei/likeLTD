@@ -571,11 +571,13 @@ inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStru
 		//if(i==gammaMuVec.size()) break;
 		if(cspModify[i].heights==0)
 			{
+			// gamma cdf
 			tmpDensity = log(kf_gammap(gammaMuVec[i].dose/scale,cdfArg));
-			//tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
 			} else {
-			tmpDensity = gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg);
-			//tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg));
+			// gamma pdf
+			//tmpDensity = gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg);
+			// discrete approximation to pmf
+			tmpDensity = log(kf_gammap(gammaMuVec[i].dose/scale,(cspModify[i].heights+0.5)/scale)-kf_gammap(gammaMuVec[i].dose/scale,(cspModify[i].heights-0.5)/scale));
 			}
 
 		outDensity += tmpDensity;

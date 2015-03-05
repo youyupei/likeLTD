@@ -440,10 +440,17 @@ probability.peaks = function(genotype,alleles,
 		if(length(dropoutIndex)!=length(peakHeights))
 		    {
 		    # non-dropout = gamma point density
-		    pdf[-dropoutIndex] = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), 
+		    #pdf[-dropoutIndex] = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), 
+		    #        x=peakHeights[-dropoutIndex], 
+		    #        k=shapesVec[-dropoutIndex], 
+		    #        t=scalesVec[-dropoutIndex])
+		    # discrete approximation to pmf
+		    pdf[-dropoutIndex] = mapply(FUN=function(x,k,t) pgamma(q=x+0.5,shape=k,scale=t)-
+		        pgamma(q=x-0.5,shape=k,scale=t), 
 		            x=peakHeights[-dropoutIndex], 
 		            k=shapesVec[-dropoutIndex], 
 		            t=scalesVec[-dropoutIndex])
+		            
 		    }
 		# dropout = integral from 0 to threshold
 		pdf[dropoutIndex] = mapply(FUN=function(k,t) pgamma(q=detectionThresh,shape=k,scale=t), 
@@ -451,7 +458,8 @@ probability.peaks = function(genotype,alleles,
 		        t=scalesVec[dropoutIndex])
 		} else {
 		# non-dropout = gamma point density
-		pdf = mapply(FUN=function(x,k,t) dgamma(x=x,shape=k,scale=t), 
+		pdf = mapply(FUN=function(x,k,t) pgamma(q=x+0.5,shape=k,scale=t)-
+		    pgamma(q=x-0.5,shape=k,scale=t), 
 		        x=peakHeights, 
 		        k=shapesVec, 
 		        t=scalesVec)
