@@ -1398,11 +1398,28 @@ SEXP probabilityPeaksSDO(SEXP genotypeArray, SEXP alleles, SEXP heights,
 	}
 
 
-
-
-
-
-
+/*
+// get probability of all genotype combinations, taking into account Single, Double and Over stutter
+SEXP testCDF(SEXP S, SEXP Z)
+    {
+    // convert S to double
+	SEXP sDuplicate = PROTECT(duplicate(S));
+	double const * const S_ptr     = REAL(sDuplicate);
+	double s = S_ptr[0];
+	// convert Z to double
+	SEXP zDuplicate = PROTECT(duplicate(Z));
+	double const * const Z_ptr     = REAL(zDuplicate);
+	double z = Z_ptr[0];
+	// get cdf
+	result = ln_kf_gammap(s,z)
+	// Make and return output object
+	SEXP out = PROTECT(allocVector(REALSXP, 1));
+  	double       * const out_ptr  = REAL(out);
+	out_ptr[0] = result;
+    UNPROTECT(3);
+	return(out);
+    }
+*/
 
 
 
