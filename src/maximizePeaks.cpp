@@ -108,20 +108,49 @@ inline double kf_lgamma(double z)
 	return log(x) - 5.58106146679532777 - z + (z-0.5) * log(z+6.5);
 }
 
-#define KF_GAMMA_EPS 1e-14
+
 
 // regularized lower incomplete gamma function, by series expansion
 // see: http://barricklab.org/hg/breseq/file/9ab26de12a0b/extern/samtools-0.1.15/bcftools/kfunc.c
-static double kf_gammap(double s, double z)
+#define KF_GAMMA_EPS 1e-14
+#define KF_TINY 1e-290
+// regularized lower incomplete gamma function, by series expansion
+static double _kf_gammap(double s, double z)
 {
 	double sum, x;
-	int k;
-	for (k = 1, sum = x = 1.; k < 100; ++k) {
-		sum += (x *= z / (s + k));
-		if (x / sum < KF_GAMMA_EPS) break;
-	}
-	return exp(s * log(z) - z - kf_lgamma(s + 1.) + log(sum));
-}
+ 	int k;
+ 	for (k = 1, sum = x = 1.; k < 100; ++k) {
+ 		sum += (x *= z / (s + k));
+ 		if (x / sum < KF_GAMMA_EPS) break;
+ 	}
+ 	return exp(s * log(z) - z - kf_lgamma(s + 1.) + log(sum));
+ }
+ // regularized upper incomplete gamma function, by continued fraction
+ static double _kf_gammaq(double s, double z)
+ {
+ 	int j;
+ 	double C, D, f;
+ 	f = 1. + z - s; C = f; D = 0.;
+ 	// Modified Lentz's algorithm for computing continued fraction
+ 	// See Numerical Recipes in C, 2nd edition, section 5.2
+ 	for (j = 1; j < 100; ++j) {
+ 		double a = j * (s - j), b = (j<<1) + 1 + z - s, d;
+ 		D = b + a * D;
+ 		if (D < KF_TINY) D = KF_TINY;
+ 		C = b + a / C;
+ 		if (C < KF_TINY) C = KF_TINY;
+ 		D = 1. / D;
+ 		d = C * D;
+ 		f *= d;
+ 		if (fabs(d - 1.) < KF_GAMMA_EPS) break;
+ 	}
+ 	return exp(s * log(z) - z - kf_lgamma(s) - log(f));
+ }
+
+ double kf_gammap(double s, double z)
+ {
+ 	return z <= 1. || z < s? _kf_gammap(s, z) : 1. - _kf_gammaq(s, z);
+ }
 
 static double ln_kf_gammap(double s, double z)
 {
@@ -463,7 +492,7 @@ inline std::vector<genoStruct> peakMeanDoseSDO(std::vector<float> genotypeVec, s
 	int matchIndex;
 	double diff;
 
-	double doubleStutterDose, overStutterDose;
+	double doubleStutterDose, overStutterDose, stutterRate;
 
 	// effective dose for stutter and allelic
 	for(int i=0; i<nGen; ++i)
@@ -495,7 +524,7 @@ inline std::vector<genoStruct> peakMeanDoseSDO(std::vector<float> genotypeVec, s
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],fragSub)*repAdjust;
 			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
-			double stutterRate = meanS+(gradientS*stuttIndSub);
+			stutterRate = meanS+(gradientS*stuttIndSub);
 			//stutterDose = tmpDose * stutter;
 			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * meanD;
@@ -505,9 +534,7 @@ inline std::vector<genoStruct> peakMeanDoseSDO(std::vector<float> genotypeVec, s
 			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
 			nonstutterDose = tmpDose * (1-(stutterRate+meanD+meanO));
 			//nonstutterDose = tmpDose * (1-stutterRate);
-
 			}
-
 		// stutter adjusted effective dose
 		// non-stutter dose
 		tmpMu.genotype = genotypeVec[i];
@@ -544,12 +571,13 @@ inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStru
 		//if(i==gammaMuVec.size()) break;
 		if(cspModify[i].heights==0)
 			{
-			tmpDensity = ln_kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
+			tmpDensity = log(kf_gammap(gammaMuVec[i].dose/scale,cdfArg));
 			//tmpDensity = kf_gammap(gammaMuVec[i].dose/scale,cdfArg);
 			} else {
 			tmpDensity = gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg);
 			//tmpDensity = exp(gammalog(cspModify[i].heights, gammaMuVec[i].dose/scale, pdfArg));
 			}
+
 		outDensity += tmpDensity;
 		//outDensity *= tmpDensity;
 	   	}
@@ -1398,8 +1426,6 @@ SEXP probabilityPeaksSDO(SEXP genotypeArray, SEXP alleles, SEXP heights,
 	}
 
 
-/*
-// get probability of all genotype combinations, taking into account Single, Double and Over stutter
 SEXP testCDF(SEXP S, SEXP Z)
     {
     // convert S to double
@@ -1411,7 +1437,7 @@ SEXP testCDF(SEXP S, SEXP Z)
 	double const * const Z_ptr     = REAL(zDuplicate);
 	double z = Z_ptr[0];
 	// get cdf
-	result = ln_kf_gammap(s,z)
+	double result = exp(log(kf_gammap(s,z)));
 	// Make and return output object
 	SEXP out = PROTECT(allocVector(REALSXP, 1));
   	double       * const out_ptr  = REAL(out);
@@ -1419,8 +1445,31 @@ SEXP testCDF(SEXP S, SEXP Z)
     UNPROTECT(3);
 	return(out);
     }
-*/
 
+
+SEXP testPDF(SEXP X, SEXP A, SEXP B)
+    {
+    // convert X to double
+	SEXP xDuplicate = PROTECT(duplicate(X));
+	double const * const X_ptr     = REAL(xDuplicate);
+	double x = X_ptr[0];
+	// convert A to double
+	SEXP aDuplicate = PROTECT(duplicate(A));
+	double const * const A_ptr     = REAL(aDuplicate);
+	double a = A_ptr[0];
+	// convert B to double
+	SEXP bDuplicate = PROTECT(duplicate(B));
+	double const * const B_ptr     = REAL(bDuplicate);
+	double b = B_ptr[0];
+	// get cdf
+	double result = gammalog(x,a,b);
+	// Make and return output object
+	SEXP out = PROTECT(allocVector(REALSXP, 1));
+  	double       * const out_ptr  = REAL(out);
+	out_ptr[0] = result;
+    UNPROTECT(4);
+	return(out);
+    }
 
 
 

@@ -144,6 +144,12 @@ inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStru
 //! \brief modify csp
 inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<float> allPosVec);
 
+    //! \brief test cdf
+    SEXP testCDF(SEXP S, SEXP Z);
+
+    //! \brief test pdf
+    SEXP testPDF(SEXP X, SEXP A, SEXP B);
+
 #ifdef __cplusplus
 }
 #endif

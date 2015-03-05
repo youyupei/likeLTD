@@ -86,7 +86,7 @@ repAdjust=NULL,
     #          hypothesis$refIndiv. In general, this means either the queried
     #          individual (if subject to dropout and prosecution hypothesis) or
     #          the first individual subject to droput is the reference individual.
-    #   ...: Any other parameter, e.g. for penalty functions. 
+    #   ...: Any other parameter, e.g. for penalty functions. genotypeArray=cons$genotypes,
     #        These parameters are ignored here.
     # Returns: A scalar value giving the likelihood for this locus and
     #          hypothesis
@@ -251,6 +251,22 @@ peaks.probabilities = function(hypothesis,cons,
         # combine mean and adjustment
         locusGradient = gradientS*gradientAdjust
         locusStutter = meanS*stutterAdjust
+if(rownames(hypothesis$peaksProfile[[1]])=="D10S1248"){
+        GENOTYPEARRAY<<-cons$genotypes
+		ALLELES<<-as.numeric(hypothesis$peaksProfile[[1]])
+		HEIGHTS<<-unlist(as.numeric(hypothesis$heightsProfile[[1]]))
+		DNACONT<<-rep(DNAcont,each=2)
+		GRADIENTS<<-locusGradient
+		MEANS<<-locusStutter
+		MEAND<<-meanD
+		MEANO<<-meanO
+		SCALE<<-scale
+		DEGRADATION<<-rep(1+degradation,each=2)
+		FRAGLENGTHS<<-hypothesis$alleleDb[,2]
+		FRAGNAMES<<-as.numeric(rownames(hypothesis$alleleDb))
+        STUTTERINDEX<<-hypothesis$alleleDb[,3]
+		REPADJUST<<-repAdjust[1]
+		DETECTIONTHRESH<<-detectionThresh}
 	    if(doR==TRUE|diagnose==TRUE)
 		    {
         	# probabilities for each replicate
@@ -280,8 +296,8 @@ peaks.probabilities = function(hypothesis,cons,
 		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
 		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanS=locusStutter,
 		                    meanD=meanD,meanO=meanO,
+		                    meanS=locusStutter,
 		                    scale=scale,degradation=rep(1+degradation,each=2),
 		                    fragLengths=hypothesis$alleleDb[,2],
 		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
@@ -311,8 +327,8 @@ peaks.probabilities = function(hypothesis,cons,
 		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
 		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanS=locusStutter,
 		                    meanD=meanD,
+		                    meanS=locusStutter,
 		                    scale=scale,degradation=rep(1+degradation,each=2),
 		                    fragLengths=hypothesis$alleleDb[,2],
 		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
@@ -327,8 +343,8 @@ peaks.probabilities = function(hypothesis,cons,
 		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
 		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
 		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanS=locusStutter,
 		                    meanO=meanO,
+		                    meanS=locusStutter,
 		                    scale=scale,degradation=rep(1+degradation,each=2),
 		                    fragLengths=hypothesis$alleleDb[,2],
 		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
@@ -440,6 +456,7 @@ probability.peaks = function(genotype,alleles,
 		        k=shapesVec, 
 		        t=scalesVec)
 		}
+
 	# set impossible values to 0 likelihood
 	pdf[which(is.infinite(pdf))] = 0
 	# output
@@ -476,7 +493,7 @@ peak.height.dose = function(genotype,alleles,heights,
 	# stutter rate
 	stutterRate = meanS+(gradientS*LUSvals[fragLengthIndex])
     # dose from stutters
-	muS = dose * stutterRate
+	muS = dose * stutterRate	
 	if(!is.null(meanD))
 		{
 		# dose from double stutters
