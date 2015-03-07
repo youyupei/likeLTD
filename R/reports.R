@@ -791,13 +791,13 @@ matchProb = function(hypothesis,rr,fst=0.02)
             p1 = (p1-fst)/(1-fst)
             p2 = (p2-fst)/(1-fst)
             # get match new fst adjusted match prob
-            ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*hom(p1,fst=fst))
+            ideal.match = c(ideal.match,rr[2]+(rr[1]*((2*fst+(1-fst)*p1)/(1+fst)))+((1-sum(rr))*hom(p1,fst=fst)))
             } else {
             # undo last bit of fst adjustment
             p1 = p1/(1-fst)
             p2 = p2/(1-fst)
             # get match new fst adjusted match prob
-            ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*het(p1,p2,fst=fst))
+            ideal.match = c(ideal.match,rr[2]+(rr[1]*((fst+(1-fst)*((p1+p2)/2))/(1+fst)))+((1-sum(rr))*het(p1,p2,fst=fst)))
             }
 		}
 		

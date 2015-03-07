@@ -364,7 +364,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 	rr = hypothesis$relatedness
 	fst = hypothesis$fst
 	ideal.match <- c()
-	for(j in 1:ncol(hypothesis$cspProfile))
+	for(j in 1:ncol(hypothesis$queriedProfile))
 		{
 		
 		if(j%in%c(linkedIndex)) next
@@ -384,13 +384,13 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
         	    p1 = (p1-fst)/(1-fst)
         	    p2 = (p2-fst)/(1-fst)
         	    # get match new fst adjusted match prob
-        	    ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*hom(p1,fst=fst))
+        	    ideal.match = c(ideal.match,rr[2]+(rr[1]*((2*fst+(1-fst)*p1)/(1+fst)))+((1-sum(rr))*hom(p1,fst=fst)))
         	    } else {
         	    # undo last bit of fst adjustment
         	    p1 = p1/(1-fst)
         	    p2 = p2/(1-fst)
         	    # get match new fst adjusted match prob
-        	    ideal.match = c(ideal.match,rr[2]+rr[1]*(p1+p2)/2+(1-sum(rr))*het(p1,p2,fst=fst))
+        	    ideal.match = c(ideal.match,rr[2]+(rr[1]*((fst+(1-fst)*((p1+p2)/2))/(1+fst)))+((1-sum(rr))*het(p1,p2,fst=fst)))
         	    }
 		}
 	# joint probabilities for linked loci
@@ -424,7 +424,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 			# A matrix
 			A = matrix(homLinked(p1,fst=fst),ncol=3)
 			# genotype probability
-			factor1 = p1*(fst+(1-fst)*p1)
+			factor1 = A[,3]
 			} else {
         	    	# undo last bit of fst adjustment
         	    	p1 = p1/(1-fst)
@@ -432,7 +432,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 			# A matrix
 			A = matrix(hetLinked(p1,p2,fst=fst),ncol=3)
 			# genotype probability
-			factor1 = 2*(1-fst)*p1*p2
+			factor1 = A[,3]
 			}
 		if(kn2[1]==kn2[2])
 			{
@@ -442,7 +442,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 			# B matrix
 			B = matrix(homLinked(p3,fst=fst),nrow=3)
 			# genotype probability
-			factor2 = p3*(fst+(1-fst)*p3)
+			factor2 = B[3,]
 			} else {
 			# undo last bit of fst adjustment
         	    	p3 = p3/(1-fst)
@@ -450,7 +450,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 			# B matrix
 			B = matrix(hetLinked(p3,p4,fst=fst),nrow=3)
 			# genotype probability
-			factor2 = 2*(1-fst)*p3*p4
+			factor2 = B[3,]
 			}
 
 		out = (A%*%Ztmp%*%B)/prod(c(factor1,factor2))
