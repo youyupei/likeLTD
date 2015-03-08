@@ -4,7 +4,7 @@
 \usage{optimisation.params(hypothesis, verbose=FALSE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
                            arguments=NULL, zero=0, throwError=FALSE,
-                           withPenalties=TRUE, objective=NULL, iterMax=75, 
+                           withPenalties=TRUE, doLinkage=TRUE,objective=NULL, iterMax=75, 
                            likeMatrix=FALSE,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
@@ -21,6 +21,12 @@
   \epsilon}{alpha +/- epsilon} that exclude the bound itself}
   \item{throwError}{If TRUE, throws an error if the result is infinite}
   \item{withPenalties}{If TRUE, then penalties are evaluated and used}
+  \item{doLinkage}{Logical indicating whether or not to apply a correction for linked loci.
+                    This correction is only applied when Q and X are assumed to be siblings
+                    i.e. \code{hypothesis$relatedness=c(0.5,0.25)}. This multiplies the 
+                    prosecution likelihood by \eqn{IMP_L/IMP_U}, where \eqn{IMP_L} is the inverse match
+                    probability with linkage taken into account, and \eqn{IMP_U} is the same
+                    but without linkage taken into account.}
   \item{objective}{Objective function produced from create.likelihood.vectors}
   \item{iterMax}{Number of iterations to run the optimisation for}
   \item{likeMatrix}{Whether to return likelihoods for every genotype combination, or 
@@ -61,3 +67,6 @@
   In any case, the value returned can always be modified prior to calling
   \code{DEoptim::DEoptim}.
 }
+
+
+

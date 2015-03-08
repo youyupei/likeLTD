@@ -1,11 +1,15 @@
 \name{load.allele.database} 
 \alias{load.allele.database} 
 \title{likeLTD::load.allele.database} 
-\usage{load.allele.database(path=NULL)}
+\usage{load.allele.database(path=NULL, kit=NULL)}
 \arguments{
   \item{path}{Path to the crime scene profile, or \code{NULL}.
               If \code{NULL}, then returns the allele database packaged with
-              \pkg{likeLTD}}
+              \pkg{likeLTD}.}
+  \item{kit}{Only used if \code{path=NULL}. Specifies one of the allele database
+            supplied with \code{likeLTD} to use. Possibilities are "DNA17",
+            "Identifiler" and "SGMplus". Defaults to "DNA17" if both \code{path=NULL}
+            and \code{kit=NULL}.}
 }
 \value{A table, as read from the file.}
 \description{Reads allele database from file, or loads database provided with
@@ -33,3 +37,4 @@ number of ethnic groups included. Finally, if the name of an allele is
 \code{R}, then it is ignored.
 }
 \seealso{read.unc.profile, read.known.profiles}
+

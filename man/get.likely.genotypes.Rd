@@ -2,7 +2,7 @@
 \alias{get.likely.genotypes}
 \title{likeLTD::get.likely.genotypes}
 \usage{get.likely.genotypes(hypothesis,params,results,
-joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))}
+posterior=FALSE,joint=FALSE,prob=ifelse(joint==FALSE,0.1,0.05))}
 \arguments{
 \item{hypothesis}{Hypothesis object created by either
 \code{defence.hypothesis} or \code{prosecution.hypothesis}
@@ -11,6 +11,8 @@ that was used for optimisation with \code{DEoptimLoop}.}
 \code{optimisation.params} that was used for optimisation
 with \code{DEoptimLoop}.}
 \item{results}{Results object returned by \code{DEoptimLoop}}
+\item{posterior}{Logical indicating whether to return all genotype
+probabilities, rather than just the most likely.}
 \item{joint}{Logical indicating whether or not to return joint
 genotypes and probabilities. If FALSE, marginal genotypes and
 probabilities are returned instead.}
@@ -38,3 +40,5 @@ contributor, summing over all the possible genotypes for all other
 contributors.}
 \seealso{defence.hypothesis, prosecution.hypothesis, 
 optimisation.params,DEoptimLoop}
+
+

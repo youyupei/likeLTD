@@ -10,7 +10,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
   scale        = 10000
-  gradientS = 0.05
+  gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
   stutterAdjust     = rep(5,nloc)
   meanS = 0.3
@@ -478,7 +478,7 @@ TMP <<- D.step
 	# if so set sd to >1 so log2(sd) is positive
 	if(sdStep<1) sdStep = 1.5
 	# decide how many steps to run
-	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*6+length(grep("cont",names(D.pars$upper)))
+	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*8+length(grep("cont",names(D.pars$upper)))
 
 	# retain all the likelihood ratios
 	Ld <- numeric(n.steps)
