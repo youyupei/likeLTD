@@ -243,7 +243,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
  if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = ethnic.database(ethnic, colnames(cspProfile), alleleDb)
  
   # Figure out which profiles show dropout.
   dropout = determine.dropout(knownProfiles, cspProfile)
@@ -253,14 +253,14 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
   noDropoutProfs = knownProfiles[!dropout, colnames(cspProfile), drop=FALSE]
 
   # Adjust uncertain profile to also contain masking (no-dropout) profiles.
-  uncProf = likeLTD:::masking.and.uncertain.profile(uncProfile, noDropoutProfs)
+  uncProf = masking.and.uncertain.profile(uncProfile, noDropoutProfs)
 
   # Remove masked alleles from  CSP.
-  cspProf = likeLTD:::masking.profile(cspProfile, noDropoutProfs)
+  cspProf = masking.profile(cspProfile, noDropoutProfs)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = likeLTD:::missing.alleles(alleleDb, cspProfile, queriedProfile, dropoutProfs)
-  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
+  alleleDb = missing.alleles(alleleDb, cspProfile, queriedProfile, dropoutProfs)
+  alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -276,7 +276,7 @@ agnostic.hypothesis <- function(cspProfile, uncProfile, knownProfiles,
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
+prosecution.hypothesis <- function(cspFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
                                    doDropin=FALSE, combineRare=TRUE,
@@ -302,7 +302,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = likeLTD:::agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
+  result = agnostic.hypothesis(cspProfile, uncProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 				rareThreshold=rareThreshold)
@@ -341,7 +341,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='EA1',
 
 # Creates defence hypothesis
 # Documentation is in man directory.
-defence.hypothesis <- function(cspFile, refFile, ethnic='EA1',  nUnknowns=0,
+defence.hypothesis <- function(cspFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
                                relatedness=c(0,0), doDropin=FALSE, combineRare=TRUE, 
 			       rareThreshold=0.05, kit=NULL, ...) {

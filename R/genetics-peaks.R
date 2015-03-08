@@ -9,15 +9,6 @@ allExplained = function(genotype,cspAlleles,knownWithStutter,alleleNames,doDoubl
 
 explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUnknowns,cspAlleles,cspHeights, doDoubleStutter=FALSE,doOverStutter=FALSE)
 	{
-	CSPPRESENCE <<- cspPresence
-PROFPRESENCE <<- profPresence
-KNOWNPROFS <<- knownProfs
-ALLELENAMES <<- alleleNames
-NUNKNOWNS <<- nUnknowns
-CSPALLELES <<- cspAlleles
-CSPHEIGHTS <<- cspHeights
-DODOUBLESTUTTER <<- doDoubleStutter
-DOOVERSTUTTER <<- doOverStutter
   	# Catch early. Shouldn't be a problem here, but will be at some point. 
 	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
 	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
@@ -40,7 +31,6 @@ DOOVERSTUTTER <<- doOverStutter
 	if(nUnknowns==0) 
 		{
 		check = !all(round(as.numeric(cspAlleles),1)%in%round(as.numeric(knownWithStutter),1))
-		CHECK <<- check
 		if(check) 
 		    {
 		    stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
@@ -49,9 +39,9 @@ DOOVERSTUTTER <<- doOverStutter
 		    }
 		}
 	# get all genotype combinations for unknowns
-	genCombs = likeLTD:::all.genotypes.per.locus(length(alleleNames),nUnknowns)
+	genCombs = all.genotypes.per.locus(length(alleleNames),nUnknowns)
 	# find which combinations explain all peaks
-	index = apply(genCombs,MARGIN=2,FUN=function(x) likeLTD:::allExplained(x,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter,doOverStutter))
+	index = apply(genCombs,MARGIN=2,FUN=function(x) allExplained(x,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter,doOverStutter))
 	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 	genCombs = genCombs[,index,drop=FALSE]
 
@@ -94,7 +84,7 @@ compatible.genotypes.peaks = function(cspPresence, profPresence, knownProfs,alle
   if(nUnknowns == 0 && dropin == TRUE) nUnknowns = 1
 
   # Compute all genotype permutations. 
-  genotypes = likeLTD:::all.genotypes.per.locus(length(alleleNames), nUnknowns)
+  genotypes = all.genotypes.per.locus(length(alleleNames), nUnknowns)
   if(dropin) return(genotypes) # Dropin case: can return immediately.
 
   # Case without dropin: check that there are enough unknown contributors to

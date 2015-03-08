@@ -1,7 +1,7 @@
 \name{prosecution.hypothesis}
 \alias{prosecution.hypothesis}
 \title{likeLTD::prosecution.hypothesis}
-\usage{prosecution.hypothesis(cspFile, refFile, ethnic='EA1', nUnknowns=0,
+\usage{prosecution.hypothesis(cspFile, refFile, ethnic='NDU1', nUnknowns=0,
                         adj=1e0, fst=0.02, databaseFile=NULL, 
                         linkageFile=NULL,
                         relatedness=c(0,0), doDropin=FALSE, 

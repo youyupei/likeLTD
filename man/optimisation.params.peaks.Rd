@@ -1,11 +1,11 @@
-\name{optimisation.params} 
-\alias{optimisation.params} 
-\title{likeLTD::optimisation.params} 
-\usage{optimisation.params(hypothesis, verbose=FALSE, fixed=NULL,
+\name{optimisation.params.peaks} 
+\alias{optimisation.params.peaks} 
+\title{likeLTD::optimisation.params.peaks} 
+\usage{optimisation.params.peaks(hypothesis, verbose=TRUE, fixed=NULL,
                            logObjective=TRUE, logDegradation=TRUE,
-                           arguments=NULL, zero=0, throwError=FALSE,
+                           arguments=NULL, zero=1e-6, throwError=FALSE,
                            withPenalties=TRUE, doLinkage=TRUE,objective=NULL, iterMax=75, 
-                           likeMatrix=FALSE,\dots)}
+                           likeMatrix=FALSE,diagnose=FALSE,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -27,12 +27,14 @@
                     prosecution likelihood by \eqn{IMP_L/IMP_U}, where \eqn{IMP_L} is the inverse match
                     probability with linkage taken into account, and \eqn{IMP_U} is the same
                     but without linkage taken into account.}
-  \item{objective}{Objective function produced from create.likelihood.vectors}
+  \item{objective}{Objective function produced from create.likelihood.vectors.peaks}
   \item{iterMax}{Number of iterations to run the optimisation for}
   \item{likeMatrix}{Whether to return likelihoods for every genotype combination, or 
   a likelihood summed over all genotypes after optimisation. Set to TRUE 
   for individual genotype likelihoods. This is used for 
-  \code{get.likely.genotypes}.}
+  \code{get.likely.genotypes.peaks}.}
+  \item{diagnose}{Logical. If \code{TRUE} a list of peak heights, estimated mean peak heights
+  and standard deviation of peak heights is returned by \code{result$fn}.}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }
@@ -40,11 +42,11 @@
   \item{fn}{The objective function}
   \item{lower}{Lower bounds for the parameters}
   \item{upper}{Upper bounds for the parameters}
-  \item{control}{Control parameters for \code{stats::optim}}
+  \item{control}{Control parameters for \code{DEoptim::DEoptim}}
 }
-\description{Creates a list of parameters to use with \code{DEoptim::DEoptim}.}
+\description{Creates a list of parameters to use with \code{DEoptim::DEoptim} for peak height data.}
 \details{
-  Starting from the hypothesis, it creates an list of arguments which can be
+  Starting from the hypothesis, it creates a list of arguments which can be
   applied to \code{DEoptim::DEoptim} to obtain the maximum (log-)likelihood of that
   hypothesis. 
 

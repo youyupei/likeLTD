@@ -1,8 +1,9 @@
-pack.admin.input.peaks <- function(peaksFile, callsFile, refFile, stutterFile, caseName='dummy',databaseFile=NULL, kit=NULL, outputPath=getwd() ) {
+pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(peaksFile, refFile) 
 	if(!is.null(databaseFile)) paths <- c(databaseFile, paths, recursive=TRUE)
+	if(!is.null(linkageFile)) paths <- c(linkageFile, paths, recursive=TRUE)
 	for(path in paths) {
 		if(!file.exists(path))
 			stop(paste(path, "does not exist."))
@@ -15,6 +16,7 @@ pack.admin.input.peaks <- function(peaksFile, callsFile, refFile, stutterFile, c
 	stop(paste(outputPath, " exists and is not a directory."))
 	admin <- list( caseName=caseName,
                 databaseFile=databaseFile,
+                linkageFile=linkageFile,
                 peaksFile=peaksFile,
                 refFile=refFile,
                 outputPath=outputPath,
@@ -116,7 +118,7 @@ plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh
 		if(!is.null(refFile))
 			{
 			# get which K contributes to each peak
-			peakContributors = likeLTD:::getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
+			peakContributors = getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
 			# add peaks to plot
 			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
 			} else {

@@ -1,0 +1,36 @@
+\name{read.peaks.profile} 
+\alias{read.peaks.profile} 
+\title{likeLTD::read.peaks.profile} 
+\usage{read.peaks.profile(FILE)}
+\arguments{
+  \item{FILE}{Path to the crime scene profile with peak height data. }
+}
+\value{
+  A list of three elements, \code{alleles}, \code{heights} and \code{sizes}.
+  Each element is itself a list with r elements, where r is the number of replicates in the CSP. Each 
+  of these elements is a matrix of n by x where n is the number of loci in the CSP,
+  and x is the maximum number of peaks recorded at any locus for that replicate. 
+}
+\description{Reads the Crime Scene Profile from a CSV file of peak height data.}
+\details{The input is a file in the CSV format (comma-separated values). 
+It should have the following form:
+
+\tabular{llccccccccc}{
+
+Sample File \tab Marker \tab Allele 1 \tab \dots \tab Allele x \tab Height 1 \tab \dots \tab Height x \tab Size 1 \tab \dots \tab Size x \cr
+sample 1 \tab locus 1 \tab 9.3 \tab \dots \tab 11 \tab 151 \tab \dots \tab 190 \tab 410 \tab \dots \tab 440 \cr  
+\dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \cr  
+sample 1 \tab locus n \tab 23 \tab \dots \tab NA \tab 301 \tab \dots \tab NA \tab 321 \tab \dots \tab NA \cr  
+sample r \tab locus 1 \tab 9.3 \tab \dots \tab 11 \tab 132 \tab \dots \tab 123 \tab 410 \tab \dots \tab 440 \cr  
+\dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \tab \dots \cr  
+sample r \tab locus n \tab 23 \tab \dots \tab NA \tab 256 \tab \dots \tab NA \tab 321 \tab \dots \tab NA \cr  
+}
+
+
+Columns are separted by commas (not present in the table above). The first
+line, containing the names of the columns needs to be present. 
+x, r and n can be any number. Columns headed by "Allele 1 \dots x" should contain the allelic
+designation of the peak. Columns headed by "Height 1 \dots x" should contain the peak height
+in RFU. Columns headed by "Size 1 \dots x" should contain the allele size. 
+}
+\seealso{read.known.profiles}

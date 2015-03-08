@@ -97,7 +97,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #          should be excluded.
   #    throwError: Throw an error if result is infinite
 
-  hypothesis = likeLTD:::add.args.to.hypothesis(hypothesis, ...)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
   # make the objective function
@@ -105,7 +105,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 
 
   # Get maximum allele fraction
-  maxAF <- likeLTD:::getMaxAF(hypothesis) 
+  maxAF <- getMaxAF(hypothesis) 
 
 
   args = arguments
@@ -146,7 +146,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     # If would return negative likelihood skip
     if(hypothesis$doDropin)
         {
-        if(likeLTD:::checkDropin(x, maxAF, hypothesis$nUnknowns+nrow(hypothesis$knownProfs)))
+        if(checkDropin(x, maxAF, hypothesis$nUnknowns+nrow(hypothesis$knownProfs)))
 	        {
 	        if(logObjective) result = log10(0) else result = 0
 	        if(verbose) print(result)
@@ -154,8 +154,6 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	        }
 	    }
 
-HYPOTHESIS <<- hypothesis
-PARAMS <<- x
 	# if stutter is >100% or <0% return negative likelihood
 stuttermodel = function(stutterMean,stutterGradient,i)
 	{
@@ -179,11 +177,6 @@ condition2 = mapply(x$gradientAdjust*x$gradientS,x$stutterAdjust*x$meanS,hypothe
     # Compute objective function.
     result <- do.call(objective, x)
 
-   if(any(is.infinite(result$objectives)|is.infinite(result$penalties))) 
-	{
-	NAINPUT <<- x
-	TOTALRES <<- result
-	}
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
 
 
@@ -216,10 +209,6 @@ condition2 = mapply(x$gradientAdjust*x$gradientS,x$stutterAdjust*x$meanS,hypothe
 			cat("Objective function is over/underflow: ", result, "\n")
 			print(x)
 			stop("Objective function over/underflow")
-			}
-		if(is.na(result))
-			{
-			OVERALLRES <<- tmpResult
 			}
 		# if result is infinite make sure it returns -Inf
 		if(is.infinite(result)|is.na(result)) result = -Inf
@@ -268,7 +257,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   # Parameters: 
   #    hypothesis: Hypothesis for which to guess nuisance paramters. 
 
-  hypothesis = likeLTD:::add.args.to.hypothesis(hypothesis, ...)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # -1 because relative to first.
   nDNAcont          = max(nrow(hypothesis$knownProfs)
@@ -435,7 +424,7 @@ checkConverged = function(new,old,tol)
     return(abs((new-old)/old)<tol)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, progBar = TRUE, interim=FALSE){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -452,8 +441,8 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	n = 1
 
 	# change DEoptim parameters
-	P.pars$control$CR <- 0.1
-	D.pars$control$CR <- 0.1
+	P.pars$control$CR <- CR.start
+	D.pars$control$CR <- CR.start
 		
 	# run DEoptimLoop until convergence at the required step
 	D.step <- DEoptimLoop(D.pars,10)
@@ -471,7 +460,6 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	# recycle the current pop into the next loop
 	D.pars$control$initialpop <- D.step$member$pop
 
-TMP <<- D.step
 	# get standard mean standard deviation of initial optimisation phase
 	sdStep = sd(D.step$member$bestvalit[1:75][!is.infinite(D.step$member$bestvalit[1:75])])
 	# sometimes sd is very low (below 1 e.g. 3locus test)
@@ -490,10 +478,10 @@ TMP <<- D.step
 	if(n.steps>1)
 		{
 		# adjust tolerance gradually
-		tol.steps <- likeLTD:::geometric.series(10,tolerance,n.steps)
+		tol.steps <- geometric.series(10,tolerance,n.steps)
 	
 		# adjust DEoptim parameters gradually, so search space is confined more at the end
-		CR.steps <- likeLTD:::geometric.series(0.1,0.7,n.steps)
+		CR.steps <- geometric.series(CR.start,CR.end,n.steps)
 
 		for(n in 2:n.steps){
 			# change DEoptim parameters
@@ -521,7 +509,7 @@ TMP <<- D.step
 		    }
 		}
         # check for convergence
-        while(any(sapply(Ld[(length(Ld)-5):(length(Ld)-1)],FUN=function(x) !likeLTD:::checkConverged(Ld[length(Ld)],x,tolerance)))|!likeLTD:::checkConverged(Ld[length(Ld)],GlobalDval,tolerance))
+        while(any(sapply(Ld[(length(Ld)-5):(length(Ld)-1)],FUN=function(x) !checkConverged(Ld[length(Ld)],x,tolerance)))|!checkConverged(Ld[length(Ld)],GlobalDval,tolerance))
             {
             D.step <- DEoptimLoop(D.pars,tolerance)
             Ld = c(Ld,D.step$optim$bestval)
@@ -578,7 +566,7 @@ TMP <<- D.step
 			P.pars$control$initialpop <- P.step$member$pop
 			}
 	    # check for convergence
-         while(any(sapply(Lp[(length(Lp)-5):(length(Lp)-1)],FUN=function(x) !likeLTD:::checkConverged(Lp[length(Lp)],x,tolerance)))|!likeLTD:::checkConverged(Lp[length(Lp)],GlobalPval,tolerance))
+         while(any(sapply(Lp[(length(Lp)-5):(length(Lp)-1)],FUN=function(x) !checkConverged(Lp[length(Lp)],x,tolerance)))|!checkConverged(Lp[length(Lp)],GlobalPval,tolerance))
             {
             P.step <- DEoptimLoop(P.pars,tolerance)
             Lp = c(Lp,P.step$optim$bestval)

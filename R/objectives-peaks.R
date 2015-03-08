@@ -5,15 +5,15 @@
 # Documentation is in man directory.
 create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE, likeMatrix=FALSE, diagnose=FALSE, ...) {
 
-  hypothesis = likeLTD:::add.args.to.hypothesis(hypothesis, ...)
+  hypothesis = add.args.to.hypothesis(hypothesis, ...)
 
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   locusCentric = transform.to.locus.centric.peaks(hypothesis)
 
-  functions <- mapply(likeLTD:::create.likelihood.per.locus.peaks, locusCentric,
+  functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 
-likeLTD:::create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose)
+create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose)
 
 
   #if(is.null(hypothesis$dropinPenalty)) hypothesis$dropinPenalty = 2 
@@ -60,7 +60,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, likeMat
   # A hypothesis is given by the number of unknown contributors, whether to model
   # dropin, so on and so forth.
 
-  cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
+  cons = likelihood.constructs.per.locus.peaks(hypothesis)
   doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
   result.function <- function(scale,gradientS,gradientAdjust,stutterAdjust,
@@ -109,7 +109,7 @@ repAdjust=NULL,
 
     if(diagnose==TRUE)
 	{
-	repRes <- likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
+	repRes <- peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale,gradientS = gradientS, gradientAdjust=gradientAdjust,stutterAdjust=stutterAdjust, meanS=meanS,
 				meanD = meanD, meanO=meanO,
 degradation=degradation, 
@@ -117,7 +117,7 @@ degradation=degradation,
 	return(repRes)
 	}
 
-    repRes <- matrix(likeLTD:::peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
+    repRes <- matrix(peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, stutterAdjust=stutterAdjust,meanS=meanS, 
 				meanD = meanD,meanO=meanO,
 degradation=degradation, 
@@ -177,9 +177,8 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
 #  genotypes <- compatible.genotypes.peaks(cspPresence, knownPresence, hypothesis$knownProfs,alleles,
  #                                   hypothesis$nUnknowns, hypothesis$doDropin,
   #                                  missingReps)
-  HYPOTHESIS <<- hypothesis
 
-genotypes = likeLTD:::explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile,hypothesis$doDoubleStutter,hypothesis$doOverStutter)
+genotypes = explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile,hypothesis$doDoubleStutter,hypothesis$doOverStutter)
 
 # get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
 if(nrow(hypothesis$knownProfs)>0) 
@@ -188,9 +187,6 @@ if(nrow(hypothesis$knownProfs)>0)
 	} else {
 	kIndex = c()
 	}
-
-GENS <<- genotypes
-KINDEX <<- kIndex
 
 # multiply by matching factor for known genotypes (1+fst, 1+2fst, ...)
 if(length(kIndex>0)) {
@@ -251,22 +247,6 @@ peaks.probabilities = function(hypothesis,cons,
         # combine mean and adjustment
         locusGradient = gradientS*gradientAdjust
         locusStutter = meanS*stutterAdjust
-if(rownames(hypothesis$peaksProfile[[1]])=="D10S1248"){
-        GENOTYPEARRAY<<-cons$genotypes
-		ALLELES<<-as.numeric(hypothesis$peaksProfile[[1]])
-		HEIGHTS<<-unlist(as.numeric(hypothesis$heightsProfile[[1]]))
-		DNACONT<<-rep(DNAcont,each=2)
-		GRADIENTS<<-locusGradient
-		MEANS<<-locusStutter
-		MEAND<<-meanD
-		MEANO<<-meanO
-		SCALE<<-scale
-		DEGRADATION<<-rep(1+degradation,each=2)
-		FRAGLENGTHS<<-hypothesis$alleleDb[,2]
-		FRAGNAMES<<-as.numeric(rownames(hypothesis$alleleDb))
-        STUTTERINDEX<<-hypothesis$alleleDb[,3]
-		REPADJUST<<-repAdjust[1]
-		DETECTIONTHRESH<<-detectionThresh}
 	    if(doR==TRUE|diagnose==TRUE)
 		    {
         	# probabilities for each replicate
