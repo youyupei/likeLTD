@@ -117,21 +117,15 @@ degradation=degradation,
 	return(repRes)
 	}
 
-    repRes <- matrix(peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
+    res <- peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 				scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, stutterAdjust=stutterAdjust,meanS=meanS, 
 				meanD = meanD,meanO=meanO,
 degradation=degradation, 
-				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR),ncol=length(hypothesis$peaksProfile))
+				repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR)
+    
 
-    # combine replicates
-    if(ncol(repRes)>1)
-	{
-	#res = likeLTD:::prod.matrix.col(t(repRes))
-	res = prod.matrix.row(repRes)
-	} else {
-	res = repRes	
-	}
-
+RES <<- res
+FACS <<- cons$factors
     # multiply by allele probs
     factorsRes = res*cons$factors
 
@@ -156,6 +150,20 @@ degradation=degradation,
 }
 
 
+get.database.values = function(alleleDb, doOverStutter, doDoubleStutter)
+    {
+    # convert database alleles to numeric
+    db = as.numeric(rownames(alleleDb))
+    # add stutter allele to db vals
+    out = c(db, db-1)
+    # add over stutter values
+    if(doOverStutter) out = c(out, db+1)
+    # add double stutter values
+    if(doDoubleStutter) out = c(out, db-2)
+    sort(unique(out))
+    }
+
+
 likelihood.constructs.per.locus.peaks = function(hypothesis) {
   # Creates the locus-specific data needed by each likehood function.
   #
@@ -174,11 +182,9 @@ likelihood.constructs.per.locus.peaks = function(hypothesis) {
 
   missingReps = apply(hypothesis$binaryProfile, 1, is.na)
 
-#  genotypes <- compatible.genotypes.peaks(cspPresence, knownPresence, hypothesis$knownProfs,alleles,
- #                                   hypothesis$nUnknowns, hypothesis$doDropin,
-  #                                  missingReps)
-
 genotypes = explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,hypothesis$heightsProfile,hypothesis$doDoubleStutter,hypothesis$doOverStutter)
+
+dbVals = get.database.values(hypothesis$alleleDb,hypothesis$doOverStutter,hypothesis$doDoubleStutter)
 
 # get index of which alleles are from known contributors - do not want population allele probabilities for known contributors
 if(nrow(hypothesis$knownProfs)>0) 
@@ -228,7 +234,7 @@ genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=nco
   list(cspPresence=cspPresence, knownPresence=knownPresence,
         missingReps=missingReps,
        genotypes=genotypes, factors=factors,
-       freqMat=hypothesis$alleleDb[, 1])
+       freqMat=hypothesis$alleleDb[, 1],dbVals=dbVals)
 }
 
 
@@ -239,6 +245,15 @@ peaks.probabilities = function(hypothesis,cons,
         degradation,repAdjust,detectionThresh,
         doR=FALSE,diagnose=FALSE)
     {
+    HYPOTHESIS <<- hypothesis
+    CONS <<- cons
+    DNACONT <<- DNAcont
+    SCALE <<- scale
+    MEAND <<- meanD
+    MEANO <<- meanO
+    DEG <<- degradation
+    REPADJUST <<- repAdjust
+    DETECTIONTHRESH <<- detectionThresh
     if(hypothesis$doDropin==TRUE)
         {
         # no dropin currently
@@ -247,6 +262,8 @@ peaks.probabilities = function(hypothesis,cons,
         # combine mean and adjustment
         locusGradient = gradientS*gradientAdjust
         locusStutter = meanS*stutterAdjust
+        LOCUSGRADIENT <<- locusGradient
+        LOCUSSTUTTER <<- locusStutter
 	    if(doR==TRUE|diagnose==TRUE)
 		    {
         	# probabilities for each replicate
@@ -270,66 +287,78 @@ peaks.probabilities = function(hypothesis,cons,
 		if(!is.null(meanD)&!is.null(meanO))
 			{
 			# single, double and over stutter
-		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
-		    	        .Call(.cpp.probabilityPeaksSDO,
+		    	probs = .Call(.cpp.getProbabilitiesSDO,
 		    	            genotypeArray=cons$genotypes,
-		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
-		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanD=meanD,meanO=meanO,
-		                    meanS=locusStutter,
-		                    scale=scale,degradation=rep(1+degradation,each=2),
-		                    fragLengths=hypothesis$alleleDb[,2],
-		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
-                            stutterIndex = hypothesis$alleleDb[,3],
-		                    repAdjust=repAdjust[x],detectionThresh=detectionThresh))
-
+                            DNAcont=rep(DNAcont,each=2), 
+                            gradientS=locusGradient,
+                            meanD=meanD,meanO=meanO,
+                            meanS=locusStutter,
+                            degradation=rep(1+degradation,each=2),
+                            fragLengths=hypothesis$alleleDb[,2],
+                            fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+                            LUSvals = hypothesis$alleleDb[,3],
+                            alleles=hypothesis$peaksProfile,
+                            heights=hypothesis$heightsProfile,
+                            repAdjust=repAdjust,
+                            scale=scale,
+                            detectionThresh=detectionThresh,
+                            databaseVals = cons$dbVals)
 			} else if(is.null(meanD)&is.null(meanO)) {
 		   	# single stutter only
-		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
-		    	        .Call(.cpp.probabilityPeaksS,
+		    	probs = .Call(.cpp.getProbabilitiesS,
 		    	            genotypeArray=cons$genotypes,
-		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
-		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                    DNAcont=rep(DNAcont,each=2),gradientS=locusGradient,
-		                    meanS=locusStutter,
-		                    scale=scale,degradation=rep(1+degradation,each=2),
-		                    fragLengths=hypothesis$alleleDb[,2],
-		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
-						    stutterIndex = hypothesis$alleleDb[,3],
-		                    repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+                            DNAcont=rep(DNAcont,each=2), 
+                            gradientS=locusGradient,
+                            meanD=meanD,meanO=meanO,
+                            meanS=locusStutter,
+                            degradation=rep(1+degradation,each=2),
+                            fragLengths=hypothesis$alleleDb[,2],
+                            fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+                            LUSvals = hypothesis$alleleDb[,3],
+                            alleles=hypothesis$peaksProfile,
+                            heights=hypothesis$heightsProfile,
+                            repAdjust=repAdjust,
+                            scale=scale,
+                            detectionThresh=detectionThresh,
+                            databaseVals = cons$dbVals)
 			
 			} else if(!is.null(meanD)&is.null(meanO)) {
 		    	# single and double stutter
-		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
-		    	        .Call(.cpp.probabilityPeaksSD,
+		    	probs = .Call(.cpp.getProbabilitiesSO,
 		    	            genotypeArray=cons$genotypes,
-		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
-		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanD=meanD,
-		                    meanS=locusStutter,
-		                    scale=scale,degradation=rep(1+degradation,each=2),
-		                    fragLengths=hypothesis$alleleDb[,2],
-		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
-		                    stutterIndex = hypothesis$alleleDb[,3],
-		                    repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+                            DNAcont=rep(DNAcont,each=2), 
+                            gradientS=locusGradient,
+                            meanO=meanO,
+                            meanS=locusStutter,
+                            degradation=rep(1+degradation,each=2),
+                            fragLengths=hypothesis$alleleDb[,2],
+                            fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+                            LUSvals = hypothesis$alleleDb[,3],
+                            alleles=hypothesis$peaksProfile,
+                            heights=hypothesis$heightsProfile,
+                            repAdjust=repAdjust,
+                            scale=scale,
+                            detectionThresh=detectionThresh,
+                            databaseVals = cons$dbVals)
 
 			} else if(is.null(meanD)&!is.null(meanO)) {
 		    	# single and over stutter
-		    	probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
-		    	        .Call(.cpp.probabilityPeaksSO,
+		    	probs = .Call(.cpp.getProbabilitiesSD,
 		    	            genotypeArray=cons$genotypes,
-		                    alleles=as.numeric(hypothesis$peaksProfile[[x]]),
-		                    heights=unlist(as.numeric(hypothesis$heightsProfile[[x]])),
-		                    DNAcont=rep(DNAcont,each=2), gradientS=locusGradient,
-		                    meanO=meanO,
-		                    meanS=locusStutter,
-		                    scale=scale,degradation=rep(1+degradation,each=2),
-		                    fragLengths=hypothesis$alleleDb[,2],
-		                    fragNames=as.numeric(rownames(hypothesis$alleleDb)),
-			                stutterIndex = hypothesis$alleleDb[,3],
-		                    repAdjust=repAdjust[x],detectionThresh=detectionThresh))
+                            DNAcont=rep(DNAcont,each=2), 
+                            gradientS=locusGradient,
+                            meanD=meanD,
+                            meanS=locusStutter,
+                            degradation=rep(1+degradation,each=2),
+                            fragLengths=hypothesis$alleleDb[,2],
+                            fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+                            LUSvals = hypothesis$alleleDb[,3],
+                            alleles=hypothesis$peaksProfile,
+                            heights=hypothesis$heightsProfile,
+                            repAdjust=repAdjust,
+                            scale=scale,
+                            detectionThresh=detectionThresh,
+                            databaseVals = cons$dbVals)
 			}
 		}
     # diagnose

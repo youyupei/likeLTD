@@ -151,7 +151,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     SEXP testPDF(SEXP X, SEXP A, SEXP B);
 
     
-    //! \brief get mean dose without repAdjust
+    //! \brief get mean dose with x-1, x-2 and x+1 stutter
     inline std::vector<genoStruct> getDoseSDO(std::vector<float> genotypeVec, 
                         std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
                         std::vector<float> overStutterVec,std::vector<float> allPosVec, 
@@ -160,9 +160,56 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 
                         std::vector<double> stutterIndex, int nGen, int nFrag);
 
-    //! get probabilities of genotype combinations
-    //SEXP getProbabilities(SEXP doseArray, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
-SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+    //! \brief get mean dose with x-1 and x-2 stutter
+    inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec, 
+                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
+                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<double> DNAcontVec, double gradientS, double meanD, 
+                        double meanS, std::vector<double> degVec,
+                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
+                        std::vector<double> stutterIndex, int nGen, int nFrag);
+
+       //! \brief get mean dose with x-1 and x+1 stutter
+    inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec, 
+                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
+                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<double> DNAcontVec, double gradientS,
+                        double meanO,double meanS, std::vector<double> degVec,
+                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
+                        std::vector<double> stutterIndex, int nGen, int nFrag);
+
+       //! \brief get mean dose with x-1 stutter
+    inline std::vector<genoStruct> getDoseS(std::vector<float> genotypeVec, 
+                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
+                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<double> DNAcontVec, double gradientS,
+                        double meanS, std::vector<double> degVec,
+                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
+                        std::vector<double> stutterIndex, int nGen, int nFrag);
+
+    //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter
+    SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
+                    SEXP meanO, SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
+                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
+                    SEXP detectionThresh, SEXP databaseVals);
+
+    //! get probabilities of genotype combinations with x-1 and x-2 stutter
+    SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
+                    SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
+                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
+                    SEXP detectionThresh, SEXP databaseVals);
+
+    //! get probabilities of genotype combinations with x-1 and x+1 stutter
+    SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, 
+                    SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
+                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
+                    SEXP detectionThresh, SEXP databaseVals);
+
+    //! get probabilities of genotype combinations with x-1 stutter
+    SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanS, 
+                    SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, 
+                    SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
+                    SEXP detectionThresh, SEXP databaseVals);
 
 #ifdef __cplusplus
 }

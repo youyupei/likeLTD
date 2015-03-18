@@ -474,13 +474,12 @@ transform.to.locus.centric.peaks = function(hypothesis) {
       if(key%in%c("peaksProfile","heightsProfile","sizesProfile"))
         {
         locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE],simplify=FALSE)
-	for(i in 1:length(locusValue[[key]]))
-		{
-		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
-		rownames(tmp) = locus
-		if(ncol(tmp)>0) colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
-		locusValue[[key]][[i]] = tmp
-		}
+	    for(i in 1:length(locusValue[[key]]))
+    		{
+    		tmp = as.numeric(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])])
+    		if(length(tmp)>0) names(tmp) = paste("Allele",1:length(tmp),sep=".")
+    		locusValue[[key]][[i]] = tmp
+    		}
         } else {
       # If a matrix and locus is either in rows or columns, then add only locus
       # part of the matrix. 

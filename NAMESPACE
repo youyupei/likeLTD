@@ -65,6 +65,9 @@ import(rtf)
 #export(.cpp.testCDF)
 #export(.cpp.testPDF)
 export(.cpp.getProbabilitiesSDO)
+export(.cpp.getProbabilitiesSD)
+export(.cpp.getProbabilitiesSO)
+export(.cpp.getProbabilitiesS)
 
 
 
