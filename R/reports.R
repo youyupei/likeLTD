@@ -156,7 +156,8 @@ load.allele.database <- function(path=NULL,kit=NULL) {
 
 #--------------------------------------------------------------------------------------------------------------------
 unattributable.plot.maker <- function(genetics){
-
+# define ggplot variables to avoid NOTE from CRAN
+aes <- geom_bar <- scale_fill_grey <- NULL
 	loci <- counts <- status <- NULL
 	plot <- ggplot(data=genetics$summary$counts, aes(x=loci,y=counts,fill=status))+
 		 geom_bar(stat='identity')+

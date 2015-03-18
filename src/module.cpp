@@ -22,8 +22,10 @@ R_CallMethodDef callMethods[]  = {
 	{"probabilityPeaksSD", (DL_FUNC) &probabilityPeaksSD, 14},
 	{"probabilityPeaksSO", (DL_FUNC) &probabilityPeaksSO, 14},
 	{"probabilityPeaksSDO", (DL_FUNC) &probabilityPeaksSDO, 15},
-		{"testCDF", (DL_FUNC) &testCDF, 2},
-		{"testPDF", (DL_FUNC) &testPDF, 3},
+			{"getDoseArray", (DL_FUNC) &getDoseArray, 11},
+			{"getProbabilities", (DL_FUNC) &getProbabilities, 16},
+//		{"testCDF", (DL_FUNC) &testCDF, 2},
+//		{"testPDF", (DL_FUNC) &testPDF, 3},
        {NULL, NULL, 0},
        {NULL, NULL, 0},
 };
@@ -40,3 +42,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+

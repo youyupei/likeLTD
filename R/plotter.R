@@ -3,6 +3,8 @@ plotLikelihood.2d <- function(hypothesis, which=c(1, 2), large=100, N=20,
                               arguments=NULL, x=NULL, y=NULL,
                               logObjective=TRUE, logDegradation=TRUE,
                               contours=list(), ...) {
+  # define ggplot variables to avoid NOTE from CRAN
+aes <- xlab <- ylab <- geom_tile <- labs <- stat_contour <- NULL
 
   if(length(which) != 2)
     stop("Argument 'which' to plotLikelihood.2d' should be of length 2")

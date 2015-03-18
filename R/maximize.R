@@ -1,7 +1,7 @@
 estimates <- function(indiv, csp) {
   # Estimation of dropout values.
   #
-  # Parameters: 
+  # Parameters: 
   #    indiv: Profile of an individual as a list of locus, each element
   #           containing one or two strings naming the alleles.
   #    csp: Crime-scene profile. Matrix of replicate (rows) vs loci (columns).
@@ -26,8 +26,8 @@ estimates <- function(indiv, csp) {
 initial.arguments <- function(hypothesis, ...) {
   # Best(?) guess for initial arguments. 
   #
-  # Parameters: 
-  #    hypothesis: Hypothesis for which to guess nuisance paramters. 
+  # Parameters: 
+  #    hypothesis: Hypothesis for which to guess nuisance paramters.
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check(hypothesis) # makes sure hypothesis has right type.
@@ -71,8 +71,8 @@ upper.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
   # Upper bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimisation function. Used as a
-  #              template.
+  #  arguments: Arguments passed to the optimisation function. Used as a
+  #             template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
   locusAdjustment = rep(1.5, length(arguments$locusAdjustment))
@@ -94,8 +94,8 @@ lower.bounds = function(arguments, zero=1e-6, logDegradation=FALSE) {
   # Lower bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimisation function. Used as a
-  #              template.
+  #  arguments: Arguments passed to the optimisation function. Used as a
+  #             template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
   #   logDegradation: Wether degradation parameters are entered as exponents of
@@ -202,7 +202,7 @@ if(likeMatrix==TRUE) return(result)
     } else result <- prod(result$objectives) 
     # Print out if requested.
     if(verbose) {
-      # print(unlist(append(x, list(result=result))))
+      # print(unlist(append(x, list(result=result))))
       print(result)
     }
     # If result is infinite, do throw

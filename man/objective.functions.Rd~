@@ -16,14 +16,14 @@
   
   The general form of these objective functions is:
 
-  \code{function(locusAdjustment, power, dropout, degradation=NULL,
+  \code{function(localAdjustment, tvedebrink, dropout, degradation=NULL,
                  rcont=NULL, dropin=NULL, \dots)}
 
   \itemize{
-    \item{locusAdjustment}{A scalar (single locus objective) or a list of values
-                           giving the locus adjustment to dropout for each locus. Must be
+    \item{localAdjustment}{A scalar (single locus objective) or a list of values
+                           giving the local adjustment for each locus. Must be
                            positive.}
-    \item{power}{Tvedebrink exponent. Must be a scalar and negative.}
+    \item{tvedebrink}{Tvedebrink exponent. Must be a scalar and negative.}
     \item{dropout}{Dropout rate for each replicate. Must be between 0 and 1.}
     \item{degradation}{Degradation parameters to determine likeliness of
                        dropout. Should be of length \eqn{k + u}.}
