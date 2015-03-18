@@ -64,8 +64,7 @@ import(rtf)
 
 #export(.cpp.testCDF)
 #export(.cpp.testPDF)
-export(.cpp.getDoseArray)
-export(.cpp.getProbabilities)
+export(.cpp.getProbabilitiesSDO)
 
 
 

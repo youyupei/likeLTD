@@ -150,14 +150,9 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     //! \brief test pdf
     SEXP testPDF(SEXP X, SEXP A, SEXP B);
 
-    //! \brief get dose array
-    SEXP getDoseArray(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
-                SEXP meanD, SEXP meanO, SEXP meanS, SEXP degradation, 
-                SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP databaseVals);
-
     
     //! \brief get mean dose without repAdjust
-    inline std::vector<genoStruct> meanDoseSingleGenotype(std::vector<float> genotypeVec, 
+    inline std::vector<genoStruct> getDoseSDO(std::vector<float> genotypeVec, 
                         std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
                         std::vector<float> overStutterVec,std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS, double meanD, 
@@ -167,7 +162,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
     //! get probabilities of genotype combinations
     //SEXP getProbabilities(SEXP doseArray, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
-SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP meanS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
 
 #ifdef __cplusplus
 }

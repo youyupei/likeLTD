@@ -18,10 +18,13 @@ R_CallMethodDef callMethods[]  = {
        {"nbthreads", (DL_FUNC) &nbthreads, 0},
        {"set_nbthreads", (DL_FUNC) &set_nbthreads, 1},
 	//{"peakMeanDose", (DL_FUNC) &peakMeanDose, 10},
-	{"probabilityPeaksS", (DL_FUNC) &probabilityPeaksS, 12},
-	{"probabilityPeaksSD", (DL_FUNC) &probabilityPeaksSD, 13},
-	{"probabilityPeaksSO", (DL_FUNC) &probabilityPeaksSO, 13},
-	{"probabilityPeaksSDO", (DL_FUNC) &probabilityPeaksSDO, 14},
+	{"probabilityPeaksS", (DL_FUNC) &probabilityPeaksS, 13},
+	{"probabilityPeaksSD", (DL_FUNC) &probabilityPeaksSD, 14},
+	{"probabilityPeaksSO", (DL_FUNC) &probabilityPeaksSO, 14},
+	{"probabilityPeaksSDO", (DL_FUNC) &probabilityPeaksSDO, 15},
+			{"getProbabilities", (DL_FUNC) &getProbabilities, 16},
+//		{"testCDF", (DL_FUNC) &testCDF, 2},
+//		{"testPDF", (DL_FUNC) &testPDF, 3},
        {NULL, NULL, 0},
        {NULL, NULL, 0},
 };
@@ -38,3 +41,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+

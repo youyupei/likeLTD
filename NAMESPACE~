@@ -1,10 +1,13 @@
-useDynLib(likeLTD, .registration=TRUE, .fixes=".cpp.") 
+useDynLib("likeLTD", .registration=TRUE, .fixes=".cpp.") 
 export(.cpp.nbthreads)
 export(.cpp.set_nbthreads)
-export(.cpp.probabilityPeaksSingleStutter)
-export(.cpp.probabilityPeaksDoubleStutter)
+export(.cpp.probabilityPeaksS)
+export(.cpp.probabilityPeaksSD)
+export(.cpp.probabilityPeaksSO)
+export(.cpp.probabilityPeaksSDO)
 export(pack.admin.input)
 export(allele.report)
+
 
 export(read.csp.profile)
 export(read.unc.profile)
@@ -33,20 +36,17 @@ export(output.report)
 
 export(DEoptimLoop)
 export(evaluate)
+export(evaluate.from.interim)
 export(get.likely.genotypes)
 
 export(pack.admin.input.peaks)
 export(defence.hypothesis.peaks)
 export(prosecution.hypothesis.peaks)
 export(optimisation.params.peaks)
-export(peak.height.dose)
-export(probability.peaks)
 export(get.likely.genotypes.peaks)
 export(plot.peaks.results)
 export(locus.likes.peaks)
 export(read.peaks.profile)
-export(read.allelic.calls)
-export(make.allelic.calls)
 export(relistArguments.peaks)
 export(create.likelihood.vectors.peaks)
 export(evaluate.peaks)
@@ -60,4 +60,11 @@ importFrom(ggplot2, ggplot)
 importFrom(tcltk, tkProgressBar)
 importFrom(tcltk, setTkProgressBar)
 import(rtf)
+
+
+#export(.cpp.testCDF)
+#export(.cpp.testPDF)
+export(.cpp.getProbabilities)
+
+
 
