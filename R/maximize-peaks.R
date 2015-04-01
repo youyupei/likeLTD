@@ -12,8 +12,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale        = 10000
   gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
-  stutterAdjust     = rep(5,nloc)
-  meanS = 0.3
+  interceptAdjust     = rep(5,nloc)
+  interceptS = 0.3
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
   meanO = NULL
@@ -27,8 +27,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-       stutterAdjust         = stutterAdjust,
-       meanS   = meanS,
+       interceptAdjust         = interceptAdjust,
+       interceptS   = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -52,8 +52,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   gradientS = 0+zero
   gradientAdjust     = rep(0.2,nloc)
-  stutterAdjust     = rep(0.2,nloc)
-  meanS  = 0+zero
+  interceptAdjust     = rep(0.2,nloc)
+  interceptS  = 0+zero
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
   meanO = NULL
@@ -67,8 +67,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-       stutterAdjust         = stutterAdjust,
-       meanS = meanS,
+       interceptAdjust         = interceptAdjust,
+       interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -102,26 +102,19 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   # If the objective function has not been handed to optimizatio.params,
   # make the objective function
   if(is.null(objective)) objective = create.likelihood.vectors.peaks(hypothesis, likeMatrix=likeMatrix, diagnose=diagnose,...)
-
-
   # Get maximum allele fraction
   maxAF <- getMaxAF(hypothesis) 
-
-
   args = arguments
   if(is.null(args)) args = initial.arguments.peaks(hypothesis)
   if(logDegradation && "degradation" %in% names(args)) 
     args$degradation = log10(args$degradation)
-
-  
   # Make sure we don't include empty stuff (like rcont sometimes)
   template = Filter(function(n) length(n) > 0, args)
-
+  # deal with fixed variables
   if(!is.null(fixed)) {
     fixedstuff = args[fixed]
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
-
     # Linkage adjustment if brothers
     linkBool = doLinkage&identical(hypothesis$relatedness,c(0.5,0.25))&hypothesis$hypothesis=="prosecution"
   if(linkBool)
@@ -129,20 +122,20 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     linkFactor = linkage(hypothesis)
     if(logObjective) linkFactor = log10(linkFactor)
     }
-
-  result.function <- function(x) {
-    # If a flat vector, reconstruct list. 
-    if(typeof(x) == "double")
-      x = relistArguments.peaks(x, hypothesis, fixed=fixed, arguments=arguments, logDegradation=logDegradation)
-    # Otherwise, checks some options.
-    else { 
-      # Make sure it contains fixed terms.
-      if(length(fixedstuff)) x = append(x, fixedstuff)
-      # Converts degradation from log10 format.
-      if(logDegradation && "degradation" %in% names(x))
-        x$degradation = 10^x$degradation
-    }
-
+    # result function
+    result.function <- function(x) 
+        {
+        # If a flat vector, reconstruct list. 
+        if(typeof(x) == "double")
+            x = relistArguments.peaks(x, hypothesis, fixed=fixed, arguments=arguments, logDegradation=logDegradation)
+        # Otherwise, checks some options.
+        else { 
+        # Make sure it contains fixed terms.
+        if(length(fixedstuff)) x = append(x, fixedstuff)
+        # Converts degradation from log10 format.
+        if(logDegradation && "degradation" %in% names(x))
+            x$degradation = 10^x$degradation
+        }
     # If would return negative likelihood skip
     if(hypothesis$doDropin)
         {
@@ -153,35 +146,31 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
 	        return(-result)
 	        }
 	    }
-
 	# if stutter is >100% or <0% return negative likelihood
-stuttermodel = function(stutterMean,stutterGradient,i)
-	{
-	stutterMean+(stutterGradient*i)
-	}
-toAdd = 0
-if(hypothesis$doDoubleStutter) toAdd = toAdd + x$meanD
-if(hypothesis$doOverStutter) toAdd = toAdd + x$meanO
-    #if(any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1))
-condition1 = mapply(x$gradientAdjust*x$gradientS,x$stutterAdjust*x$meanS,hypothesis$alleleDb,FUN=function(gradA,stuttA,db) any(stuttermodel(stuttA,gradA,db[,3])+toAdd>1)|any(stuttermodel(stuttA,gradA,db[,3])+toAdd<0))
-condition2 = mapply(x$gradientAdjust*x$gradientS,x$stutterAdjust*x$meanS,hypothesis$alleleDb,FUN=function(gradA,stuttA,db) any(stuttermodel(stuttA,gradA,db[,3])>1)|any(stuttermodel(stuttA,gradA,db[,3])<0))
-#mapply(x$stutterAdjust,hypothesis$alleleDb,FUN=function(stuttA,db) as.numeric(rownames(db))*x$stutterMean*stuttA*x$stutterGradient)
-#condition = any(x$stutterMean*x$stutterAdjust<0)|any(x$stutterMean*x$stutterAdjust>1)
+    stuttermodel = function(stutterMean,stutterGradient,i)
+    	{
+    	stutterMean+(stutterGradient*i)
+    	}
+    toAdd = 0
+    if(hypothesis$doDoubleStutter) toAdd = toAdd + x$meanD
+    if(hypothesis$doOverStutter) toAdd = toAdd + x$meanO
+    condition1 = mapply(x$gradientAdjust*x$gradientS,x$interceptAdjust*x$interceptS,hypothesis$alleleDb,
+                FUN=function(gradA,stuttA,db) 
+                    any(stuttermodel(stuttA,gradA,db[,3])+toAdd>1)|any(stuttermodel(stuttA,gradA,db[,3])+toAdd<0))
+    condition2 = mapply(x$gradientAdjust*x$gradientS,x$interceptAdjust*x$interceptS,hypothesis$alleleDb,
+                FUN=function(gradA,stuttA,db) 
+                    any(stuttermodel(stuttA,gradA,db[,3])>1)|any(stuttermodel(stuttA,gradA,db[,3])<0))
     if(any(condition1)|any(condition2))
 	    {
 	    if(logObjective) result = log10(0) else result = 0
 	    if(verbose) print(result)
 	    return(-result)
 	    }
-
     # Compute objective function.
     result <- do.call(objective, x)
 
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
-
-
-
-    	# Compute as log if requested, otherwise as product.
+    # Compute as log if requested, otherwise as product.
 	if(withPenalties) 
 		{
 		if(logObjective)
@@ -226,26 +215,16 @@ condition2 = mapply(x$gradientAdjust*x$gradientS,x$stutterAdjust*x$meanS,hypothe
 		# return result
 		-result
 	}
-  
   lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
   upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
-
-
-
  # population size for optimisation
   searchPop = 4*length(unlist(upper))
-
-
-  list(#par     = unlist(template), 
-       fn      = result.function, 
+  list(fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
-       #control = list(fnscale=-1, factr=1e7, maxit=500), 
        control = list(strategy=3,NP=searchPop,itermax=iterMax) 
-       #method  = "L-BFGS-B",
-       #hessian = FALSE )
        )
 }
 
@@ -271,8 +250,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   scale           = 1/4
   gradientS = 0.08
   gradientAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
-  stutterAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
-  meanS = 0
+  interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
+  interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 1e-2
   if(hypothesis$doDoubleStutter) meanD = 0.02
@@ -284,8 +263,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-       stutterAdjust         = stutterAdjust,
-       meanS = meanS,
+       interceptAdjust         = interceptAdjust,
+       interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -500,7 +479,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 
 			# put the Def outputs into the combined output	
 			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
-			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
 			D.iter <- c(D.iter, D.step$optim$iter)
 			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
 
@@ -521,7 +500,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 				}
 			# put the Def outputs into the combined output	
 			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
-			D.bestvalit <- rbind(D.bestvalit, D.step$member$bestvalit)
+			D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
 			D.iter <- c(D.iter, D.step$optim$iter)
 			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
 			# recycle the current pop into the next loop
@@ -529,7 +508,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
             }
 		
 
-		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
+		#P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
 
 		for(n in 1:n.steps){
 			# change DEoptim parameters
@@ -558,7 +537,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 
 			# put the Pros outputs into the combined output
 			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
-			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
 			P.iter <- c(P.iter, P.step$optim$iter)
 			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
 
@@ -578,7 +557,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 				}
 			# put the Def outputs into the combined output	
 			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
-			P.bestvalit <- rbind(P.bestvalit, P.step$member$bestvalit)
+			P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
 			P.iter <- c(P.iter, P.step$optim$iter)
 			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)	
 			# recycle the current pop into the next loop
@@ -626,6 +605,8 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 
 	# update final Pros results
 	P.results <- P.step
+	P.results$optim$bestval = GlobalPval
+	P.results$optim$bestmem = GlobalPmem
 	P.results$member$bestmemit <- P.bestmemit
 	P.results$member$bestvalit <- P.bestvalit
 	P.results$optim$iter <- P.iter
@@ -633,6 +614,8 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 
 	# update final Pros results
 	D.results <- D.step
+	D.results$optim$bestval = GlobalDval
+	D.results$optim$bestmem = GlobalDmem
 	D.results$member$bestmemit <- D.bestmemit
 	D.results$member$bestvalit <- D.bestvalit
 	D.results$optim$iter <- D.iter
