@@ -134,7 +134,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
                     SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
                     SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
+                    SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropoutWeight);
 
 
 #ifdef __cplusplus

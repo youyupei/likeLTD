@@ -1633,7 +1633,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 
 
 
-SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropoutWeight)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -1756,6 +1756,11 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	double const * const scale_ptr     = REAL(SCALE);
 	double scaleDouble = scale_ptr[0];
 
+	// convert dropoutWeight to double
+	SEXP DROPOUTWEIGHT = PROTECT(duplicate(dropoutWeight));
+	double const * const dropoutWeight_ptr     = REAL(DROPOUTWEIGHT);
+	double dropoutW = dropoutWeight_ptr[0];
+
     // convert detectionThresh to double
 	SEXP DETECTIONTHRESH = PROTECT(duplicate(detectionThresh));
 	double const * const detect_ptr     = REAL(DETECTIONTHRESH);
@@ -1877,13 +1882,14 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         	                    break;
         	                    }
         	                }
+		double cdf = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * cdf * (1+dropoutW);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)) * 1-(dropoutW*(cdf/(1-cdf)));
 			            }   
 			        }
 			    }
@@ -1902,7 +1908,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(19);
+    UNPROTECT(20);
 	return result;
     }
 
