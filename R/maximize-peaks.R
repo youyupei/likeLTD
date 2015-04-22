@@ -20,7 +20,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
+  if(!is.null(arguments[["dropin"]])) dropin = 50
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
@@ -253,7 +253,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
-  if(hypothesis$doDropin) dropin = 1e-2
+  if(hypothesis$doDropin) dropin = 20
   if(hypothesis$doDoubleStutter) meanD = 0.02
   if(hypothesis$doOverStutter) meanO = 0.02
 

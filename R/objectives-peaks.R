@@ -118,6 +118,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 							degradation=degradation, 
 							repAdjust=repAdjust,
 							detectionThresh=detectionThresh,
+							dropin=dropin,
 							doR=doR,diagnose=diagnose)
 			return(repRes)
 			}
@@ -125,7 +126,8 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 		res <- peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 					scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, 						interceptAdjust=interceptAdjust,interceptS=interceptS, 
 					meanD = meanD,meanO=meanO,degradation=degradation, 
-					repAdjust=repAdjust,detectionThresh=detectionThresh,doR=doR)
+					repAdjust=repAdjust,dropin=dropin,
+					detectionThresh=detectionThresh,doR=doR)
 		# multiply by allele probabilities
 		factorsRes = res*cons$factors
 		# Figure out likelihood for good and return.
@@ -157,7 +159,7 @@ get.database.values = function(alleleDb, doOverStutter, doDoubleStutter)
 	if(doOverStutter) out = c(out, db+1)
 	# add double stutter values
 	if(doDoubleStutter) out = c(out, db-2)
-	sort(unique(out))
+	sort(unique(round(out,1)))
 	}
 
 
@@ -180,7 +182,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 	genotypes = explain.all.peaks(cspPresence,knownPresence,hypothesis$knownProfs,
 					alleles,hypothesis$nUnknowns,hypothesis$peaksProfile,
 					hypothesis$heightsProfile,hypothesis$doDoubleStutter,
-					hypothesis$doOverStutter)
+					hypothesis$doOverStutter,hypothesis$doDropin)
 	# get database values, including all stutter positions
 	dbVals = get.database.values(hypothesis$alleleDb,hypothesis$doOverStutter,
 					hypothesis$doDoubleStutter)
@@ -236,16 +238,53 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 			gradientS,gradientAdjust,interceptAdjust,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
-			repAdjust,detectionThresh,doR=FALSE,diagnose=FALSE)
+			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
+	# combine mean and adjustment
+	locusGradient = gradientS*gradientAdjust
+	locusIntercept = interceptS*interceptAdjust
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
-		stop("Cannot handle dropin")
+		if(doR==TRUE|diagnose==TRUE)
+			{
+			# probabilities for each replicate
+			probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
+				peak.heights.per.locus(genotypeArray=cons$genotypes,
+						alleles=hypothesis$peaksProfile[[x]],
+						heights=hypothesis$heightsProfile[[x]],
+						DNAcont=DNAcont,
+						gradientS = locusGradient,
+						meanD=meanD,meanO=meanO,
+						interceptS=locusIntercept,
+						scale=scale,degradation=degradation,
+						fragLengths=hypothesis$alleleDb[,2],
+						fragProbs=hypothesis$alleleDb[,1],
+						LUSvals=hypothesis$alleleDb[,3],
+						repAdjust=repAdjust[x],
+						detectionThresh=detectionThresh,
+						dropin=dropin,
+						diagnose=diagnose))
+			} else {
+				# single, double and over stutter
+		    		probs = .Call(.cpp.getProbabilitiesSDO_dropin,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					meanD=meanD,meanO=meanO,
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
+			}
 		} else {
-		# combine mean and adjustment
-		locusGradient = gradientS*gradientAdjust
-		locusIntercept = interceptS*interceptAdjust
 		if(doR==TRUE|diagnose==TRUE)
 			{
 			# probabilities for each replicate
@@ -349,8 +388,8 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 # get probability pf each genotype combination
 peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
 			gradientS,meanD=NULL,meanO=NULL,interceptS,scale,
-			degradation,fragLengths,LUSvals,repAdjust=NULL,
-			detectionThresh,diagnose=FALSE)
+			degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
+			detectionThresh,dropin=FALSE,diagnose=FALSE)
 	{
 	# get combined probability of all peaks for each genotype combination seperately
 	Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(genotype=x,
@@ -359,9 +398,9 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
         	gradientS=gradientS,meanD=meanD,
         	meanO=meanO,interceptS=interceptS,
         	scale=scale,degradation=degradation,
-        	fragLengths=fragLengths,LUSvals=LUSvals,
+        	fragLengths=fragLengths,fragProbs=fragProbs,LUSvals=LUSvals,
         	repAdjust=repAdjust,
-        	detectionThresh=detectionThresh,
+        	detectionThresh=detectionThresh,dropin=dropin,
 	        diagnose=diagnose))
 	# diagnose
 	if(diagnose==TRUE) return(Probs)
@@ -375,8 +414,8 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
 # get probability of every peak given current parameters
 probability.peaks = function(genotype,alleles,heights,DNAcont,
 		gradientS,meanD=NULL,meanO=NULL,interceptS,scale,
-		degradation,fragLengths,LUSvals,repAdjust=NULL,
-		detectionThresh,diagnose=FALSE)
+		degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
+		detectionThresh,dropin=NULL,diagnose=FALSE)
 	{
 	# convert genotype to numeric
 	genotype = as.numeric(genotype)
@@ -386,7 +425,7 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	        DNAcont=DNAcont,gradientS=gradientS,
 	        meanD=meanD,meanO=meanO,interceptS=interceptS,
 	        degradation=degradation,fragLengths=fragLengths,
-	        LUSvals=LUSvals,repAdjust=repAdjust)
+	        LUSvals=LUSvals,repAdjust=repAdjust,dropin=dropin)
 	names(heights) = alleles
 	# give peak heights to dropout alleles (height=0)
 	peakHeights = unlist(heights)
@@ -450,8 +489,8 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 # get mean expected peak height at each position
 peak.height.dose = function(genotype,alleles,heights,DNAcont,
 			gradientS,meanD=NULL,meanO=NULL,
-            		interceptS,degradation,fragLengths,
-			LUSvals,repAdjust=NULL)
+            		interceptS,degradation,fragLengths,fragProbs=NULL,
+			LUSvals,repAdjust=NULL,dropin=NULL)
 	{
 	# positions of stutter alleles
 	stutterPos = genotype-1
@@ -472,7 +511,7 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 	# index frag lengths and LUS values
 	fragLengthIndex = sapply(genotype,FUN=function(x) which(names(fragLengths)==x))
 	# base dose
-	dose = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^fragLengths[fragLengthIndex]
+	dose = repAdjust*rep(DNAcont,each=2)*rep(1+degradation,each=2)^-fragLengths[fragLengthIndex]
 	# stutter rate
 	stutterRate = interceptS+(gradientS*LUSvals[fragLengthIndex])
 	# dose from stutters
@@ -534,6 +573,18 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		                                    sum(muS[which(stutterPos==x)]))
 		names(muX) = allPos
 		}
+	# add dropin expected dose
+	if(!is.null(fragProbs))
+		{
+		for(i in 1:length(muX))
+			{
+			index = which(round(as.numeric(names(fragProbs)),1)==names(muX)[i])
+			if(length(index)>0)
+				{
+				muX[i] = muX[i]+fragProbs[index]*dropin 
+				}
+			}
+		}
 	return(muX)
 	} 
 
@@ -557,6 +608,12 @@ penalties.peaks <- function(nloc, degradation=NULL,
     # penalty on degradation
     result = result * exp(-sum(degradation) * degradationPenalty 
                            * normalization )
+    # penalty on gradientS
+    # mean = 0.013, var=0.1 (actual var=0.01^2) 
+    result = result * (dgamma(meanD,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
+    # penalty on interceptS
+    # mean = 0.001, var=0.1 (actual mean=-0.076, actual var=0.13^2) 
+    result = result * (dgamma(meanD,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
     # penalty on gradientAdjust
     result = result * dnorm(log10(gradientAdjust),mean=0, sd=0.15)
     # penalty on interceptAdjust
@@ -565,13 +622,13 @@ penalties.peaks <- function(nloc, degradation=NULL,
     if(!missing(meanD) & !is.null(meanD))
         {
         # mean = 0.01, sd = 5e-5
-        result = result * dgamma(meanD,shape=0.02/0.018,scale=0.018)
+        result = result * (dgamma(meanD,shape=0.02/0.018,scale=0.018) * normalization)
         }
     # penalty on meanO
     if(!missing(meanO) & !is.null(meanO))
 	    {
 	    # mean = 0.01, sd = 5e-5
-	    result = result * dgamma(meanO,shape=0.02/0.018,scale=0.018)
+	    result = result * (dgamma(meanO,shape=0.02/0.018,scale=0.018) * normalization)
 	    }
   return(result)
 }

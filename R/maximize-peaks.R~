@@ -20,7 +20,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 10 - zero
+  if(!is.null(arguments[["dropin"]])) dropin = 50
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
@@ -508,7 +508,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
             }
 		
 
-		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
+		#P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
 
 		for(n in 1:n.steps){
 			# change DEoptim parameters
