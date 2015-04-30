@@ -21,8 +21,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 					scale=NULL, gradientS = NULL, 
 					gradientAdjust=NULL, interceptAdjust=NULL, 
 					dropin=NULL, interceptS=NULL, 
-					meanD=NULL, meanO=NULL, repAdjust=NULL,
-					dropoutWeight = NULL, 
+					meanD=NULL, meanO=NULL, repAdjust=NULL, 
 					detectionThresh=hypothesis$detectionThresh, 
 					degradationPenalty=hypothesis$degradationPenalty,
 					stutterPenalty=hypothesis$stutterPenalty, ...) 
@@ -32,7 +31,6 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 				scale = scale, repAdjust=repAdjust,
 				gradientS = gradientS,interceptS=interceptS, 
 				meanD = meanD,meanO=meanO,
-				dropoutWeight=dropoutWeight,
 				detectionThresh = detectionThresh,
 		                degradationPenalty=degradationPenalty, 
 				stutterPenalty=stutterPenalty, dropin=dropin)
@@ -75,8 +73,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,
 				interceptS,meanD=NULL,meanO=NULL,repAdjust=NULL,
 				degradation=NULL, DNAcont=NULL, 
-				detectionThresh = NULL, dropin=NULL, 
-				dropoutWeight=NULL, ...) 
+				detectionThresh = NULL, dropin=NULL, ...) 
 		{
 		# Likelihood function for a given hypothesis and locus
 		#
@@ -121,7 +118,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 							degradation=degradation, 
 							repAdjust=repAdjust,
 							detectionThresh=detectionThresh,
-							dropin=dropin,dropoutWeight=dropoutWeight,
+							dropin=dropin,
 							doR=doR,diagnose=diagnose)
 			return(repRes)
 			}
@@ -130,7 +127,6 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 					scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, 						interceptAdjust=interceptAdjust,interceptS=interceptS, 
 					meanD = meanD,meanO=meanO,degradation=degradation, 
 					repAdjust=repAdjust,dropin=dropin,
-					dropoutWeight=dropoutWeight,
 					detectionThresh=detectionThresh,doR=doR)
 		# multiply by allele probabilities
 		factorsRes = res*cons$factors
@@ -166,6 +162,30 @@ get.database.values = function(alleleDb, doOverStutter, doDoubleStutter)
 	sort(unique(round(out,1)))
 	}
 
+sortDbVals = function(values)
+	{
+	endings = sapply(values,FUN=function(x) strsplit(toString(x),split="[.]")[[1]][2])
+	if(length(unique(endings))>1)
+		{
+		uniqueEndings = unique(endings)
+		notNaUniqueIndex = which(!is.na(uniqueEndings))
+		for(i in 1:length(uniqueEndings[notNaUniqueIndex]))
+			{
+			index = grep(paste0(".",uniqueEndings[notNaUniqueIndex][i]), values)
+			values = c(values[-index],sort(values[index]))
+			}
+		naIndex = which(is.na(endings))
+		if(length(naIndex)>0)
+			{
+			values[1:length(naIndex)] = sort(values[1:length(naIndex)])
+			}
+		} else {
+		values = sort(values)
+		}
+	return(values)
+	}
+
+
 
 likelihood.constructs.per.locus.peaks = function(hypothesis) 
 	{
@@ -190,6 +210,8 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 	# get database values, including all stutter positions
 	dbVals = get.database.values(hypothesis$alleleDb,hypothesis$doOverStutter,
 					hypothesis$doDoubleStutter)
+	dbVals = sortDbVals(dbVals)
+	# sort dbVals by stutter order e.g. 2,3,4,2.3,3.3,4.3
 	# get index of which alleles are from known contributors
 	#do not want population allele probabilities for known contributors
 	if(nrow(hypothesis$knownProfs)>0) 
@@ -242,8 +264,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 			gradientS,gradientAdjust,interceptAdjust,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
-			repAdjust,detectionThresh,dropin=NULL
-			dropoutWeight,doR=FALSE,diagnose=FALSE)
+			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
@@ -268,9 +289,28 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 						LUSvals=hypothesis$alleleDb[,3],
 						repAdjust=repAdjust[x],
 						detectionThresh=detectionThresh,
-						dropin=dropin,dropoutWeight=dropoutWeight,
+						dropin=dropin,
 						diagnose=diagnose))
 			} else {
+				
+					TgenotypeArray<<-cons$genotypes
+					TDNAcont<<-rep(DNAcont,each=2) 
+					TgradientS<<-locusGradient
+					TmeanD<<-meanD
+TmeanO<<-meanO
+					TinterceptS<<-locusIntercept
+					Tdegradation<<-rep(1+degradation,each=2)
+					TfragLengths<<-hypothesis$alleleDb[,2]
+					TfragNames<<-as.numeric(rownames(hypothesis$alleleDb))
+					TLUSvals <<- hypothesis$alleleDb[,3]
+					Talleles<<-hypothesis$peaksProfile
+					Theights<<-hypothesis$heightsProfile
+					TrepAdjust<<-repAdjust
+Tscale<<-scale
+					TdetectionThresh<<-detectionThresh
+					TdatabaseVals <<- cons$dbVals
+					TfragProbs<<-hypothesis$alleleDb[,1]
+Tdropin<<-dropin
 				# single, double and over stutter
 		    		probs = .Call(.cpp.getProbabilitiesSDO_dropin,
 					genotypeArray=cons$genotypes,
@@ -287,8 +327,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 					repAdjust=repAdjust,scale=scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals,
-					fragProbs=hypothesis$alleleDb[,1], dropin=dropin,
-					dropoutWeight=dropoutWeight)
+					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
 			}
 		} else {
 		if(doR==TRUE|diagnose==TRUE)
@@ -395,7 +434,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
 			gradientS,meanD=NULL,meanO=NULL,interceptS,scale,
 			degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
-			detectionThresh,dropin=FALSE,dropoutWeight,diagnose=FALSE)
+			detectionThresh,dropin=FALSE,diagnose=FALSE)
 	{
 	# get combined probability of all peaks for each genotype combination seperately
 	Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(genotype=x,
@@ -407,7 +446,7 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
         	fragLengths=fragLengths,fragProbs=fragProbs,LUSvals=LUSvals,
         	repAdjust=repAdjust,
         	detectionThresh=detectionThresh,dropin=dropin,
-	        dropoutWeight=dropoutWeight,diagnose=diagnose))
+	        diagnose=diagnose))
 	# diagnose
 	if(diagnose==TRUE) return(Probs)
 	# give impossible values a probability of 0
@@ -421,7 +460,7 @@ peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
 probability.peaks = function(genotype,alleles,heights,DNAcont,
 		gradientS,meanD=NULL,meanO=NULL,interceptS,scale,
 		degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
-		detectionThresh,dropin=NULL,dropoutWeight,diagnose=FALSE)
+		detectionThresh,dropin=NULL,diagnose=FALSE)
 	{
 	# convert genotype to numeric
 	genotype = as.numeric(genotype)
@@ -462,34 +501,28 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	# probability densities
 	pdf = vector(length=length(peakHeights))
 	dropoutIndex = which(peakHeights==0)
-	# function to return downweighted observed peak probability
-	downWeightObserved = function(peakHeight,shape,scale,threshold,weight)
-		{
-		cdf = pgamma(q=threshold,shape=shape,scale=scale)
-		pmfApprox = pgamma(q=peakHeight+0.5,shape=shape,scale=scale)-pgamma(q=peakHeight-0.5,shape=shape,scale=scale)
-		out = pmfApprox*(1-(weight*(cdf/(1-cdf))))
-		}
 	if(length(dropoutIndex)>0)
 		{
 		if(length(dropoutIndex)!=length(peakHeights))
 		    {
 		    # discrete approximation to pmf
-		    pdf[-dropoutIndex] = mapply(FUN=function(x,k,t) downWeightObserved(x,k,t,threshold,dropoutWeight), 
+		    pdf[-dropoutIndex] = mapply(FUN=function(x,k,t) pgamma(q=x+0.5,shape=k,scale=t)-
+		        pgamma(q=x-0.5,shape=k,scale=t), 
 		            x=peakHeights[-dropoutIndex], 
 		            k=shapesVec[-dropoutIndex], 
 		            t=scalesVec[-dropoutIndex])       
 		    }
 		# dropout = integral from 0 to threshold
-		# weighted to increase weight of dropout
-		pdf[dropoutIndex] = mapply(FUN=function(k,t) pgamma(q=detectionThresh,shape=k,scale=t)*(1+dropoutWeight), 
+		pdf[dropoutIndex] = mapply(FUN=function(k,t) pgamma(q=detectionThresh,shape=k,scale=t), 
 		        k=shapesVec[dropoutIndex], 
 		        t=scalesVec[dropoutIndex])
 		} else {
 		# non-dropout = gamma point density
-		    pdf = mapply(FUN=function(x,k,t) downWeightObserved(x,k,t,threshold,dropoutWeight), 
-		            x=peakHeights, 
-		            k=shapesVec, 
-		            t=scalesVec)   
+		pdf = mapply(FUN=function(x,k,t) pgamma(q=x+0.5,shape=k,scale=t)-
+		    pgamma(q=x-0.5,shape=k,scale=t), 
+		        x=peakHeights, 
+		        k=shapesVec, 
+		        t=scalesVec)
 		}
 	# set impossible values to 0 likelihood
 	pdf[which(is.infinite(pdf))] = 0

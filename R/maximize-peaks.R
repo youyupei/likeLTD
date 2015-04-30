@@ -14,14 +14,13 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   gradientAdjust     = rep(5,nloc)
   interceptAdjust     = rep(5,nloc)
   interceptS = 0.3
-  dropoutWeight = 1
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
   meanO = NULL
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 50
+  if(!is.null(arguments[["dropin"]])) dropin = 500
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
@@ -33,7 +32,6 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropoutWeight = dropoutWeight,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -56,7 +54,6 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   gradientAdjust     = rep(0.2,nloc)
   interceptAdjust     = rep(0.2,nloc)
   interceptS  = 0+zero
-  dropoutWeight = 0
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
   meanO = NULL
@@ -75,7 +72,6 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropoutWeight = dropoutWeight,
        dropin          = dropin)[names(arguments)]
 }
 
@@ -257,7 +253,6 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
-  dropoutWeight = 0.5
   if(hypothesis$doDropin) dropin = 20
   if(hypothesis$doDoubleStutter) meanD = 0.02
   if(hypothesis$doOverStutter) meanO = 0.02
@@ -273,7 +268,6 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropoutWeight = dropoutWeight,
        dropin          = dropin)
 }
 
