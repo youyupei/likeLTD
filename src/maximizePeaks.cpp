@@ -1624,14 +1624,12 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
     }
 
 
-
-SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SEXP meanO, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP stutterVals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
 	//    R_CStackLimit = (uintptr_t) - 1;
 	# endif
-	//genotypeArray = coerceVector(genotypeArray,REALSXP);
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
@@ -1639,7 +1637,6 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	int const nDeg = length(degradation);
     int const nDat = length(databaseVals);
 	double doseArray[nCombs][nDat];
-	//memset(doseArray,0,sizeof(doseArray));
 	memset( doseArray, '\0', sizeof( doseArray ) );
 
 	// convert genotypeArray to vector
@@ -1660,16 +1657,6 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		DNAcontVec.push_back(dnacont_ptr[i]);
 		}	
 
-	// convert stutter gradient to double
-	SEXP GRADIENTS = PROTECT(gradientS);
-	double const * const gradientS_ptr     = REAL(GRADIENTS);
-	double gradients = gradientS_ptr[0];
-
-	// convert stutter intercept to double
-	SEXP INTERCEPTS = PROTECT(interceptS);
-	double const * const interceptS_ptr     = REAL(INTERCEPTS);
-	double intercepts = interceptS_ptr[0];
-
 	// convert double stutter to double
 	SEXP MEAND = PROTECT(meanD);
 	double const * const meanD_ptr     = REAL(MEAND);
@@ -1689,7 +1676,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	SEXP DEGRADATION = PROTECT(degradation);
 	double const * const deg_ptr     = REAL(DEGRADATION);
 	std::vector<double> degVec;
-	for(int i=0; i<nDeg; ++i)
+	for(int i=0; i<nGen*nFrag; ++i)
 		{
 		degVec.push_back(deg_ptr[i]);
 		}
@@ -1705,33 +1692,25 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 
 	int const nRep = length(repAdjust);
 	double outDouble[nCombs];
-	std::vector<double> tmpVec;
+	std::vector<double> tmpHvec,tmpAvec;
 	std::fill_n(outDouble,nCombs,1);
 
-	// convert alleles to vector of vectors (equivalent to list)
+	// convert alleles and heights to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(alleles);
-	std::vector<std::vector<double> >  allelesVec;
-	for(int r=0; r<nRep; r++)
-	    {
-	tmpVec.clear();
-	    for(int i=0; i<length(VECTOR_ELT(ALLELES,r)); ++i)
-		    {
-		    tmpVec.push_back(REAL(VECTOR_ELT(ALLELES,r))[i]);
-		    }	
-		allelesVec.push_back(tmpVec);    
-		}
-
-	// convert heights to vector of vectors (equivalent to list)
 	SEXP HEIGHTS = PROTECT(heights);
+	std::vector<std::vector<double> >  allelesVec;
 	std::vector<std::vector<double> >  heightsVec;
 	for(int r=0; r<nRep; r++)
 	    {
-	tmpVec.clear();
-	    for(int i=0; i<length(VECTOR_ELT(HEIGHTS,r)); ++i)
+	tmpAvec.clear();
+	tmpHvec.clear();
+	    for(int i=0; i<length(VECTOR_ELT(ALLELES,r)); ++i)
 		    {
-		    tmpVec.push_back(REAL(VECTOR_ELT(HEIGHTS,r))[i]);
+		    tmpAvec.push_back(REAL(VECTOR_ELT(ALLELES,r))[i]);
+		    tmpHvec.push_back(REAL(VECTOR_ELT(HEIGHTS,r))[i]);
 		    }	
-		heightsVec.push_back(tmpVec);    
+		allelesVec.push_back(tmpAvec); 
+		heightsVec.push_back(tmpHvec);      
 		}
 
 	// convert repAdjust to vector
@@ -1760,29 +1739,26 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	double * fragLvec_ptr     = REAL(fragLvec);
 	SEXP fragPvec = PROTECT(fragProbs);
 	double * fragPvec_ptr     = REAL(fragPvec);
-	SEXP lusvals = PROTECT(LUSvals);
-	double * lusvals_ptr     = REAL(lusvals);
-	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
+	SEXP stuttervals = PROTECT(stutterVals);
+	double * stuttervals_ptr     = REAL(stuttervals);
+	std::vector<double> fragVecN, fragVecL, fragVecP,stuttVals;
 	for(int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(myRound(fragNvec_ptr[i]*10.0f)/10.0f);
 		fragVecL.push_back(fragLvec_ptr[i]);
 		fragVecP.push_back(fragPvec_ptr[i]);
-		lusVals.push_back(lusvals_ptr[i]);	
+		stuttVals.push_back(stuttervals_ptr[i]);	
 		}
 
 	double cdfArg = detectDouble/scaleDouble;
 
-    double stutterRate,initialDose;
+    double stutterRate,initialDose,toAdd(0);
     int genIndex,alleleIndex;
     // would like to fill a single vector for each genotype combination, but does not play well with parallel code
     // get probability for each genotype combination
-    # pragma omp parallel for //schedule(dynamic)
+    //# pragma omp parallel for //schedule(dynamic)
     for(int i=0; i<nCombs; i++)
         {
-	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*4,0);
-
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
     		{
@@ -1796,57 +1772,60 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 				break;
 				}
 			}
-		initialDose =  DNAcontVec[y]*std::pow(degVec[y],-fragVecL[alleleIndex]);
-		//if(y==0) Rprintf("%f\n",initialDose);
-//Rprintf("%d\n",alleleIndex);
-		// Loop over database
+		// get initial dose for this individual and allele
+		initialDose =  DNAcontVec[y]*degVec[y*nFrag+alleleIndex];//exp(-fragVecL[alleleIndex]*degVec[y]);//std::pow(degVec[y],-fragVecL[alleleIndex]);
+		// get stutter, overstutter, doublestutter & allelic doses for this allele
 		for(int j=0; j<nDat; j++)
 			{
 			if(abs(genotypeArrayVec[genIndex]-dbVals[j])<0.0001)
 				{
-//Rprintf("%d\t",j);
-				stutterRate = intercepts+(gradients*lusVals[alleleIndex]);
 				// stutter dose
-				doseArray[i][j-1] = doseArray[i][j-1] + (stutterRate*initialDose);
+				doseArray[i][j-1] = doseArray[i][j-1] + (stuttVals[alleleIndex]*initialDose);
 				// over stutter dose
 				doseArray[i][j+1] = doseArray[i][j+1] + (meano*initialDose);
 				// double stutter dose
 				doseArray[i][j-2] = doseArray[i][j-2] + (meand*initialDose);
 				// allelic dose
-				doseArray[i][j] = doseArray[i][j] + ((1-(stutterRate+meand+meano))*initialDose);
+				doseArray[i][j] = doseArray[i][j] + ((1-(stuttVals[alleleIndex]+meand+meano))*initialDose);
 				break;
 				}
 			}
 		}
-
-//for(int j=0; j<nDat; j++) { Rprintf("%f\t",doseArray[j][i]);}
-	// add dropin doses to dose array
-	for(int j=0; j<fragVecN.size(); j++)
+    	// update with dropin dose, then compute probability
+	for(int j=0; j<nDat; j++)
 		{
-		int matchIndex=0;
-		for(int k=0; k<dbVals.size(); k++)
+		toAdd = 0;
+		// add dropin dose to alleleDb alleles
+		bool flag = false;
+		int matchIndex = 0;
+		for(int l=0; l<fragVecN.size(); l++)
 			{
-			double diff = std::abs(dbVals[k]-fragVecN[j]); 
+			double diff = std::abs(dbVals[j]-fragVecN[l]); 
                 	if(diff<0.0001)
 	                    {
-        	            matchIndex = k;
+	                    //Rprintf("%d\t",l);
+        	            matchIndex = l;
+			    flag = true;
         	            break;
         	            }
 			}
-		doseArray[i][matchIndex] = doseArray[i][matchIndex] + fragVecP[j]*Dropin;
-		}
-//for(int j=0; j<nDat; j++) { Rprintf("%f\t",doseArray[i][j]);}
-//Rprintf("\n");
-    	// loop over database values
-	for(int j=0; j<nDat; j++)
-		{
-		// loop over replicates
+		if(flag)
+			{
+			toAdd =  fragVecP[matchIndex]*Dropin;
+			//Rprintf("%f\t",toAdd);
+			//Rprintf("\n");
+ 			} else {
+			toAdd = '\0';
+			}
+		// adjust doses to be replicate specific
 		for(int k=0; k<nRep; k++)
 		    {
-	        int matchIndex = 0;   
-	        bool matchFlag = false; 
+		    double meanDose = (doseArray[i][j]*repadjustVec[k])+toAdd;
+		    //Rprintf("%.9f\n", meanDose);
+	            int matchIndex = 0;   
+	            bool matchFlag = false; 
 		    // only do anything if doseArray is not 0
-		    if(doseArray[i][j]!='\0')
+		    if(meanDose!=0)
 		        {
 		        // which allele are we looking at?
 		        int matchIndex = 0;   
@@ -1861,13 +1840,17 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
+		double shape = meanDose/scaleDouble;
+		//Rprintf("%f\t", meanDose);
+		if(matchFlag==true)
 		    {
+		    //Rprintf("observed: %f\n",kf_gammap(shape,cdfArg));
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[i][j]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * kf_gammap(shape,cdfArg);
 			            } else {
+			//Rprintf("dropout: %f\n",(kf_gammap(shape,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap(shape,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[i][j]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[i][j]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (kf_gammap(shape,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap(shape,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -1886,10 +1869,9 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(19);
+    UNPROTECT(17);
 	return result;
     }
-
 
 
 
