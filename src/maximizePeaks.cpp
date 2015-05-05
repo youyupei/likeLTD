@@ -1756,7 +1756,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
     int genIndex,alleleIndex;
     // would like to fill a single vector for each genotype combination, but does not play well with parallel code
     // get probability for each genotype combination
-    //# pragma omp parallel for //schedule(dynamic)
+    # pragma omp parallel for //schedule(dynamic)
     for(int i=0; i<nCombs; i++)
         {
         // Loop over members of genotype
@@ -1844,13 +1844,13 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		//Rprintf("%f\t", meanDose);
 		if(matchFlag==true)
 		    {
-		    //Rprintf("observed: %f\n",kf_gammap(shape,cdfArg));
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap(shape,cdfArg);
-			            } else {
-			//Rprintf("dropout: %f\n",(kf_gammap(shape,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap(shape,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
+			//Rprintf("Observed Peak: %.9f\t%f\n",meanDose,heightsVec[k][matchIndex]);
                         // non-dropout dose
                         outDouble[i] = outDouble[i] * (kf_gammap(shape,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap(shape,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			            } else {
+			//Rprintf("Dropout Peak: %.9f\n",meanDose);
+                        // dropout dose
+                        outDouble[i] = outDouble[i] * kf_gammap(shape,cdfArg);
 			            }   
 			        }
 			    }
