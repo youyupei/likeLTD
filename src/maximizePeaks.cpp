@@ -1625,7 +1625,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 
 
 
-inline double singleGenComb(std::vector<double> genotype,
+double singleGenComb(std::vector<double> genotype,
 	std::vector<double> DNAcontVec,
 	double meand,
 	double meano,
@@ -1776,11 +1776,12 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 	int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
     int const nDat = length(databaseVals);
+	int nProtect(0);
 	double doseArray[nCombs][nDat];
 	memset( doseArray, '\0', sizeof( doseArray ) );
 
 	// convert genotypeArray to vector
-	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
+	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray)); nProtect++;
 	double const * const genotypeArray_ptr     = REAL(GENOTYPEARRAY);
 	std::vector<double> genotypeArrayVec(nCombs*nGen,0);
 	for(int i=0; i<nCombs*nGen; ++i)
@@ -1789,7 +1790,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		}
 
 	// convert DNAcont to vector
-	SEXP DNACONT = PROTECT(duplicate(DNAcont));
+	SEXP DNACONT = PROTECT(duplicate(DNAcont)); nProtect++;
 	double const * const dnacont_ptr     = REAL(DNACONT);
 	std::vector<double> DNAcontVec;
 	for(int i=0; i<nCont; ++i)
@@ -1798,22 +1799,22 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		}	
 
 	// convert double stutter to double
-	SEXP MEAND = PROTECT(duplicate(meanD));
+	SEXP MEAND = PROTECT(duplicate(meanD)); nProtect++;
 	double const * const meanD_ptr     = REAL(MEAND);
 	double meand = meanD_ptr[0];
 
 	// convert over stutter to double
-	SEXP MEANO = PROTECT(duplicate(meanO));
+	SEXP MEANO = PROTECT(duplicate(meanO)); nProtect++;
 	double const * const meanO_ptr     = REAL(MEANO);
 	double meano = meanO_ptr[0];
 
 	// convert dropin to double
-	SEXP DROPIN = PROTECT(duplicate(dropin));
+	SEXP DROPIN = PROTECT(duplicate(dropin)); nProtect++;
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
 
     // convert degradation to vector
-	SEXP DEGRADATION = PROTECT(duplicate(degradation));
+	SEXP DEGRADATION = PROTECT(duplicate(degradation)); nProtect++;
 	double const * const deg_ptr     = REAL(DEGRADATION);
 	std::vector<double> degVec;
 	for(int i=0; i<nGen*nFrag; ++i)
@@ -1822,7 +1823,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		}
 		
     // convert databaseVals to vector
-	SEXP DATABASEVALS = PROTECT(duplicate(databaseVals));
+	SEXP DATABASEVALS = PROTECT(duplicate(databaseVals)); nProtect++;
 	double const * const dbvals_ptr     = REAL(DATABASEVALS);
 	std::vector<double> dbVals;
 	for(int i=0; i<nDat; ++i)
@@ -1836,8 +1837,8 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 	std::fill_n(outDouble,nCombs,1);
 
 	// convert alleles and heights to vector of vectors (equivalent to list)
-	SEXP ALLELES = PROTECT(duplicate(alleles));
-	SEXP HEIGHTS = PROTECT(duplicate(heights));
+	SEXP ALLELES = PROTECT(duplicate(alleles)); nProtect++;
+	SEXP HEIGHTS = PROTECT(duplicate(heights)); nProtect++;
 	std::vector<std::vector<double> >  allelesVec;
 	std::vector<std::vector<double> >  heightsVec;
 	for(int r=0; r<nRep; r++)
@@ -1854,7 +1855,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		}
 
 	// convert repAdjust to vector
-	SEXP REPADJUST = PROTECT(duplicate(repAdjust));
+	SEXP REPADJUST = PROTECT(duplicate(repAdjust)); nProtect++;
 	double const * const repadjust_ptr     = REAL(REPADJUST);
 	std::vector<double> repadjustVec(nRep,0);
 	for(int i=0; i<nRep; ++i)
@@ -1863,23 +1864,23 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 		}	
 
 	// convert scale to double
-	SEXP SCALE = PROTECT(duplicate(scale));
+	SEXP SCALE = PROTECT(duplicate(scale)); nProtect++;
 	double const * const scale_ptr     = REAL(SCALE);
 	double scaleDouble = scale_ptr[0];
 
     // convert detectionThresh to double
-	SEXP DETECTIONTHRESH = PROTECT(duplicate(detectionThresh));
+	SEXP DETECTIONTHRESH = PROTECT(duplicate(detectionThresh)); nProtect++;
 	double const * const detect_ptr     = REAL(DETECTIONTHRESH);
 	double detectDouble = detect_ptr[0];
 
     // convert fragLengths, fragNames, LUSvals and fragProbs to vector
-	SEXP fragNvec = PROTECT(duplicate(fragNames));
+	SEXP fragNvec = PROTECT(duplicate(fragNames)); nProtect++;
 	double * fragNvec_ptr     = REAL(fragNvec);
-	SEXP fragLvec = PROTECT(duplicate(fragLengths));
+	SEXP fragLvec = PROTECT(duplicate(fragLengths)); nProtect++;
 	double * fragLvec_ptr     = REAL(fragLvec);
-	SEXP fragPvec = PROTECT(duplicate(fragProbs));
+	SEXP fragPvec = PROTECT(duplicate(fragProbs)); nProtect++;
 	double * fragPvec_ptr     = REAL(fragPvec);
-	SEXP stuttervals = PROTECT(duplicate(stutterVals));
+	SEXP stuttervals = PROTECT(duplicate(stutterVals)); nProtect++;
 	double * stuttervals_ptr     = REAL(stuttervals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,stuttVals;
 	for(int i=0; i<nFrag; ++i)
@@ -1911,7 +1912,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 	# endif	
 
 	// Make and return output object
-	SEXP result = PROTECT(allocVector(REALSXP, nCombs));
+	SEXP result = PROTECT(allocVector(REALSXP, nCombs)); nProtect++;
   	double       * const out_ptr  = REAL(result);
 	for(int i=0; i<nCombs; ++i)
 		{
@@ -1929,7 +1930,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 			}
 		}
 */
-    UNPROTECT(17);
+    UNPROTECT(nProtect);
 	return result;
     }
 

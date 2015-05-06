@@ -137,7 +137,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SE
 //SEXP getProbabilitiesSDO_dropinOptimised(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SEXP meanO, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP stutterVals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
 
    //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter allowing for dropin
-inline double singleGenComb(std::vector<double> genotype,
+double singleGenComb(std::vector<double> genotype,
 	std::vector<double> DNAcontVec,
 	double meand,
 	double meano,
