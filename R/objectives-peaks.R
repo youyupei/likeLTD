@@ -162,30 +162,6 @@ get.database.values = function(alleleDb, doOverStutter, doDoubleStutter)
 	sort(unique(round(out,1)))
 	}
 
-sortDbVals = function(values)
-	{
-	endings = sapply(values,FUN=function(x) strsplit(toString(x),split="[.]")[[1]][2])
-	if(length(unique(endings))>1)
-		{
-		uniqueEndings = unique(endings)
-		notNaUniqueIndex = which(!is.na(uniqueEndings))
-		for(i in 1:length(uniqueEndings[notNaUniqueIndex]))
-			{
-			index = grep(paste0(".",uniqueEndings[notNaUniqueIndex][i]), values)
-			values = c(values[-index],sort(values[index]))
-			}
-		naIndex = which(is.na(endings))
-		if(length(naIndex)>0)
-			{
-			values[1:length(naIndex)] = sort(values[1:length(naIndex)])
-			}
-		} else {
-		values = sort(values)
-		}
-	return(values)
-	}
-
-
 
 likelihood.constructs.per.locus.peaks = function(hypothesis) 
 	{
@@ -210,8 +186,6 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 	# get database values, including all stutter positions
 	dbVals = get.database.values(hypothesis$alleleDb,hypothesis$doOverStutter,
 					hypothesis$doDoubleStutter)
-	dbVals = sortDbVals(dbVals)
-	# sort dbVals by stutter order e.g. 2,3,4,2.3,3.3,4.3
 	# get index of which alleles are from known contributors
 	#do not want population allele probabilities for known contributors
 	if(nrow(hypothesis$knownProfs)>0) 
@@ -269,6 +243,23 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
+
+
+TgenotypeArray<<-cons$genotypes
+					TDNAcont<<-rep(DNAcont,each=2) 
+					TgradientS<<-locusGradient
+					TmeanD<<-meanD;TmeanO<<-meanO
+					TinterceptS<<-locusIntercept
+					Tdegradation<<-rep(1+degradation,each=2)
+					TfragLengths<<-hypothesis$alleleDb[,2]
+					TfragNames<<-as.numeric(rownames(hypothesis$alleleDb))
+					TLUSvals <<- hypothesis$alleleDb[,3]
+					Talleles<<-hypothesis$peaksProfile
+					Theights<<-hypothesis$heightsProfile
+					TrepAdjust<<-repAdjust;Tscale<<-scale
+					TdetectionThresh<<-detectionThresh
+					TdatabaseVals <<- cons$dbVals
+					TfragProbs<<-hypothesis$alleleDb[,1]; Tdropin<<-dropin
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
@@ -292,34 +283,17 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 						dropin=dropin,
 						diagnose=diagnose))
 			} else {
-				
-					TgenotypeArray<<-cons$genotypes
-					TDNAcont<<-rep(DNAcont,each=2) 
-					TgradientS<<-locusGradient
-					TmeanD<<-meanD
-TmeanO<<-meanO
-					TinterceptS<<-locusIntercept
-					Tdegradation<<-rep(1+degradation,each=2)
-					TfragLengths<<-hypothesis$alleleDb[,2]
-					TfragNames<<-as.numeric(rownames(hypothesis$alleleDb))
-					TLUSvals <<- hypothesis$alleleDb[,3]
-					Talleles<<-hypothesis$peaksProfile
-					Theights<<-hypothesis$heightsProfile
-					TrepAdjust<<-repAdjust
-Tscale<<-scale
-					TdetectionThresh<<-detectionThresh
-					TdatabaseVals <<- cons$dbVals
-					TfragProbs<<-hypothesis$alleleDb[,1]
-Tdropin<<-dropin
 				# single, double and over stutter
 		    		probs = .Call(.cpp.getProbabilitiesSDO_dropin,
 					genotypeArray=cons$genotypes,
 					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
 					meanD=meanD,meanO=meanO,
-					degradation=sapply(rep(1+degradation,each=2),FUN=function(x) x^(-hypothesis$alleleDb[,2])),
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
 					fragLengths=hypothesis$alleleDb[,2],
 					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
-					stutterVals = locusIntercept+(locusGradient*hypothesis$alleleDb[,3]),
+					LUSvals = hypothesis$alleleDb[,3],
 					alleles=hypothesis$peaksProfile,
 					heights=hypothesis$heightsProfile,
 					repAdjust=repAdjust,scale=scale,

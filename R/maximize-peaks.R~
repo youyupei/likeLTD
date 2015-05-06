@@ -20,7 +20,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(10,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 500
+  if(!is.null(arguments[["dropin"]])) dropin = 50
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,

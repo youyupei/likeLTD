@@ -131,38 +131,10 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
                     SEXP detectionThresh, SEXP databaseVals);
 
     //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter allowing for dropin
-SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SEXP meanO, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP stutterVals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
-
-    //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter allowing for dropin
-//SEXP getProbabilitiesSDO_dropinOptimised(SEXP genotypeArray, SEXP DNAcont, SEXP meanD, SEXP meanO, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP stutterVals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
-
-   //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter allowing for dropin
-double singleGenComb(std::vector<double> genotype,
-	std::vector<double> DNAcontVec,
-	double meand,
-	double meano,
-	double Dropin,
-	std::vector<double> degVec,
-	std::vector<double> dbVals,
-		std::vector<std::vector<double> >  allelesVec,
-	std::vector<std::vector<double> >  heightsVec,
-	std::vector<double> repadjustVec,
-		double scaleDouble,
-	double detectDouble,
-	std::vector<double> fragVecN, 
-	std::vector<double> fragVecL, 
-	std::vector<double> fragVecP,
-	std::vector<double> stuttVals,
-	double cdfArg,
-	int const nCombs,
-	int const nGen,
-	int const nCont,
-	int const nFrag,
-	int const nDeg,
-    int const nDat,
-    int const nRep,
-    int currentComb
-	);
+    SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
+                    SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
+                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
+                    SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
 
 
 #ifdef __cplusplus
