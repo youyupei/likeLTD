@@ -190,6 +190,55 @@ extrapolateLUS = function(alleleDb,toFill)
 	return(out)
 	}
 
+extrapolateBP = function(alleleDb, newAllele)
+	{
+	alleles = as.numeric(rownames(alleleDb))
+	BPs = alleleDb[,2]
+	newEnding = strsplit(newAllele,"[.]")[[1]][2]
+	newAllele = as.numeric(newAllele)
+	allEndings = sapply(rownames(alleleDb),FUN=function(x) strsplit(x,"[.]")[[1]][2])
+	# get possible levels e.g. partial and whole repeats
+	levels = names(table(allEndings,useNA="ifany"))
+	# need two to find repeat length
+	pairs = which(table(allEndings,useNA="ifany")>1)
+	toCheck = levels[pairs[1]]
+	if(is.na(toCheck))
+		{
+		matching = which(is.na(allEndings))
+		} else {
+		matching = which(allEndings==toCheck)
+		}
+	# get repeat length
+	repeatLength = (BPs[matching[1]]-BPs[matching[2]])/(alleles[matching[1]]-alleles[matching[2]])
+	# get alleles that have same ending as new allele
+	if(is.na(newEnding))
+		{
+		matching = which(is.na(allEndings))
+		} else {
+		matching = which(allEndings==newEnding)
+		}
+	if(length(matching)>0)
+		{
+		# simple same ending
+		newLength = BPs[matching[1]] + repeatLength*(newAllele-alleles[matching[1]])
+		} else {
+		# no matching ending
+		if(any(is.na(allEndings)))
+			{
+			# try whole repeats first, simple
+			naIndex = which(is.na(allEndings))
+			newLength = BPs[naIndex[1]] + repeatLength*(floor(newAllele)-alleles[naIndex[1]])
+			newLength = newLength + as.numeric(newEnding)
+			} else {
+			# only partials
+			if(is.na(newEnding)) newEnding=0
+			newLength = BPs[1] + repeatLength*(floor(newAllele)-floor(alleles[1]))
+			newLength = newLength + (as.numeric(newEnding)-as.numeric(allEndings[1]))
+			}
+		}
+	return(newLength)
+	}
+
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
                                 adj=1e0, fst=0.02, combineRare=FALSE, 
@@ -426,8 +475,13 @@ missing.alleles.peaks = function(alleleDb, cspProfile, queriedProfile, knownProf
       #newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
       #                 byrow=TRUE)
       rownames(newrows) = missingAlleles
+      beforeLength = nrow(alleleDb[[locus]])
+      addedRows = (beforeLength+1):(beforeLength+nrow(newrows))
       alleleDb[[locus]] = rbind(alleleDb[[locus]], newrows)
-      alleleDb[[locus]][nrow(alleleDb[[locus]]),3] = extrapolateLUS(alleleDb[[locus]],nrow(alleleDb[[locus]]))
+      # get missing LUS values
+      alleleDb[[locus]][addedRows,3] = sapply(addedRows, FUN=function(x) extrapolateLUS(alleleDb[[locus]],x))
+      # get missing BP values
+      alleleDb[[locus]][addedRows,2] = sapply(missingAlleles, FUN=function(x) extrapolateBPs(alleleDb[[locus]],x))
     }
   }
   alleleDb

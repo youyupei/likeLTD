@@ -58,12 +58,12 @@ read.peaks.profile = function(FILE)
 	# get replicate names
 	conditions = names(table(data[,1]))
 	# get allele data
-	alleles = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
+	alleles = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
 	# get height data
-	heights = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
+	heights = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
 	# get size data
 	# not sure if this is needed
-	sizes = sapply(conditions, FUN=function(x) likeLTD:::subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
+	sizes = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
 	# checks
 	check1 = !mapply(FUN=checkData1,alleles,heights,sizes)
 	if(any(check1)) stop(paste("Error in the CSP provided - replicates ",paste(which(check1),collapse=",")))
@@ -71,24 +71,6 @@ read.peaks.profile = function(FILE)
 	if(check2) stop(paste("Error in the CSP provided - replicates do not match"))
 	# return data
 	return(list(alleles=alleles,heights=heights,sizes=sizes))
-	}
-
-# function to read in allele calls
-# 0=non-allelic, 1=allelic
-read.allelic.calls = function(FILE)
-	{
-	if(!file.exists(FILE)) stop(paste(FILE, "does not exist."))
-	# get data
-	data = read.csv(file=FILE,as.is=TRUE,na.strings="")
-	# get replicate names
-	conditions = names(table(data[,1]))
-	# get allele data
-	calls = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
-	# perform checks
-	check = !checkData2(alleleReps=calls)
-	if(check) stop(paste("Error in the allele calls provided - replicates do not match"))
-	# return data
-	return(calls)
 	}
 
 # Function to convert from peak heights designation to binary designation
@@ -208,6 +190,55 @@ extrapolateLUS = function(alleleDb,toFill)
 	return(out)
 	}
 
+extrapolateBP = function(alleleDb, newAllele)
+	{
+	alleles = as.numeric(rownames(alleleDb))
+	BPs = alleleDb[,2]
+	newEnding = strsplit(newAllele,"[.]")[[1]][2]
+	newAllele = as.numeric(newAllele)
+	allEndings = sapply(rownames(alleleDb),FUN=function(x) strsplit(x,"[.]")[[1]][2])
+	# get possible levels e.g. partial and whole repeats
+	levels = names(table(allEndings,useNA="ifany"))
+	# need two to find repeat length
+	pairs = which(table(allEndings,useNA="ifany")>1)
+	toCheck = levels[pairs[1]]
+	if(is.na(toCheck))
+		{
+		matching = which(is.na(allEndings))
+		} else {
+		matching = which(allEndings==toCheck)
+		}
+	# get repeat length
+	repeatLength = (BPs[matching[1]]-BPs[matching[2]])/(alleles[matching[1]]-alleles[matching[2]])
+	# get alleles that have same ending as new allele
+	if(is.na(newEnding))
+		{
+		matching = which(is.na(allEndings))
+		} else {
+		matching = which(allEndings==newEnding)
+		}
+	if(length(matching)>0)
+		{
+		# simple same ending
+		newLength = BPs[matching[1]] + repeatLength*(newAllele-alleles[matching[1]])
+		} else {
+		# no matching ending
+		if(any(is.na(allEndings)))
+			{
+			# try whole repeats first, simple
+			naIndex = which(is.na(allEndings))
+			newLength = BPs[naIndex[1]] + repeatLength*(floor(newAllele)-alleles[naIndex[1]])
+			newLength = newLength + as.numeric(newEnding)
+			} else {
+			# only partials
+			if(is.na(newEnding)) newEnding=0
+			newLength = BPs[1] + repeatLength*(floor(newAllele)-floor(alleles[1]))
+			newLength = newLength + (as.numeric(newEnding)-as.numeric(allEndings[1]))
+			}
+		}
+	return(newLength)
+	}
+
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
                                 queriedProfile, alleleDb, ethnic='EA1',
                                 adj=1e0, fst=0.02, combineRare=FALSE, 
@@ -220,12 +251,13 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
   #alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
-  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
+  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  # remove allele with 0 observations in database
+  alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -233,10 +265,10 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   #alleleDb2 = sapply(alleleDb,FUN=fill.unknown.LUS,simplify=FALSE)
 
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = likeLTD:::combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
 
   # add index for stutter values
-  alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
+  #alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
 
 
   # Construct all profiles as arrays of  
@@ -284,22 +316,15 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
-prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',
-                                   nUnknowns=0, adj=1e0, fst=0.02, linkageFile=NULL,
+prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
+                                   nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
                                    doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL,...) {
-  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-#  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
-#  if(is.null(callsFile))
-#    {
-#    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
-#    } else {
-#    allelicCalls = read.allelic.calls(callsFile)
-#    }
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
   if(identical(relatedness,c(0.5,0.25)))
 	{
@@ -318,7 +343,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter)
@@ -344,7 +369,6 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
   result[["doDoubleStutter"]] = doDoubleStutter
   result[["doOverStutter"]] = doOverStutter
   result[["peaksFile"]] = peaksFile
-  result[["callsFile"]] = callsFile
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
@@ -361,20 +385,13 @@ prosecution.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, eth
 
 # Creates defence hypothesis
 # Documentation is in man directory.
-defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic='EA1',  nUnknowns=0,
-                               adj=1e0, fst=0.02, databaseFile=NULL, stutterPercent=NULL, linkageFile=NULL,
+defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknowns=0,
+                               adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
                                relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, 
 			       rareThreshold=0.05, kit=NULL,...) {
-  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-#  if(is.null(stutterPercent)&is.null(callsFile)) stop("Need either a file with allelic calls, or a stutter percentage to automatically call alleles")
-#  if(is.null(callsFile))
-#    {
-#    allelicCalls = make.allelic.calls(peaksProfile,stutterPercent)
-#    } else {
-#    allelicCalls = read.allelic.calls(callsFile)
-#    }
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
   cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
@@ -418,11 +435,9 @@ defence.hypothesis.peaks <- function(peaksFile, callsFile=NULL, refFile, ethnic=
   result[["doOverStutter"]] = doOverStutter
   result[["peaksFile"]] = peaksFile
   result[["refFile"]] = refFile
-  result[["callsFile"]] = callsFile
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
   result[["detectionThresh"]] = detectionThresh
-  result[["stutterPercent"]] = stutterPercent
   if(identical(relatedness,c(0.5,0.25))) result[["linkageInfo"]] = linkageInfo
 
 
@@ -455,12 +470,18 @@ missing.alleles.peaks = function(alleleDb, cspProfile, queriedProfile, knownProf
     missingAlleles = setdiff(missingAlleles, c("", NA, "NA"))
     # Now add new rows to database. 
     if(length(missingAlleles)) {
-      #newrows = matrix(c(1, 0, NA), nrow=length(missingAlleles), ncol=3,
-      #                 byrow=TRUE)
-      newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+      newrows = matrix(c(1, 0, NA), nrow=length(missingAlleles), ncol=3,
                        byrow=TRUE)
+      #newrows = matrix(c(1, 0), nrow=length(missingAlleles), ncol=2,
+      #                 byrow=TRUE)
       rownames(newrows) = missingAlleles
+      beforeLength = nrow(alleleDb[[locus]])
+      addedRows = (beforeLength+1):(beforeLength+nrow(newrows))
       alleleDb[[locus]] = rbind(alleleDb[[locus]], newrows)
+      # get missing LUS values
+      alleleDb[[locus]][addedRows,3] = sapply(addedRows, FUN=function(x) extrapolateLUS(alleleDb[[locus]],x))
+      # get missing BP values
+      alleleDb[[locus]][addedRows,2] = sapply(missingAlleles, FUN=function(x) extrapolateBPs(alleleDb[[locus]],x))
     }
   }
   alleleDb
@@ -479,14 +500,6 @@ sanity.check.peaks = function(hypothesis) {
   if(ncol(hypothesis$binaryProfile) != ncol(hypothesis$queriedProfile))
       errors = c( errors,
                   "Number of loci of binaryProf and queriedProf do not match." )
-  if(!is.null(hypothesis$stutterPercent))
-    {
-    if(hypothesis$stutterPercent<0|hypothesis$stutterPercent>1)
-        errors = c( errors,
-            "stutterPercent must be between 0 and 1." )
-    if(hypothesis$stutterPercent>0.3)
-      print("Warning: stutterPercent is set unusually high.")   
-    }
   if(hypothesis$detectionThresh<0)
         errors = c( errors,
             "Detection threshold should not be set lower than 0." )
@@ -515,13 +528,12 @@ transform.to.locus.centric.peaks = function(hypothesis) {
       if(key%in%c("peaksProfile","heightsProfile","sizesProfile"))
         {
         locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE],simplify=FALSE)
-	for(i in 1:length(locusValue[[key]]))
-		{
-		tmp = data.frame(t(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])]),stringsAsFactors=FALSE)
-		rownames(tmp) = locus
-		if(ncol(tmp)>0) colnames(tmp) = paste("Allele",1:ncol(tmp),sep=".")
-		locusValue[[key]][[i]] = tmp
-		}
+	    for(i in 1:length(locusValue[[key]]))
+    		{
+    		tmp = as.numeric(locusValue[[key]][[i]][!is.na(locusValue[[key]][[i]])])
+    		if(length(tmp)>0) names(tmp) = paste("Allele",1:length(tmp),sep=".")
+    		locusValue[[key]][[i]] = tmp
+    		}
         } else {
       # If a matrix and locus is either in rows or columns, then add only locus
       # part of the matrix. 
