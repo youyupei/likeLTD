@@ -481,7 +481,7 @@ missing.alleles.peaks = function(alleleDb, cspProfile, queriedProfile, knownProf
       # get missing LUS values
       alleleDb[[locus]][addedRows,3] = sapply(addedRows, FUN=function(x) extrapolateLUS(alleleDb[[locus]],x))
       # get missing BP values
-      alleleDb[[locus]][addedRows,2] = sapply(missingAlleles, FUN=function(x) extrapolateBPs(alleleDb[[locus]],x))
+      alleleDb[[locus]][addedRows,2] = sapply(missingAlleles, FUN=function(x) extrapolateBP(alleleDb[[locus]],x))
     }
   }
   alleleDb

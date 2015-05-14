@@ -12,6 +12,8 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
   	# Catch early. Shouldn't be a problem here, but will be at some point. 
 	if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
 	if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
+	# add extra unknown contributor if dropin and no unknowns
+	#if(nUnknowns == 0 && doDropin == TRUE) nUnknowns = 1
 	if(ncol(profPresence)!=0)
 	    {
 	    # get known alleles
@@ -31,6 +33,7 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 	if(nUnknowns==0) 
 		{
 		check = !all(round(as.numeric(cspAlleles),1)%in%round(as.numeric(knownWithStutter),1))
+		if(doDropin) check=FALSE
 		if(check) 
 		    {
 		    stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
