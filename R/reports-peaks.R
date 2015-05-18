@@ -101,7 +101,7 @@ plotline = function(height,size,contributors,colours)
 	}
 
 
-plot.CSP = function(cspFile,refFile=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
+plot.CSP.heights = function(cspFile,refFile=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
 	{
 	# get CSP
 	print("load CSP")

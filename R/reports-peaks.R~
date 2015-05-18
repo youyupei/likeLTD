@@ -1,8 +1,9 @@
-pack.admin.input.peaks <- function(peaksFile, callsFile, refFile, stutterFile, caseName='dummy',databaseFile=NULL, kit=NULL, outputPath=getwd() ) {
+pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(peaksFile, refFile) 
 	if(!is.null(databaseFile)) paths <- c(databaseFile, paths, recursive=TRUE)
+	if(!is.null(linkageFile)) paths <- c(linkageFile, paths, recursive=TRUE)
 	for(path in paths) {
 		if(!file.exists(path))
 			stop(paste(path, "does not exist."))
@@ -15,6 +16,7 @@ pack.admin.input.peaks <- function(peaksFile, callsFile, refFile, stutterFile, c
 	stop(paste(outputPath, " exists and is not a directory."))
 	admin <- list( caseName=caseName,
                 databaseFile=databaseFile,
+                linkageFile=linkageFile,
                 peaksFile=peaksFile,
                 refFile=refFile,
                 outputPath=outputPath,
@@ -32,6 +34,33 @@ locus.likes.peaks <- function(hypothesis,results,...){
 	likes <- likes$objectives * likes$penalties
 	}
 
+
+# function to check if stutter
+checkStutter = function(x,alleles,heights,stutterPos=-1,upperThresh=0.15,lowerThresh=0.05)
+	{
+	thisIndex = which(alleles==x)
+	parentIndex = which(alleles==x-stutterPos)
+	if(length(parentIndex)>0)
+		{
+		# x>15% allelic
+		if(heights[thisIndex]/heights[parentIndex]>=upperThresh) return(2)
+		# 5%<x<15% uncertain
+		if((heights[thisIndex]/heights[parentIndex]<upperThresh)&(heights[thisIndex]/heights[parentIndex]>=lowerThresh)) return(1)
+		# x<5% = non-alleleic
+		if(heights[thisIndex]/heights[parentIndex]<lowerThresh) return(0)
+		} else {
+		# no parent peak (not in stutter position)
+		return(NA)
+		}
+	}
+# combine stutter calls for overall call
+combineStutter = function(stutterCall,doubleCall,overCall)
+	{
+	calls = c(stutterCall,doubleCall,overCall)
+	if(any(calls==0,na.rm=TRUE)) return(0)
+	if(any(calls==1,na.rm=TRUE)) return(1)
+	return(2)
+	}
 
 getPeakContributors = function(locusPeaks,locusRefs)
 	{
@@ -72,13 +101,20 @@ plotline = function(height,size,contributors,colours)
 	}
 
 
-plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh=NULL,replicate=1)
+plot.CSP = function(cspFile,refFile=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
 	{
 	# get CSP
+	print("load CSP")
+	print(cspFile)
 	csp = read.peaks.profile(cspFile)
+	# get database
+	print("load DB")
+if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
+  alleleDb = load.allele.database(dbFile,kit)
 	# get K profiles
 	if(!is.null(refFile)) 
 		{
+		print("refs")
 		# get reference profiles
 		refs = read.known.profiles(refFile)
 		Q = refs[which(unlist(refs[,1])),-1]
@@ -88,65 +124,87 @@ plot.CSP.heights = function(cspFile,refFile=NULL,detectThresh=NULL,stutterThresh
 		# colours
 		contColours = rainbow(nrow(refs))
 		nK = length(contColours)
+		cspProfile = sapply(csp$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
+        cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+        alleleDb = likeLTD:::ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
+        alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
 		}
 	# locus names
-	loci = rownames(csp$alleles[[replicate]])
-	# stutter calls 
-	if(!is.null(stutterThresh)) 
+	if(is.null(toPlot))
 		{
-		stutters = make.allelic.calls(csp,stutterThresh)
+		loci = rownames(csp$alleles[[replicate]])
+		} else {
+		loci = toPlot
+		}
+	# stutter calls 
+	if(doStutter) 
+		{
+		print("stutters")
+		stutters = likeLTD:::make.allelic.calls(csp,stutterThresh)
 		}
 	# set plotting parameters that are constant across loci
-	par(mfrow=rep(ceiling(sqrt(nrow(csp$alleles[[replicate]]))),times=2),mar=c(2,2,2,0))
-	YLIM = c(0,range(unlist(csp$heights),na.rm=TRUE)[2])
+	print("pars")
+	dims = rep(ceiling(sqrt(length(loci))),times=2)
+	print(range(unlist(csp$heights[[replicate]][loci,]),na.rm=TRUE))
+	YLIM = c(0,range(as.numeric(unlist(csp$heights[[replicate]][loci,])),na.rm=TRUE)[2])
 	YLIM = YLIM + c(0,YLIM[2]/10)
+	if(!is.null(outputFile)) pdf(outputFile)
+	par(mfrow=dims,mar=c(2,2,2,0.5))
 	# loop over loci
-	for(j in 1:nrow(csp$alleles[[replicate]]))
+	for(j in 1:length(loci))
 		{
+		# remove NAs
+		index = which(!is.na(csp$alleles[[replicate]][loci[j],]))
+		alleles = as.numeric(unlist(csp$alleles[[replicate]][loci[j],][index]))
+		heights = as.numeric(unlist(csp$heights[[replicate]][loci[j],][index]))
+		thisDB = alleleDb[[which(names(alleleDb)==loci[j])]]
+		dbIndex = sapply(alleles,FUN=function(x) which(rownames(thisDB)==x))
 		# set plotting parameters that are specific to a locus
-		XLIM = range(as.numeric(csp$sizes[[replicate]][j,]),na.rm=TRUE)
+		XLIM = range(thisDB[dbIndex,2],na.rm=TRUE)
 		XLIM = XLIM + c(-2,2)
-		flag = (j-1)%%4==0
+		flag = (j-1)%%dims[1]==0
 		# make an empty plot
-		plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=rownames(csp$alleles[[replicate]])[j],yaxt=ifelse(flag,'s','n'))
+		print("plot")
+		plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=loci[j],yaxt=ifelse(flag,'s','n'))
 		# add baseline
 		abline(h=0)
 		# add detection threshold
+		print("detectThresh")
 		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
 		if(!is.null(refFile))
 			{
+			print("references")
 			# get which K contributes to each peak
-			peakContributors = likeLTD:::getPeakContributors(csp$alleles[[replicate]][loci[j],],refs[,loci[j]])
+			peakContributors = getPeakContributors(alleles,refs[,loci[j]])
 			# add peaks to plot
-			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
+			mapply(heights,thisDB[dbIndex,2],peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
 			} else {
-			mapply(as.numeric(csp$heights[[replicate]][j,]),as.numeric(csp$sizes[[replicate]][j,]),FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="blue"))
+			mapply(heights,thisDB[dbIndex,2],FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="black",lwd=2))
 			}
 		# add peak labels to plot
-		if(is.null(stutterThresh))
+		if(!doStutter)
 			{
 			# with no predicted stutter
-			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
+			mapply(thisDB[dbIndex,2],heights,alleles,FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
 			} else {
+			print("stutters")
+			# with predicted stutter
+			# stutter
+			stutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights)
+			doubleStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
+			overStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
+			calls = mapply(FUN=combineStutter,stutter,doubleStutter,overStutter)
+			labelCols = vector(length=length(calls))
+			certIndex = which(calls==2)
+			labelCols[certIndex] = "blue"
+			uncIndex = which(calls==1)
+			labelCols[uncIndex] = "purple"
+			labelCols[-c(certIndex,uncIndex)] = "red"
 			# with predicted stutter (crude)
-			mapply(as.numeric(csp$sizes[[replicate]][j,]),as.numeric(csp$heights[[replicate]][j,]),csp$alleles[[replicate]][j,],stutters[[replicate]][j,],FUN=function(x,y,a,b) text(x,y+(YLIM[2]/12),a,col=ifelse(b,"blue","gray")))
+			mapply(thisDB[dbIndex,2],heights,alleles,labelCols,FUN=function(x,y,a,c) text(x,y+(YLIM[2]/12),a,col=c))
 			}
 		}		
-	}
-
-
-
-
-getAlleleStutters = function(hypothesis,results)
-	{
-	res = results$optim$bestmem
-	SMindex = grep("stutterMean",names(res))
-	SGindex = grep("stutterGradient",names(res))
-	SAindex = grep("stutterAdjust",names(res))
-	stutterConstant = res[SGindex]*res[SMindex]
-	out = mapply(res[SAindex],hypothesis$alleleDb,FUN=function(SA,db) (abs(as.numeric(rownames(db))-as.numeric(rownames(db))[1])+1)*SA*stutterConstant)
-	names(out) = names(hypothesis$alleleDb)
-	return(out)
+    if(!is.null(outputFile)) dev.off()
 	}
 
 
