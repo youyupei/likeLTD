@@ -243,23 +243,6 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
-
-
-TgenotypeArray<<-cons$genotypes
-					TDNAcont<<-rep(DNAcont,each=2) 
-					TgradientS<<-locusGradient
-					TmeanD<<-meanD;TmeanO<<-meanO
-					TinterceptS<<-locusIntercept
-					Tdegradation<<-rep(1+degradation,each=2)
-					TfragLengths<<-hypothesis$alleleDb[,2]
-					TfragNames<<-as.numeric(rownames(hypothesis$alleleDb))
-					TLUSvals <<- hypothesis$alleleDb[,3]
-					Talleles<<-hypothesis$peaksProfile
-					Theights<<-hypothesis$heightsProfile
-					TrepAdjust<<-repAdjust;Tscale<<-scale
-					TdetectionThresh<<-detectionThresh
-					TdatabaseVals <<- cons$dbVals
-					TfragProbs<<-hypothesis$alleleDb[,1]; Tdropin<<-dropin
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
@@ -283,6 +266,8 @@ TgenotypeArray<<-cons$genotypes
 						dropin=dropin,
 						diagnose=diagnose))
 			} else {
+			if(!is.null(meanD)&!is.null(meanO))
+				{
 				# single, double and over stutter
 		    		probs = .Call(.cpp.getProbabilitiesSDO_dropin,
 					genotypeArray=cons$genotypes,
@@ -300,6 +285,60 @@ TgenotypeArray<<-cons$genotypes
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals,
 					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
+				} else if(is.null(meanD)&is.null(meanO)) {
+				# single stutter
+		    		probs = .Call(.cpp.getProbabilitiesS_dropin,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
+				} else if(!is.null(meanD)&is.null(meanO)) {
+				# single, double stutter
+		    		probs = .Call(.cpp.getProbabilitiesSD_dropin,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					meanD=meanD,
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
+				} else if(is.null(meanD)&!is.null(meanO)) {
+				# single, over stutter
+		    		probs = .Call(.cpp.getProbabilitiesSO_dropin,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					meanO=meanO,
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], dropin=dropin)
+				}
 			}
 		} else {
 		if(doR==TRUE|diagnose==TRUE)
@@ -627,10 +666,10 @@ penalties.peaks <- function(nloc, degradation=NULL,
                            * normalization )
     # penalty on gradientS
     # mean = 0.013, var=0.1 (actual var=0.01^2) 
-    result = result * (dgamma(meanD,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
+    result = result * (dgamma(gradientS,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
     # penalty on interceptS
     # mean = 0.001, var=0.1 (actual mean=-0.076, actual var=0.13^2) 
-    result = result * (dgamma(meanD,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
+    result = result * (dgamma(interceptS,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
     # penalty on gradientAdjust
     result = result * dnorm(log10(gradientAdjust),mean=0, sd=0.15)
     # penalty on interceptAdjust

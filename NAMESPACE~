@@ -1,10 +1,6 @@
 useDynLib("likeLTD", .registration=TRUE, .fixes=".cpp.") 
 export(.cpp.nbthreads)
 export(.cpp.set_nbthreads)
-export(.cpp.probabilityPeaksS)
-export(.cpp.probabilityPeaksSD)
-export(.cpp.probabilityPeaksSO)
-export(.cpp.probabilityPeaksSDO)
 export(pack.admin.input)
 export(allele.report)
 
@@ -64,7 +60,10 @@ import(rtf)
 
 #export(.cpp.testCDF)
 #export(.cpp.testPDF)
-export(.cpp.getProbabilities)
+export(.cpp.getProbabilitiesSDO)
+export(.cpp.getProbabilitiesSD)
+export(.cpp.getProbabilitiesSO)
+export(.cpp.getProbabilitiesS)
 
 
 

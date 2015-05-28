@@ -106,35 +106,23 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 
                         std::vector<double> stutterIndex, int nGen, int nFrag);
 
-    //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter
-    SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
-                    SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
-                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals);
+//! \brief get mean dose with x-1, x-2 and x+1 stutter with dropin
+SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
+//! \brief get mean dose with x-1 and x+1 stutter with dropin
+SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
+//! \brief get mean dose with x-1 and x-2 stutter with dropin
+SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
+//! \brief get mean dose with x-1 stutter with dropin
+SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
 
-    //! get probabilities of genotype combinations with x-1 and x-2 stutter
-    SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
-                    SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
-                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals);
-
-    //! get probabilities of genotype combinations with x-1 and x+1 stutter
-    SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, 
-                    SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
-                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals);
-
-    //! get probabilities of genotype combinations with x-1 stutter
-    SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, 
-                    SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, 
-                    SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals);
-
-    //! get probabilities of genotype combinations with x-1, x-2 and x+1 stutter allowing for dropin
-    SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, 
-                    SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, 
-                    SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, 
-                    SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
+//! \brief get mean dose with x-1, x-2 and x+1 stutter
+SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+//! \brief get mean dose with x-1 and x+1 stutter
+SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+//! \brief get mean dose with x-1 and x-2 stutter
+SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+//! \brief get mean dose with x-1 stutter
+SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
 
 
 #ifdef __cplusplus
