@@ -508,7 +508,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
             }
 		
 
-		P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
+		#P.pars$upper[grep("scale",names(D.pars$upper))] = GlobalDmem[grep("scale",names(GlobalDmem))]*scaleLimit
 
 		for(n in 1:n.steps){
 			# change DEoptim parameters

@@ -666,10 +666,10 @@ penalties.peaks <- function(nloc, degradation=NULL,
                            * normalization )
     # penalty on gradientS
     # mean = 0.013, var=0.1 (actual var=0.01^2) 
-    result = result * (dgamma(gradientS,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
+    #result = result * (dgamma(gradientS,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
     # penalty on interceptS
     # mean = 0.001, var=0.1 (actual mean=-0.076, actual var=0.13^2) 
-    result = result * (dgamma(interceptS,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
+    #result = result * (dgamma(interceptS,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
     # penalty on gradientAdjust
     result = result * dnorm(log10(gradientAdjust),mean=0, sd=0.15)
     # penalty on interceptAdjust

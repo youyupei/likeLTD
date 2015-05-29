@@ -280,12 +280,15 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.02,
                                    databaseFile=NULL, linkageFile=NULL, relatedness=c(0,0), 
                                    doDropin=FALSE, combineRare=TRUE,
-				   rareThreshold=0.05, kit=NULL,...) {
+				   rareThreshold=0.05, kit=NULL, relationship=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
+  if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
+  if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
-  if(identical(relatedness,c(0.5,0.25)))
+  if(!is.null(relationship))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
 	rownames(linkageInfo) = linkageInfo[,1]
@@ -330,9 +333,11 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='NDU1',
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
-  if(identical(relatedness,c(0.5,0.25)))
+
+  if(!is.null(relationship))
 	{
     result[["linkageInfo"]] = linkageInfo
+    result[["relationship"]] = relationship 
     }
 
   sanity.check(result) # makes sure hypothesis has right type.
@@ -344,12 +349,15 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='NDU1',
 defence.hypothesis <- function(cspFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
                                relatedness=c(0,0), doDropin=FALSE, combineRare=TRUE, 
-			       rareThreshold=0.05, kit=NULL, ...) {
+			       rareThreshold=0.05, kit=NULL, relationship=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
+  if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
+  if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
+  if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   cspProfile = read.csp.profile(cspFile)
   uncProfile = read.unc.profile(cspFile)
-  if(identical(relatedness,c(0.5,0.25)))
+  if(!is.null(relationship))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
 	rownames(linkageInfo) = linkageInfo[,1]
@@ -386,8 +394,11 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='NDU1',  nUnknowns=0,
   result[["refFile"]] = refFile
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
-  if(identical(relatedness,c(0.5,0.25))) result[["linkageInfo"]] = linkageInfo
-
+  if(!is.null(relationship)) 
+	{
+	result[["linkageInfo"]] = linkageInfo
+	result[["relationship"]] = relationship 
+	}
   sanity.check(result) # makes sure hypothesis has right type.
   result
 }
