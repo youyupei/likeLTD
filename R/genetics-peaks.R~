@@ -156,7 +156,10 @@ ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
     result <- matrix(c(locus[[ethnic]], locus[["BP"]], locus[["LUS"]]), , 3)
     result[is.na(result[, 2]), 2] <- 0
     rownames(result) <- locus$Allele
-    result = fill.unknown.LUS(result)
+    if(any(is.na(result[,3])))
+	{
+    	result = likeLTD:::fill.unknown.LUS(result)
+	}
     return(result[result[, 1] > 0, ])
     return(result)
   }

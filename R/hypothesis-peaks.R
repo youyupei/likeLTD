@@ -99,6 +99,14 @@ convert.to.binary = function(data)
 	{
 	# get rid of spaces
 	data = as.matrix(data)
+	# if no alleles, return empty matrix
+	if(ncol(data)==0) 
+		{
+		allelic = sapply(1:nrow(data),FUN=function(x) NULL,simplify=TRUE)
+		names(allelic) = rownames(data)
+		return(allelic)
+		}
+	# remove spaces
 	data = matrix(gsub(" ","",data),ncol=ncol(data),dimnames=list(rownames(data),colnames(data)))
 	# replace .0 with nothing
 	data = gsub("[.]0","",data)
@@ -251,13 +259,13 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
   #alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
   # remove allele with 0 observations in database
-  alleleDb = adjust.frequencies( alleleDb, 
+  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -326,8 +334,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-#  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
 if(!is.null(relationship))
 	{
@@ -346,7 +353,7 @@ if(!is.null(relationship))
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter)

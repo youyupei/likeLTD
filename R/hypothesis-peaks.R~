@@ -99,6 +99,14 @@ convert.to.binary = function(data)
 	{
 	# get rid of spaces
 	data = as.matrix(data)
+	# if no alleles, return empty matrix
+	if(ncol(data)==0) 
+		{
+		allelic = sapply(1:nrow(data),FUN=function(x) NULL,simplify=TRUE)
+		names(allelic) = rownames(data)
+		return(allelic)
+		}
+	# remove spaces
 	data = matrix(gsub(" ","",data),ncol=ncol(data),dimnames=list(rownames(data),colnames(data)))
 	# replace .0 with nothing
 	data = gsub("[.]0","",data)
@@ -326,8 +334,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-#  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
+  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
   cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
 if(!is.null(relationship))
 	{
