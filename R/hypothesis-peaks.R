@@ -176,6 +176,8 @@ extrapolateLUS = function(alleleDb,toFill)
 	{
 	# get allele names
 	alleleNames = as.numeric(rownames(alleleDb))
+	# if a negative allele, give mean LUS
+	if(alleleNames[toFill]<0) return(mean(alleleDb[,3],na.rm=TRUE))
 	# get allele endings e.g. 9.3 ending is 0.3
 	alleleEndings = alleleNames-floor(alleleNames)
 	# if not partial add one (so not dividing by zero)
@@ -204,6 +206,11 @@ extrapolateBP = function(alleleDb, newAllele)
 	BPs = alleleDb[,2]
 	newEnding = strsplit(newAllele,"[.]")[[1]][2]
 	newAllele = as.numeric(newAllele)
+	# if -10 give mean BP
+	if(newAllele<0) 
+		{
+		return(mean(BPs[which(alleles>0)],na.rm=TRUE))
+		}
 	allEndings = sapply(rownames(alleleDb),FUN=function(x) strsplit(x,"[.]")[[1]][2])
 	# get possible levels e.g. partial and whole repeats
 	levels = names(table(allEndings,useNA="ifany"))

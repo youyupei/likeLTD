@@ -176,6 +176,8 @@ extrapolateLUS = function(alleleDb,toFill)
 	{
 	# get allele names
 	alleleNames = as.numeric(rownames(alleleDb))
+	# if a negative allele, give mean LUS
+	if(alleleNames[toFill]<0) return(mean(alleleDb[,3],na.rm=TRUE))
 	# get allele endings e.g. 9.3 ending is 0.3
 	alleleEndings = alleleNames-floor(alleleNames)
 	# if not partial add one (so not dividing by zero)
@@ -204,6 +206,11 @@ extrapolateBP = function(alleleDb, newAllele)
 	BPs = alleleDb[,2]
 	newEnding = strsplit(newAllele,"[.]")[[1]][2]
 	newAllele = as.numeric(newAllele)
+	# if -10 give mean BP
+	if(newAllele<0) 
+		{
+		return(mean(BPs[which(alleles>0)],na.rm=TRUE))
+		}
 	allEndings = sapply(rownames(alleleDb),FUN=function(x) strsplit(x,"[.]")[[1]][2])
 	# get possible levels e.g. partial and whole repeats
 	levels = names(table(allEndings,useNA="ifany"))
@@ -259,13 +266,13 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
   #alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
   # remove allele with 0 observations in database
-  alleleDb = adjust.frequencies( alleleDb, 
+  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -353,7 +360,7 @@ if(!is.null(relationship))
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter)

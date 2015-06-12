@@ -100,23 +100,21 @@ plotline = function(height,size,contributors,colours)
 		}
 	}
 
+pack.genetics.for.peaks.reports = function(cspFile,refFile)
+    {
+    csp = read.peaks.profile(cspFile)
+    refs = read.known.profiles(refFile)
+    return(list(csp=csp,refs=refs))
+    }
 
-plot.CSP.heights = function(cspFile,refFile=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
+plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
 	{
-	# get CSP
-	print("load CSP")
-	print(cspFile)
-	csp = read.peaks.profile(cspFile)
 	# get database
-	print("load DB")
-if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
-  alleleDb = load.allele.database(dbFile,kit)
+    if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
+    alleleDb = load.allele.database(dbFile,kit)
 	# get K profiles
-	if(!is.null(refFile)) 
+	if(!is.null(refs)) 
 		{
-		print("refs")
-		# get reference profiles
-		refs = read.known.profiles(refFile)
 		Q = refs[which(unlist(refs[,1])),-1]
 		# make Q the first individual
 		refIndex = which(unlist(refs[,1]))
@@ -139,11 +137,9 @@ if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
 	# stutter calls 
 	if(doStutter) 
 		{
-		print("stutters")
 		stutters = likeLTD:::make.allelic.calls(csp,stutterThresh)
 		}
 	# set plotting parameters that are constant across loci
-	print("pars")
 	dims = rep(ceiling(sqrt(length(loci))),times=2)
 	print(range(unlist(csp$heights[[replicate]][loci,]),na.rm=TRUE))
 	YLIM = c(0,range(as.numeric(unlist(csp$heights[[replicate]][loci,])),na.rm=TRUE)[2])
@@ -171,9 +167,8 @@ if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
 		# add detection threshold
 		print("detectThresh")
 		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
-		if(!is.null(refFile))
+		if(!is.null(refs))
 			{
-			print("references")
 			# get which K contributes to each peak
 			peakContributors = getPeakContributors(alleles,refs[,loci[j]])
 			# add peaks to plot
@@ -187,7 +182,6 @@ if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
 			# with no predicted stutter
 			mapply(thisDB[dbIndex,2],heights,alleles,FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
 			} else {
-			print("stutters")
 			# with predicted stutter
 			# stutter
 			stutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights)
@@ -207,5 +201,41 @@ if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
     if(!is.null(outputFile)) dev.off()
 	}
 
+representation.and.rfu = function(K,alleles,heights,loci)
+    {
+    k <<- K
+    ALLELES <<- alleles
+    HEIGHTS <<- heights
+    LOCI <<- loci
+    representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,]),simplify=FALSE)
+    foo = function(x) mapply(any,x)
+    representOverall = do.call(foo,represented)
+    representation = sum(representOverall)/length(representOverall)
+    rfu = sapply(1:length(alleles), FUN=function(z) sapply(loci,FUN=function(x) sapply(K[[x]], FUN=function(y) ifelse(!y%in%alleles[[z]][x,],0,heights[[z]][x,which(alleles[[z]][x,]==y)]))))
+    return(c(representation,mean(as.numeric(unlist(rfu)))))
+    }
+
+
+get.representation.rfu = function(csp,refs)
+    {
+    loci = colnames(refs)[-1]
+    info = sapply(1:nrow(refs),FUN=function(x) representation.and.rfu(refs[x,-1],csp$alleles,csp$heights,loci))
+    rownames(info) = c("representation","meanRFU")
+    colnames(info) = rownames(refs)
+    return(info)
+    }
+
+allele.report.peaks = function(admin)
+    {
+    # get genetics
+    gen = pack.genetics.for.peaks.reports(admin$peaksFile,admin$refFile)
+    # plot CSP
+    sapply(1:length(gen$csp$alleles),FUN=function(x) plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,kit=admin$kit,detectThresh=admin$detectThreshold,doStutter=TRUE,replicate=x))
+    # representation
+    repRFU = get.representation.rfu(gen$csp,gen$refs)
+    # 
+    
+
+    }
 
 
