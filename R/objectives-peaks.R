@@ -8,9 +8,9 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# check hypothesis has the right type
 	sanity.check.peaks(hypothesis)
 	# convert hypothesis to locus specific
-	locusCentric = transform.to.locus.centric.peaks(hypothesis)
+	locusCentric = likeLTD:::transform.to.locus.centric.peaks(hypothesis)
 	# functions to perform on each locus
-	functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
+	functions <- mapply(likeLTD:::create.likelihood.per.locus.peaks, locusCentric,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 	#create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, 
 	#				likeMatrix=likeMatrix, diagnose=diagnose)
@@ -59,6 +59,18 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	return(likelihood.vectors)
 	}
 
+alterHypothesis = function(alleleDb,gens)
+    {
+    nRow = nrow(alleleDb)
+    missing = unique(gens[which(!gens%in%as.numeric(rownames(alleleDb)))])
+    if(length(missing)>0)
+        {
+        alleleDb = rbind(alleleDb,matrix(rep(alleleDb[which(rownames(alleleDb)==-1),],times=length(missing)),nrow=length(missing),byrow=TRUE))
+        rownames(alleleDb)[(nRow+1):(nRow+length(missing))] = missing
+        }
+    return(alleleDb)
+    }
+
 
 create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, 
 				likeMatrix = FALSE, diagnose=FALSE) 
@@ -67,7 +79,11 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	#
 	# A hypothesis is given by the number of unknown contributors, whether to model
 	# dropin, so on and so forth.
-	cons = likelihood.constructs.per.locus.peaks(hypothesis)
+	cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
+	# alter hypothesis so that rare alleles are always different
+    HYPOTHESIS <<- hypothesis
+    CONS <<- cons
+    hypothesis$alleleDb = likeLTD:::alterHypothesis(hypothesis$alleleDb,cons$genotypes)
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
 	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,
@@ -227,6 +243,19 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 		}
 	# convert genotypes from indices to repeat number
 	genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=ncol(genotypes))
+	GENS <<- genotypes
+	# make sure rare combined alleles are always different
+	foo = function(x)
+    {
+    index = which(x<0&x>-100)
+    if(length(index)>1)
+        {
+        x[index] = seq(from=-1,to=-99,by=-4)[1:length(index)]
+        }
+    return(x)
+    }
+    genotypes = apply(genotypes,MARGIN=2,foo)
+	#genotypes = differentRares(genotypes)
 	# output list
 	list(cspPresence=cspPresence, knownPresence=knownPresence,
         	missingReps=missingReps,genotypes=genotypes, factors=factors,
