@@ -111,7 +111,7 @@ convert.to.binary = function(data)
 	# replace .0 with nothing
 	data = gsub("[.]0","",data)
 	# allelic calls
-	allelic = apply(data,MARGIN=1,FUN=function(x) x[which(!is.na(x))])
+	allelic = sapply(1:nrow(data),FUN=function(x) data[x,which(!is.na(data[x,]))],simplify=FALSE)
 	names(allelic) = rownames(data)
 	return(allelic)
 	}
@@ -341,8 +341,8 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-  cspProfile = sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
-  cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+  cspProfile = t(sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary))
+  #cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
 if(!is.null(relationship))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
@@ -414,8 +414,7 @@ defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknow
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = sapply(peaksProfile$alleles,FUN=convert.to.binary,simplify=FALSE)
-  cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+  cspProfile = t(sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary))
 if(!is.null(relationship))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
