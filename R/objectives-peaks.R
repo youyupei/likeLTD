@@ -423,7 +423,6 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals)
 			} else if(is.null(meanD)&is.null(meanO)) {
-print("here")
 		   		# single stutter only
 		    		probs = .Call(likeLTD:::.cpp.getProbabilitiesS,
 					genotypeArray=cons$genotypes,
@@ -439,7 +438,6 @@ print("here")
 					repAdjust=repAdjust,scale=scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals)
-print("out")
 			
 			} else if(!is.null(meanD)&is.null(meanO)) {
 		    		# single and double stutter
