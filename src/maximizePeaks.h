@@ -82,7 +82,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     //! \brief get mean dose with x-1 and x-2 stutter
     inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec, 
                         std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
-                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS, double meanD, 
                         double interceptS, std::vector<double> degVec,
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 
@@ -90,7 +90,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
        //! \brief get mean dose with x-1 and x+1 stutter
     inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec, 
-                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
+                        std::vector<float> stutterPosVec,
                         std::vector<float> overStutterVec,std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS,
                         double meanO,double interceptS, std::vector<double> degVec,
@@ -99,8 +99,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
        //! \brief get mean dose with x-1 stutter
     inline std::vector<genoStruct> getDoseS(std::vector<float> genotypeVec, 
-                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
-                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<float> stutterPosVec,std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS,
                         double interceptS, std::vector<double> degVec,
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 

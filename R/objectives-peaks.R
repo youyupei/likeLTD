@@ -269,6 +269,22 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
+	HYPOTHESIS <<- hypothesis
+	CONS <<- cons
+	DNACONT <<- DNAcont
+	SCALE <<- scale
+	GRADIENTS <<- gradientS
+	GRADIENTADJUST <<- gradientAdjust
+	INTERCEPTADJUST <<- interceptAdjust
+	INTERCEPTS <<- interceptS
+	MEAND <<- meanD
+	MEANO<<-meanO
+	DEGRADATION<<-degradation
+	REPADJUST<<-repAdjust
+	DETECTIONTHRESH<<-detectionThresh
+	DROPIN<<-dropin
+	DOR<<-doR
+	DIAGNOSE <<- diagnose
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
@@ -407,8 +423,9 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals)
 			} else if(is.null(meanD)&is.null(meanO)) {
+print("here")
 		   		# single stutter only
-		    		probs = .Call(.cpp.getProbabilitiesS,
+		    		probs = .Call(likeLTD:::.cpp.getProbabilitiesS,
 					genotypeArray=cons$genotypes,
 					DNAcont=rep(DNAcont,each=2), 
 					gradientS=locusGradient,
@@ -422,6 +439,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 					repAdjust=repAdjust,scale=scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals)
+print("out")
 			
 			} else if(!is.null(meanD)&is.null(meanO)) {
 		    		# single and double stutter
