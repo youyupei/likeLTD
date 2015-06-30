@@ -160,7 +160,7 @@ ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
 	{
     	result = likeLTD:::fill.unknown.LUS(result)
 	}
-    return(result[result[, 1] > 0, ])
+    #return(result[result[, 1] > 0, ])
     return(result)
   }
   # now apply function over all loci.

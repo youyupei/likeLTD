@@ -71,6 +71,15 @@ alterHypothesis = function(alleleDb,gens)
     return(alleleDb)
     }
 
+alterDBvals = function(alleleDb,hypothesis)
+	{
+	dbVals = as.numeric(rownames(alleleDb))
+	outVals = c(dbVals,dbVals-1)
+	if(hypothesis$doDoubleStutter) outVals = c(outVals,dbVals-2)
+	if(hypothesis$doOverStutter) outVals = c(outVals,dbVals+1)
+	return(sort(unique(outVals)))
+	}
+
 
 create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE, 
 				likeMatrix = FALSE, diagnose=FALSE) 
@@ -81,9 +90,14 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	# dropin, so on and so forth.
 	cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
 	# alter hypothesis so that rare alleles are always different
-    HYPOTHESIS <<- hypothesis
-    CONS <<- cons
     hypothesis$alleleDb = likeLTD:::alterHypothesis(hypothesis$alleleDb,cons$genotypes)
+	# alter dbVals to include any extra rare alleles
+	cons$dbVals = likeLTD:::alterDBvals(hypothesis$alleleDb,hypothesis)
+    if(colnames(hypothesis$binaryProfile)=="D21S11")
+    {
+	HYPOTHESIS <<- hypothesis
+    CONS <<- cons
+    }
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
 	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,
@@ -151,7 +165,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 			{
 			return(sum(factorsRes))
 			} else {
-			return(factorsRes)
+			return(list(evProb=res,genProb=cons$factors))
 			}
 		}
 	# add some attributes
@@ -269,6 +283,8 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
+	if(colnames(hypothesis$binaryProfile)=="D21S11")
+	{
 	HYPOTHESIS <<- hypothesis
 	CONS <<- cons
 	DNACONT <<- DNAcont
@@ -285,6 +301,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 	DROPIN<<-dropin
 	DOR<<-doR
 	DIAGNOSE <<- diagnose
+	}
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust

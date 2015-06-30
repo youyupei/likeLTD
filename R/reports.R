@@ -771,7 +771,7 @@ het <- function(pa, pb, fst=0.02)
 #	(fst+(1-fst)*p)/(1+fst)
 #	}
 
-matchProb = function(hypothesis,rr,fst=0.02)
+matchProb = function(hypothesis,rr,fst=0.02,sep=FALSE)
     {
 	ideal.match <- c()
 	for(j in 1:ncol(hypothesis$queriedProfile))
@@ -801,9 +801,12 @@ matchProb = function(hypothesis,rr,fst=0.02)
             ideal.match = c(ideal.match,rr[2]+(rr[1]*((fst+(1-fst)*((p1+p2)/2))/(1+fst)))+((1-sum(rr))*het(p1,p2,fst=fst)))
             }
 		}
-		
-	ideal.match = 1/prod(ideal.match)
-    return(ideal.match)
+	if(sep)
+		{
+		return(1/ideal.match)
+		} else {
+		return(1/prod(ideal.match))
+		}
     }
 
 ideal <- function(hypothesis,rr,fst=0.02)

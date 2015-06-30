@@ -305,11 +305,10 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	# function to return genotype combinations for each locus
 	genCombs = function(locusHyp,alleleDb)
 		{
-		genotypeIndex = likelihood.constructs.per.locus.peaks(locusHyp)$genotypes
-		genotypes = matrix(rownames(alleleDb)[genotypeIndex],ncol=ncol(genotypeIndex))
+		genotypes = likeLTD:::likelihood.constructs.per.locus.peaks(locusHyp)$genotypes
 		return(genotypes)
 		}
-	genotypes = mapply(FUN=genCombs,locusHyp=locusCentricHyp,alleleDb=hypothesis$alleleDb)
+	genotypes = mapply(FUN=genCombs,locusHyp=locusCentricHyp,alleleDb=hypothesis$alleleDb,SIMPLIFY=FALSE)
 	# make a new output function to output genotype likelihoods
 	newParams = optimisation.params.peaks(hypothesis,likeMatrix=TRUE)
 	# get genotype likelihoods with parameters returned by previous optimisation (results)
@@ -407,7 +406,7 @@ multiConverged = function(L,globalVal,tolerance)
     any(sapply(L[(length(L)-5):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-7, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds

@@ -1631,6 +1631,8 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	double doseArray[nDat][nCombs];
 	memset( doseArray, '\0', sizeof( doseArray ) );
 
+std::vector<double> debug;
+
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
 	double const * const genotypeArray_ptr     = REAL(GENOTYPEARRAY);
@@ -1821,6 +1823,8 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
+		if(!(fragVecN[j]<0&&fragVecN[j]>-100))
+		{
 		int matchIndex=0;
 		for(int k=0; k<dbVals.size(); k++)
 			{
@@ -1834,10 +1838,12 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		//Rprintf("%d\t",matchIndex);
 		doseArray[matchIndex][i] += fragVecP[j]*Dropin;
 		}
+		}
     	// get probabilities
 	// loop over database alleles
 	for(int j=0; j<nDat; j++)
 		{
+// if(i==9) debug.push_back(doseArray[j][i]);
 		// loop over replicates
 		for(int k=0; k<nRep; k++)
 		    {
@@ -1870,14 +1876,21 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 			            }   
 			        }
 			    }
+
 			}
 		//Rprintf("After main loop");
 	    # ifdef OPENMP_STACK
 	    //    R_CStackLimit = oldstack;
-	    # endif	
-
+	    # endif		
 		}
 
+	// Make and return output object
+//	SEXP result = PROTECT(allocVector(REALSXP, debug.size()));
+//  	double       * const out_ptr  = REAL(result);
+//	for(int i=0; i<debug.size(); ++i)
+//		{
+//		out_ptr[i] = debug[i];
+//		}
 	// Make and return output object
 	SEXP result = PROTECT(allocVector(REALSXP, nCombs));
   	double       * const out_ptr  = REAL(result);
@@ -2441,6 +2454,8 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	// create some objects
 	double doseArray[nDat][nCombs];
 	memset( doseArray, '\0', sizeof( doseArray ) );
+
+	std::vector<double> debug;
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));

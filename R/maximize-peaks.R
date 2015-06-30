@@ -170,6 +170,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     result <- do.call(objective, x)
 
 	if(likeMatrix==TRUE|diagnose==TRUE) return(result)
+
     # Compute as log if requested, otherwise as product.
 	if(withPenalties) 
 		{
@@ -308,13 +309,15 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 		genotypes = likeLTD:::likelihood.constructs.per.locus.peaks(locusHyp)$genotypes
 		return(genotypes)
 		}
-	genotypes = mapply(FUN=genCombs,locusHyp=locusCentricHyp,alleleDb=hypothesis$alleleDb)
+	genotypes = mapply(FUN=genCombs,locusHyp=locusCentricHyp,alleleDb=hypothesis$alleleDb,SIMPLIFY=FALSE)
 	# make a new output function to output genotype likelihoods
 	newParams = optimisation.params.peaks(hypothesis,likeMatrix=TRUE)
 	# get genotype likelihoods with parameters returned by previous optimisation (results)
-	likes = newParams$fn(results$optim$bestmem)$objectives
+	sepLikes = newParams$fn(results$optim$bestmem)$objectives
+	combinedLikes = sapply(1:ncol(sepLikes),FUN=function(x) sepLikes[1,x][[1]]*sepLikes[2,x][[1]],simplify=FALSE)
+	names(combinedLikes) = colnames(sepLikes)
 	# convert to probabilities
-	likes = lapply(likes,FUN=function(x) x/sum(x))
+	likes = lapply(combinedLikes,FUN=function(x) x/sum(x))
 	# if want posterior, return
 	if(posterior==TRUE) return(list(genotypes=genotypes,probabilities=likes))
 	# if we only want the joint distributions
@@ -406,7 +409,7 @@ multiConverged = function(L,globalVal,tolerance)
     any(sapply(L[(length(L)-5):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-7, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
