@@ -1823,7 +1823,7 @@ std::vector<double> debug;
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
-		if(!(fragVecN[j]<0&&fragVecN[j]>-100))
+		if(!(fragVecN[j]<-2&&fragVecN[j]>-100))
 		{
 		int matchIndex=0;
 		for(int k=0; k<dbVals.size(); k++)
