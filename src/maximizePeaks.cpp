@@ -1824,26 +1824,25 @@ std::vector<double> debug;
 	for(int j=0; j<fragVecN.size(); j++)
 		{
 		if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
-		{
-		int matchIndex=0;
-		for(int k=0; k<dbVals.size(); k++)
-			{
-			double diff = std::abs(dbVals[k]-fragVecN[j]); 
-                	if(diff<0.0001)
-	                    {
-        	            matchIndex = k;
-        	            break;
-        	            }
-			}
-		//Rprintf("%d\t",matchIndex);
-		doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    {
+		    int matchIndex=0;
+		    for(int k=0; k<dbVals.size(); k++)
+			    {
+			    double diff = std::abs(dbVals[k]-fragVecN[j]); 
+                if(diff<0.0001)
+	                {
+        	        matchIndex = k;
+        	        break;
+        	        }
+			    }
+		    //Rprintf("%d\t",matchIndex);
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    }
 		}
-		}
-    	// get probabilities
+    // get probabilities
 	// loop over database alleles
 	for(int j=0; j<nDat; j++)
 		{
-// if(i==9) debug.push_back(doseArray[j][i]);
 		// loop over replicates
 		for(int k=0; k<nRep; k++)
 		    {
@@ -2103,20 +2102,23 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
-		int matchIndex=0;
-		for(int k=0; k<dbVals.size(); k++)
-			{
-			double diff = std::abs(dbVals[k]-fragVecN[j]); 
-                	if(diff<0.0001)
-	                    {
-        	            matchIndex = k;
-        	            break;
-        	            }
-			}
-		//Rprintf("%d\t",matchIndex);
-		doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
+		    {
+		    int matchIndex=0;
+		    for(int k=0; k<dbVals.size(); k++)
+			    {
+			    double diff = std::abs(dbVals[k]-fragVecN[j]); 
+                if(diff<0.0001)
+	                {
+        	        matchIndex = k;
+        	        break;
+        	        }
+			    }
+		    //Rprintf("%d\t",matchIndex);
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    }
 		}
-    	// get probabilities
+    // get probabilities
 	// loop over database alleles
 	for(int j=0; j<nDat; j++)
 		{
@@ -2369,20 +2371,23 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
-		int matchIndex=0;
-		for(int k=0; k<dbVals.size(); k++)
-			{
-			double diff = std::abs(dbVals[k]-fragVecN[j]); 
-                	if(diff<0.0001)
-	                    {
-        	            matchIndex = k;
-        	            break;
-        	            }
-			}
-		//Rprintf("%d\t",matchIndex);
-		doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
+		    {
+		    int matchIndex=0;
+		    for(int k=0; k<dbVals.size(); k++)
+			    {
+			    double diff = std::abs(dbVals[k]-fragVecN[j]); 
+                if(diff<0.0001)
+	                {
+        	        matchIndex = k;
+        	        break;
+        	        }
+			    }
+		    //Rprintf("%d\t",matchIndex);
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    }
 		}
-    	// get probabilities
+    // get probabilities
 	// loop over database alleles
 	for(int j=0; j<nDat; j++)
 		{
@@ -2627,20 +2632,23 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
-		int matchIndex=0;
-		for(int k=0; k<dbVals.size(); k++)
-			{
-			double diff = std::abs(dbVals[k]-fragVecN[j]); 
-                	if(diff<0.0001)
-	                    {
-        	            matchIndex = k;
-        	            break;
-        	            }
-			}
-		//Rprintf("%d\t",matchIndex);
-		doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
+		    {
+		    int matchIndex=0;
+		    for(int k=0; k<dbVals.size(); k++)
+			    {
+			    double diff = std::abs(dbVals[k]-fragVecN[j]); 
+                if(diff<0.0001)
+	                {
+        	        matchIndex = k;
+        	        break;
+        	        }
+			    }
+		    //Rprintf("%d\t",matchIndex);
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    }
 		}
-    	// get probabilities
+    // get probabilities
 	// loop over database alleles
 	for(int j=0; j<nDat; j++)
 		{
