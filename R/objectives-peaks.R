@@ -502,6 +502,84 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
     }
 
 
+# function to be called at each iteration of maximisation
+peaks.probabilities.combined = function(hypothesis,cons,DNAcont,scale,
+			gradientS,gradientAdjust,interceptAdjust,
+			interceptS,meanD=NULL,meanO=NULL,degradation,
+			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
+	{
+	if(colnames(hypothesis$binaryProfile)=="D21S11")
+	{
+	HYPOTHESIS <<- hypothesis
+	CONS <<- cons
+	DNACONT <<- DNAcont
+	SCALE <<- scale
+	GRADIENTS <<- gradientS
+	GRADIENTADJUST <<- gradientAdjust
+	INTERCEPTADJUST <<- interceptAdjust
+	INTERCEPTS <<- interceptS
+	MEAND <<- meanD
+	MEANO<<-meanO
+	DEGRADATION<<-degradation
+	REPADJUST<<-repAdjust
+	DETECTIONTHRESH<<-detectionThresh
+	DROPIN<<-dropin
+	DOR<<-doR
+	DIAGNOSE <<- diagnose
+	}
+	# combine mean and adjustment
+	locusGradient = gradientS*gradientAdjust
+	locusIntercept = interceptS*interceptAdjust
+		# no dropin currently
+		if(doR==TRUE|diagnose==TRUE)
+			{
+			# probabilities for each replicate
+			probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
+				peak.heights.per.locus(genotypeArray=cons$genotypes,
+						alleles=hypothesis$peaksProfile[[x]],
+						heights=hypothesis$heightsProfile[[x]],
+						DNAcont=DNAcont,
+						gradientS = locusGradient,
+						meanD=meanD,meanO=meanO,
+						interceptS=locusIntercept,
+						scale=scale,degradation=degradation,
+						fragLengths=hypothesis$alleleDb[,2],
+						fragProbs=hypothesis$alleleDb[,1],
+						LUSvals=hypothesis$alleleDb[,3],
+						repAdjust=repAdjust[x],
+						detectionThresh=detectionThresh,
+						dropin=dropin,
+						diagnose=diagnose))
+			} else {
+
+				# single, double and over stutter
+		    		probs = .Call(.cpp.getProbabilities,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					meanD=ifelse(hypothesis$doDoubleStutter,meanD,-1),
+					meanO=ifelse(hypothesis$doOverStutter,meanO,-1),
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], 
+					dropin=ifelse(hypothesis$doDropin,dropin,-1))
+            }
+	# diagnose
+	if(diagnose==TRUE) return(probs)
+	# set probability of impossible genotypes to 0
+	probs[is.na(probs)] = 0
+    return(probs)
+    }
+
+
 
 # get probability pf each genotype combination
 peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
