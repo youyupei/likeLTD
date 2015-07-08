@@ -66,59 +66,6 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 	return(genCombs)
 	}
 
-# Profiles of unknown contributors for given locus.
-compatible.genotypes.peaks = function(cspPresence, profPresence, knownProfs,alleleNames,
-                                nUnknowns, dropin=FALSE, missingReps=NULL) {
-  
-  # Catch early. Shouldn't be a problem here, but will be at some point. 
-  if(!is.matrix(cspPresence)) stop("Expected a matrix as input.")
-  if(!is.matrix(profPresence)) stop("Expected a matrix as input.")
-
-  # Case where there are no unknown contributors but dropin is modelled.
-  # Seems it's formally equivalent to one unknown and dropin.
-  if(nUnknowns == 0 && dropin == TRUE) nUnknowns = 1
-
-  # Compute all genotype permutations. 
-  genotypes = all.genotypes.per.locus(length(alleleNames), nUnknowns)
-  if(dropin) return(genotypes) # Dropin case: can return immediately.
-
-  # Case without dropin: check that there are enough unknown contributors to
-  # account for the alleles in the CSP that are not in the known profile.
-  # Might be able to return early here also.
-  # Reduce matrices to a single logical vector
-  if(is.null(missingReps)) missingReps = rep(TRUE, nrow(cspPresence))
-  cspPresence  = rowSums(cspPresence[, c(!missingReps), drop=FALSE]) > 0
-  profPresence = rowSums(profPresence) > 0
-
-  # required: indices of the alleles in the crime scene which are not in the
-  #           known profiles. Indices are for freqLocus rows. In the case of
-  #           dropins, then there are no required alleles.
-  required = which(cspPresence & !profPresence) 
-
-  # Not enough contributors, return empty matrix.
-  if(length(required) > 2*nUnknowns)  {
-    stop(sprintf("Not enough unknown contributors:
-       %d contributors, 
-       %d required allele (%s).", 
-       nUnknowns, length(required),
-       paste(alleleNames[required], collapse=", ")))
-  }
-  #if(nUnknowns == 0) return(matrix(0, nrow=1, ncol=1))
-
-
-  hasRequired <- apply(genotypes, 2, function(n) all(required %in% n))
-  genotypes = genotypes[, hasRequired, drop=FALSE]
-
-# if no unknown contributors, sometimes have an empty genotypes object
-if(ncol(genotypes)==0) genotypes = matrix(ncol=1,nrow=0)
-
-  # add known profiles as last contributors
-  knownAlleles = sapply(unlist(knownProfs),FUN=function(x) which(alleleNames==x))
-  if(length(knownAlleles)!=0) genotypes = rbind(genotypes,matrix(rep(knownAlleles,times=ncol(genotypes)),ncol=ncol(genotypes)))
-
-return(genotypes) 
-}
-
 # Defines prod.matrix from R.
 prod.matrix.row <- function(x) {
   # Fast column-wise product.

@@ -4,6 +4,7 @@
 #include "objectives.h"
 #include "openmp.h"
 #include "maximizePeaks.h"
+#include "gammaDist.h"
 
 R_CallMethodDef callMethods[]  = {
        {"allGenotypesPerLocus", (DL_FUNC) &allGenotypesPerLocus, 2},
@@ -26,7 +27,8 @@ R_CallMethodDef callMethods[]  = {
 		{"getProbabilitiesSO_dropin", (DL_FUNC) &getProbabilitiesSO_dropin, 17},
 		{"getProbabilitiesS_dropin", (DL_FUNC) &getProbabilitiesS_dropin, 16},
 		{"getProbabilities", (DL_FUNC) &getProbabilities, 18},
-//		{"testCDF", (DL_FUNC) &testCDF, 2},
+		{"testCDF", (DL_FUNC) &testCDF, 2},
+		{"testNewCDF", (DL_FUNC) &testNewCDF, 2},
 //		{"testPDF", (DL_FUNC) &testPDF, 3},
        {NULL, NULL, 0},
        {NULL, NULL, 0},

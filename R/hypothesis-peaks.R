@@ -1,11 +1,3 @@
-#pack.admin.input
-#read.csp.profile
-#prosecution.hypotheses
-#defence.hypothesis
-#optimisation.params
-#allele.report
-#output.report
-
 # function to subset data
 subsetData = function(data,search)
 	{
@@ -73,28 +65,6 @@ read.peaks.profile = function(FILE)
 	return(list(alleles=alleles,heights=heights,sizes=sizes))
 	}
 
-# Function to convert from peak heights designation to binary designation
-# Requires separate input of designations
-# This function is strictly for a single replicate
-# Parameters:
-# data = CSP alleles (csp$alleles[[x]])
-# allelicCalls = alleles designations from file input
-# (Coding: 0=nonallelic,1=allelic)
-#convert.to.binary = function(data,allelicCalls)
-#	{
-#	# get rid of spaces
-#	data = as.matrix(data)
-#	data = matrix(gsub(" ","",data),ncol=ncol(data),dimnames=list(rownames(data),colnames(data)))
-#	# replace .0 with nothing
-#	data = gsub("[.]0","",data)
-#	allelicCalls = as.matrix(allelicCalls)
-#	allelicCalls = matrix(gsub(" ","",allelicCalls),ncol=ncol(allelicCalls),dimnames=list(rownames(allelicCalls),colnames(allelicCalls)))
-#	# allelic calls
-#	allelic = mapply(FUN=function(a,b) a[which(b==1)], split(data,row(data)), split(allelicCalls,row(allelicCalls)))
-#	names(allelic) = rownames(data)
-#	return(allelic)
-#	}
-
 convert.to.binary = function(data)
 	{
 	# get rid of spaces
@@ -117,28 +87,36 @@ convert.to.binary = function(data)
 	}
 
 # combine rare alleles into one joined allele for a single locus
-combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedProfile,rareThreshold=0.05,doDoubleStutter=FALSE)
+combine.rares.locus.peaks = function(alleleDb,cspProfile,knownProfiles,queriedProfile,rareThreshold=0.05,doDoubleStutter=FALSE,combineStutters=TRUE)
     {
     # not in any profiles or in overstutter positions of profiles
     inProfile = !rownames(alleleDb)%in%c(unlist(cspProfile),unlist(knownProfiles),unlist(queriedProfile))
-    inOverStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))+1,as.numeric(unlist(knownProfiles))+1,as.numeric(unlist(queriedProfile))+1)
-    inUnderStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))-1,as.numeric(unlist(knownProfiles))-1,as.numeric(unlist(queriedProfile))-1)
     isRare = alleleDb[,1]<rareThreshold
+    if(!combineStutters)
+	{
+    	inOverStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))+1,as.numeric(unlist(knownProfiles))+1,as.numeric(unlist(queriedProfile))+1)
+    	inUnderStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))-1,as.numeric(unlist(knownProfiles))-1,as.numeric(unlist(queriedProfile))-1)
+    	}
     # index of alleles not in csp, unc, knowns or queried, and also probability < rareThreshold
-    if(doDoubleStutter)
+    if(doDoubleStutter&!combineStutters)
         {
         inDoubleOverStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))+1,as.numeric(unlist(knownProfiles))+1,as.numeric(unlist(queriedProfile))+1)
         inDoubleUnderStutter = !as.numeric(rownames(alleleDb))%in%c(as.numeric(unlist(cspProfile))-1,as.numeric(unlist(knownProfiles))-1,as.numeric(unlist(queriedProfile))-1)
         index = which(inProfile&inOverStutter&inUnderStutter&isRare&inDoubleOverStutter&inDoubleUnderStutter)
         } else {
-        index = which(inProfile&inOverStutter&inUnderStutter&isRare)
-        }
+	if(!combineStutters)
+		{
+        	index = which(inProfile&inOverStutter&inUnderStutter&isRare)
+		} else {
+		index = which(inProfile&isRare)
+        	} 
+	}
     if(length(index)>0)
         {
         # remove indexed alleles, new allele has sum of probabilities, and mean of BP
         #alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]))) 
 	if(all(is.na(alleleDb[index,3]))) meanLUS = mean(alleleDb[,3],na.rm=TRUE) else meanLUS = mean(alleleDb[index,3],na.rm=TRUE)
-	alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]),meanLUS))
+	alleleDb = rbind(alleleDb[-index,,drop=FALSE],c(sum(alleleDb[index,1]),mean(alleleDb[index,2]),meanLUS))
 	#alleleDb = rbind(alleleDb[-index,],c(sum(alleleDb[index,1]),mean(alleleDb[index,2])))
         rownames(alleleDb)[nrow(alleleDb)] = "-1"
         }
@@ -280,7 +258,7 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   #alleleDb2 = sapply(alleleDb,FUN=fill.unknown.LUS,simplify=FALSE)
 
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+  if(combineRare) alleleDb = likeLTD:::combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
 
   # add index for stutter values
   #alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)

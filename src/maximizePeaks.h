@@ -66,6 +66,9 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     //! \brief test cdf
     SEXP testCDF(SEXP S, SEXP Z);
 
+    //! \brief test new cdf
+    SEXP testNewCDF(SEXP S, SEXP Z);
+
     //! \brief test pdf
     SEXP testPDF(SEXP X, SEXP A, SEXP B);
 

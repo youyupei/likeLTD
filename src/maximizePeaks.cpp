@@ -2,6 +2,7 @@
 #include "config.h"
 #include "openmp.h"
 #include "maximizePeaks.h"
+#include "gammaDist.h"
 
 #include <cmath>
 #include <string>
@@ -263,27 +264,41 @@ inline std::vector<genoStruct> combineDosesSDO(std::vector<float> allPosVec,std:
 	return(outRes);
 	}
 
-
 SEXP testCDF(SEXP S, SEXP Z)
     {
     // convert S to double
-	SEXP sDuplicate = PROTECT(duplicate(S));
-	double const * const S_ptr     = REAL(sDuplicate);
+	double const * const S_ptr     = REAL(S);
 	double s = S_ptr[0];
 	// convert Z to double
-	SEXP zDuplicate = PROTECT(duplicate(Z));
-	double const * const Z_ptr     = REAL(zDuplicate);
+	double const * const Z_ptr     = REAL(Z);
 	double z = Z_ptr[0];
 	// get cdf
-	double result = exp(log(kf_gammap(s,z)));
+	double result = kf_gammap(s,z);
 	// Make and return output object
 	SEXP out = PROTECT(allocVector(REALSXP, 1));
   	double       * const out_ptr  = REAL(out);
 	out_ptr[0] = result;
-    UNPROTECT(3);
+    UNPROTECT(1);
 	return(out);
     }
 
+SEXP testNewCDF(SEXP S, SEXP Z)
+    {
+    // convert S to double
+	double const * const S_ptr     = REAL(S);
+	double s = S_ptr[0];
+	// convert Z to double
+	double const * const Z_ptr     = REAL(Z);
+	double z = Z_ptr[0];
+	// get cdf
+	double result = gammp(s, z);
+	// Make and return output object
+	SEXP out = PROTECT(allocVector(REALSXP, 1));
+  	double       * const out_ptr  = REAL(out);
+	out_ptr[0] = result;
+    UNPROTECT(1);
+	return(out);
+    }
 
 SEXP testPDF(SEXP X, SEXP A, SEXP B)
     {
@@ -357,22 +372,15 @@ inline std::vector<genoStruct> getDoseSDO(std::vector<float> genotypeVec,
 			fragSub = fragVecL[matchIndex];
 			stuttIndSub = stutterIndex[matchIndex];
 
-		//itDbl = std::find(fragVecN.begin(),fragVecN.end(),std::floor(genotypeVec[i]*10.0f)/10.0f);
-		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
-
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],-fragSub);
-			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			// compute linear stutter rate
 			stutterRate = interceptS+(gradientS*stuttIndSub);
-			//stutterDose = tmpDose * stutter;
+            // stutter doses
 			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * meanD;
 			overStutterDose = tmpDose * meanO;
-			//stutterDose = tmpDose * stutterRate;
-			//nonstutterDose = tmpDose * (1-stutter);
-			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
 			nonstutterDose = tmpDose * (1-(stutterRate+meanD+meanO));
-			//nonstutterDose = tmpDose * (1-stutterRate);
 			}
 		// stutter adjusted effective dose
 		// non-stutter dose
@@ -441,22 +449,14 @@ inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec,
 
 			fragSub = fragVecL[matchIndex];
 			stuttIndSub = stutterIndex[matchIndex];
-
-		//itDbl = std::find(fragVecN.begin(),fragVecN.end(),std::floor(genotypeVec[i]*10.0f)/10.0f);
-		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
-
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],-fragSub);
-			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+            // get linear stutter rate
 			stutterRate = interceptS+(gradientS*stuttIndSub);
-			//stutterDose = tmpDose * stutter;
+            // stutter doses
 			stutterDose = tmpDose * stutterRate;
 			doubleStutterDose = tmpDose * meanD;
-			//stutterDose = tmpDose * stutterRate;
-			//nonstutterDose = tmpDose * (1-stutter);
-			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
 			nonstutterDose = tmpDose * (1-(stutterRate+meanD));
-			//nonstutterDose = tmpDose * (1-stutterRate);
 			}
 		// stutter adjusted effective dose
 		// non-stutter dose
@@ -521,22 +521,14 @@ inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec,
 
 			fragSub = fragVecL[matchIndex];
 			stuttIndSub = stutterIndex[matchIndex];
-
-		//itDbl = std::find(fragVecN.begin(),fragVecN.end(),std::floor(genotypeVec[i]*10.0f)/10.0f);
-		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
-
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],-fragSub);
-			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			// linear stutter rate
 			stutterRate = interceptS+(gradientS*stuttIndSub);
-			//stutterDose = tmpDose * stutter;
+			// stutter doses
 			stutterDose = tmpDose * stutterRate;
 			overStutterDose = tmpDose * meanO;
-			//stutterDose = tmpDose * stutterRate;
-			//nonstutterDose = tmpDose * (1-stutter);
-			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
 			nonstutterDose = tmpDose * (1-(stutterRate+meanO));
-			//nonstutterDose = tmpDose * (1-stutterRate);
 			}
 		// stutter adjusted effective dose
 		// non-stutter dose
@@ -600,21 +592,13 @@ inline std::vector<genoStruct> getDoseS(std::vector<float> genotypeVec,
 
 			fragSub = fragVecL[matchIndex];
 			stuttIndSub = stutterIndex[matchIndex];
-
-		//itDbl = std::find(fragVecN.begin(),fragVecN.end(),std::floor(genotypeVec[i]*10.0f)/10.0f);
-		//fragSub = fragVecL[std::distance(fragVecN.begin(),itDbl)];
-
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],-fragSub);
-			//double stutterRate = meanS*(1+gradientS*stuttIndSub);
+			// linear stutter rate
 			stutterRate = interceptS+(gradientS*stuttIndSub);
-			//stutterDose = tmpDose * stutter;
+			// stutter doses
 			stutterDose = tmpDose * stutterRate;
-			//stutterDose = tmpDose * stutterRate;
-			//nonstutterDose = tmpDose * (1-stutter);
-			//nonstutterDose = tmpDose * (1-(stutter+doubleStutterRate));
 			nonstutterDose = tmpDose * (1-stutterRate);
-			//nonstutterDose = tmpDose * (1-stutterRate);
 			}
 		// stutter adjusted effective dose
 		// non-stutter dose
@@ -857,10 +841,10 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -1102,10 +1086,10 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -1344,10 +1328,10 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -1577,10 +1561,10 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -1630,8 +1614,6 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	// create some objects
 	double doseArray[nDat][nCombs];
 	memset( doseArray, '\0', sizeof( doseArray ) );
-
-std::vector<double> debug;
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -1868,10 +1850,10 @@ std::vector<double> debug;
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -2147,10 +2129,10 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -2416,10 +2398,10 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -2459,8 +2441,6 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	// create some objects
 	double doseArray[nDat][nCombs];
 	memset( doseArray, '\0', sizeof( doseArray ) );
-
-	std::vector<double> debug;
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -2677,10 +2657,10 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
@@ -2723,8 +2703,6 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	// create some objects
 	double doseArray[nDat][nCombs];
 	memset( doseArray, '\0', sizeof( doseArray ) );
-
-std::vector<double> debug;
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -3013,11 +2991,11 @@ std::vector<double> debug;
 		if(matchFlag==false)
 		    {
                         // dropout dose
-                        outDouble[i] = outDouble[i] * kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
                         // non-dropout dose
-                        outDouble[i] = outDouble[i] * (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
-                                                        kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+                                                        gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   
 			        }
 			    }
