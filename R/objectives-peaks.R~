@@ -90,11 +90,14 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	# dropin, so on and so forth.
 	cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
 	# alter hypothesis so that rare alleles are always different
-    HYPOTHESIS <<- hypothesis
-    CONS <<- cons
     hypothesis$alleleDb = likeLTD:::alterHypothesis(hypothesis$alleleDb,cons$genotypes)
 	# alter dbVals to include any extra rare alleles
 	cons$dbVals = likeLTD:::alterDBvals(hypothesis$alleleDb,hypothesis)
+    if(colnames(hypothesis$binaryProfile)=="D21S11")
+    {
+	HYPOTHESIS <<- hypothesis
+    CONS <<- cons
+    }
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
 	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,
@@ -280,7 +283,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
-	if(colnames(hypothesis$binaryProfile)=="D10S1248")
+	if(colnames(hypothesis$binaryProfile)=="D21S11")
 	{
 	HYPOTHESIS <<- hypothesis
 	CONS <<- cons
@@ -499,6 +502,84 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
     }
 
 
+# function to be called at each iteration of maximisation
+peaks.probabilities.combined = function(hypothesis,cons,DNAcont,scale,
+			gradientS,gradientAdjust,interceptAdjust,
+			interceptS,meanD=NULL,meanO=NULL,degradation,
+			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
+	{
+	if(colnames(hypothesis$binaryProfile)=="D21S11")
+	{
+	HYPOTHESIS <<- hypothesis
+	CONS <<- cons
+	DNACONT <<- DNAcont
+	SCALE <<- scale
+	GRADIENTS <<- gradientS
+	GRADIENTADJUST <<- gradientAdjust
+	INTERCEPTADJUST <<- interceptAdjust
+	INTERCEPTS <<- interceptS
+	MEAND <<- meanD
+	MEANO<<-meanO
+	DEGRADATION<<-degradation
+	REPADJUST<<-repAdjust
+	DETECTIONTHRESH<<-detectionThresh
+	DROPIN<<-dropin
+	DOR<<-doR
+	DIAGNOSE <<- diagnose
+	}
+	# combine mean and adjustment
+	locusGradient = gradientS*gradientAdjust
+	locusIntercept = interceptS*interceptAdjust
+		# no dropin currently
+		if(doR==TRUE|diagnose==TRUE)
+			{
+			# probabilities for each replicate
+			probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
+				peak.heights.per.locus(genotypeArray=cons$genotypes,
+						alleles=hypothesis$peaksProfile[[x]],
+						heights=hypothesis$heightsProfile[[x]],
+						DNAcont=DNAcont,
+						gradientS = locusGradient,
+						meanD=meanD,meanO=meanO,
+						interceptS=locusIntercept,
+						scale=scale,degradation=degradation,
+						fragLengths=hypothesis$alleleDb[,2],
+						fragProbs=hypothesis$alleleDb[,1],
+						LUSvals=hypothesis$alleleDb[,3],
+						repAdjust=repAdjust[x],
+						detectionThresh=detectionThresh,
+						dropin=dropin,
+						diagnose=diagnose))
+			} else {
+
+				# single, double and over stutter
+		    		probs = .Call(.cpp.getProbabilities,
+					genotypeArray=cons$genotypes,
+					DNAcont=rep(DNAcont,each=2), 
+					gradientS=locusGradient,
+					meanD=ifelse(hypothesis$doDoubleStutter,meanD,-1),
+					meanO=ifelse(hypothesis$doOverStutter,meanO,-1),
+					interceptS=locusIntercept,
+					degradation=rep(1+degradation,each=2),
+					fragLengths=hypothesis$alleleDb[,2],
+					fragNames=as.numeric(rownames(hypothesis$alleleDb)),
+					LUSvals = hypothesis$alleleDb[,3],
+					alleles=hypothesis$peaksProfile,
+					heights=hypothesis$heightsProfile,
+					repAdjust=repAdjust,scale=scale,
+					detectionThresh=detectionThresh,
+					databaseVals = cons$dbVals,
+					fragProbs=hypothesis$alleleDb[,1], 
+					dropin=ifelse(hypothesis$doDropin,dropin,-1))
+            }
+	# diagnose
+	if(diagnose==TRUE) return(probs)
+	# set probability of impossible genotypes to 0
+	probs[is.na(probs)] = 0
+    return(probs)
+    }
+
+
 
 # get probability pf each genotype combination
 peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
@@ -713,7 +794,7 @@ penalties.peaks <- function(nloc, degradation=NULL,
                        gradientAdjust=NULL,interceptAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
                        interceptS=NULL,meanD=NULL,meanO=NULL,
-                       scale=NULL, scaleSD=1, ...) {
+                       scale=NULL, dropin=NULL, scaleSD=1, ...) {
     # set initial penalty
     result = 1
     # Normalizes by number of loci so product of penalties same as in old code.
@@ -744,6 +825,11 @@ penalties.peaks <- function(nloc, degradation=NULL,
 	    {
 	    # mean = 0.01, sd = 5e-5
 	    result = result * (dgamma(meanO,shape=0.02/0.018,scale=0.018) * normalization)
+	    }
+    # penalty on dropin
+    if(!missing(dropin) & !is.null(dropin))
+	    {
+	    result = result * (dexp(dropin,rate=0.05) * normalization)
 	    }
   return(result)
 }

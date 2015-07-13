@@ -794,7 +794,7 @@ penalties.peaks <- function(nloc, degradation=NULL,
                        gradientAdjust=NULL,interceptAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
                        interceptS=NULL,meanD=NULL,meanO=NULL,
-                       scale=NULL, scaleSD=1, ...) {
+                       scale=NULL, dropin=NULL, scaleSD=1, ...) {
     # set initial penalty
     result = 1
     # Normalizes by number of loci so product of penalties same as in old code.
@@ -825,6 +825,11 @@ penalties.peaks <- function(nloc, degradation=NULL,
 	    {
 	    # mean = 0.01, sd = 5e-5
 	    result = result * (dgamma(meanO,shape=0.02/0.018,scale=0.018) * normalization)
+	    }
+    # penalty on dropin
+    if(!missing(dropin) & !is.null(dropin))
+	    {
+	    result = result * (dexp(dropin,rate=0.05) * normalization)
 	    }
   return(result)
 }

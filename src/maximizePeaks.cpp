@@ -121,7 +121,7 @@ inline double kf_lgamma(double z)
 #define KF_GAMMA_EPS 1e-14
 #define KF_TINY 1e-290
 // regularized lower incomplete gamma function, by series expansion
-static double _kf_gammap(double s, double z)
+double _kf_gammap(double s, double z)
 {
 	double sum, x;
  	int k;
@@ -132,7 +132,7 @@ static double _kf_gammap(double s, double z)
  	return exp(s * log(z) - z - kf_lgamma(s + 1.) + log(sum));
  }
  // regularized upper incomplete gamma function, by continued fraction
- static double _kf_gammaq(double s, double z)
+double _kf_gammaq(double s, double z)
  {
  	int j;
  	double C, D, f;
@@ -153,12 +153,12 @@ static double _kf_gammap(double s, double z)
  	return exp(s * log(z) - z - kf_lgamma(s) - log(f));
  }
 
- double kf_gammap(double s, double z)
+double kf_gammap(double s, double z)
  {
  	return z <= 1. || z < s? _kf_gammap(s, z) : 1. - _kf_gammaq(s, z);
  }
 
-static double ln_kf_gammap(double s, double z)
+double ln_kf_gammap(double s, double z)
 {
 	double sum, x;
 	int k;
@@ -822,7 +822,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -1067,7 +1067,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -1309,7 +1309,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -1542,7 +1542,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -1831,7 +1831,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -2110,7 +2110,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -2379,7 +2379,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -2638,7 +2638,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?
@@ -2972,7 +2972,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	        int matchIndex = 0;   
 	        bool matchFlag = false; 
 		    // only do something if some hypothesised dose
-		    if(doseArray[j][i]!='\0')
+		    if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        {
 		        // only do anything if doseArray is not 0
 		        // which allele are we looking at?

@@ -52,10 +52,10 @@ extern "C" {
 	inline double kf_lgamma(double z);
 
 	//! \brief regularized lower incomplete gamma function, by series expansion
-	static double kf_gammap(double s, double z);
+	double kf_gammap(double s, double z);
 
 	//! \brief log regularized lower incomplete gamma function, by series expansion	
-	static double ln_kf_gammap(double s, double z);
+	double ln_kf_gammap(double s, double z);
 
     //! \brief get density
     inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg);

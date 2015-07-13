@@ -1,7 +1,9 @@
 // Functions for gamma distribution from Numerical Recipes
 #include "config.h"
 #include "openmp.h"
+#include "maximizePeaks.h"
 #include "gammaDist.h"
+
 
 #include <cmath>
 #include <string>
@@ -10,7 +12,7 @@
 #include <R_ext/Error.h>
 
 #include <math.h>
-#define ITMAX 100  // maximum allowed number of iterations
+#define ITMAX 1.0e6  // maximum allowed number of iterations
 #define EPS 3.0e-7  // relative accuracy
 #define FPMIN 1.0e-30  // Number near smallest representable floating point number 
 
@@ -49,7 +51,12 @@ float gammp(float a, float x)
     void gser(float *gamser, float a, float x, float *gln);
     void nrerror(char error_text[]);
     float gamser,gammcf,gln;
-    if (x < 0.0 || a <= 0.0) nrerror("Invalid arguments in routine gammp");
+    if((a>=0.0&&a<1.0e-30)||isinf(a)) return kf_gammap(a,x);
+    if (x < 0.0 || a < 0.0) 
+        {
+        fprintf(stderr,"a=%f\nx=%f\n",a,x);
+        nrerror("Invalid arguments in routine gammp");
+        }
     if (x < (a+1.0)) { //Use the series representation.
         gser(&gamser,a,x,&gln);
         return gamser;
@@ -103,6 +110,7 @@ void gser(float *gamser, float a, float x, float *gln)
                 return;
                 }
             }
+        fprintf(stderr,"a=%.30f\nx=%f\n",a,x);
         nrerror("a too large, ITMAX too small in routine gser");
         return;
         }
