@@ -6,27 +6,29 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   #              template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
-  degradation = if(logDegradation) { 0-zero } else { 1-zero }
+  degradation = if(logDegradation) { -1 } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
   DNAcont       = rep(5000, length(arguments$DNAcont))
-  scale        = 10000
+  scale        = 1000
   gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
   interceptAdjust     = rep(5,nloc)
-  interceptS = 0.3
+#locusAdjust     = rep(5,nloc)
+  interceptS = 1e-2
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
   meanO = NULL
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
-  repAdjust   = rep(10,length(arguments$repAdjust))
+  repAdjust   = rep(5,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 500
+  if(!is.null(arguments[["dropin"]])) dropin = 20
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
+#locusAdjust     = locusAdjust,
        interceptAdjust         = interceptAdjust,
        interceptS   = interceptS,
        repAdjust       = repAdjust,
@@ -53,14 +55,15 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   gradientS = 0+zero
   gradientAdjust     = rep(0.2,nloc)
   interceptAdjust     = rep(0.2,nloc)
-  interceptS  = 0+zero
+#locusAdjust     = rep(0.2,nloc)
+  interceptS  = 1e-15
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
   meanO = NULL
   if(!is.null(arguments[["meanO"]])) meanO = 0+zero
-  repAdjust   = rep(0.5+zero,length(arguments$repAdjust))
+  repAdjust   = rep(0.2,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = zero
+  if(!is.null(arguments[["dropin"]])) dropin = 1
 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
@@ -68,6 +71,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
        interceptAdjust         = interceptAdjust,
+#locusAdjust         = locusAdjust,
        interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
@@ -252,6 +256,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   gradientS = 0.08
   gradientAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
+#locusAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 20
@@ -265,6 +270,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
        interceptAdjust         = interceptAdjust,
+#       locusAdjust         = locusAdjust,
        interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
@@ -396,6 +402,7 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE)
 		}
 	dev.off()
+
 	}
 
 
@@ -456,12 +463,14 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	P.pars$control$initialpop <- P.step$member$pop
 
 	# get standard mean standard deviation of initial optimisation phase
-	sdStep = mean(c(sd(P.step$member$bestvalit[1:75][!is.infinite(P.step$member$bestvalit[1:75])]),sd(D.step$member$bestvalit[1:75][!is.infinite(D.step$member$bestvalit[1:75])])))
+	#sdStep = mean(c(sd(P.step$member$bestvalit[1:75][!is.infinite(P.step$member$bestvalit[1:75])]),sd(D.step$member$bestvalit[1:75][!is.infinite(D.step$member$bestvalit[1:75])])))
+	sdStep = max(c(sd(P.step$member$bestvalit[1:75][!is.infinite(P.step$member$bestvalit[1:75])]),sd(D.step$member$bestvalit[1:75][!is.infinite(D.step$member$bestvalit[1:75])])))
 	# sometimes sd is very low (below 1 e.g. 3locus test)
 	# if so set sd to >1 so log2(sd) is positive
-	if(sdStep<1) sdStep = 1.5
+	#if(sdStep<1) sdStep = 1.5
 	# decide how many steps to run
-	if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*8+length(grep("cont",names(D.pars$upper)))
+	#if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*8+length(grep("cont",names(D.pars$upper)))
+	if(is.null(n.steps)) n.steps = ceiling(sdStep+length(grep("cont",names(D.pars$upper))))
 
 	# retain all the likelihood ratios
 	Ld <- numeric(n.steps)

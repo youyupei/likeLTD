@@ -19,7 +19,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# output function, to be run every iteration
 	likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, 
 					scale=NULL, gradientS = NULL, 
-					gradientAdjust=NULL, interceptAdjust=NULL, 
+					gradientAdjust=NULL, interceptAdjust=NULL, #locusAdjust=NULL,
 					dropin=NULL, interceptS=NULL, 
 					meanD=NULL, meanO=NULL, repAdjust=NULL, 
 					detectionThresh=hypothesis$detectionThresh, 
@@ -35,20 +35,27 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 		                degradationPenalty=degradationPenalty, 
 				stutterPenalty=stutterPenalty, dropin=dropin)
 		# single locus objective function
-		callme <- function(objective,grad,stut) 
+		callme <- function(objective,grad,stut#,
+					#loc
+					) 
 			{
-			args = append(arguments, list(gradientAdjust=grad,interceptAdjust=stut))
+			args = append(arguments, list(gradientAdjust=grad,
+							interceptAdjust=stut#,
+							#locusAdjust=loc
+							))
 			do.call(objective, args)
 			}
 		if(length(gradientAdjust) == 1) gradientAdjust = rep(gradientAdjust, length(functions))
 		if(length(interceptAdjust) == 1) interceptAdjust = rep(interceptAdjust, length(functions))
+		#if(length(locusAdjust) == 1) locusAdjust = rep(locusAdjust, length(functions))
 		# call every objective function (one per locus)
-		objectives = mapply(callme, functions, gradientAdjust,interceptAdjust)
+		objectives = mapply(callme, functions, gradientAdjust,interceptAdjust)#,locusAdjust)
 		arguments = append(arguments, list(...))
 		if(diagnose==TRUE) return(objectives)
 		# calculate penalties
 		pens <- do.call(penalties.peaks, append(arguments,list(gradientAdjust=gradientAdjust,
-				interceptAdjust=interceptAdjust,nloc=ncol(hypothesis$queriedProfile))))
+				interceptAdjust=interceptAdjust,#locusAdjust=locusAdjust,
+				nloc=ncol(hypothesis$queriedProfile))))
     		list(objectives=objectives, penalties=pens)
   		}
 	if(addAttr) 
@@ -93,14 +100,9 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
     hypothesis$alleleDb = likeLTD:::alterHypothesis(hypothesis$alleleDb,cons$genotypes)
 	# alter dbVals to include any extra rare alleles
 	cons$dbVals = likeLTD:::alterDBvals(hypothesis$alleleDb,hypothesis)
-    if(colnames(hypothesis$binaryProfile)=="D21S11")
-    {
-	HYPOTHESIS <<- hypothesis
-    CONS <<- cons
-    }
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
-	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,
+	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,#locusAdjust,
 				interceptS,meanD=NULL,meanO=NULL,repAdjust=NULL,
 				degradation=NULL, DNAcont=NULL, 
 				detectionThresh = NULL, dropin=NULL, ...) 
@@ -142,6 +144,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 							DNAcont=DNAcont,scale=scale,
 							gradientS = gradientS, 
 							gradientAdjust=gradientAdjust,
+							#locusAdjust=locusAdjust,
 							interceptAdjust=interceptAdjust, 
 							interceptS=interceptS,
 							meanD = meanD, meanO=meanO,
@@ -154,7 +157,9 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 			}
 		# result
 		res <- peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
-					scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, 						interceptAdjust=interceptAdjust,interceptS=interceptS, 
+					scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, 	
+					#locusAdjust=locusAdjust,					
+					interceptAdjust=interceptAdjust,interceptS=interceptS, 
 					meanD = meanD,meanO=meanO,degradation=degradation, 
 					repAdjust=repAdjust,dropin=dropin,
 					detectionThresh=detectionThresh,doR=doR)
@@ -257,7 +262,6 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 		}
 	# convert genotypes from indices to repeat number
 	genotypes = matrix(as.numeric(rownames(hypothesis$alleleDb))[genotypes],ncol=ncol(genotypes))
-	GENS <<- genotypes
 	# make sure rare combined alleles are always different
 	foo = function(x)
     {
@@ -278,33 +282,15 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 
 
 # function to be called at each iteration of maximisation
-peaks.probabilities = function(hypothesis,cons,DNAcont,scale,
-			gradientS,gradientAdjust,interceptAdjust,
+peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
+			scale,gradientS,gradientAdjust,interceptAdjust,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
-	if(colnames(hypothesis$binaryProfile)=="D21S11")
-	{
-	HYPOTHESIS <<- hypothesis
-	CONS <<- cons
-	DNACONT <<- DNAcont
-	SCALE <<- scale
-	GRADIENTS <<- gradientS
-	GRADIENTADJUST <<- gradientAdjust
-	INTERCEPTADJUST <<- interceptAdjust
-	INTERCEPTS <<- interceptS
-	MEAND <<- meanD
-	MEANO<<-meanO
-	DEGRADATION<<-degradation
-	REPADJUST<<-repAdjust
-	DETECTIONTHRESH<<-detectionThresh
-	DROPIN<<-dropin
-	DOR<<-doR
-	DIAGNOSE <<- diagnose
-	}
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
+	#locusDNAcont = DNAcont*locusAdjust
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
@@ -508,25 +494,6 @@ peaks.probabilities.combined = function(hypothesis,cons,DNAcont,scale,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
 	{
-	if(colnames(hypothesis$binaryProfile)=="D21S11")
-	{
-	HYPOTHESIS <<- hypothesis
-	CONS <<- cons
-	DNACONT <<- DNAcont
-	SCALE <<- scale
-	GRADIENTS <<- gradientS
-	GRADIENTADJUST <<- gradientAdjust
-	INTERCEPTADJUST <<- interceptAdjust
-	INTERCEPTS <<- interceptS
-	MEAND <<- meanD
-	MEANO<<-meanO
-	DEGRADATION<<-degradation
-	REPADJUST<<-repAdjust
-	DETECTIONTHRESH<<-detectionThresh
-	DROPIN<<-dropin
-	DOR<<-doR
-	DIAGNOSE <<- diagnose
-	}
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
@@ -585,7 +552,7 @@ peaks.probabilities.combined = function(hypothesis,cons,DNAcont,scale,
 peak.heights.per.locus = function(genotypeArray,alleles,heights,DNAcont,
 			gradientS,meanD=NULL,meanO=NULL,interceptS,scale,
 			degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
-			detectionThresh,dropin=FALSE,diagnose=FALSE)
+			detectionThresh,dropin=NULL,diagnose=FALSE)
 	{
 	# get combined probability of all peaks for each genotype combination seperately
 	Probs = apply(genotypeArray,MARGIN=2,FUN=function(x) probability.peaks(genotype=x,
@@ -791,7 +758,7 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 # Documentation is in man directory.
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, gradientS = NULL, 
-                       gradientAdjust=NULL,interceptAdjust=NULL,
+                       gradientAdjust=NULL,interceptAdjust=NULL,#locusAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
                        interceptS=NULL,meanD=NULL,meanO=NULL,
                        scale=NULL, dropin=NULL, scaleSD=1, ...) {
@@ -826,11 +793,15 @@ penalties.peaks <- function(nloc, degradation=NULL,
 	    # mean = 0.01, sd = 5e-5
 	    result = result * (dgamma(meanO,shape=0.02/0.018,scale=0.018) * normalization)
 	    }
+    # penalty on scale
+    result = result * (dexp(scale,rate=0.01) * normalization)
     # penalty on dropin
     if(!missing(dropin) & !is.null(dropin))
 	    {
-	    result = result * (dexp(dropin,rate=0.05) * normalization)
+	    result = result * (dgamma(dropin,shape=1.5,scale=4.1)  * normalization)
 	    }
+    # penalty on locusAdjust
+    #result = result * dnorm(log10(locusAdjust),mean=0, sd=0.5)
   return(result)
 }
 

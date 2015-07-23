@@ -203,10 +203,6 @@ plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,t
 
 representation.and.rfu = function(K,alleles,heights,loci)
     {
-    k <<- K
-    ALLELES <<- alleles
-    HEIGHTS <<- heights
-    LOCI <<- loci
     representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,]),simplify=FALSE)
     foo = function(x) mapply(any,x)
     representOverall = do.call(foo,represented)
