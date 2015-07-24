@@ -107,26 +107,23 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile)
     return(list(csp=csp,refs=refs))
     }
 
-plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
+plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
 	{
 	# get database
     if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
     alleleDb = load.allele.database(dbFile,kit)
 	# get K profiles
-	if(!is.null(refs)) 
-		{
-		Q = refs[which(unlist(refs[,1])),-1]
-		# make Q the first individual
-		refIndex = which(unlist(refs[,1]))
-		refs = rbind(refs[refIndex,],refs[-refIndex,])
-		# colours
-		contColours = rainbow(nrow(refs))
-		nK = length(contColours)
-		cspProfile = sapply(csp$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
+	Q = refs[which(unlist(refs[,1])),-1]
+	# make Q the first individual
+	refIndex = which(unlist(refs[,1]))
+	refs = rbind(refs[refIndex,],refs[-refIndex,])
+	# colours
+	contColours = rainbow(nrow(refs))
+	nK = length(contColours)
+	cspProfile = sapply(csp$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
         cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
         alleleDb = likeLTD:::ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
         alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
-		}
 	# locus names
 	if(is.null(toPlot))
 		{
@@ -156,7 +153,12 @@ plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,t
 		thisDB = alleleDb[[which(names(alleleDb)==loci[j])]]
 		dbIndex = sapply(alleles,FUN=function(x) which(rownames(thisDB)==x))
 		# set plotting parameters that are specific to a locus
-		XLIM = range(thisDB[dbIndex,2],na.rm=TRUE)
+		if(length(alleles)==0)
+			{
+			XLIM = c(0,1)
+			} else {
+			XLIM = range(thisDB[dbIndex,2],na.rm=TRUE)
+			}
 		XLIM = XLIM + c(-2,2)
 		flag = (j-1)%%dims[1]==0
 		# make an empty plot
@@ -167,35 +169,39 @@ plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,t
 		# add detection threshold
 		print("detectThresh")
 		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
-		if(!is.null(refs))
+		# only bother plotting peaks if there are peaks
+		if(length(alleles>0))
 			{
-			# get which K contributes to each peak
-			peakContributors = getPeakContributors(alleles,refs[,loci[j]])
-			# add peaks to plot
-			mapply(heights,thisDB[dbIndex,2],peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
-			} else {
-			mapply(heights,thisDB[dbIndex,2],FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="black",lwd=2))
-			}
-		# add peak labels to plot
-		if(!doStutter)
-			{
-			# with no predicted stutter
-			mapply(thisDB[dbIndex,2],heights,alleles,FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
-			} else {
-			# with predicted stutter
-			# stutter
-			stutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights)
-			doubleStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
-			overStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
-			calls = mapply(FUN=combineStutter,stutter,doubleStutter,overStutter)
-			labelCols = vector(length=length(calls))
-			certIndex = which(calls==2)
-			labelCols[certIndex] = "blue"
-			uncIndex = which(calls==1)
-			labelCols[uncIndex] = "purple"
-			labelCols[-c(certIndex,uncIndex)] = "red"
-			# with predicted stutter (crude)
-			mapply(thisDB[dbIndex,2],heights,alleles,labelCols,FUN=function(x,y,a,c) text(x,y+(YLIM[2]/12),a,col=c))
+			if(!is.null(refs))
+				{
+				# get which K contributes to each peak
+				peakContributors = likeLTD:::getPeakContributors(alleles,refs[,loci[j]])
+				# add peaks to plot
+				mapply(heights,thisDB[dbIndex,2],peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
+				} else {
+				mapply(heights,thisDB[dbIndex,2],FUN=function(a,b) lines(x=c(b,b),y=c(0,a),col="black",lwd=2))
+				}
+			# add peak labels to plot
+			if(!doStutter)
+				{
+				# with no predicted stutter
+				mapply(thisDB[dbIndex,2],heights,alleles,FUN=function(x,y,a) text(x,y+(YLIM[2]/12),a,col="blue"))
+				} else {
+				# with predicted stutter
+				# stutter
+				stutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights)
+				doubleStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
+				overStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
+				calls = mapply(FUN=combineStutter,stutter,doubleStutter,overStutter)
+				labelCols = vector(length=length(calls))
+				certIndex = which(calls==2)
+				labelCols[certIndex] = "blue"
+				uncIndex = which(calls==1)
+				labelCols[uncIndex] = "purple"
+				labelCols[-c(certIndex,uncIndex)] = "red"
+				# with predicted stutter (crude)
+				mapply(thisDB[dbIndex,2],heights,alleles,labelCols,FUN=function(x,y,a,c) text(x,y+(YLIM[2]/12),a,col=c))
+				}
 			}
 		}		
     if(!is.null(outputFile)) dev.off()
@@ -203,10 +209,6 @@ plot.CSP.heights = function(csp,refs=NULL,dbFile=NULL,kit=NULL,outputFile=NULL,t
 
 representation.and.rfu = function(K,alleles,heights,loci)
     {
-    k <<- K
-    ALLELES <<- alleles
-    HEIGHTS <<- heights
-    LOCI <<- loci
     representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,]),simplify=FALSE)
     foo = function(x) mapply(any,x)
     representOverall = do.call(foo,represented)
