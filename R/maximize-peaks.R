@@ -534,6 +534,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
         # check for convergence   
         while(multiConverged(Ld,GlobalDval,tolerance)|multiConverged(Lp,GlobalPval,tolerance))
             {
+	    n = n+1
             D.step <- DEoptimLoop(D.pars,tolerance)
             P.step <- DEoptimLoop(P.pars,tolerance)
             Ld = c(Ld,D.step$optim$bestval)
