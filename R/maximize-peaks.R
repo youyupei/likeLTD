@@ -13,7 +13,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
   interceptAdjust     = rep(5,nloc)
-#locusAdjust     = rep(5,nloc)
+locusAdjust     = rep(5,nloc)
   interceptS = 1e-2
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
@@ -28,7 +28,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-#locusAdjust     = locusAdjust,
+locusAdjust     = locusAdjust,
        interceptAdjust         = interceptAdjust,
        interceptS   = interceptS,
        repAdjust       = repAdjust,
@@ -55,7 +55,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   gradientS = 0+zero
   gradientAdjust     = rep(0.2,nloc)
   interceptAdjust     = rep(0.2,nloc)
-#locusAdjust     = rep(0.2,nloc)
+locusAdjust     = rep(0.2,nloc)
   interceptS  = 1e-15
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
@@ -71,7 +71,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
        interceptAdjust         = interceptAdjust,
-#locusAdjust         = locusAdjust,
+locusAdjust         = locusAdjust,
        interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
@@ -256,7 +256,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   gradientS = 0.08
   gradientAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
-#locusAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
+locusAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
   interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 20
@@ -270,7 +270,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
        interceptAdjust         = interceptAdjust,
-#       locusAdjust         = locusAdjust,
+       locusAdjust         = locusAdjust,
        interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,

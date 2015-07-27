@@ -19,7 +19,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# output function, to be run every iteration
 	likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, 
 					scale=NULL, gradientS = NULL, 
-					gradientAdjust=NULL, interceptAdjust=NULL, #locusAdjust=NULL,
+					gradientAdjust=NULL, interceptAdjust=NULL, locusAdjust=NULL,
 					dropin=NULL, interceptS=NULL, 
 					meanD=NULL, meanO=NULL, repAdjust=NULL, 
 					detectionThresh=hypothesis$detectionThresh, 
@@ -35,26 +35,26 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 		                degradationPenalty=degradationPenalty, 
 				stutterPenalty=stutterPenalty, dropin=dropin)
 		# single locus objective function
-		callme <- function(objective,grad,stut#,
-					#loc
+		callme <- function(objective,grad,stut,
+					loc
 					) 
 			{
 			args = append(arguments, list(gradientAdjust=grad,
-							interceptAdjust=stut#,
-							#locusAdjust=loc
+							interceptAdjust=stut,
+							locusAdjust=loc
 							))
 			do.call(objective, args)
 			}
 		if(length(gradientAdjust) == 1) gradientAdjust = rep(gradientAdjust, length(functions))
 		if(length(interceptAdjust) == 1) interceptAdjust = rep(interceptAdjust, length(functions))
-		#if(length(locusAdjust) == 1) locusAdjust = rep(locusAdjust, length(functions))
+		if(length(locusAdjust) == 1) locusAdjust = rep(locusAdjust, length(functions))
 		# call every objective function (one per locus)
-		objectives = mapply(callme, functions, gradientAdjust,interceptAdjust)#,locusAdjust)
+		objectives = mapply(callme, functions, gradientAdjust,interceptAdjust,locusAdjust)
 		arguments = append(arguments, list(...))
 		if(diagnose==TRUE) return(objectives)
 		# calculate penalties
 		pens <- do.call(penalties.peaks, append(arguments,list(gradientAdjust=gradientAdjust,
-				interceptAdjust=interceptAdjust,#locusAdjust=locusAdjust,
+				interceptAdjust=interceptAdjust,locusAdjust=locusAdjust,
 				nloc=ncol(hypothesis$queriedProfile))))
     		list(objectives=objectives, penalties=pens)
   		}
@@ -102,7 +102,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	cons$dbVals = likeLTD:::alterDBvals(hypothesis$alleleDb,hypothesis)
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
-	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,#locusAdjust,
+	result.function <- function(scale,gradientS,gradientAdjust,interceptAdjust,locusAdjust,
 				interceptS,meanD=NULL,meanO=NULL,repAdjust=NULL,
 				degradation=NULL, DNAcont=NULL, 
 				detectionThresh = NULL, dropin=NULL, ...) 
@@ -144,7 +144,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 							DNAcont=DNAcont,scale=scale,
 							gradientS = gradientS, 
 							gradientAdjust=gradientAdjust,
-							#locusAdjust=locusAdjust,
+							locusAdjust=locusAdjust,
 							interceptAdjust=interceptAdjust, 
 							interceptS=interceptS,
 							meanD = meanD, meanO=meanO,
@@ -158,7 +158,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 		# result
 		res <- peaks.probabilities(hypothesis=hypothesis, cons=cons, DNAcont=DNAcont, 
 					scale=scale,gradientS = gradientS,gradientAdjust=gradientAdjust, 	
-					#locusAdjust=locusAdjust,					
+					locusAdjust=locusAdjust,					
 					interceptAdjust=interceptAdjust,interceptS=interceptS, 
 					meanD = meanD,meanO=meanO,degradation=degradation, 
 					repAdjust=repAdjust,dropin=dropin,
@@ -282,7 +282,7 @@ likelihood.constructs.per.locus.peaks = function(hypothesis)
 
 
 # function to be called at each iteration of maximisation
-peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
+peaks.probabilities = function(hypothesis,cons,DNAcont,locusAdjust,
 			scale,gradientS,gradientAdjust,interceptAdjust,
 			interceptS,meanD=NULL,meanO=NULL,degradation,
 			repAdjust,detectionThresh,dropin=NULL,doR=FALSE,diagnose=FALSE)
@@ -290,7 +290,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 	# combine mean and adjustment
 	locusGradient = gradientS*gradientAdjust
 	locusIntercept = interceptS*interceptAdjust
-	#locusDNAcont = DNAcont*locusAdjust
+	locusDNAcont = DNAcont*locusAdjust
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
@@ -319,7 +319,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 				# single, double and over stutter
 		    		probs = .Call(.cpp.getProbabilitiesSDO_dropin,
 					genotypeArray=cons$genotypes,
-					DNAcont=rep(DNAcont,each=2), 
+					DNAcont=rep(locusDNAcont,each=2), 
 					gradientS=locusGradient,
 					meanD=meanD,meanO=meanO,
 					interceptS=locusIntercept,
@@ -758,7 +758,7 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 # Documentation is in man directory.
 penalties.peaks <- function(nloc, degradation=NULL,
                        degradationPenalty=50, gradientS = NULL, 
-                       gradientAdjust=NULL,interceptAdjust=NULL,#locusAdjust=NULL,
+                       gradientAdjust=NULL,interceptAdjust=NULL,locusAdjust=NULL,
                        stutterPenalty = 0.2,# stutterSD=0.2, 
                        interceptS=NULL,meanD=NULL,meanO=NULL,
                        scale=NULL, dropin=NULL, scaleSD=1, ...) {
@@ -801,7 +801,7 @@ penalties.peaks <- function(nloc, degradation=NULL,
 	    #result = result * (dgamma(dropin,shape=1.05,scale=2.1)  * normalization)
 	    }
     # penalty on locusAdjust
-    #result = result * dnorm(log10(locusAdjust),mean=0, sd=0.5)
+    result = result * dnorm(log10(locusAdjust),mean=0, sd=0.2)
   return(result)
 }
 
