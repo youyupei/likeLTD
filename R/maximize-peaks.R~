@@ -12,16 +12,16 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale        = 1000
   gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
-  interceptAdjust     = rep(5,nloc)
+  #interceptAdjust     = rep(5,nloc)
 #locusAdjust     = rep(5,nloc)
-  interceptS = 1e-2
+  #interceptS = 1e-2
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0.1
   meanO = NULL
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(5,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 20
+  if(!is.null(arguments[["dropin"]])) dropin = 100
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
@@ -29,8 +29,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
 #locusAdjust     = locusAdjust,
-       interceptAdjust         = interceptAdjust,
-       interceptS   = interceptS,
+       #interceptAdjust         = interceptAdjust,
+       #interceptS   = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -54,25 +54,25 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   scale       = 0+zero
   gradientS = 0+zero
   gradientAdjust     = rep(0.2,nloc)
-  interceptAdjust     = rep(0.2,nloc)
+  #interceptAdjust     = rep(0.2,nloc)
 #locusAdjust     = rep(0.2,nloc)
-  interceptS  = 1e-15
+  #interceptS  = 1e-15
   meanD = NULL
   if(!is.null(arguments[["meanD"]])) meanD = 0+zero
   meanO = NULL
   if(!is.null(arguments[["meanO"]])) meanO = 0+zero
   repAdjust   = rep(0.2,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 1
+  if(!is.null(arguments[["dropin"]])) dropin = 0+zero
 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-       interceptAdjust         = interceptAdjust,
+      # interceptAdjust         = interceptAdjust,
 #locusAdjust         = locusAdjust,
-       interceptS = interceptS,
+      # interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -158,12 +158,18 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     toAdd = 0
     if(hypothesis$doDoubleStutter) toAdd = toAdd + x$meanD
     if(hypothesis$doOverStutter) toAdd = toAdd + x$meanO
-    condition1 = mapply(x$gradientAdjust*x$gradientS,x$interceptAdjust*x$interceptS,hypothesis$alleleDb,
-                FUN=function(gradA,stuttA,db) 
-                    any(stuttermodel(stuttA,gradA,db[,3])+toAdd>1)|any(stuttermodel(stuttA,gradA,db[,3])+toAdd<0))
-    condition2 = mapply(x$gradientAdjust*x$gradientS,x$interceptAdjust*x$interceptS,hypothesis$alleleDb,
-                FUN=function(gradA,stuttA,db) 
-                    any(stuttermodel(stuttA,gradA,db[,3])>1)|any(stuttermodel(stuttA,gradA,db[,3])<0))
+#    condition1 = mapply(x$gradientAdjust*x$gradientS,0,hypothesis$alleleDb,
+#                FUN=function(gradA,stuttA,db) 
+#                    any(stuttermodel(stuttA,gradA,db[,3])+toAdd>1)|any(stuttermodel(stuttA,gradA,db[,3])+toAdd<0))
+#    condition2 = mapply(x$gradientAdjust*x$gradientS,0,hypothesis$alleleDb,
+#                FUN=function(gradA,stuttA,db) 
+#                    any(stuttermodel(stuttA,gradA,db[,3])>1)|any(stuttermodel(stuttA,gradA,db[,3])<0))
+condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
+                FUN=function(gradA,db) 
+                    any(stuttermodel(0,gradA,db[,3])+toAdd>1)|any(stuttermodel(0,gradA,db[,3])+toAdd<0))
+    condition2 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
+                FUN=function(gradA,db) 
+                    any(stuttermodel(0,gradA,db[,3])>1)|any(stuttermodel(0,gradA,db[,3])<0))
     if(any(condition1)|any(condition2))
 	    {
 	    if(logObjective) result = log10(0) else result = 0
@@ -255,9 +261,9 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   scale           = 1/4
   gradientS = 0.08
   gradientAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
-  interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
+ # interceptAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
 #locusAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
-  interceptS = 0
+ # interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
   if(hypothesis$doDropin) dropin = 20
   if(hypothesis$doDoubleStutter) meanD = 0.02
@@ -269,9 +275,9 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        scale           = scale,
        gradientS = gradientS,
        gradientAdjust         = gradientAdjust,
-       interceptAdjust         = interceptAdjust,
+   #    interceptAdjust         = interceptAdjust,
 #       locusAdjust         = locusAdjust,
-       interceptS = interceptS,
+   #    interceptS = interceptS,
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
@@ -534,6 +540,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
         # check for convergence   
         while(multiConverged(Ld,GlobalDval,tolerance)|multiConverged(Lp,GlobalPval,tolerance))
             {
+	    n = n+1
             D.step <- DEoptimLoop(D.pars,tolerance)
             P.step <- DEoptimLoop(P.pars,tolerance)
             Ld = c(Ld,D.step$optim$bestval)

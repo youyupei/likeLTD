@@ -312,7 +312,7 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, rareThreshold=0.05, kit=NULL, relationship=NULL,...) {
+                                   doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
   if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
   if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
@@ -384,7 +384,7 @@ if(!is.null(relationship))
 defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
                                relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, 
-			       rareThreshold=0.05, kit=NULL, relationship=NULL,...) {
+			       rareThreshold=1, kit=NULL, relationship=NULL,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
   if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
   if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
