@@ -14,8 +14,19 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 	#create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, 
 	#				likeMatrix=likeMatrix, diagnose=diagnose)
-	# set degradation penalty if it is missing
+	# set penalties if missing
 	if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
+	if(is.null(hypothesis$gradientSshape)) hypothesis$gradientSshape=0.013/(0.01^2/0.013)
+	if(is.null(hypothesis$gradientSscale)) hypothesis$gradientSscale=0.01^2/0.013
+	if(is.null(hypothesis$gradientAdjustSD)) hypothesis$gradientAdjustSD=0.15
+	if(is.null(hypothesis$meanDshape)) hypothesis$meanDshape=0.02/0.018
+	if(is.null(hypothesis$meanDscale)) hypothesis$meanDscale=0.018
+	if(is.null(hypothesis$meanOshape)) hypothesis$meanOshape=0.02/0.018
+	if(is.null(hypothesis$meanOscale)) hypothesis$meanOscale=0.018
+	if(is.null(hypothesis$scaleRate)) hypothesis$scaleRate=0.01
+
+
+
 	# output function, to be run every iteration
 	likelihood.vectors <- function(degradation=NULL, DNAcont=NULL, 
 					scale=NULL, gradientS = NULL, 
@@ -25,7 +36,15 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 					meanD=NULL, meanO=NULL, repAdjust=NULL, 
 					detectionThresh=hypothesis$detectionThresh, 
 					degradationPenalty=hypothesis$degradationPenalty,
-					stutterPenalty=hypothesis$stutterPenalty, ...) 
+					gradientSshape=hypothesis$gradientSshape,
+					gradientSscale=hypothesis$gradientSscale,
+					gradientAdjustSD=hypothesis$gradientAdjustSD,
+					meanDshape=hypothesis$meanDshape,
+					meanDscale=hypothesis$meanDscale,
+					meanOshape=hypothesis$meanOshape,
+					meanOscale=hypothesis$meanOscale,
+					scaleRate=hypothesis$scaleRate, 
+					...) 
 		{
     		# set arguments
 		arguments = list(degradation=degradation, DNAcont=DNAcont,
@@ -33,8 +52,16 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 				gradientS = gradientS,#interceptS=interceptS, 
 				meanD = meanD,meanO=meanO,
 				detectionThresh = detectionThresh,
-		                degradationPenalty=degradationPenalty, 
-				stutterPenalty=stutterPenalty, dropin=dropin)
+				dropin=dropin,
+				degradationPenalty=degradationPenalty, 
+				gradientSshape=gradientSshape,
+				gradientSscale=gradientSscale,
+				gradientAdjustSD=gradientAdjustSD,
+				meanDshape=meanDshape,
+				meanDscale=meanDscale,
+				meanOshape=meanOshape,
+				meanOscale=meanOscale,
+				scaleRate=scaleRate)
 		# single locus objective function
 		callme <- function(objective,grad#,
 		#stut,
@@ -762,14 +789,17 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 
 
 
+
 # Penalties to apply to the likelihood.
 # Documentation is in man directory.
-penalties.peaks <- function(nloc, degradation=NULL,
-                       degradationPenalty=50, gradientS = NULL, 
-                       gradientAdjust=NULL,interceptAdjust=NULL,locusAdjust=NULL,
-                       stutterPenalty = 0.2,# stutterSD=0.2, 
-                       interceptS=NULL,meanD=NULL,meanO=NULL,
-                       scale=NULL, dropin=NULL, scaleSD=1, ...) {
+penalties.peaks <- function(nloc, 
+			degradation=NULL, degradationPenalty=50, 
+			gradientS=NULL,gradientSshape=0.013/(0.01^2/0.013), gradientSscale=0.01^2/0.013,
+                       gradientAdjust=NULL,gradientAdjustSD=0.3,
+		       meanD=NULL,meanDshape=0.02/0.018,meanDscale=0.018,
+		       meanO=NULL,meanOshape=0.02/0.018,meanOscale=0.018,
+                       scale=NULL, scaleRate=0.01,
+			dropin=NULL, ...) {
     # set initial penalty
     result = 1
     # Normalizes by number of loci so product of penalties same as in old code.
@@ -781,32 +811,32 @@ penalties.peaks <- function(nloc, degradation=NULL,
                            * normalization )
     # penalty on gradientS
     # mean = 0.013, var=0.1 (actual var=0.01^2) 
-    result = result * (dgamma(gradientS,shape=0.013/(0.01^2/0.013),scale=0.01^2/0.013) * normalization)
+    result = result * (dgamma(gradientS,shape=gradientSshape,scale=gradientSscale) * normalization)
     # penalty on interceptS
     # mean = 0.001, var=0.1 (actual mean=-0.076, actual var=0.13^2) 
     #result = result * (dgamma(interceptS,shape=0.001/(0.0001/0.001),scale=0.0001/0.001) * normalization)
     # penalty on gradientAdjust
-    result = result * dnorm(log10(gradientAdjust),mean=0, sd=0.15)
+    result = result * dnorm(log10(gradientAdjust),mean=0, sd=gradientAdjustSD)
     # penalty on interceptAdjust
     #result = result * dnorm(log10(interceptAdjust),mean=0, sd=0.5)
     # penalty on meanD
     if(!missing(meanD) & !is.null(meanD))
         {
         # mean = 0.01, sd = 5e-5
-        result = result * (dgamma(meanD,shape=0.02/0.018,scale=0.018) * normalization)
+        result = result * (dgamma(meanD,shape=meanDshape,scale=meanDscale) * normalization)
         }
     # penalty on meanO
     if(!missing(meanO) & !is.null(meanO))
 	    {
 	    # mean = 0.01, sd = 5e-5
-	    result = result * (dgamma(meanO,shape=0.02/0.018,scale=0.018) * normalization)
+	    result = result * (dgamma(meanO,shape=meanOshape,scale=meanOscale) * normalization)
 	    }
     # penalty on scale
-    result = result * (dexp(scale,rate=0.01) * normalization)
+    result = result * (dexp(scale,rate=scaleRate) * normalization)
     # penalty on dropin
     if(!missing(dropin) & !is.null(dropin))
 	    {
-	    result = result * (densigamma(dropin,alpha=1e-30,beta=5)  * normalization)
+	    #result = result * (densigamma(dropin,alpha=1e-30,beta=5)  * normalization)
 	    }
     # penalty on locusAdjust
     #result = result * dnorm(log10(locusAdjust),mean=0, sd=0.2)
