@@ -14,7 +14,7 @@ pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',database
     		} # loop over files.
 	if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
 	stop(paste(outputPath, " exists and is not a directory."))
-	admin <- list( caseName=caseName,
+	admin <- list(caseName=caseName,
                 databaseFile=databaseFile,
                 linkageFile=linkageFile,
                 peaksFile=peaksFile,
@@ -72,6 +72,7 @@ getPeakContributors = function(locusPeaks,locusRefs)
 	return(conts)
 	}
 
+# function to plot a line with multiple colours depending on the known contributors
 plotline = function(height,size,contributors,colours)
 	{
 	if(length(contributors)==0) 
@@ -100,17 +101,20 @@ plotline = function(height,size,contributors,colours)
 		}
 	}
 
-pack.genetics.for.peaks.reports = function(cspFile,refFile)
+
+   
+simplify.locus.names = function(names)
     {
-    csp = read.peaks.profile(cspFile)
-    refs = read.known.profiles(refFile)
-    return(list(csp=csp,refs=refs))
+    index = grep("D[0-9]{1,}S{1}",tests)
+    names[index] = sapply(names[index],FUN=function(a) strsplit(a,split="S")[[1]][1])
+    return(names)
     }
 
+# function to plot the CSP data as RFU against mean BP for each locus
 plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
 	{
 	# get database
-    if(is.null(dbFile)&is.null(kit)) kit = "DNA17-lus"
+    if(is.null(dbFile)&is.null(kit)) kit = "DNA17"
     alleleDb = load.allele.database(dbFile,kit)
 	# get K profiles
 	Q = refs[which(unlist(refs[,1])),-1]
@@ -138,7 +142,6 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
 		}
 	# set plotting parameters that are constant across loci
 	dims = rep(ceiling(sqrt(length(loci))),times=2)
-	print(range(unlist(csp$heights[[replicate]][loci,]),na.rm=TRUE))
 	YLIM = c(0,range(as.numeric(unlist(csp$heights[[replicate]][loci,])),na.rm=TRUE)[2])
 	YLIM = YLIM + c(0,YLIM[2]/10)
 	if(!is.null(outputFile)) pdf(outputFile)
@@ -205,37 +208,367 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
     if(!is.null(outputFile)) dev.off()
 	}
 
-representation.and.rfu = function(K,alleles,heights,loci)
+representation = function(K,alleles,heights,loci)
     {
-    representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,]),simplify=FALSE)
-    foo = function(x) mapply(any,x)
-    representOverall = do.call(foo,represented)
-    representation = sum(representOverall)/length(representOverall)
+    representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,],simplify=FALSE),simplify=FALSE)
+    representLoci = do.call(Map,c(rbind,representReplicates))
+    representOverall = do.call(cbind,representLoci)
+    representation = apply(representOverall,MARGIN=1,FUN=function(a) sum(a)/length(a))
+    representation = c(representation,sum(representOverall)/prod(dim(representOverall)))
+    names(representation) = c(names(alleles),"Overall")
+    return(representation)
+    }
+
+meanRfu = function(K,alleles,heights,loci)
+    {
     rfu = sapply(1:length(alleles), FUN=function(z) sapply(loci,FUN=function(x) sapply(K[[x]], FUN=function(y) ifelse(!y%in%alleles[[z]][x,],0,heights[[z]][x,which(alleles[[z]][x,]==y)]))))
-    return(c(representation,mean(as.numeric(unlist(rfu)))))
+    rfu = c(colMeans(rfu),mean(rfu))
+    names(rfu) = c(names(alleles),"Overall")
+    return(rfu)
     }
 
 
+# function to get the mean RFU and estimate of representation for each contributor
 get.representation.rfu = function(csp,refs)
     {
     loci = colnames(refs)[-1]
-    info = sapply(1:nrow(refs),FUN=function(x) representation.and.rfu(refs[x,-1],csp$alleles,csp$heights,loci))
-    rownames(info) = c("representation","meanRFU")
-    colnames(info) = rownames(refs)
-    return(info)
+    repres = sapply(1:nrow(refs),FUN=function(x) representation(refs[x,-1],csp$alleles,csp$heights,loci))
+    repres = cbind(paste0("{\\b ",rownames(repres),"}"),repres)
+    colnames(repres) = c("Representation",rownames(refs))
+    rfu = sapply(1:nrow(refs),FUN=function(x) meanRfu(refs[x,-1],csp$alleles,csp$heights,loci))
+    rfu = cbind(paste0("{\\b ",rownames(rfu),"}"),rfu)
+    colnames(rfu) = c("Mean RFU",rownames(refs))
+    #rownames(info) = c("representation","meanRFU")
+    #colnames(info) = rownames(refs)
+    return(list(repres=repres,rfu=rfu))
     }
 
-allele.report.peaks = function(admin)
+
+
+# function to create a table of reference profiles for peaks reports
+reference.tables.peaks = function(refs,csp,certains)
+	{
+	refCountsAll = sapply(1:nrow(refs),FUN=function(x) likeLTD:::isSingleRefReplicatedAll(refs[x,-1],csp))
+	refCountsCertain = sapply(1:nrow(refs),FUN=function(x) likeLTD:::isSingleRefReplicatedCertain(refs[x,-1],certains))
+	formattedAll = sapply(1:nrow(refs),FUN=function(x) likeLTD:::formatRef(refs[x,-1],refCountsAll[,x]))
+	formattedCertain = sapply(1:nrow(refs),FUN=function(x) likeLTD:::formatRef(refs[x,-1],refCountsCertain[,x]))
+	formattedAll = rbind(rownames(refs),formattedAll)
+	formattedCertain = rbind(rownames(refs),formattedCertain)
+	rownames(formattedAll) = rownames(formattedCertain) = c("Profile",colnames(refs)[-1])
+	return(list(all=formattedAll,certains=formattedCertain))
+	}
+
+formatRef = function(ref,counts)
+	{
+	sapply(1:length(ref), FUN=function(x)
+		paste(sapply(1:length(ref[[x]]), FUN=function(y) 
+			formatAllele(ref[[x]][y],counts[[x]][y])),collapse=",")
+			)
+	}
+
+formatAllele = function(allele,count)
+	{
+	if(length(count)==0) return(allele)
+	for(i in 1:length(allele))
+		{
+		if(count[i]==0)
+			{
+			allele[i] = paste0('{\\chbrdr\\brdrs ',allele[i],'}')
+			} else if(count[i]==1) {
+			allele[i] = paste0('{\\i ',allele[i],'}')
+			} else {
+			allele[i] = paste0('{\\b ',allele[i],'}')
+			}
+		}
+	return(allele)
+	}
+
+isSingleRefReplicatedAll = function(reference,csp)
+	{
+	sapply(1:length(reference), FUN=function(x)
+		sapply(reference[[x]], FUN=function(y) 
+			length(which(as.numeric(unlist(sapply(csp$alleles,FUN=function(a) a[x,],simplify=FALSE)))==y))
+			),simplify=FALSE)
+	}
+
+isSingleRefReplicatedCertain = function(reference,certain)
+	{
+	sapply(1:length(reference), FUN=function(x)
+		sapply(reference[[x]], FUN=function(y) 
+			length(which(as.numeric(unlist(sapply(certain,FUN=function(a) a[[x]],simplify=FALSE)))==y))
+			),simplify=FALSE)
+	}
+
+
+
+
+# function to determine whether peaks are certain (2), uncertain (1) or non-allelic (0) 
+callLocusPeaks = function(alleles,heights)
+	{
+	alleles = as.numeric(alleles)
+	heights = as.numeric(heights)
+	naIndex = which(is.na(alleles))
+	if(length(naIndex)>0) 
+		{
+		alleles = alleles[-naIndex]
+		heights = heights[-naIndex]
+		}
+	stutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights)
+	doubleStutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
+	overStutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
+	calls = mapply(FUN=likeLTD:::combineStutter,stutter,doubleStutter,overStutter)
+	return(calls)
+	}
+
+callReplicatePeaks = function(alleles,heights)
+	{
+	return(sapply(1:nrow(alleles), FUN=function(y) callLocusPeaks(alleles[y,],heights[y,])))
+	}
+
+# function to filter down from allelic calls to just keep the certain alleles
+getLocusCertains = function(alleles,calls)
+	{
+	alleles = as.numeric(alleles)
+	naIndex = which(is.na(alleles))
+	if(length(naIndex)>0) 
+		{
+		alleles = alleles[-naIndex]
+		}
+	return(alleles[which(calls==2)])
+	}
+
+getReplicateCertains = function(alleles,calls)
+	{
+	return(sapply(1:nrow(alleles), FUN=function(y) getLocusCertains(alleles[y,],calls[[y]])))
+	}
+
+filterCertains = function(csp,ref)
+	{
+	return(csp[which(!csp%in%as.numeric(unlist(ref)))])
+	}
+
+# function to add unnatributable peaks to reference tables
+unattribForRefs = function(csp,refs,certains)
+	{
+	# with estimation of stutters etc
+	# find the unnatributable alleles
+	unattributable1 = sapply(1:length(certains), FUN=function(x) 
+				sapply(1:length(certains[[x]]), FUN=function(y) 
+					likeLTD:::filterCertains(certains[[x]][[y]],refs[,y+1]),
+					simplify=FALSE),simplify=FALSE)
+	# unattributable counts with estimation
+	counts1 = sapply(do.call(Map,c(c,unattributable1)),FUN=table)
+	withEstimation = sapply(1:length(counts1),FUN=function(a) paste(likeLTD:::formatAllele(names(counts1[[a]]),counts1[[a]]),collapse=","))
+	# without estimation of stutters etc
+	unattributable2 = sapply(1:length(csp$alleles), FUN=function(x) 
+				sapply(1:nrow(csp$alleles[[x]]), FUN=function(y) 
+					likeLTD:::filterCertains(unlist(csp$alleles[[x]][y,][which(!is.na(csp$alleles[[x]][y,]))]),refs[,y+1]),
+					simplify=FALSE),simplify=FALSE)
+	# unattributable counts without estimation
+	counts2 = sapply(do.call(Map,c(c,unattributable2)),FUN=table)
+	withoutEstimation = sapply(1:length(counts2),FUN=function(a) paste(likeLTD:::formatAllele(names(counts2[[a]]),counts2[[a]]),collapse=","))
+	return(list(withEstimation=withEstimation,withoutEstimation=withoutEstimation))
+	}
+
+# function to determine which peaks are unnatributable while attempting to ignore stutter peaks
+# not perfect
+unattributablePeaks = function(csp,refs,certains)
+	{
+	# find the unnatributable alleles
+	unnatributable = sapply(1:length(certains), FUN=function(x) 
+				sapply(1:length(certains[[x]]), FUN=function(y) 
+					likeLTD:::filterCertains(certains[[x]][[y]],refs[,y+1]),
+					simplify=FALSE),simplify=FALSE)
+	if(length(unnatributable)>1) 
+		{
+		together = do.call(Map,c(c,unnatributable))
+		} else {
+		together = unnatributable[[1]]
+		}
+	counts = sapply(together,table,simplify=FALSE)
+	replicated = cbind(sapply(counts,FUN=function(a) length(which(a==1))),sapply(counts,FUN=function(a) length(which(a>1))))
+	rownames(replicated) = colnames(refs)[-1]
+	colnames(replicated) = c("Unreplicated","Replicated")
+	return(replicated)
+	}
+
+# function to plot replicated and unreplicated unnatributable alleles determined by assuming stutter rates
+plotUnnatributablePeaks = function(replicated)
+	{
+	par(mai=c(1,1.2,1,1))
+	barplot(t(replicated),legend.text=c("Unreplicated","Replicated"),xlab="Frequency",horiz=TRUE,las=1)
+	abline(v=seq(from=0,to=max(rowSums(replicated)),by=2)[-1],lty=2)
+	}
+
+# function to generate hypotheses suggestions for peak heights
+hypothesis.generator.peaks = function(unattrib,nReps)
+	{
+	out = matrix(NA,ncol=3,nrow=0)
+	colnames(out) = c("nU","doDropin","Recommended")
+	nU = ceiling(max(rowSums(unattrib))/2)
+	dropin = "FALSE"
+	out = rbind(out,c(nU,dropin,"TRUE"))
+	testUnattrib = t(apply(unattrib,MARGIN=1,FUN=removeSingleContrib))
+	if(any(testUnattrib[,2]>0)|sum(testUnattrib[,2])>nReps) 
+		{
+		return(out)
+		} else {
+		out = rbind(out,c(nU-1,"TRUE","TRUE"))
+		out[1,3] = "FALSE"
+		return(out)
+		}
+	}
+
+# remove a single contributor to check if a dropin hypothesis is sensible
+removeSingleContrib = function(x)
+	{
+	toRemove = 2
+	if((sum(x)-toRemove)<0)
+		{
+		return(c(0,0))
+		} else {
+		if(x[2]>=toRemove)
+			{
+			x[2] = x[2]-toRemove
+			toRemove = 0
+			} else {
+			toRemove = toRemove - x[2]
+			x[2] = 0
+			}
+		if(x[1]>=toRemove)
+			{
+			x[1] = x[1]-toRemove
+			toRemove = 0
+			} else {
+			toRemove = toRemove - x[1]
+			x[1] = 0
+			}	
+		}
+	return(x)
+	}
+
+
+
+# function to create the parts of the report documents that are present in both allele report and output report
+common.report.section.peaks = function(names,gen,admin)
+	{
+	# Create a new Docx. 
+	doc <- RTF(names$filename, width=11,height=8.5,omi=c(1,1,1,1))
+	# add title
+	print("title")
+	addParagraph(doc, line)
+	spacer(doc,3)
+	addHeader( doc, title=substr(names$title,1,nchar(names$title)-1), subtitle=names$subtitle, font.size=fs0 )
+	addParagraph(doc, line)
+	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	# add hypothesis
+	# plot CSP
+	print("CSP")	
+	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
+	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
+	sapply(1:length(gen$csp$alleles),FUN=function(y) 
+		{
+		addText(doc,names(gen$csp$alleles)[y],bold=TRUE);
+		addNewLine(doc)
+		addPlot( doc, plot.fun = print, width = 5.5, height = 5, x = 
+			plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
+					kit=admin$kit,detectThresh=admin$detectThreshold,
+					doStutter=TRUE,replicate=y))
+		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks that Q shares coloured in red, and peaks that other known profiles share coloured otherwise. Black peaks are unattributable. Colours of allele labels give a rough estimate of whether a peak is allelic or not; blue=allelic, purple=uncertain, red=non-allelic. These allele designations are not used when calculating the weight-of-evidence.")
+		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+		})
+
+	# table of reference profiles
+	print("references")
+	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
+	addText(doc,"Without estimation of which peaks are allelic",bold=TRUE)
+	addNewLine(doc)
+	addTable(doc, t(gen$refTables$all), col.justify='C', header.col.justify='C',font.size=fs3)
+	addText(doc,"With estimation of which peaks are allelic",bold=TRUE)
+	addNewLine(doc)
+	addTable(doc, t(gen$refTables$certains), col.justify='C', header.col.justify='C',font.size=fs3)
+	addNewLine(doc)
+	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	# summary
+	#print("summary")
+	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
+	# representation
+	print("representation")
+	addTable(doc, gen$repTables$repres, col.justify='C', header.col.justify='C',font.size=fs3)
+	addParagraph( doc, "Approximate representation (observed/total) for each reference profile per replicate and overall.")
+	addNewLine(doc)
+	addTable(doc, gen$repTables$rfu, col.justify='C', header.col.justify='C',font.size=fs3)
+	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall.")
+	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	# unnatributable
+	print("unnatributable")
+	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
+	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
+	addParagraph( doc, "Number of replicated (light grey) and unreplicated (dark grey) unattributable alleles per locus, for the ''certain'' allele calls (blue labels) shown in the CSP plots.")
+	return(doc)
+	}
+
+
+pack.genetics.for.peaks.reports = function(cspFile,refFile)
+    {
+    # get csp
+    csp = read.peaks.profile(cspFile)
+    # get references
+    refs = read.known.profiles(refFile)
+    # make allelic calls
+    calls = sapply(1:length(csp$alleles), FUN=function(x) likeLTD:::callReplicatePeaks(csp$alleles[[x]],csp$heights[[x]]),simplify=FALSE)
+    # list of only certain calls
+    certains = sapply(1:length(csp$alleles), FUN=function(x) likeLTD:::getReplicateCertains(csp$alleles[[x]],calls[[x]]),simplify=FALSE)
+    # unnatributable, with estimation of which peaks are stutters etc
+    unattributable = likeLTD:::unattributablePeaks(csp,refs,certains)
+    # reference tables
+    refTables = likeLTD:::reference.tables.peaks(refs,csp,certains)
+    # unnatributable to add to reference tables
+    unattrib = likeLTD:::unattribForRefs(csp,refs,certains)
+    refTables$certains = cbind(refTables$certains,t(cbind("{\\i Other}",t(unattrib$withEstimation))))
+    refTables$all = cbind(refTables$all,t(cbind("{\\i Other}",t(unattrib$withoutEstimation))))
+    # representation tables
+    repTables = likeLTD:::get.representation.rfu(csp,refs)
+    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables))
+    }
+
+
+
+# function to generate the allele report
+allele.report.peaks = function(admin,file=NULL)
+    {
+    # get genetics
+    gen = likeLTD:::pack.genetics.for.peaks.reports(admin$peaksFile,admin$refFile)
+    # file name
+    names <- likeLTD:::filename.maker(admin$outputPath,admin$caseName,file,type='allele')
+    names$subtitle <- admin$caseName
+    # section common to allele and output report
+    doc <- likeLTD:::common.report.section.peaks(names,gen,admin)
+    # section specific to the allele report
+    addNewLine(doc)
+    addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
+    addTable(doc, hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles)), col.justify='C', header.col.justify='C')
+    addParagraph( doc, "LikeLTD does not support an nU>2. If nU>2, you may run with nU=2 and doDropin=TRUE, but this is not advised. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; they are rough estimations and you may disagree with some designations.")
+    addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+    # system info
+    addHeader(doc, "System information", TOC.level=1,font.size=fs1)
+    addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
+    done(doc)
+    #rtf.formater(names$filename)	
+    }
+
+
+# function to generate the allele report
+output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,file=NULL)
     {
     # get genetics
     gen = pack.genetics.for.peaks.reports(admin$peaksFile,admin$refFile)
-    # plot CSP
-    sapply(1:length(gen$csp$alleles),FUN=function(x) plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,kit=admin$kit,detectThresh=admin$detectThreshold,doStutter=TRUE,replicate=x))
-    # representation
-    repRFU = get.representation.rfu(gen$csp,gen$refs)
-    # 
-    
+    # file name
+    names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
+    names$subtitle <- admin$caseName
+    # section common to allele and output report
+    doc = common.report.section.peaks(names,gen)
 
+    done(doc)
+    rtf.formater(names$filename)	
     }
-
-

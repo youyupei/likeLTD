@@ -18,7 +18,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
 	if(is.null(hypothesis$gradientSshape)) hypothesis$gradientSshape=0.013/(0.01^2/0.013)
 	if(is.null(hypothesis$gradientSscale)) hypothesis$gradientSscale=0.01^2/0.013
-	if(is.null(hypothesis$gradientAdjustSD)) hypothesis$gradientAdjustSD=0.3
+	if(is.null(hypothesis$gradientAdjustSD)) hypothesis$gradientAdjustSD=0.2
 	if(is.null(hypothesis$meanDshape)) hypothesis$meanDshape=0.02/0.018
 	if(is.null(hypothesis$meanDscale)) hypothesis$meanDscale=0.018
 	if(is.null(hypothesis$meanOshape)) hypothesis$meanOshape=0.02/0.018
@@ -795,7 +795,7 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 penalties.peaks <- function(nloc, 
 			degradation=NULL, degradationPenalty=50, 
 			gradientS=NULL,gradientSshape=0.013/(0.01^2/0.013), gradientSscale=0.01^2/0.013,
-                       gradientAdjust=NULL,gradientAdjustSD=0.3,
+                       gradientAdjust=NULL,gradientAdjustSD=0.2,
 		       meanD=NULL,meanDshape=0.02/0.018,meanDscale=0.018,
 		       meanO=NULL,meanOshape=0.02/0.018,meanOscale=0.018,
                        scale=NULL, scaleRate=0.01,
