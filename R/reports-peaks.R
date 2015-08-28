@@ -1,4 +1,4 @@
-pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, outputPath=getwd() ) {
+pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, detectionThresh=30, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(peaksFile, refFile) 
@@ -20,7 +20,8 @@ pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',database
                 peaksFile=peaksFile,
                 refFile=refFile,
                 outputPath=outputPath,
-		kit=kit )
+		kit=kit,
+		detectionThresh = detectionThresh )
 	return(admin)}
 
 locus.likes.peaks <- function(hypothesis,results,...){
@@ -213,6 +214,7 @@ representation = function(K,alleles,heights,loci)
     representReplicates = sapply(1:length(alleles), FUN=function(y) sapply(loci,FUN=function(x) K[[x]]%in%alleles[[y]][x,],simplify=FALSE),simplify=FALSE)
     representLoci = do.call(Map,c(rbind,representReplicates))
     representOverall = do.call(cbind,representLoci)
+
     representation = apply(representOverall,MARGIN=1,FUN=function(a) sum(a)/length(a))
     representation = c(representation,sum(representOverall)/prod(dim(representOverall)))
     names(representation) = c(names(alleles),"Overall")
@@ -404,25 +406,50 @@ plotUnnatributablePeaks = function(replicated)
 hypothesis.generator.peaks = function(unattrib,nReps)
 	{
 	out = matrix(NA,ncol=3,nrow=0)
-	colnames(out) = c("nU","doDropin","Recommended")
+	colnames(out) = c("nU","doDropin","Recommendation")
 	nU = ceiling(max(rowSums(unattrib))/2)
 	dropin = "FALSE"
-	out = rbind(out,c(nU,dropin,"TRUE"))
-	testUnattrib = t(apply(unattrib,MARGIN=1,FUN=removeSingleContrib))
-	if(any(testUnattrib[,2]>0)|sum(testUnattrib[,2])>nReps) 
+	if(nU==3)
 		{
+		rec = "Can only be evaluated by removing the additional U from defence"
+		} else if(nU>3) {
+		rec = "Too many U's to evaluate"
+		} else {
+		rec = "Recommended"
+		}	
+	out = rbind(out,c(nU,dropin,rec))
+	if(nU==0) return(out)
+	# check if dropin could be sensible 
+	# (counts replicated and unreplicated unattributables with nU-1)
+	testUnattrib = t(apply(unattrib,MARGIN=1,FUN=function(a) removeContribs(a,nU-1)))
+	if(any(testUnattrib[,2]>0)|sum(testUnattrib[,1])>(2*nReps)) 
+		{
+		# if replicated of too many dropins, dont suggest dropin
 		return(out)
 		} else {
-		out = rbind(out,c(nU-1,"TRUE","TRUE"))
-		out[1,3] = "FALSE"
+		if(sum(testUnattrib[,1])>nReps)
+			{
+			if((nU-1)<3) 
+				{
+				# if between 1 and 2 dropins per replicate consider
+				out = rbind(out,c(nU-1,"TRUE","Worth considering"))
+				}
+			} else {
+			if((nU-1)<3) 
+				{
+				# if < 1 dropin per replicate suggest
+				out = rbind(out,c(nU-1,"TRUE","Recommended"))
+				if(rec=="Recommended") out[1,3] = ""
+				}
+			}
 		return(out)
 		}
 	}
 
 # remove a single contributor to check if a dropin hypothesis is sensible
-removeSingleContrib = function(x)
+removeContribs = function(x,toRemove)
 	{
-	toRemove = 2
+	toRemove = toRemove*2
 	if((sum(x)-toRemove)<0)
 		{
 		return(c(0,0))
@@ -447,10 +474,140 @@ removeSingleContrib = function(x)
 	return(x)
 	}
 
+# function to return locus likelihoods and LRs for peak heights
+local.likelihood.table.reformatter.peaks <- function(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults)
+    {
+	P <- log10(locus.likes.peaks(prosecutionHypothesis,prosecutionResults))
+	D <- log10(locus.likes.peaks(defenceHypothesis,defenceResults))
+	table  <- t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=(P-D),Ratio=10^(P-D)))
+	extra <- data.frame(Likelihood=row.names(table))
+	result <- round.3(cbind(extra,table))
+    return(result)
+    }
 
+# function to return table of user input parameters
+chosen.parameter.table.reformatter.peaks <- function(prosecutionHypothesis)
+    {
+    chosen = c("nUnknowns","ethnic","adj","fst","relatedness","relationship","doDropin","doDoubleStutter","doOverStutter","detectionThresh")
+	keep <- sapply(chosen,FUN=function(a) grep(a,names(prosecutionHypothesis)))
+	table <- as.data.frame(unlist(prosecutionHypothesis[unlist(keep)]))
+	extra <- data.frame(Parameter= rownames(table))
+	combined <- cbind(extra,table)
+	colnames(combined) <- c('Parameter','User input')
+    return(combined)
+    }
+
+# function to produce table of file inputs
+file.inputs.table.reformatter.peaks <- function(prosecutionHypothesis)
+	{
+	tmp = strsplit(prosecutionHypothesis$peaksFile,split="/")[[1]]
+	cspFile = tmp[length(tmp)]
+	tmp = strsplit(prosecutionHypothesis$refFile,split="/")[[1]]
+	refFile = tmp[length(tmp)]
+	if(is.null(prosecutionHypothesis$databaseFile)&is.null(prosecutionHypothesis$kit))
+		{
+		databaseFile = "DNA17-db.txt (Default)"
+		} else if (is.null(prosecutionHypothesis$databaseFile)) {
+        databaseFile = paste0(prosecutionHypothesis$kit,".txt (Default)")
+		} else {
+		tmp = strsplit(prosecutionHypothesis$databaseFile,split="/")[[1]]
+		databaseFile = tmp[length(tmp)]
+		}
+	table = data.frame(file=c("CSP","Reference","Database"),input=c(cspFile,refFile,databaseFile))
+	colnames(table) = c("File","Used")
+	return(table)
+	}
+
+# function to display the seed used
+seedTable <- function(results)
+    {
+    if(is.null(results$seed.input)) 
+        {
+        extra="Randomly generated"
+        } else {
+        extra = "User input"
+        }
+    out = cbind(results$seed.used,extra)
+    colnames(out) = c("Seed","Origin")
+    return(out)
+    }
+
+# DNAcont and deg estimates for a single hypothesis
+getDNAcontDeg = function(estimates,repNames,knownProfs,hyp)
+    {
+    DNAcontIndex = grep("DNAcont",names(estimates))
+    repIndex = grep("repAdjust",names(estimates))
+    degIndex = grep("degradation",names(estimates))
+    DNAcont = estimates[DNAcontIndex]
+    if(length(repIndex)>0)
+        {
+        DNAcont = sapply(DNAcont,FUN=function(a) a*c(1,estimates[repIndex]))
+        }
+    out = rbind(round(DNAcont,2),round(10^estimates[degIndex],5))
+    out = cbind(c(paste0("{\\b ",repNames,"}"),"{\\b Degradation}"),out)
+    contNames = vector(length=length(DNAcontIndex))
+    if(nrow(knownProfs)==0)
+        {
+        namesK = c()
+        } else {
+        namesK = rownames(knownProfs)[which(!unlist(knownProfs[,1]))]
+        }
+    nU = length(DNAcontIndex)-nrow(knownProfs)
+    if(nU>0) 
+        {
+        namesU = paste0("U",1:nU)
+        if(hyp=="defence") namesU[length(namesU)] = "X"
+        } else {
+        namesU = c()
+        }
+    if(hyp=="prosecution") 
+        {
+        namesQ = rownames(knownProfs)[which(unlist(knownProfs[,1]))]
+        outNames = c(namesK,namesU,namesQ)
+        } else {
+        outNames = c(namesK,namesU)
+        }
+    colnames(out) = c(ifelse(hyp=="prosecution","Prosecution","Defence"),outNames)
+    return(out)
+    }
+
+# function to create a table summarising DNA contribution estimates and degradation estimates
+DNAcontDeg = function(results,repNames,knownProfsP,knownProfsD)
+    {
+    DNAcontP = likeLTD:::getDNAcontDeg(results$Pros$optim$bestmem,repNames,knownProfsP,"prosecution")
+    DNAcontD = likeLTD:::getDNAcontDeg(results$Def$optim$bestmem,repNames,knownProfsD,"defence")
+    return(list(pros=DNAcontP,def=DNAcontD))
+    }
+
+# function to create a string that describes the pros and def hypotheses
+create.hypothesis.string.peaks = function(hypP)
+	{
+	nameQ = paste0(rownames(hypP$knownProfs)[which(unlist(hypP$knownProfs[,1]))]," (Q)")
+	nameK = rownames(hypP$knownProfs)[which(!unlist(hypP$knownProfs[,1]))]
+	if(hypP$nUnknowns>0)
+		{	
+		nameU = paste0("U",1:hypP$nUnknowns)
+		} else {
+		nameU = c()
+		}
+	pros = paste0("Prosecution hypothesis: ",nameQ)
+	def = "Defence hypothesis: Unknown (X)"
+	if(length(nameK)>0)
+		{
+		nameK = paste0(nameK," (K",1:length(nameK),")")
+		pros = paste(pros,nameK,sep=" + ",collapse=" + ")
+		def = paste(def,nameK,sep=" + ",collapse=" + ")
+		}
+	if(length(nameU)>0)
+		{
+		pros = paste(pros,nameU,sep=" + ",collapse=" + ")
+		def = paste(def,nameU,sep=" + ",collapse=" + ")
+		}
+	return(list(pros=pros,def=def))
+	}
 
 # function to create the parts of the report documents that are present in both allele report and output report
-common.report.section.peaks = function(names,gen,admin)
+common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL)
 	{
 	# Create a new Docx. 
 	doc <- RTF(names$filename, width=11,height=8.5,omi=c(1,1,1,1))
@@ -460,6 +617,14 @@ common.report.section.peaks = function(names,gen,admin)
 	spacer(doc,3)
 	addHeader( doc, title=substr(names$title,1,nchar(names$title)-1), subtitle=names$subtitle, font.size=fs0 )
 	addParagraph(doc, line)
+	if(!is.null(hypothesisString))
+		{
+		addHeader(doc, hypothesisString$pros, TOC.level=1,font.size=fs1)
+		addHeader(doc, hypothesisString$def, TOC.level=1,font.size=fs1)
+		}
+	# warnings
+	if(any(as.numeric(unlist(gen$csp$heights))<admin$detectionThresh,na.rm=TRUE)) addParagraph(doc, "WARNING: peaks observed in CSP lower than the detection threshold.")
+	if(length(warnings)>0) sapply(1:length(warnings),FUN=function(a) addParagraph(doc, warnings[a]))
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# add hypothesis
 	# plot CSP
@@ -472,7 +637,7 @@ common.report.section.peaks = function(names,gen,admin)
 		addNewLine(doc)
 		addPlot( doc, plot.fun = print, width = 5.5, height = 5, x = 
 			plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
-					kit=admin$kit,detectThresh=admin$detectThreshold,
+					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
 		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks that Q shares coloured in red, and peaks that other known profiles share coloured otherwise. Black peaks are unattributable. Colours of allele labels give a rough estimate of whether a peak is allelic or not; blue=allelic, purple=uncertain, red=non-allelic. These allele designations are not used when calculating the weight-of-evidence.")
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
@@ -505,16 +670,101 @@ common.report.section.peaks = function(names,gen,admin)
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
 	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
 	addParagraph( doc, "Number of replicated (light grey) and unreplicated (dark grey) unattributable alleles per locus, for the ''certain'' allele calls (blue labels) shown in the CSP plots.")
+	addHeader(doc, "Unusual alleles", TOC.level=1,font.size=fs1)
+	addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
 	return(doc)
 	}
 
+locus.unusual = function(csp,refs,alleleDb,locus)
+	{
+	thisDB = alleleDb[which(alleleDb$Marker==locus),]
+	thisCSP = sapply(csp$alleles,FUN=function(a) a[locus,],simplify=FALSE)
+	thisRefs = refs[,locus]
+	ethnicIndex = which(!colnames(thisDB)%in%c("Marker","Allele","LUS","BP"))
+	out = matrix(NA,ncol=5+length(ethnicIndex),nrow=0)
+	colnames(out) = c("Locus","File","Profile","Allele","Issue",colnames(thisDB)[ethnicIndex])
+	repNames = names(csp$alleles)
+	Knames = rownames(refs)
+	# CSP alleles
+	# loop over each replicate
+	for(i in 1:length(thisCSP))
+		{
+		# loop over each allele in each replicate
+		for(j in 1:length(thisCSP[[i]]))
+			{
+			thisAllele = as.numeric(thisCSP[[i]][j])
+			if(is.na(thisAllele)) next
+			index = which(thisDB$Allele==thisAllele)
+			# missing alleles
+			if(length(index)==0)
+				{
+				out = rbind(out,c(locus,"CSP",repNames[i],thisAllele,"Not in database",thisDB[index,ethnicIndex]))
+				next
+				}
+			# duplicate alleles
+			if(length(index)>1)
+				{
+				out = rbind(out,c(locus,"CSP",repNames[i],thisAllele,"Duplicate allele",thisDB[index,ethnicIndex]))
+				next
+				}
+			# rare alleles
+			if(any(thisDB[index,ethnicIndex]<2))
+				{
+				out = rbind(out,c(locus,"CSP",repNames[i],thisAllele,"Rare allele",thisDB[index,ethnicIndex]))
+				}
+			}
+		}
+	# Reference alleles
+	# loop over reference profiles
+	for(i in 1:length(thisRefs))
+		{
+		# loop over each allele in each reference profile
+		for(j in 1:length(thisRefs[[i]]))
+			{
+			thisAllele = as.numeric(thisRefs[[i]][j])
+			index = which(thisDB$Allele==thisAllele)
+			# missing alleles
+			if(length(index)==0)
+				{
+				out = rbind(out,c(locus,"Reference",Knames[i],thisAllele,"Not in database",thisDB[index,ethnicIndex]))
+				next
+				}
+			# duplicate alleles
+			if(length(index)>1)
+				{
+				out = rbind(out,c(locus,"Reference",Knames[i],thisAllele,"Duplicate allele",thisDB[index,ethnicIndex]))
+				next
+				}
+			# rare alleles
+			if(any(thisDB[index,ethnicIndex]<2))
+				{
+				out = rbind(out,c(locus,"Reference",Knames[i],thisAllele,"Rare allele",thisDB[index,ethnicIndex]))
+				}
+			}
+		}
+	return(out)
+	}
 
-pack.genetics.for.peaks.reports = function(cspFile,refFile)
+# unusual alleles for peak heights
+unusual.alleles.peaks = function(csp,refs,alleleDb)
+	{
+	loci = colnames(refs)[-1]
+	unusuals = sapply(loci,FUN=function(a) likeLTD:::locus.unusual(csp,refs,alleleDb,a))
+	return(do.call(rbind,unusuals))
+	}
+
+
+pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,dbFile=NULL,kit=NULL)
     {
     # get csp
-    csp = read.peaks.profile(cspFile)
+    if(is.null(csp)) csp = read.peaks.profile(cspFile)
     # get references
-    refs = read.known.profiles(refFile)
+    if(is.null(refs)) refs = read.known.profiles(refFile)
+    # get allele database
+    if(is.null(dbFile)&is.null(kit)) kit = "DNA17"
+    alleleDb = likeLTD:::load.allele.database(dbFile,kit)
+    # unusual alleles
+    unusuals = likeLTD:::unusual.alleles.peaks(csp,refs,alleleDb)
     # make allelic calls
     calls = sapply(1:length(csp$alleles), FUN=function(x) likeLTD:::callReplicatePeaks(csp$alleles[[x]],csp$heights[[x]]),simplify=FALSE)
     # list of only certain calls
@@ -529,7 +779,7 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile)
     refTables$all = cbind(refTables$all,t(cbind("{\\i Other}",t(unattrib$withoutEstimation))))
     # representation tables
     repTables = likeLTD:::get.representation.rfu(csp,refs)
-    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables))
+    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables,unusuals=unusuals))
     }
 
 
@@ -538,7 +788,7 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile)
 allele.report.peaks = function(admin,file=NULL)
     {
     # get genetics
-    gen = likeLTD:::pack.genetics.for.peaks.reports(admin$peaksFile,admin$refFile)
+    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile)
     # file name
     names <- likeLTD:::filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
@@ -561,14 +811,67 @@ allele.report.peaks = function(admin,file=NULL)
 # function to generate the allele report
 output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,file=NULL)
     {
+    prosecutionResults = results$Pros
+    defenceResults = results$Def
+    # some checks
+    warnings = NULL
+    WoE = results$WoE[length(results$WoE)]
+    maxWoE = log10(likeLTD:::matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
+    if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
     # get genetics
-    gen = pack.genetics.for.peaks.reports(admin$peaksFile,admin$refFile)
+    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
     # file name
-    names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
-    names$subtitle <- admin$caseName
+    names <- likeLTD:::filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
+    names$subtitle <- prosecutionHypothesis$caseName
+    # hypotheses names
+    hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
-    doc = common.report.section.peaks(names,gen)
-
+    doc = likeLTD:::common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
+    # section specific to the output report
+    # locus likelihoods
+    addHeader(doc, "Likelihoods at each locus", TOC.level=2, font.size=fs2)
+	addTable(doc, likeLTD:::local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
+	spacer(doc,3)
+    # overall likelihood
+	addHeader(doc, "Overall Likelihood", TOC.level=2, font.size=fs2)
+	addTable(doc, likeLTD:::overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C')
+	spacer(doc,3)
+    # max LR
+	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
+	addTable(doc, likeLTD:::ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
+	spacer(doc,3)
+	# DNAcont and degradation
+	DNAcontTables = likeLTD:::DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
+    addHeader(doc, "DNA contribution and degradation estimates", TOC.level=2, font.size=fs2)
+	addTable(doc, DNAcontTables$pros, col.justify='C', header.col.justify='C')
+	addTable(doc, DNAcontTables$def, col.justify='C', header.col.justify='C')
+	spacer(doc,3)	
+	# dropin
+	addHeader(doc, "Dropin parameter estimates", TOC.level=2, font.size=fs2)
+	addTable(doc, overall.dropin.table.reformatter(prosecutionResults,defenceResults), col.justify='C', header.col.justify='C')
+	spacer(doc,3)
+    # user defined parameters
+	addHeader(doc, "User defined parameters", TOC.level=1, font.size=fs1)
+	addTable(doc, likeLTD:::chosen.parameter.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
+	spacer(doc,3)
+    # input files
+	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
+	addTable(doc, likeLTD:::file.inputs.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
+	spacer(doc,3)
+	# seed used
+	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
+	addTable(doc, likeLTD:::seedTable(results), col.justify='L', header.col.justify='L')
+    # optimised parameters
+	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
+	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
+	addTable(doc, likeLTD:::optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')
+	spacer(doc,3)
+	addHeader(doc, "Defence parameters", TOC.level=2, font.size=fs2)
+	addTable(doc, likeLTD:::optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
+	spacer(doc,3)
+    # system information
+	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
+	addTable(doc,  likeLTD:::system.info(), col.justify='L', header.col.justify='L')
     done(doc)
     rtf.formater(names$filename)	
     }
