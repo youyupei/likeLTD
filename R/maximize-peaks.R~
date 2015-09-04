@@ -63,7 +63,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0+zero
   repAdjust   = rep(0.2,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 0+zero
+  if(!is.null(arguments[["dropin"]])) dropin = 5
 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
@@ -422,12 +422,19 @@ multiConverged = function(L,globalVal,tolerance)
     any(sapply(L[(length(L)-5):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
 	
 	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
+	if(is.null(seed.input)) 
+	    {
+	    seed.used =  as.numeric(Sys.time())
+	    } else {
+        seed.used = seed.input
+	    }
+    set.seed(seed.used)
 
 	# combine the outputs outside the loop
 	P.bestmemit <- D.bestmemit <- NULL
@@ -618,7 +625,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	print(Lp)
 
 # return all results
-return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld))}
+return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed=seed))}
 
 
 

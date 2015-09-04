@@ -814,18 +814,23 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     prosecutionResults = results$Pros
     defenceResults = results$Def
     # some checks
+    print("warning")
     warnings = NULL
     WoE = results$WoE[length(results$WoE)]
     maxWoE = log10(likeLTD:::matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
     if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
     # get genetics
+    print("genetics")
     gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
     # file name
+    print("names")
     names <- likeLTD:::filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
     names$subtitle <- prosecutionHypothesis$caseName
     # hypotheses names
-    hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
+    print("hyps")
+    hypNames = likeLTD:::create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
+    print("doc")
     doc = likeLTD:::common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
     # section specific to the output report
     # locus likelihoods
