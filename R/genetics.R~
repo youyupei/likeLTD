@@ -354,7 +354,7 @@ Zsib = function(R)
 			(X*Y)/2,
 			(X^2)/4
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # Z matrix needed for linked locus match probability uncle/nephew
@@ -372,7 +372,7 @@ Zuncle = function(R)
 			0.5-W,
 			W
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # Z matrix needed for linked locus match probability half uncle/nephew
@@ -391,7 +391,7 @@ Zhuncle = function(R)
 			(1-(X*nR))*0.25,
 			(2+(X*nR))*0.25
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # Z matrix needed for linked locus match probability cousin
@@ -409,7 +409,7 @@ Zcousin = function(R)
 			0.25-V,
 			0.5+V
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # Z matrix needed for linked locus match probability grandparent
@@ -427,7 +427,7 @@ Zgrandparent = function(R)
 			R/2,
 			nR/2
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # Z matrix needed for linked locus match probability half siblings
@@ -446,7 +446,7 @@ Zhsibs = function(R)
 			Y/2,
 			X/2
 			)),ncol=3,nrow=3)
-	return(out)
+	return(t(out))
 	}
 
 # function to find the match probability including linked loci
@@ -567,7 +567,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 
 
 # Function to find the difference between the match probability with/without linkage
-linkage = function(hypothesis)
+linkage = function(hypothesis,factor=TRUE)
 	{
 	# combinations of CSP markers
 	combs = combinations(length(hypothesis$alleleDb),2) 
@@ -597,6 +597,7 @@ linkage = function(hypothesis)
 	    }
 	# get non-linked match probability
 	nonLinked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+	if(!factor) return(linked)
 	# return 
 	out = linked/nonLinked
     return(out)

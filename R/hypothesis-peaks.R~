@@ -568,11 +568,6 @@ sanity.check.peaks = function(hypothesis) {
   }
 }
 
-outer(1:nrow(cspInfo$peaksObs),1:ncol(cspInfo$peaksNa),FUN=function(a,b) any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(x) x<unlist(cspInfo$peaksObs[a,b]))))
-
-if(any(sapply(1:nrow(cspInfo$peaksObs), FUN=function(a) sapply(1:ncol(cspInfo$peaksObs), FUN=function(b) any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(x) x<unlist(cspInfo$peaksObs[a,b]))))))
-
-any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(a) a<unlist(cspInfo$peaksObs[a,b])))
 
 transform.to.locus.centric.peaks = function(hypothesis) {
   # Transform hypothesis to locus centric modes.

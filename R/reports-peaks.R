@@ -242,11 +242,13 @@ get.representation.rfu = function(csp,refs)
     {
     loci = colnames(refs)[-1]
     repres = sapply(1:nrow(refs),FUN=function(x) representation(refs[x,-1],csp$alleles,csp$heights,loci))
+    rownames(repres)[-nrow(repres)] = paste0("Replicate: ", rownames(repres)[-nrow(repres)])
     repres = cbind(paste0("{\\b ",rownames(repres),"}"),repres)
-    colnames(repres) = c("Representation",rownames(refs))
+    colnames(repres) = c("Reference profile",rownames(refs))
     rfu = sapply(1:nrow(refs),FUN=function(x) meanRfu(refs[x,-1],csp$alleles,csp$heights,loci))
+    rownames(rfu)[-nrow(rfu)] = paste0("Replicate: ", rownames(rfu)[-nrow(rfu)])
     rfu = cbind(paste0("{\\b ",rownames(rfu),"}"),rfu)
-    colnames(rfu) = c("Mean RFU",rownames(refs))
+    colnames(rfu) = c("Reference profile",rownames(refs))
     #rownames(info) = c("representation","meanRFU")
     #colnames(info) = rownames(refs)
     return(list(repres=repres,rfu=rfu))
@@ -405,7 +407,7 @@ unattributablePeaks = function(csp,refs,certains)
 plotUnnatributablePeaks = function(replicated)
 	{
 	par(mai=c(1,1.2,1,1))
-	barplot(t(replicated),legend.text=c("Unreplicated","Replicated"),xlab="Frequency",horiz=TRUE,las=1)
+	barplot(t(replicated),legend.text=c("Unreplicated","Replicated"),xlab="Frequency",horiz=TRUE,las=1,xlim=c(0,max(rowSums(replicated))+2),col=c("gray69","gray30"))
 	abline(v=seq(from=0,to=max(rowSums(replicated)),by=2)[-1],lty=2)
 	}
 
@@ -488,7 +490,7 @@ local.likelihood.table.reformatter.peaks <- function(prosecutionHypothesis,defen
 	D <- log10(locus.likes.peaks(defenceHypothesis,defenceResults))
 	table  <- t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=(P-D),Ratio=10^(P-D)))
 	extra <- data.frame(Likelihood=row.names(table))
-	result <- round.3(cbind(extra,table))
+	result <- cbind(extra,round(table,2))
     return(result)
     }
 
@@ -534,7 +536,7 @@ seedTable <- function(results)
         } else {
         extra = "User input"
         }
-    out = cbind(results$seed.used,extra)
+    out = cbind(toString(results$seed.used),extra)
     colnames(out) = c("Seed","Origin")
     return(out)
     }
@@ -551,7 +553,7 @@ getDNAcontDeg = function(estimates,repNames,knownProfs,hyp)
         DNAcont = sapply(DNAcont,FUN=function(a) a*c(1,estimates[repIndex]))
         }
     out = rbind(round(DNAcont,2),round(10^estimates[degIndex],5))
-    out = cbind(c(paste0("{\\b ",repNames,"}"),"{\\b Degradation}"),out)
+    out = cbind(c(paste0("{\\b Replicate: ",repNames,"}"),"{\\b Degradation}"),out)
     contNames = vector(length=length(DNAcontIndex))
     if(nrow(knownProfs)==0)
         {
@@ -613,6 +615,23 @@ create.hypothesis.string.peaks = function(hypP)
 	return(list(pros=pros,def=def))
 	}
 
+create.contributor.table = function(refs)
+	{
+	refLabels = NULL
+	refNames = NULL
+	refNames = c(refNames, rownames(refs)[which(unlist(refs[,1]))])
+	refLabels = c(refLabels, "Q")
+	Kindex = which(!unlist(refs[,1]))
+	if(length(Kindex)>0)
+		{
+		refNames = c(refNames, rownames(refs)[Kindex])
+		refLabels = c(refLabels,paste0("K",1:length(Kindex)))
+		}
+	out = cbind(refLabels, refNames)
+	colnames(out) = c("Label","Reference profile")
+	return(out)
+	}
+
 # function to create the parts of the report documents that are present in both allele report and output report
 common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL)
 	{
@@ -628,6 +647,8 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 		{
 		addHeader(doc, hypothesisString$pros, TOC.level=1,font.size=fs1)
 		addHeader(doc, hypothesisString$def, TOC.level=1,font.size=fs1)
+		} else {
+		addTable(doc, create.contributor.table(gen$refs), col.justify='C', header.col.justify='C',font.size=fs3)
 		}
 	# warnings
 	if(any(as.numeric(unlist(gen$csp$heights))<admin$detectionThresh,na.rm=TRUE)) addParagraph(doc, "WARNING: peaks observed in CSP lower than the detection threshold.")
@@ -636,29 +657,29 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	# add hypothesis
 	# plot CSP
 	print("CSP")	
-	addHeader(doc, "Data provided by forensic scientist", TOC.level=1,font.size=fs1)
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
 	sapply(1:length(gen$csp$alleles),FUN=function(y) 
 		{
-		addText(doc,names(gen$csp$alleles)[y],bold=TRUE);
+		addText(doc,paste0("Replicate: ",names(gen$csp$alleles)[y]),bold=TRUE);
 		addNewLine(doc)
 		addPlot( doc, plot.fun = print, width = 5.5, height = 5, x = 
 			plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
 					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
-		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks that Q shares coloured in red, and peaks that other known profiles share coloured otherwise. Black peaks are unattributable. Colours of allele labels give a rough estimate of whether a peak is allelic or not; blue=allelic, purple=uncertain, red=non-allelic. These allele designations are not used when calculating the weight-of-evidence.")
+		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): blue=allelic, purple=uncertain, red=non-allelic.")
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 		})
 
 	# table of reference profiles
 	print("references")
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
-	addText(doc,"Without estimation of which peaks are allelic",bold=TRUE)
+	addText(doc,"All peaks in the provided profiles",bold=TRUE)
 	addNewLine(doc)
 	addTable(doc, t(gen$refTables$all), col.justify='C', header.col.justify='C',font.size=fs3)
-	addText(doc,"With estimation of which peaks are allelic",bold=TRUE)
+	addText(doc,"After removal of peaks that are possibly non-allelic (intended as a guide only - not assumed by software)",bold=TRUE)
 	addNewLine(doc)
 	addTable(doc, t(gen$refTables$certains), col.justify='C', header.col.justify='C',font.size=fs3)
+	addParagraph(doc,"{\\chbrdr\\brdrs Missing}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
 	addNewLine(doc)
 	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# summary
@@ -670,14 +691,14 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	addParagraph( doc, "Approximate representation (observed/total) for each reference profile per replicate and overall.")
 	addNewLine(doc)
 	addTable(doc, gen$repTables$rfu, col.justify='C', header.col.justify='C',font.size=fs3)
-	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall.")
+	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to masking. These values are not used by the software.")
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# unnatributable
 	print("unnatributable")
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
 	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
-	addParagraph( doc, "Number of replicated (light grey) and unreplicated (dark grey) unattributable alleles per locus, for the ''certain'' allele calls (blue labels) shown in the CSP plots.")
-	addHeader(doc, "Unusual alleles", TOC.level=1,font.size=fs1)
+	addParagraph( doc, "Number of replicated (light grey) and unreplicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (blue allele labels shown in the CSP plots).")
+	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
 	addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
 	return(doc)
 	}
@@ -805,7 +826,7 @@ allele.report.peaks = function(admin,file=NULL)
     addNewLine(doc)
     addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
     addTable(doc, hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles)), col.justify='C', header.col.justify='C')
-    addParagraph( doc, "LikeLTD does not support an nU>2. If nU>2, you may run with nU=2 and doDropin=TRUE, but this is not advised. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; they are rough estimations and you may disagree with some designations.")
+    addParagraph( doc, "LikeLTD does not support an nU>2. If nU>2, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
     addHeader(doc, "System information", TOC.level=1,font.size=fs1)
@@ -841,39 +862,48 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     doc = likeLTD:::common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
     # section specific to the output report
     # locus likelihoods
+    print("locus likelihoods")
     addHeader(doc, "Likelihoods at each locus", TOC.level=2, font.size=fs2)
 	addTable(doc, likeLTD:::local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
 	spacer(doc,3)
     # overall likelihood
+print("overall likelihood")
 	addHeader(doc, "Overall Likelihood", TOC.level=2, font.size=fs2)
 	addTable(doc, likeLTD:::overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C')
 	spacer(doc,3)
     # max LR
+print("max likelihood")
 	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
 	addTable(doc, likeLTD:::ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
+print("DNAcont Deg")
 	DNAcontTables = likeLTD:::DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
     addHeader(doc, "DNA contribution and degradation estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, DNAcontTables$pros, col.justify='C', header.col.justify='C')
 	addTable(doc, DNAcontTables$def, col.justify='C', header.col.justify='C')
 	spacer(doc,3)	
 	# dropin
+print("Dropin")
 	addHeader(doc, "Dropin parameter estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, overall.dropin.table.reformatter(prosecutionResults,defenceResults), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
     # user defined parameters
+print("user defined")
 	addHeader(doc, "User defined parameters", TOC.level=1, font.size=fs1)
 	addTable(doc, likeLTD:::chosen.parameter.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
     # input files
+print("input files")
 	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
 	addTable(doc, likeLTD:::file.inputs.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 	# seed used
+print("seed")
 	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
 	addTable(doc, likeLTD:::seedTable(results), col.justify='L', header.col.justify='L')
     # optimised parameters
+print("optimised params")
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, likeLTD:::optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')

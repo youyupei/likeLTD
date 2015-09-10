@@ -119,8 +119,8 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     fixedstuff = args[fixed]
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
-    # Linkage adjustment if brothers
-    linkBool = doLinkage&identical(hypothesis$relatedness,c(0.5,0.25))&hypothesis$hypothesis=="prosecution"
+    # Linkage adjustment if related
+    linkBool = doLinkage&!identical(hypothesis$relatedness,c(0,0))&hypothesis$hypothesis=="prosecution"
   if(linkBool)
     {
     linkFactor = linkage(hypothesis)
@@ -430,9 +430,9 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
 	if(is.null(seed.input)) 
 	    {
-	    seed.used =  as.numeric(Sys.time())
+	    seed.used =  as.integer(Sys.time())
 	    } else {
-        seed.used = seed.input
+        seed.used = as.integer(seed.input)
 	    }
     set.seed(seed.used)
 
@@ -625,7 +625,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 	print(Lp)
 
 # return all results
-return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed=seed))}
+return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed.used=seed.used,seed.input=seed.input))}
 
 
 

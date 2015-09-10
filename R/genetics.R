@@ -567,7 +567,7 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
 
 
 # Function to find the difference between the match probability with/without linkage
-linkage = function(hypothesis)
+linkage = function(hypothesis,factor=TRUE)
 	{
 	# combinations of CSP markers
 	combs = combinations(length(hypothesis$alleleDb),2) 
@@ -597,6 +597,7 @@ linkage = function(hypothesis)
 	    }
 	# get non-linked match probability
 	nonLinked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+	if(!factor) return(linked)
 	# return 
 	out = linked/nonLinked
     return(out)
