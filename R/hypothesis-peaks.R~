@@ -19,17 +19,17 @@ subsetData = function(data,search)
 	}
 
 # function to check that the data make sense
-checkData1 = function(alleles,heights,sizes)
+checkData1 = function(alleles,heights)
 	{
 	# check if dimensions are all the same
-	check1 = identical(dim(alleles),dim(heights),dim(sizes))
+	check1 = identical(dim(alleles),dim(heights))
 	# check if all have same loci
-	check2 = all(mapply(FUN=function(a,b,c) a==b&b==c,rownames(alleles),rownames(heights),rownames(sizes)))
+	check2 = all(mapply(FUN=function(a,b) a==b,rownames(alleles),rownames(heights)))
 	return(all(check1,check2))
 	}
 
 # function to check data makes sense between replicates
-checkData2 = function(alleleReps,heightReps=NULL,sizeReps=NULL)
+checkData2 = function(alleleReps,heightReps=NULL)
 	{
 	# loci names for each replicate
 	lociReps = sapply(alleleReps,FUN=function(x) rownames(x),simplify=FALSE)
@@ -53,16 +53,13 @@ read.peaks.profile = function(FILE)
 	alleles = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Allele"),simplify=FALSE)
 	# get height data
 	heights = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Height"),simplify=FALSE)
-	# get size data
-	# not sure if this is needed
-	sizes = sapply(conditions, FUN=function(x) subsetData(data[which(data[,1]==x),],"Size"),simplify=FALSE)
 	# checks
-	check1 = !mapply(FUN=checkData1,alleles,heights,sizes)
+	check1 = !mapply(FUN=checkData1,alleles,heights)
 	if(any(check1)) stop(paste("Error in the CSP provided - replicates ",paste(which(check1),collapse=",")))
-	check2 = !checkData2(alleles,heights,sizes)
+	check2 = !checkData2(alleles,heights)
 	if(check2) stop(paste("Error in the CSP provided - replicates do not match"))
 	# return data
-	return(list(alleles=alleles,heights=heights,sizes=sizes))
+	return(list(alleles=alleles,heights=heights))
 	}
 
 convert.to.binary = function(data)
@@ -233,7 +230,7 @@ extrapolateBP = function(alleleDb, newAllele)
 	}
 
 agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
-                                queriedProfile, alleleDb, ethnic='EA1',
+                                queriedProfile, alleleDb, ethnic='NDU1',
                                 adj=1e0, fst=0.02, combineRare=FALSE, 
                                 rareThreshold=0.05,doDoubleStutter=FALSE) {
   # Helper function to figure out the input of most hypothesis.
@@ -312,8 +309,8 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
 prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
                                    databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=NULL,...) {
-  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
+                                   doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=NULL,...) {
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
   if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
@@ -352,7 +349,6 @@ if(!is.null(relationship))
   result = append(result, list(...))
   result[["peaksProfile"]] = peaksProfile$alleles
   result[["heightsProfile"]] = peaksProfile$heights
-  result[["sizesProfile"]] = peaksProfile$sizes
   result[["knownProfs"]] = knownProfiles
   result[["nUnknowns"]] = nUnknowns
   result[["hypothesis"]] = "prosecution"
@@ -383,9 +379,9 @@ if(!is.null(relationship))
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
-                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=FALSE,doOverStutter=FALSE, combineRare=TRUE, 
+                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
 			       rareThreshold=1, kit=NULL, relationship=NULL,...) {
-  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17-lus"
+  if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
   if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
@@ -420,7 +416,6 @@ if(!is.null(relationship))
   result = append(result, list(...))
   result[["peaksProfile"]] = peaksProfile$alleles
   result[["heightsProfile"]] = peaksProfile$heights
-  result[["sizesProfile"]] = peaksProfile$sizes
   result[["knownProfs"]] = knownProfiles
   result[["nUnknowns"]] = nUnknowns + 1
   result[["hypothesis"]] = "defence"
@@ -505,8 +500,67 @@ sanity.check.peaks = function(hypothesis) {
   if(hypothesis$detectionThresh<0)
         errors = c( errors,
             "Detection threshold should not be set lower than 0." )
-  if(hypothesis$detectionThresh<0)
-    print("Detection threshold set unusually high.")
+  if(any(as.numeric(unlist(hypothesis$heightsProfile))<hypothesis$detectionThresh,na.rm=TRUE))
+	errors = c(errors,
+    "Observed peak height below detection threshold.")
+  if(hypothesis$detectionThresh>100)
+	errors = c(errors,
+    "Detection threshold set unusually high.")
+  if(any(hypothesis$relatedness<0))
+	errors = c(errors,
+	"IBD probability cannot be < 0.")
+  if(any(hypothesis$relatedness>1))
+	errors = c(errors,
+	"IBD probability cannot be > 1.")
+  if(sum(hypothesis$relatedness)>1)
+	errors = c(errors,
+	"Combined IBD probability cannot be > 1.")
+  if(hypothesis$fst<0)
+	errors = c(errors,
+	"Fst cannot be < 0.")
+  if(hypothesis$fst>1)
+	errors = c(errors,
+	"Fst cannot be > 1.")
+  if(hypothesis$nUnknowns<0)
+	errors = c(errors,
+	"nUnknowns cannot be negative.")
+  if(hypothesis$nUnknowns>3)
+	errors = c(errors,
+	"likeLTD does not support more than 3 unknown contributors.")
+  if(length(hypothesis$peaksProfile)!=length(hypothesis$heightsProfile))
+	errors = c(errors,
+	"Different number of replicates in allele profile and heights profile.")
+  if(!identical(sapply(hypothesis$peaksProfile,nrow),sapply(hypothesis$heightsProfile,nrow)))
+	errors = c(errors,
+	"Different number of loci between allele profile and heights profile.")	
+  cspInfo = do.call(Map,c(rbind,mapply(hypothesis$peaksProfile,hypothesis$heightsProfile,FUN=function(a,b) 
+    list(peaksObs = sapply(1:nrow(a), FUN = function(x) which(!is.na(a[x,])),simplify=FALSE),
+      peaksNa = sapply(1:nrow(a), FUN = function(x) which(is.na(a[x,])),simplify=FALSE),
+      heightsObs = sapply(1:nrow(b), FUN = function(x) which(!is.na(b[x,])),simplify=FALSE),
+      heightsNa = sapply(1:nrow(b), FUN = function(x) which(is.na(b[x,])),simplify=FALSE))
+	,SIMPLIFY=FALSE)))
+  if(!identical(cspInfo$peaksObs,cspInfo$heightsObs))
+	errors = c(errors,
+	"Mismatch of data points between alleles and heights.")
+  if(!identical(cspInfo$peaksNa,cspInfo$heightsNa))
+	errors = c(errors,
+	"Mismatch of blank spaces between alleles and heights.")	
+  if(any(sapply(1:nrow(cspInfo$peaksObs), FUN=function(a) sapply(1:ncol(cspInfo$peaksObs), 
+	FUN=function(b) any(sapply(unlist(cspInfo$peaksNa[a,b]),
+		FUN=function(x) x<unlist(cspInfo$peaksObs[a,b])))))))
+	errors = c(errors,
+	"Blank space in alleles data.")	
+  if(any(sapply(1:nrow(cspInfo$heightsObs), FUN=function(a) sapply(1:ncol(cspInfo$heightsObs), 
+	FUN=function(b) any(sapply(unlist(cspInfo$heightsNa[a,b]),
+		FUN=function(x) x<unlist(cspInfo$heightsObs[a,b])))))))
+	errors = c(errors,
+	"Blank space in heights data.")	
+  if(any(is.na(as.numeric(na.omit(unlist(hypothesis$peaksProfile))))))
+	errors = c(errors,
+	"Non-numeric values in alleles data.")	
+  if(any(is.na(as.numeric(na.omit(unlist(hypothesis$heightsProfile))))))
+	errors = c(errors,
+	"Non-numeric values in heights data.")		
   if(length(errors) != 0) {
     cat("There seems to be an error with the input hypothesis.\n")
     for(error in errors) cat(paste(c(error, "\n")))
@@ -514,6 +568,11 @@ sanity.check.peaks = function(hypothesis) {
   }
 }
 
+outer(1:nrow(cspInfo$peaksObs),1:ncol(cspInfo$peaksNa),FUN=function(a,b) any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(x) x<unlist(cspInfo$peaksObs[a,b]))))
+
+if(any(sapply(1:nrow(cspInfo$peaksObs), FUN=function(a) sapply(1:ncol(cspInfo$peaksObs), FUN=function(b) any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(x) x<unlist(cspInfo$peaksObs[a,b]))))))
+
+any(sapply(unlist(cspInfo$peaksNa[a,b]),FUN=function(a) a<unlist(cspInfo$peaksObs[a,b])))
 
 transform.to.locus.centric.peaks = function(hypothesis) {
   # Transform hypothesis to locus centric modes.
@@ -526,8 +585,8 @@ transform.to.locus.centric.peaks = function(hypothesis) {
     # Loop over all items in original list.
     for(key in names(hypothesis)) {
       value = hypothesis[[key]]
-      # special treatment for peaks profiles (peaks, heights and sizes)
-      if(key%in%c("peaksProfile","heightsProfile","sizesProfile"))
+      # special treatment for peaks profiles (peaks, heights)
+      if(key%in%c("peaksProfile","heightsProfile"))
         {
         locusValue[[key]] = sapply(value,FUN=function(x) x[locus, , drop=FALSE],simplify=FALSE)
 	    for(i in 1:length(locusValue[[key]]))

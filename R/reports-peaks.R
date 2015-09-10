@@ -14,6 +14,13 @@ pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',database
     		} # loop over files.
 	if(file.exists(outputPath) & !file.info(outputPath)$isdir) 
 	stop(paste(outputPath, " exists and is not a directory."))
+	if(!is.null(kit))
+		{
+		if(!kit%in%c("DNA17","Identifiler","SGMplus"))
+			{
+			stop(paste0(kit, " is not a default database supplied with likeLTD."))
+			}
+		}
 	admin <- list(caseName=caseName,
                 databaseFile=databaseFile,
                 linkageFile=linkageFile,
