@@ -379,8 +379,9 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 	info = diagParams$fn(res$optim$bestmem)
 	# genotype likelihoods from results
 	likesParams = optimisation.params.peaks(hyp,likeMatrix=TRUE)
-	likes = likesParams$fn(res$optim$bestmem)
-	maxIndex = sapply(likes$objectives, FUN=which.max)
+	sepLikes = likesParams$fn(res$optim$bestmem)
+	likes = apply(sepLikes$objectives,MARGIN=2,FUN=function(x) x[[1]]*x[[2]])
+	maxIndex = sapply(likes, FUN=which.max)
 
 	# plot for each locus
 	pdf(fileName)
