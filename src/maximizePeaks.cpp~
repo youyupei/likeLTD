@@ -1849,11 +1849,11 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         	                }
 		if(matchFlag==false)
 		    {
-fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
+//fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
                         // dropout dose
                         outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 			            } else {
-fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
+//fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
                         // non-dropout dose
                         outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 			            }   

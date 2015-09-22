@@ -42,7 +42,7 @@ inline int myRound(double d)
         return static_cast<int>(d + 0.5);
     }
 
-inline float roundOneDP(double d) 
+inline double roundOneDP(double d) 
     {
     myRound(d*10.0f)/10.0f;
     }
@@ -170,7 +170,7 @@ double ln_kf_gammap(double s, double z)
 }
 
 // combine doses, taking into account Single stutter
-inline std::vector<genoStruct> combineDosesS(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
+inline std::vector<genoStruct> combineDosesS(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS)
 	{
 	genoStruct tmpMu; 
 	std::vector<genoStruct> outRes(allPosVec.size(),tmpMu);
@@ -192,7 +192,7 @@ inline std::vector<genoStruct> combineDosesS(std::vector<float> allPosVec,std::v
 	}
 
 // combine doses taking into account Single and Double stutter 
-inline std::vector<genoStruct> combineDosesSD(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
+inline std::vector<genoStruct> combineDosesSD(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
                                             ,std::vector<genoStruct> muSd)
 	{
 	genoStruct tmpMu; 
@@ -216,7 +216,7 @@ inline std::vector<genoStruct> combineDosesSD(std::vector<float> allPosVec,std::
 	}
 
 // combine doses taking into account Single and Over stuttter
-inline std::vector<genoStruct> combineDosesSO(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
+inline std::vector<genoStruct> combineDosesSO(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
                                             ,std::vector<genoStruct> muSo)
 	{
 	genoStruct tmpMu; 
@@ -240,7 +240,7 @@ inline std::vector<genoStruct> combineDosesSO(std::vector<float> allPosVec,std::
 	}
 
 // combine doses taking into account Single, Double and Over stutter
-inline std::vector<genoStruct> combineDosesSDO(std::vector<float> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
+inline std::vector<genoStruct> combineDosesSDO(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS
                                             ,std::vector<genoStruct> muSd,std::vector<genoStruct> muSo)
 	{
 	genoStruct tmpMu; 
@@ -326,11 +326,11 @@ SEXP testPDF(SEXP X, SEXP A, SEXP B)
 
 
 // get expected peak heights taking into account Single, Double and Over stutter
-inline std::vector<genoStruct> getDoseSDO(std::vector<float> genotypeVec, 
-                                                    std::vector<float> stutterPosVec,
-                                                    std::vector<float> doubleStutterVec, 
-                                                    std::vector<float> overStutterVec,
-                                                    std::vector<float> allPosVec, 
+inline std::vector<genoStruct> getDoseSDO(std::vector<double> genotypeVec, 
+                                                    std::vector<double> stutterPosVec,
+                                                    std::vector<double> doubleStutterVec, 
+                                                    std::vector<double> overStutterVec,
+                                                    std::vector<double> allPosVec, 
                                                     std::vector<double> DNAcontVec, 
                                                     double gradientS, double meanD, 
                                                     double meanO, double interceptS, 
@@ -405,10 +405,10 @@ inline std::vector<genoStruct> getDoseSDO(std::vector<float> genotypeVec,
 	}
 
 // get expected peak heights taking into account Single, Double and Over stutter
-inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec, 
-                                                    std::vector<float> stutterPosVec,
-                                                    std::vector<float> doubleStutterVec, 
-                                                    std::vector<float> allPosVec, 
+inline std::vector<genoStruct> getDoseSD(std::vector<double> genotypeVec, 
+                                                    std::vector<double> stutterPosVec,
+                                                    std::vector<double> doubleStutterVec, 
+                                                    std::vector<double> allPosVec, 
                                                     std::vector<double> DNAcontVec, 
                                                     double gradientS, double meanD, 
                                                     double interceptS, 
@@ -477,10 +477,10 @@ inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec,
 	}
 
 // get expected peak heights taking into account Single, Double and Over stutter
-inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec, 
-                                                    std::vector<float> stutterPosVec,
-                                                    std::vector<float> overStutterVec,
-                                                    std::vector<float> allPosVec, 
+inline std::vector<genoStruct> getDoseSO(std::vector<double> genotypeVec, 
+                                                    std::vector<double> stutterPosVec,
+                                                    std::vector<double> overStutterVec,
+                                                    std::vector<double> allPosVec, 
                                                     std::vector<double> DNAcontVec, 
                                                     double gradientS, 
                                                     double meanO, double interceptS, 
@@ -549,9 +549,9 @@ inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec,
 	}
 
 // get expected peak heights taking into account Single, Double and Over stutter
-inline std::vector<genoStruct> getDoseS(std::vector<float> genotypeVec, 
-            std::vector<float> stutterPosVec,
-            std::vector<float> allPosVec, 
+inline std::vector<genoStruct> getDoseS(std::vector<double> genotypeVec, 
+            std::vector<double> stutterPosVec,
+            std::vector<double> allPosVec, 
             std::vector<double> DNAcontVec, 
             double gradientS, 
             double interceptS, 
@@ -762,7 +762,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*4,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*4,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -785,7 +785,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -1011,7 +1011,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*3,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*3,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -1030,7 +1030,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -1253,7 +1253,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), allPosVec(nGen*3,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), allPosVec(nGen*3,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -1272,7 +1272,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -1491,7 +1491,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), allPosVec(nGen*2,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), allPosVec(nGen*2,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -1506,7 +1506,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -1752,7 +1752,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*4,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*4,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -1775,7 +1775,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -2037,7 +2037,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*3,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), overStutterVec(nGen,0), allPosVec(nGen*3,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -2056,7 +2056,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -2306,7 +2306,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), allPosVec(nGen*3,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), allPosVec(nGen*3,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -2325,7 +2325,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -2571,7 +2571,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), allPosVec(nGen*2,0);
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), allPosVec(nGen*2,0);
 
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
@@ -2586,7 +2586,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
 
         // get doses ignoring repAdjust
@@ -2861,7 +2861,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
     for(int i=0; i<nCombs; i++)
         {
 	    // loop over genotype combinations
-        std::vector<float> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec;
+        std::vector<double> genotypeVec(nGen,0), stutterPosVec(nGen,0), doubleStutterVec(nGen,0), overStutterVec(nGen,0), allPosVec;
         // Loop over members of genotype
 	    for(int y=0; y<nGen; ++y)
     		{
@@ -2883,7 +2883,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
     		}
     	// sort and unique allPos
 	    std::sort(allPosVec.begin(),allPosVec.end());
-    	std::vector<float>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
+    	std::vector<double>::iterator itFlt = std::unique(allPosVec.begin(),allPosVec.end());
     	allPosVec.resize(std::distance(allPosVec.begin(),itFlt));
         std::vector<genoStruct>  gammaMuVec;
         // get doses ignoring repAdjust

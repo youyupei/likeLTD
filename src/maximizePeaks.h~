@@ -52,10 +52,10 @@ extern "C" {
 	inline double kf_lgamma(double z);
 
 	//! \brief regularized lower incomplete gamma function, by series expansion
-	static double kf_gammap(double s, double z);
+	double kf_gammap(double s, double z);
 
 	//! \brief log regularized lower incomplete gamma function, by series expansion	
-	static double ln_kf_gammap(double s, double z);
+	double ln_kf_gammap(double s, double z);
 
     //! \brief get density
     inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg);
@@ -65,6 +65,9 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
     //! \brief test cdf
     SEXP testCDF(SEXP S, SEXP Z);
+
+    //! \brief test new cdf
+    SEXP testNewCDF(SEXP S, SEXP Z);
 
     //! \brief test pdf
     SEXP testPDF(SEXP X, SEXP A, SEXP B);
@@ -82,7 +85,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
     //! \brief get mean dose with x-1 and x-2 stutter
     inline std::vector<genoStruct> getDoseSD(std::vector<float> genotypeVec, 
                         std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
-                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS, double meanD, 
                         double interceptS, std::vector<double> degVec,
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 
@@ -90,7 +93,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
        //! \brief get mean dose with x-1 and x+1 stutter
     inline std::vector<genoStruct> getDoseSO(std::vector<float> genotypeVec, 
-                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
+                        std::vector<float> stutterPosVec,
                         std::vector<float> overStutterVec,std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS,
                         double meanO,double interceptS, std::vector<double> degVec,
@@ -99,8 +102,7 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<f
 
        //! \brief get mean dose with x-1 stutter
     inline std::vector<genoStruct> getDoseS(std::vector<float> genotypeVec, 
-                        std::vector<float> stutterPosVec,std::vector<float> doubleStutterVec,
-                        std::vector<float> overStutterVec,std::vector<float> allPosVec, 
+                        std::vector<float> stutterPosVec,std::vector<float> allPosVec, 
                         std::vector<double> DNAcontVec, double gradientS,
                         double interceptS, std::vector<double> degVec,
                         std::vector<double> fragVecL, std::vector<double> fragVecN, 
@@ -123,6 +125,9 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
 //! \brief get mean dose with x-1 stutter
 SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
+
+//! \brief get mean dose with x-1, x-2 or x+1 stutter with possible dropin
+SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin);
 
 
 #ifdef __cplusplus

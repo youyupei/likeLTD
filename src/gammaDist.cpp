@@ -14,7 +14,7 @@
 #include <math.h>
 #define ITMAX 1.0e6  // maximum allowed number of iterations
 #define EPS 3.0e-7  // relative accuracy
-#define FPMIN 1.0e-30  // Number near smallest representable floating point number 
+#define FPMIN 1.0e-308  // Number near smallest representable double number 
 
 // Numerical Recipes standard error handler
 void nrerror(char error_text[])
@@ -28,7 +28,7 @@ void nrerror(char error_text[])
 // Returns the value ln[Γ(xx)] for xx > 0.
 // Internal arithmetic will be done in double precision, a nicety that you can omit if five-figure
 // accuracy is good enough.
-float new_gammln(float xx)
+double new_gammln(double xx)
     {
     double x,y,tmp,ser;
     static double cof[6]={76.18009172947146,-86.50532032941677,
@@ -45,12 +45,12 @@ float new_gammln(float xx)
 
 
 //Returns the incomplete gamma function P(a, x).
-float gammp(float a, float x)
+double gammp(double a, double x)
     {
-    void gcf(float *gammcf, float a, float x, float *gln);
-    void gser(float *gamser, float a, float x, float *gln);
+    void gcf(double *gammcf, double a, double x, double *gln);
+    void gser(double *gamser, double a, double x, double *gln);
     void nrerror(char error_text[]);
-    float gamser,gammcf,gln;
+    double gamser,gammcf,gln;
     if((a>=0.0&&a<1.0e-30)||std::isinf(a)) return kf_gammap(a,x);
     if (x < 0.0 || a < 0.0) 
         {
@@ -68,12 +68,12 @@ float gammp(float a, float x)
     }
 
 //Returns the incomplete gamma function Q(a, x) ≡ 1 − P(a, x).
-float gammq(float a, float x)
+double gammq(double a, double x)
     {
-    void gcf(float *gammcf, float a, float x, float *gln);
-    void gser(float *gamser, float a, float x, float *gln);
+    void gcf(double *gammcf, double a, double x, double *gln);
+    void gser(double *gamser, double a, double x, double *gln);
     void nrerror(char error_text[]);
-    float gamser,gammcf,gln;
+    double gamser,gammcf,gln;
     if (x < 0.0 || a <= 0.0) 
 	{
 	char message[] = "Invalid arguments in routine gammq";
@@ -92,12 +92,12 @@ float gammq(float a, float x)
 
 // Returns the incomplete gamma function P(a, x) evaluated by its series representation as gamser.
 // Also returns ln Γ(a) as gln.
-void gser(float *gamser, float a, float x, float *gln)
+void gser(double *gamser, double a, double x, double *gln)
     {
-    float new_gammln(float xx);
+    double new_gammln(double xx);
     void nrerror(char error_text[]);
     int n;
-    float sum,del,ap;
+    double sum,del,ap;
     *gln=new_gammln(a);
     if (x <= 0.0) {
         if (x < 0.0) 
@@ -128,12 +128,12 @@ void gser(float *gamser, float a, float x, float *gln)
 
 //Returns the incomplete gamma function Q(a, x) evaluated by its continued fraction representation
 //as gammcf. Also returns lnΓ(a) as gln.
-void gcf(float *gammcf, float a, float x, float *gln)
+void gcf(double *gammcf, double a, double x, double *gln)
     {
-    float new_gammln(float xx);
+    double new_gammln(double xx);
     void nrerror(char error_text[]);
     int i;
-    float an,b,c,d,del,h;
+    double an,b,c,d,del,h;
     *gln=new_gammln(a);
     b=x+1.0-a; //Set up for evaluating continued fraction by modified Lentz’s method (§5.2) with b0 = 0.
     c=1.0/FPMIN;

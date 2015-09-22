@@ -51,7 +51,7 @@ float gammp(float a, float x)
     void gser(float *gamser, float a, float x, float *gln);
     void nrerror(char error_text[]);
     float gamser,gammcf,gln;
-    if((a>=0.0&&a<1.0e-30)||isinf(a)) return kf_gammap(a,x);
+    if((a>=0.0&&a<1.0e-30)||std::isinf(a)) return kf_gammap(a,x);
     if (x < 0.0 || a < 0.0) 
         {
         fprintf(stderr,"a=%f\nx=%f\n",a,x);

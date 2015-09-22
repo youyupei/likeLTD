@@ -13,7 +13,7 @@
 extern "C" {
 #endif
     //! \brief Error handling function
-    void nrerror(char * error_text);
+    void nrerror(char error_text);
 
     //! \brief Returns the log gamma function
     float new_gammln(float xx);
