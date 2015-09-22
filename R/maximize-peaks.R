@@ -172,7 +172,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
                     any(stuttermodel(0,gradA,db[,3])>1)|any(stuttermodel(0,gradA,db[,3])<0))
     if(any(condition1)|any(condition2))
 	    {
-	    if(logObjective) result = -999 else result = 0
+	    if(logObjective) result = -Inf else result = 0
 	    if(verbose) print(result)
 	    return(-result)
 	    }
@@ -211,7 +211,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 			stop("Objective function over/underflow")
 			}
 		# if result is infinite make sure it returns -Inf
-		if(is.infinite(result)|is.na(result)) result = -999
+		if(is.infinite(result)|is.na(result)) result = -Inf
 
     		# Linkage adjustment
 		if(linkBool)
