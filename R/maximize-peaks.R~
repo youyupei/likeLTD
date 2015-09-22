@@ -84,7 +84,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, doLinkage=TRUE, objective=NULL, iterMax=75, 
-				likeMatrix=FALSE,diagnose=FALSE,...) {
+				likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -172,7 +172,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
                     any(stuttermodel(0,gradA,db[,3])>1)|any(stuttermodel(0,gradA,db[,3])<0))
     if(any(condition1)|any(condition2))
 	    {
-	    if(logObjective) result = log10(0) else result = 0
+	    if(logObjective) result = -999 else result = 0
 	    if(verbose) print(result)
 	    return(-result)
 	    }
@@ -211,7 +211,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 			stop("Objective function over/underflow")
 			}
 		# if result is infinite make sure it returns -Inf
-		if(is.infinite(result)|is.na(result)) result = -Inf
+		if(is.infinite(result)|is.na(result)) result = -999
 
     		# Linkage adjustment
 		if(linkBool)
@@ -230,12 +230,15 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
   upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
- # population size for optimisation
-  searchPop = 4*length(unlist(upper))
+   # population size for optimisation
+  searchPop = searchPopFactor*length(unlist(upper))
+  control = list(strategy=DEoptimStrategy,NP=searchPop,itermax=iterMax,F=DEoptimF)
+  if(!is.null(DEoptimC)) control = append(control,list(c=DEoptimC))
+
   list(fn      = result.function, 
        lower   = unlist(lower), 
        upper   = unlist(upper),
-       control = list(strategy=3,NP=searchPop,itermax=iterMax) 
+       control = control
        )
 }
 
@@ -379,8 +382,9 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 	info = diagParams$fn(res$optim$bestmem)
 	# genotype likelihoods from results
 	likesParams = optimisation.params.peaks(hyp,likeMatrix=TRUE)
-	likes = likesParams$fn(res$optim$bestmem)
-	maxIndex = sapply(likes$objectives, FUN=which.max)
+	sepLikes = likesParams$fn(res$optim$bestmem)
+	likes = apply(sepLikes$objectives,MARGIN=2,FUN=function(x) x[[1]]*x[[2]])
+	maxIndex = sapply(likes, FUN=which.max)
 
 	# plot for each locus
 	pdf(fileName)
@@ -417,12 +421,12 @@ checkConverged = function(new,old,tol)
     {
     return(abs((new-old)/old)<tol)
     }
-multiConverged = function(L,globalVal,tolerance)
+multiConverged = function(L,globalVal,tolerance,nConverged=5)
     {
-    any(sapply(L[(length(L)-5):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
+    any(sapply(L[(length(L)-nConverged):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLimit=1, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL, nConverged=5){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -545,7 +549,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, scaleLi
 		    }
 		}
         # check for convergence   
-        while(multiConverged(Ld,GlobalDval,tolerance)|multiConverged(Lp,GlobalPval,tolerance))
+        while(multiConverged(Ld,GlobalDval,tolerance,nConverged)|multiConverged(Lp,GlobalPval,tolerance,nConverged))
             {
 	    n = n+1
             D.step <- DEoptimLoop(D.pars,tolerance)

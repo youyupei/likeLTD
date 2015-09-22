@@ -618,11 +618,12 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	# convert genotype to numeric
 	genotype = as.numeric(genotype)
 	# get mean expected peak heights
-	gammaMu = peak.height.dose(genotype=genotype,
+	gammaMu = likeLTD:::peak.height.dose(genotype=genotype,
 	        alleles=alleles,heights=heights,
 	        DNAcont=DNAcont,gradientS=gradientS,
 	        meanD=meanD,meanO=meanO,interceptS=interceptS,
 	        degradation=degradation,fragLengths=fragLengths,
+		fragProbs = fragProbs,
 	        LUSvals=LUSvals,repAdjust=repAdjust,dropin=dropin)
 	names(heights) = alleles
 	# give peak heights to dropout alleles (height=0)
@@ -772,15 +773,24 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		names(muX) = allPos
 		}
 	# add dropin expected dose
-	if(!is.null(fragProbs))
+	if(!is.null(dropin))
 		{
-		for(i in 1:length(muX))
+		toAdd = NULL
+		for(i in 1:length(fragProbs))
 			{
-			index = which(round(as.numeric(names(fragProbs)),1)==names(muX)[i])
-			if(length(index)>0)
+			index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
+			if(length(index==0))
 				{
-				muX[i] = muX[i]+fragProbs[index]*dropin 
+				muX[index] = muX[index]+fragProbs[i]*dropin 
+				} else {
+				toAdd = c(toAdd,fragProbs[i]*dropin)
+				names(toAdd)[length(toAdd)] = names(fragProbs)[i]
 				}
+			}
+		if(!is.null(toAdd))
+			{
+			muX = c(muX,toAdd)
+			muX = muX[order(names(muX))]
 			}
 		}
 	return(muX)

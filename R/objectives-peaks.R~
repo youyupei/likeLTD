@@ -18,7 +18,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	if(is.null(hypothesis$degradationPenalty)) hypothesis$degradationPenalty = 50 
 	if(is.null(hypothesis$gradientSshape)) hypothesis$gradientSshape=0.013/(0.01^2/0.013)
 	if(is.null(hypothesis$gradientSscale)) hypothesis$gradientSscale=0.01^2/0.013
-	if(is.null(hypothesis$gradientAdjustSD)) hypothesis$gradientAdjustSD=0.15
+	if(is.null(hypothesis$gradientAdjustSD)) hypothesis$gradientAdjustSD=0.2
 	if(is.null(hypothesis$meanDshape)) hypothesis$meanDshape=0.02/0.018
 	if(is.null(hypothesis$meanDscale)) hypothesis$meanDscale=0.018
 	if(is.null(hypothesis$meanOshape)) hypothesis$meanOshape=0.02/0.018
@@ -331,6 +331,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 		# no dropin currently
 		if(doR==TRUE|diagnose==TRUE)
 			{
+			print("With dropin")
 			# probabilities for each replicate
 			probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
 				peak.heights.per.locus(genotypeArray=cons$genotypes,
@@ -426,6 +427,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 		} else {
 		if(doR==TRUE|diagnose==TRUE)
 			{
+			print("Without dropin")
 			# probabilities for each replicate
 			probs = sapply(1:length(hypothesis$peaksProfile), FUN=function(x) 
 				peak.heights.per.locus(genotypeArray=cons$genotypes,
@@ -618,11 +620,12 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	# convert genotype to numeric
 	genotype = as.numeric(genotype)
 	# get mean expected peak heights
-	gammaMu = peak.height.dose(genotype=genotype,
+	gammaMu = likeLTD:::peak.height.dose(genotype=genotype,
 	        alleles=alleles,heights=heights,
 	        DNAcont=DNAcont,gradientS=gradientS,
 	        meanD=meanD,meanO=meanO,interceptS=interceptS,
 	        degradation=degradation,fragLengths=fragLengths,
+		fragProbs = fragProbs,
 	        LUSvals=LUSvals,repAdjust=repAdjust,dropin=dropin)
 	names(heights) = alleles
 	# give peak heights to dropout alleles (height=0)
@@ -772,15 +775,24 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		names(muX) = allPos
 		}
 	# add dropin expected dose
-	if(!is.null(fragProbs))
+	if(!is.null(dropin))
 		{
-		for(i in 1:length(muX))
+		toAdd = NULL
+		for(i in 1:length(fragProbs))
 			{
-			index = which(round(as.numeric(names(fragProbs)),1)==names(muX)[i])
-			if(length(index)>0)
+			index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
+			if(length(index==0))
 				{
-				muX[i] = muX[i]+fragProbs[index]*dropin 
+				muX[index] = muX[index]+fragProbs[i]*dropin 
+				} else {
+				toAdd = c(toAdd,fragProbs[i]*dropin)
+				names(toAdd)[length(toAdd)] = names(fragProbs)[i]
 				}
+			}
+		if(!is.null(toAdd))
+			{
+			muX = c(muX,toAdd)
+			muX = muX[order(names(muX))]
 			}
 		}
 	return(muX)
@@ -795,7 +807,7 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 penalties.peaks <- function(nloc, 
 			degradation=NULL, degradationPenalty=50, 
 			gradientS=NULL,gradientSshape=0.013/(0.01^2/0.013), gradientSscale=0.01^2/0.013,
-                       gradientAdjust=NULL,gradientAdjustSD=0.3,
+                       gradientAdjust=NULL,gradientAdjustSD=0.2,
 		       meanD=NULL,meanDshape=0.02/0.018,meanDscale=0.018,
 		       meanO=NULL,meanOshape=0.02/0.018,meanOscale=0.018,
                        scale=NULL, scaleRate=0.01,
