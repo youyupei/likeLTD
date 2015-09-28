@@ -401,14 +401,15 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 		if(length(topGenoInfo)==1) topGenoInfo = topGenoInfo[[1]]
 		
 		heights = topGenoInfo$height[order(as.numeric(names(topGenoInfo$height)))]
+		heights[heights==0] = NA
 		scale = res$optim$bestmem[grep("scale",names(res$optim$bestmem))]
 		shapes = topGenoInfo$mu/scale
 		shapes = shapes[order(as.numeric(names(shapes)))]
 		#  confidence intervals
 		CIs = sapply(shapes,FUN=function(x) qgamma(p=c(0.025,0.25,0.5,0.75,0.975),shape=x,scale=scale))
-		YLIM = c(0,max(c(CIs,heights)))
+		YLIM = c(0,max(c(CIs,heights[!is.na(heights)])))
 		# plot
-		boxplot(CIs,ylim=YLIM,range=0,main=names(hyp$alleleDb)[i])
+		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0)
 		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE)
 		}
 	dev.off()
