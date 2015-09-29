@@ -44,7 +44,7 @@ inline int myRound(double d)
 
 inline double roundOneDP(double d) 
     {
-    myRound(d*10.0f)/10.0f;
+    return myRound(d*10.0f)/10.0f;
     }
 
 inline bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp) 
@@ -768,13 +768,13 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // double stutter positions
-            doubleStutterVec[y] = genotypeArrayVec[(i*nGen)+y]-2.0;
+            doubleStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-2.0);
     	    // over stutter positions
-            overStutterVec[y] = genotypeArrayVec[(i*nGen)+y]+1.0;
+            overStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]+1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -831,7 +831,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -1017,11 +1017,11 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // over stutter positions
-            overStutterVec[y] = genotypeArrayVec[(i*nGen)+y]+1.0;
+            overStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]+1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -1076,7 +1076,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -1259,11 +1259,11 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // double stutter positions
-            doubleStutterVec[y] = genotypeArrayVec[(i*nGen)+y]-2.0;
+            doubleStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-2.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -1318,7 +1318,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -1497,9 +1497,9 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -1551,7 +1551,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -1758,13 +1758,13 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // double stutter positions
-            doubleStutterVec[y] = genotypeArrayVec[(i*nGen)+y]-2.0;
+            doubleStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-2.0);
     	    // over stutter positions
-            overStutterVec[y] = genotypeArrayVec[(i*nGen)+y]+1.0;
+            overStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]+1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -1786,6 +1786,10 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	                                        intercepts, 
 	                                        degVec, fragVecL, 
 	                                        fragVecN, lusVals, nGen, nFrag);
+
+//if(i==10) {
+//for(int m=0; m<allPosVec.size(); m++) Rprintf("%f\t",allPosVec[m]);
+//}
 
         // slot doses into dose array
         for(int j=0; j<gammaMuVec.size(); j++)
@@ -1840,7 +1844,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -1852,10 +1856,14 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 //fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
                         // dropout dose
                         outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
+//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            } else {
 //fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
                         // non-dropout dose
                         outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
+//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            }   
 			        }
 			    }
@@ -2043,11 +2051,11 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // over stutter positions
-            overStutterVec[y] = genotypeArrayVec[(i*nGen)+y]+1.0;
+            overStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]+1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -2121,7 +2129,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -2312,11 +2320,11 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // double stutter positions
-            doubleStutterVec[y] = genotypeArrayVec[(i*nGen)+y]-2.0;
+            doubleStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-2.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -2390,7 +2398,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -2577,9 +2585,9 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec[y] = genotypeVec[y];
     		allPosVec[y+nGen] = stutterPosVec[y];
@@ -2649,7 +2657,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;
@@ -2866,13 +2874,13 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	    for(int y=0; y<nGen; ++y)
     		{
     	    // round genotypes
-    		genotypeVec[y] = genotypeArrayVec[(i*nGen)+y];
+    		genotypeVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]);
     		// get stutter positions
-		    stutterPosVec[y] = genotypeArrayVec[(i*nGen)+y]-1.0;
+		    stutterPosVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-1.0);
     	    // double stutter positions
-            doubleStutterVec[y] = genotypeArrayVec[(i*nGen)+y]-2.0;
+            doubleStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]-2.0);
     	    // over stutter positions
-            overStutterVec[y] = genotypeArrayVec[(i*nGen)+y]+1.0;
+            overStutterVec[y] = roundOneDP(genotypeArrayVec[(i*nGen)+y]+1.0);
     		// get all positions, while rounding to 1dp
     		allPosVec.push_back(genotypeVec[y]);
     		allPosVec.push_back(stutterPosVec[y]);
@@ -2983,7 +2991,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
         		for(int l=0; l<allelesVec[k].size(); l++)
         	                {
         	                double diff = std::abs(dbVals[j]-allelesVec[k][l]);  
-        	                if(diff<0.000001)
+        	                if(diff<0.0001)
         	                    {           
         	                    matchIndex = l;
         	                    matchFlag = true;

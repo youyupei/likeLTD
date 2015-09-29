@@ -375,7 +375,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	}
 
 
-plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
+plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,LOG="")
 	{
 	# mean & sd from results
 	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
@@ -385,11 +385,12 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 	sepLikes = likesParams$fn(res$optim$bestmem)
 	likes = apply(sepLikes$objectives,MARGIN=2,FUN=function(x) x[[1]]*x[[2]])
 	maxIndex = sapply(likes, FUN=which.max)
-
+	# only some loci
+	torun = ifelse(!is.null(toplot),toplot,1:length(hyp$alleleDb))
 	# plot for each locus
-	pdf(fileName)
-	par(mfrow=rep(ceiling(sqrt(length(hyp$alleleDb))),times=2),mar=c(3,2,2,0))
-	for(i in 1:length(hyp$alleleDb))
+	if(!is.null(fileName)) pdf(fileName)
+	par(mfrow=rep(ceiling(sqrt(length(torun))),times=2),mar=c(3,2,2,0))
+	for(i in torun)
 		{
 		# results from top genotype at this locus
 		if(is.matrix(info[[i]])) 
@@ -407,12 +408,12 @@ plot.peaks.results = function(hyp,res,replicate=1,fileName="peakHeights.pdf")
 		shapes = shapes[order(as.numeric(names(shapes)))]
 		#  confidence intervals
 		CIs = sapply(shapes,FUN=function(x) qgamma(p=c(0.025,0.25,0.5,0.75,0.975),shape=x,scale=scale))
-		YLIM = c(0,max(c(CIs,heights)))
+		YLIM = c(0,max(c(CIs,heights[!is.na(heights)])))
 		# plot
-		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0)
-		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE)
+		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0,log=LOG)
+		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE,log=LOG)
 		}
-	dev.off()
+	if(!is.null(fileName)) dev.off()
 
 	}
 

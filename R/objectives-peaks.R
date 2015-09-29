@@ -326,6 +326,28 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 	#locusIntercept = interceptS*interceptAdjust
 	locusIntercept = 0
 	locusDNAcont = DNAcont#*locusAdjust
+# debug
+if(colnames(hypothesis$queriedProfile)=="D21S11")
+	{
+	GENARRAY<<-cons$genotypes
+	DNACONT<<-rep(locusDNAcont,each=2) 
+	GRAD<<-locusGradient
+	MEAND<<-meanD
+	MEANO<<-meanO
+	INTCPT<<-locusIntercept
+	DEG<<-rep(1+degradation,each=2)
+	FRAGL<<-hypothesis$alleleDb[,2]
+	FRAGN<<-as.numeric(rownames(hypothesis$alleleDb))
+	LUS <<- hypothesis$alleleDb[,3]
+	ALLS<<-hypothesis$peaksProfile
+	HEIGHTS<<-hypothesis$heightsProfile
+	REPADJ<<-repAdjust
+	SCALE<<-scale
+	DETECTTHRESH<<-detectionThresh
+	DBVALS <<- cons$dbVals
+	FRAGP<<-hypothesis$alleleDb[,1] 
+	DROPIN<<-dropin
+	}
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
