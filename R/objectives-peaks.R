@@ -327,7 +327,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 	locusIntercept = 0
 	locusDNAcont = DNAcont#*locusAdjust
 # debug
-if(colnames(hypothesis$queriedProfile)=="D21S11")
+if(colnames(hypothesis$queriedProfile)=="D1S1656")
 	{
 	GENARRAY<<-cons$genotypes
 	DNACONT<<-rep(locusDNAcont,each=2) 
@@ -800,13 +800,16 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		toAdd = NULL
 		for(i in 1:length(fragProbs))
 			{
-			index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
-			if(length(index==0))
-				{
-				muX[index] = muX[index]+fragProbs[i]*dropin 
-				} else {
-				toAdd = c(toAdd,fragProbs[i]*dropin)
-				names(toAdd)[length(toAdd)] = names(fragProbs)[i]
+			if(as.numeric(names(fragProbs)[i])<c(-1)&as.numeric(names(fragProbs)[i])<c(-100))
+			    {
+			    index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
+			    if(length(index==0))
+				    {
+				    muX[index] = muX[index]+fragProbs[i]*dropin 
+				    } else {
+				    toAdd = c(toAdd,fragProbs[i]*dropin)
+				    names(toAdd)[length(toAdd)] = names(fragProbs)[i]
+			    	}
 				}
 			}
 		if(!is.null(toAdd))

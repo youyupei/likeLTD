@@ -42,9 +42,14 @@ inline int myRound(double d)
         return static_cast<int>(d + 0.5);
     }
 
+//inline double roundOneDP(double d) 
+//    {
+//    return myRound(d*10.0f)/10.0f;
+//    }
+
 inline double roundOneDP(double d) 
     {
-    return myRound(d*10.0f)/10.0f;
+    return floor(d*10+0.5)/10;
     }
 
 inline bool shouldBeRemoved( genoStruct g, std::vector<cspStruct> csp) 
@@ -1787,7 +1792,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	                                        degVec, fragVecL, 
 	                                        fragVecN, lusVals, nGen, nFrag);
 
-//if(i==10) {
+//if(i==5) {
 //for(int m=0; m<allPosVec.size(); m++) Rprintf("%f\t",allPosVec[m]);
 //}
 
@@ -1857,13 +1862,13 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
                         // dropout dose
                         outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
 //if(i==10) Rprintf("%.1f:%f\t",dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
-//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            } else {
 //fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
                         // non-dropout dose
                         outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
 //if(i==10) Rprintf("%.1f:%f\t",dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
-//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            }   
 			        }
 			    }
