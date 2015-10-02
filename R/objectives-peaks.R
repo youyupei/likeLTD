@@ -800,16 +800,16 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		toAdd = NULL
 		for(i in 1:length(fragProbs))
 			{
-			if(as.numeric(names(fragProbs)[i])<c(-1)&as.numeric(names(fragProbs)[i])<c(-100))
+			if(as.numeric(names(fragProbs)[i])>c(-2)|as.numeric(names(fragProbs)[i])<c(-99))
 			    {
-			    index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
-			    if(length(index==0))
+			    index = which(round(as.numeric(names(muX)),1)==round(as.numeric(names(fragProbs)),1)[i])
+			    if(length(index)==0)
 				    {
-				    muX[index] = muX[index]+fragProbs[i]*dropin 
-				    } else {
 				    toAdd = c(toAdd,fragProbs[i]*dropin)
-				    names(toAdd)[length(toAdd)] = names(fragProbs)[i]
-			    	}
+				    names(toAdd)[length(toAdd)] = names(fragProbs)[i]				    
+				    } else {
+				    muX[index] = muX[index]+fragProbs[i]*dropin 
+			    	    }
 				}
 			}
 		if(!is.null(toAdd))

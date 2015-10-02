@@ -327,8 +327,8 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 	locusIntercept = 0
 	locusDNAcont = DNAcont#*locusAdjust
 # debug
-	HYP <<- hypothesis
-	CONS <<- cons
+if(colnames(hypothesis$queriedProfile)=="D1S1656")
+	{
 	GENARRAY<<-cons$genotypes
 	DNACONT<<-rep(locusDNAcont,each=2) 
 	GRAD<<-locusGradient
@@ -347,6 +347,7 @@ peaks.probabilities = function(hypothesis,cons,DNAcont,#locusAdjust,
 	DBVALS <<- cons$dbVals
 	FRAGP<<-hypothesis$alleleDb[,1] 
 	DROPIN<<-dropin
+	}
 	if(hypothesis$doDropin==TRUE)
 		{
 		# no dropin currently
@@ -799,13 +800,16 @@ peak.height.dose = function(genotype,alleles,heights,DNAcont,
 		toAdd = NULL
 		for(i in 1:length(fragProbs))
 			{
-			index = which(names(muX)==round(as.numeric(names(fragProbs)),1)[i])
-			if(length(index==0))
-				{
-				muX[index] = muX[index]+fragProbs[i]*dropin 
-				} else {
-				toAdd = c(toAdd,fragProbs[i]*dropin)
-				names(toAdd)[length(toAdd)] = names(fragProbs)[i]
+			if(as.numeric(names(fragProbs)[i])>c(-2)|as.numeric(names(fragProbs)[i])<c(-99))
+			    {
+			    index = which(round(as.numeric(names(muX)),1)==round(as.numeric(names(fragProbs)),1)[i])
+			    if(length(index==0))
+				    {
+				    toAdd = c(toAdd,fragProbs[i]*dropin)
+				    names(toAdd)[length(toAdd)] = names(fragProbs)[i]				    
+				    } else {
+				    muX[index] = muX[index]+fragProbs[i]*dropin 
+			    	    }
 				}
 			}
 		if(!is.null(toAdd))
