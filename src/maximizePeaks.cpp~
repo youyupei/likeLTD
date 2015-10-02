@@ -379,6 +379,7 @@ inline std::vector<genoStruct> getDoseSDO(std::vector<double> genotypeVec,
 
 			// compute effective dose
 			tmpDose = DNAcontVec[i]*std::pow(degVec[i],-fragSub);
+//Rprintf("%f\n",degVec[i]);
 			// compute linear stutter rate
 			stutterRate = interceptS+(gradientS*stuttIndSub);
             // stutter doses
@@ -1753,7 +1754,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	// get argument for cdf
 	double cdfArg = detectDouble/scaleDouble;
     // get probability for each genotype combination
-    # pragma omp parallel for //schedule(dynamic)
+    //# pragma omp parallel for //schedule(dynamic)
     for(int i=0; i<nCombs; i++)
         {
 	// loop over genotype combinations
@@ -1793,7 +1794,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	                                        fragVecN, lusVals, nGen, nFrag);
 
 //if(i==5) {
-//for(int m=0; m<allPosVec.size(); m++) Rprintf("%f\t",allPosVec[m]);
+//for(int m=0; m<gammaMuVec.size(); m++) Rprintf("%.1f:%f\t",allPosVec[m],gammaMuVec[m]);
 //}
 
         // slot doses into dose array
@@ -1811,6 +1812,9 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
                 }
             doseArray[matchIndex][i] += gammaMuVec[j].dose;
             }
+//if(i==5) {
+//for(int j=1; j<dbVals.size(); j++) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+//}
 	// add dropin doses to dose array
 	for(int j=0; j<fragVecN.size(); j++)
 		{
@@ -1861,14 +1865,14 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 //fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
                         // dropout dose
                         outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
-if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            } else {
 //fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
                         // non-dropout dose
                         outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
-//if(i==10) Rprintf("%.1f:%f\t",dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
-if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
+//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
 			            }   
 			        }
 			    }

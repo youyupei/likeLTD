@@ -637,7 +637,9 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 		degradation,fragLengths,fragProbs=NULL,LUSvals,repAdjust=NULL,
 		detectionThresh,dropin=NULL,diagnose=FALSE)
 	{
-	# convert genotype to numeric
+	# convert some formats
+	heights = unlist(heights)
+	alleles = unlist(alleles)
 	genotype = as.numeric(genotype)
 	# get mean expected peak heights
 	gammaMu = likeLTD:::peak.height.dose(genotype=genotype,
@@ -647,7 +649,7 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	        degradation=degradation,fragLengths=fragLengths,
 		fragProbs = fragProbs,
 	        LUSvals=LUSvals,repAdjust=repAdjust,dropin=dropin)
-	names(heights) = alleles
+	names(heights) = unlist(alleles)
 	# give peak heights to dropout alleles (height=0)
 	peakHeights = unlist(heights)
 	gammaMus = gammaMu
