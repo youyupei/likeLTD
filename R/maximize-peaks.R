@@ -386,7 +386,8 @@ plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,LOG=
 	likes = apply(sepLikes$objectives,MARGIN=2,FUN=function(x) x[[1]]*x[[2]])
 	maxIndex = sapply(likes, FUN=which.max)
 	# only some loci
-	torun = ifelse(!is.null(toplot),toplot,1:length(hyp$alleleDb))
+	torun = ifelse(!is.null(toplot),list(toplot),list(1:length(hyp$alleleDb)))
+	torun = unlist(torun)
 	# plot for each locus
 	if(!is.null(fileName)) pdf(fileName)
 	par(mfrow=rep(ceiling(sqrt(length(torun))),times=2),mar=c(3,2,2,0))
