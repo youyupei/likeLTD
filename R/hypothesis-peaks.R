@@ -322,6 +322,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
                                    databaseFile=NULL, detectionThresh=30, 
                                    doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=0,...) {
+  if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
@@ -391,6 +392,7 @@ defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknow
                                adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
                                detectionThresh=30, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
 			       rareThreshold=1, kit=NULL, relationship=0,...) {
+  if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)

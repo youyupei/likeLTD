@@ -281,6 +281,7 @@ prosecution.hypothesis <- function(cspFile, refFile, ethnic='NDU1',
                                    databaseFile=NULL, linkageFile=NULL,
                                    doDropin=FALSE, combineRare=TRUE,
 				   rareThreshold=0.05, kit=NULL, relationship=0,...) {
+  if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
@@ -348,6 +349,7 @@ defence.hypothesis <- function(cspFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.02, databaseFile=NULL, linkageFile=NULL, 
                                doDropin=FALSE, combineRare=TRUE, 
 			       rareThreshold=0.05, kit=NULL, relationship=0,...) {
+  if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)

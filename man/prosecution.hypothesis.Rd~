@@ -1,16 +1,15 @@
-\name{defence.hypothesis}
-\alias{defence.hypothesis}
-\title{likeLTD::defence.hypothesis}
-\description{Helper function to create the input for the defence.}
-\usage{defence.hypothesis(cspFile, refFile, ethnic='NDU1', nUnknowns=0,
+\name{prosecution.hypothesis}
+\alias{prosecution.hypothesis}
+\title{likeLTD::prosecution.hypothesis}
+\usage{prosecution.hypothesis(cspFile, refFile, ethnic='NDU1', nUnknowns=0,
                         adj=1e0, fst=0.02, databaseFile=NULL, 
                         linkageFile=NULL,
                         relatedness=c(0,0), doDropin=FALSE, 
                         combineRare=TRUE, rareThreshold=0.05,
-                        kit=NULL, relationship=NULL, ...)
+                        kit=NULL, ...)
 }
 \arguments{
-  \item{cspFile}{Path to the crime scene profile.}
+   \item{cspFile}{Path to the crime scene profile.}
   \item{refFile}{Path to the known profiles.}
   \item{ethnic}{Ethnicity, e.g. subgroup within the allele frequency database.}
   \item{nUnknowns}{Number of unknown contributors for which to perform
@@ -24,9 +23,6 @@
                     if \code{relatedness}=\code{c(0.5,0.25)} i.e. when Q and X are 
                     siblings.}
   \item{relatedness}{IBD1 and IBD2 values to take into account close relatedness.}
-  \item{relationship}{Specified relationship for relationship pairs that share IBD
-values e.g. a half sibling pair and uncle nephew pair both have IBD1=0.5 and IBD2=0. 
-Possible values are "sibling","uncle","half uncle","cousin","grandparent","half sibling".}
   \item{doDropin}{Whether or not to model drop-in.}
   \item{combineRare}{Whether or not to combine rare unobserved alleles into a single
                     allele.}
@@ -39,15 +35,10 @@ Possible values are "sibling","uncle","half uncle","cousin","grandparent","half 
   \item{...}{Other parameters to determine how to perform calculations.}
 }
 \value{A list of named input parameters, or hypothesis, suitable for the
-defence.}
+prosecution.}
+\description{Helper function to create the input for the prosecution.}
 \details{It loads the CSP, known profiles, and allele database from file. It
-removes the queried individual from the known profiles. It increments the
-number of unknown contributors by one (to make up for the queried individual).
-The reference individual is set to "X" (first unprofiled contributor) by
-default. 
-} 
-\seealso{prosecution.hypothesis}
-
-
-
-
+makes sure the relatedness factor is zero. It sets the reference individual to
+the first queried individual, unless it is not subject to dropout. In that
+case, the reference individual is the first individual with dropout. } 
+\seealso{defence.hypothesis}
