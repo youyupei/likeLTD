@@ -317,11 +317,11 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	#	prob: genotypes with a probability greater than this will be returned
 
 	# transform hypothesis to locus centric
-	locusCentricHyp = likeLTD:::transform.to.locus.centric.peaks(hypothesis)
+	locusCentricHyp = transform.to.locus.centric.peaks(hypothesis)
 	# function to return genotype combinations for each locus
 	genCombs = function(locusHyp,alleleDb)
 		{
-		genotypes = likeLTD:::likelihood.constructs.per.locus.peaks(locusHyp)$genotypes
+		genotypes = likelihood.constructs.per.locus.peaks(locusHyp)$genotypes
 		return(genotypes)
 		}
 	genotypes = mapply(FUN=genCombs,locusHyp=locusCentricHyp,alleleDb=hypothesis$alleleDb,SIMPLIFY=FALSE)

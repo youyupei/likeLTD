@@ -8,9 +8,9 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# check hypothesis has the right type
 	sanity.check.peaks(hypothesis)
 	# convert hypothesis to locus specific
-	locusCentric = likeLTD:::transform.to.locus.centric.peaks(hypothesis)
+	locusCentric = transform.to.locus.centric.peaks(hypothesis)
 	# functions to perform on each locus
-	functions <- mapply(likeLTD:::create.likelihood.per.locus.peaks, locusCentric,
+	functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 	#create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, 
 	#				likeMatrix=likeMatrix, diagnose=diagnose)
@@ -127,11 +127,11 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 	#
 	# A hypothesis is given by the number of unknown contributors, whether to model
 	# dropin, so on and so forth.
-	cons = likeLTD:::likelihood.constructs.per.locus.peaks(hypothesis)
+	cons = likelihood.constructs.per.locus.peaks(hypothesis)
 	# alter hypothesis so that rare alleles are always different
-    hypothesis$alleleDb = likeLTD:::alterHypothesis(hypothesis$alleleDb,cons$genotypes)
+    hypothesis$alleleDb = alterHypothesis(hypothesis$alleleDb,cons$genotypes)
 	# alter dbVals to include any extra rare alleles
-	cons$dbVals = likeLTD:::alterDBvals(hypothesis$alleleDb,hypothesis)
+	cons$dbVals = alterDBvals(hypothesis$alleleDb,hypothesis)
 	doR = !is.null(hypothesis$doR) && hypothesis$doR == TRUE
 
 	result.function <- function(scale,gradientS,gradientAdjust,#interceptAdjust,
@@ -484,7 +484,7 @@ if(colnames(hypothesis$queriedProfile)=="D1S1656")
 					databaseVals = cons$dbVals)
 			} else if(is.null(meanD)&is.null(meanO)) {
 		   		# single stutter only
-		    		probs = .Call(likeLTD:::.cpp.getProbabilitiesS,
+		    		probs = .Call(.cpp.getProbabilitiesS,
 					genotypeArray=cons$genotypes,
 					DNAcont=rep(locusDNAcont,each=2), 
 					gradientS=locusGradient,
@@ -642,7 +642,7 @@ probability.peaks = function(genotype,alleles,heights,DNAcont,
 	alleles = unlist(alleles)
 	genotype = as.numeric(genotype)
 	# get mean expected peak heights
-	gammaMu = likeLTD:::peak.height.dose(genotype=genotype,
+	gammaMu = peak.height.dose(genotype=genotype,
 	        alleles=alleles,heights=heights,
 	        DNAcont=DNAcont,gradientS=gradientS,
 	        meanD=meanD,meanO=meanO,interceptS=interceptS,

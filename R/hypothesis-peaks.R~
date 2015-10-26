@@ -570,15 +570,6 @@ sanity.check.peaks = function(hypothesis) {
   }
 }
 
-for(a in 1:nrow(cspInfo$heightsObs))
-	{
-	for(b in 1:ncol(cspInfo$heightsObs))
-		{
-print(any(sapply(unlist(cspInfo$peaksNa[a,b]),
-		FUN=function(x) x<unlist(cspInfo$peaksObs[a,b]))))
-		}
-	}
-
 
 transform.to.locus.centric.peaks = function(hypothesis) {
   # Transform hypothesis to locus centric modes.

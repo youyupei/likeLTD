@@ -105,7 +105,7 @@ ethnic.database.lus <- function(ethnic, loci=NULL, afreq=NULL) {
     rownames(result) <- locus$Allele
     if(any(is.na(result[,3])))
 	{
-    	result = likeLTD:::fill.unknown.LUS(result)
+    	result = fill.unknown.LUS(result)
 	}
     return(result[result[, 1] > 0, ])
     return(result)

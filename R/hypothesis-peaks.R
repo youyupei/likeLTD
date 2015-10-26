@@ -241,13 +241,13 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   if(!ethnic%in%colnames(alleleDb)) stop("Chosen race code not included in database")
 
   # Read database and filter it down to requisite ethnicity and locus. 
-  alleleDb = likeLTD:::ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
+  alleleDb = ethnic.database.lus(ethnic, colnames(cspProfile), alleleDb)
   #alleleDb = likeLTD:::ethnic.database(ethnic, colnames(cspProfile), alleleDb)
 
   # Adjust database to contain all requisite alleles
-  alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
+  alleleDb = missing.alleles.peaks(alleleDb, cspProfile, queriedProfile, knownProfiles)
   # remove allele with 0 observations in database
-  alleleDb = likeLTD:::adjust.frequencies( alleleDb, 
+  alleleDb = adjust.frequencies( alleleDb, 
                                  queriedProfile[1, colnames(cspProfile), 
                                                 drop=FALSE],
                                  adj=adj, fst=fst )
@@ -255,7 +255,7 @@ agnostic.hypothesis.peaks <- function(cspProfile, knownProfiles,
   #alleleDb2 = sapply(alleleDb,FUN=fill.unknown.LUS,simplify=FALSE)
 
   # combine rare alleles into a single allele
-  if(combineRare) alleleDb = likeLTD:::combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
+  if(combineRare) alleleDb = combine.rares.peaks(alleleDb, cspProfile, knownProfiles, queriedProfile[1, colnames(cspProfile), drop=FALSE], rareThreshold,doDoubleStutter)
 
   # add index for stutter values
   #alleleDb = sapply(alleleDb,FUN=add.stutter.index,simplify=FALSE)
@@ -316,7 +316,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
   if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
-  cspProfile = t(sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary))
+  cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
   #cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
 if(!is.null(relationship))
 	{
@@ -335,7 +335,7 @@ if(!is.null(relationship))
   # Puts queried profile at the end.
   knownProfiles = knownProfiles[c(uIndices, qIndices), , drop=FALSE] 
 
-  result = likeLTD:::agnostic.hypothesis.peaks(cspProfile, knownProfiles,
+  result = agnostic.hypothesis.peaks(cspProfile, knownProfiles,
                                queriedProfile, alleleDb, ethnic=ethnic,
                                adj=adj, fst=fst, combineRare=combineRare,
 			       rareThreshold=rareThreshold, doDoubleStutter=doDoubleStutter)
@@ -370,7 +370,7 @@ if(!is.null(relationship))
     result[["relationship"]] = relationship 
     }
 
-  likeLTD:::sanity.check.peaks(result) # makes sure hypothesis has right type.
+  sanity.check.peaks(result) # makes sure hypothesis has right type.
   result
 }
 
@@ -388,7 +388,7 @@ defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknow
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
-  cspProfile = t(sapply(peaksProfile$alleles,FUN=likeLTD:::convert.to.binary))
+  cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
 if(!is.null(relationship))
 	{
   	linkageInfo = load.linkage.info(linkageFile)

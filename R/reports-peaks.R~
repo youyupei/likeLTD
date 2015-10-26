@@ -132,10 +132,10 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
 	# colours
 	contColours = rainbow(nrow(refs))
 	nK = length(contColours)
-	cspProfile = sapply(csp$alleles,FUN=likeLTD:::convert.to.binary,simplify=FALSE)
+	cspProfile = sapply(csp$alleles,FUN=convert.to.binary,simplify=FALSE)
         cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
-        alleleDb = likeLTD:::ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
-        alleleDb = likeLTD:::missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
+        alleleDb = ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
+        alleleDb = missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
 	# locus names
 	if(is.null(toPlot))
 		{
@@ -146,7 +146,7 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
 	# stutter calls 
 	if(doStutter) 
 		{
-		stutters = likeLTD:::make.allelic.calls(csp,stutterThresh)
+		stutters = make.allelic.calls(csp,stutterThresh)
 		}
 	# set plotting parameters that are constant across loci
 	dims = rep(ceiling(sqrt(length(loci))),times=2)
@@ -184,7 +184,7 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
 			if(!is.null(refs))
 				{
 				# get which K contributes to each peak
-				peakContributors = likeLTD:::getPeakContributors(alleles,refs[,loci[j]])
+				peakContributors = getPeakContributors(alleles,refs[,loci[j]])
 				# add peaks to plot
 				mapply(heights,thisDB[dbIndex,2],peakContributors,FUN=function(a,b,c) plotline(height=a,size=b,contributors=c,contColours))
 				} else {
@@ -259,10 +259,10 @@ get.representation.rfu = function(csp,refs)
 # function to create a table of reference profiles for peaks reports
 reference.tables.peaks = function(refs,csp,certains)
 	{
-	refCountsAll = sapply(1:nrow(refs),FUN=function(x) likeLTD:::isSingleRefReplicatedAll(refs[x,-1],csp))
-	refCountsCertain = sapply(1:nrow(refs),FUN=function(x) likeLTD:::isSingleRefReplicatedCertain(refs[x,-1],certains))
-	formattedAll = sapply(1:nrow(refs),FUN=function(x) likeLTD:::formatRef(refs[x,-1],refCountsAll[,x]))
-	formattedCertain = sapply(1:nrow(refs),FUN=function(x) likeLTD:::formatRef(refs[x,-1],refCountsCertain[,x]))
+	refCountsAll = sapply(1:nrow(refs),FUN=function(x) isSingleRefReplicatedAll(refs[x,-1],csp))
+	refCountsCertain = sapply(1:nrow(refs),FUN=function(x) isSingleRefReplicatedCertain(refs[x,-1],certains))
+	formattedAll = sapply(1:nrow(refs),FUN=function(x) formatRef(refs[x,-1],refCountsAll[,x]))
+	formattedCertain = sapply(1:nrow(refs),FUN=function(x) formatRef(refs[x,-1],refCountsCertain[,x]))
 	formattedAll = rbind(rownames(refs),formattedAll)
 	formattedCertain = rbind(rownames(refs),formattedCertain)
 	rownames(formattedAll) = rownames(formattedCertain) = c("Profile",colnames(refs)[-1])
@@ -324,10 +324,10 @@ callLocusPeaks = function(alleles,heights)
 		alleles = alleles[-naIndex]
 		heights = heights[-naIndex]
 		}
-	stutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights)
-	doubleStutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
-	overStutter = sapply(alleles,FUN=likeLTD:::checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
-	calls = mapply(FUN=likeLTD:::combineStutter,stutter,doubleStutter,overStutter)
+	stutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights)
+	doubleStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=-2,upperThresh=0.1)
+	overStutter = sapply(alleles,FUN=checkStutter,alleles=alleles,heights=heights,stutterPos=1,upperThresh=0.1)
+	calls = mapply(FUN=combineStutter,stutter,doubleStutter,overStutter)
 	return(calls)
 	}
 
@@ -365,19 +365,19 @@ unattribForRefs = function(csp,refs,certains)
 	# find the unnatributable alleles
 	unattributable1 = sapply(1:length(certains), FUN=function(x) 
 				sapply(1:length(certains[[x]]), FUN=function(y) 
-					likeLTD:::filterCertains(certains[[x]][[y]],refs[,y+1]),
+					filterCertains(certains[[x]][[y]],refs[,y+1]),
 					simplify=FALSE),simplify=FALSE)
 	# unattributable counts with estimation
 	counts1 = sapply(do.call(Map,c(c,unattributable1)),FUN=table)
-	withEstimation = sapply(1:length(counts1),FUN=function(a) paste(likeLTD:::formatAllele(names(counts1[[a]]),counts1[[a]]),collapse=","))
+	withEstimation = sapply(1:length(counts1),FUN=function(a) paste(formatAllele(names(counts1[[a]]),counts1[[a]]),collapse=","))
 	# without estimation of stutters etc
 	unattributable2 = sapply(1:length(csp$alleles), FUN=function(x) 
 				sapply(1:nrow(csp$alleles[[x]]), FUN=function(y) 
-					likeLTD:::filterCertains(unlist(csp$alleles[[x]][y,][which(!is.na(csp$alleles[[x]][y,]))]),refs[,y+1]),
+					filterCertains(unlist(csp$alleles[[x]][y,][which(!is.na(csp$alleles[[x]][y,]))]),refs[,y+1]),
 					simplify=FALSE),simplify=FALSE)
 	# unattributable counts without estimation
 	counts2 = sapply(do.call(Map,c(c,unattributable2)),FUN=table)
-	withoutEstimation = sapply(1:length(counts2),FUN=function(a) paste(likeLTD:::formatAllele(names(counts2[[a]]),counts2[[a]]),collapse=","))
+	withoutEstimation = sapply(1:length(counts2),FUN=function(a) paste(formatAllele(names(counts2[[a]]),counts2[[a]]),collapse=","))
 	return(list(withEstimation=withEstimation,withoutEstimation=withoutEstimation))
 	}
 
@@ -388,7 +388,7 @@ unattributablePeaks = function(csp,refs,certains)
 	# find the unnatributable alleles
 	unnatributable = sapply(1:length(certains), FUN=function(x) 
 				sapply(1:length(certains[[x]]), FUN=function(y) 
-					likeLTD:::filterCertains(certains[[x]][[y]],refs[,y+1]),
+					filterCertains(certains[[x]][[y]],refs[,y+1]),
 					simplify=FALSE),simplify=FALSE)
 	if(length(unnatributable)>1) 
 		{
@@ -407,7 +407,7 @@ unattributablePeaks = function(csp,refs,certains)
 plotUnnatributablePeaks = function(replicated)
 	{
 	par(mai=c(1,1.2,1,1))
-	barplot(t(replicated),legend.text=c("Unreplicated","Replicated"),xlab="Frequency",horiz=TRUE,las=1,xlim=c(0,max(rowSums(replicated))+2),col=c("gray69","gray47"))
+	barplot(t(replicated),legend.text=c("Unreplicated","Replicated"),xlab="Frequency",horiz=TRUE,las=1,xlim=c(0,max(rowSums(replicated))+2),col=c("gray69","gray30"))
 	abline(v=seq(from=0,to=max(rowSums(replicated)),by=2)[-1],lty=2)
 	}
 
@@ -583,8 +583,8 @@ getDNAcontDeg = function(estimates,repNames,knownProfs,hyp)
 # function to create a table summarising DNA contribution estimates and degradation estimates
 DNAcontDeg = function(results,repNames,knownProfsP,knownProfsD)
     {
-    DNAcontP = likeLTD:::getDNAcontDeg(results$Pros$optim$bestmem,repNames,knownProfsP,"prosecution")
-    DNAcontD = likeLTD:::getDNAcontDeg(results$Def$optim$bestmem,repNames,knownProfsD,"defence")
+    DNAcontP = getDNAcontDeg(results$Pros$optim$bestmem,repNames,knownProfsP,"prosecution")
+    DNAcontD = getDNAcontDeg(results$Def$optim$bestmem,repNames,knownProfsD,"defence")
     return(list(pros=DNAcontP,def=DNAcontD))
     }
 
@@ -777,7 +777,7 @@ locus.unusual = function(csp,refs,alleleDb,locus)
 unusual.alleles.peaks = function(csp,refs,alleleDb)
 	{
 	loci = colnames(refs)[-1]
-	unusuals = sapply(loci,FUN=function(a) likeLTD:::locus.unusual(csp,refs,alleleDb,a))
+	unusuals = sapply(loci,FUN=function(a) locus.unusual(csp,refs,alleleDb,a))
 	return(do.call(rbind,unusuals))
 	}
 
@@ -790,23 +790,23 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
     if(is.null(refs)) refs = read.known.profiles(refFile)
     # get allele database
     if(is.null(dbFile)&is.null(kit)) kit = "DNA17"
-    alleleDb = likeLTD:::load.allele.database(dbFile,kit)
+    alleleDb = load.allele.database(dbFile,kit)
     # unusual alleles
-    unusuals = likeLTD:::unusual.alleles.peaks(csp,refs,alleleDb)
+    unusuals = unusual.alleles.peaks(csp,refs,alleleDb)
     # make allelic calls
-    calls = sapply(1:length(csp$alleles), FUN=function(x) likeLTD:::callReplicatePeaks(csp$alleles[[x]],csp$heights[[x]]),simplify=FALSE)
+    calls = sapply(1:length(csp$alleles), FUN=function(x) callReplicatePeaks(csp$alleles[[x]],csp$heights[[x]]),simplify=FALSE)
     # list of only certain calls
-    certains = sapply(1:length(csp$alleles), FUN=function(x) likeLTD:::getReplicateCertains(csp$alleles[[x]],calls[[x]]),simplify=FALSE)
+    certains = sapply(1:length(csp$alleles), FUN=function(x) getReplicateCertains(csp$alleles[[x]],calls[[x]]),simplify=FALSE)
     # unnatributable, with estimation of which peaks are stutters etc
-    unattributable = likeLTD:::unattributablePeaks(csp,refs,certains)
+    unattributable = unattributablePeaks(csp,refs,certains)
     # reference tables
-    refTables = likeLTD:::reference.tables.peaks(refs,csp,certains)
+    refTables = reference.tables.peaks(refs,csp,certains)
     # unnatributable to add to reference tables
-    unattrib = likeLTD:::unattribForRefs(csp,refs,certains)
+    unattrib = unattribForRefs(csp,refs,certains)
     refTables$certains = cbind(refTables$certains,t(cbind("{\\i Other}",t(unattrib$withEstimation))))
     refTables$all = cbind(refTables$all,t(cbind("{\\i Other}",t(unattrib$withoutEstimation))))
     # representation tables
-    repTables = likeLTD:::get.representation.rfu(csp,refs)
+    repTables = get.representation.rfu(csp,refs)
     return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables,unusuals=unusuals))
     }
 
@@ -816,12 +816,12 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
 allele.report.peaks = function(admin,file=NULL)
     {
     # get genetics
-    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile)
+    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile)
     # file name
-    names <- likeLTD:::filename.maker(admin$outputPath,admin$caseName,file,type='allele')
+    names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
     # section common to allele and output report
-    doc <- likeLTD:::common.report.section.peaks(names,gen,admin)
+    doc <- common.report.section.peaks(names,gen,admin)
     # section specific to the allele report
     addNewLine(doc)
     addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
@@ -845,40 +845,40 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     print("warning")
     warnings = NULL
     WoE = results$WoE[length(results$WoE)]
-    maxWoE = log10(likeLTD:::matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
+    maxWoE = log10(matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
     if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
     # get genetics
     print("genetics")
-    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
+    gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
     # file name
     print("names")
-    names <- likeLTD:::filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
+    names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
     names$subtitle <- prosecutionHypothesis$caseName
     # hypotheses names
     print("hyps")
-    hypNames = likeLTD:::create.hypothesis.string.peaks(prosecutionHypothesis)
+    hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
     print("doc")
-    doc = likeLTD:::common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
+    doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
     # section specific to the output report
     # locus likelihoods
     print("locus likelihoods")
     addHeader(doc, "Likelihoods at each locus", TOC.level=2, font.size=fs2)
-	addTable(doc, likeLTD:::local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
+	addTable(doc, local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
 	spacer(doc,3)
     # overall likelihood
 print("overall likelihood")
 	addHeader(doc, "Overall Likelihood", TOC.level=2, font.size=fs2)
-	addTable(doc, likeLTD:::overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C')
+	addTable(doc, overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C')
 	spacer(doc,3)
     # max LR
 print("max likelihood")
 	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
-	addTable(doc, likeLTD:::ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
+	addTable(doc, ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
 print("DNAcont Deg")
-	DNAcontTables = likeLTD:::DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
+	DNAcontTables = DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
     addHeader(doc, "DNA contribution and degradation estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, DNAcontTables$pros, col.justify='C', header.col.justify='C')
 	addTable(doc, DNAcontTables$def, col.justify='C', header.col.justify='C')
@@ -891,29 +891,29 @@ print("Dropin")
     # user defined parameters
 print("user defined")
 	addHeader(doc, "User defined parameters", TOC.level=1, font.size=fs1)
-	addTable(doc, likeLTD:::chosen.parameter.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
+	addTable(doc, chosen.parameter.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
     # input files
 print("input files")
 	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
-	addTable(doc, likeLTD:::file.inputs.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
+	addTable(doc, file.inputs.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 	# seed used
 print("seed")
 	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
-	addTable(doc, likeLTD:::seedTable(results), col.justify='L', header.col.justify='L')
+	addTable(doc, seedTable(results), col.justify='L', header.col.justify='L')
     # optimised parameters
 print("optimised params")
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
-	addTable(doc, likeLTD:::optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')
+	addTable(doc, optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 	addHeader(doc, "Defence parameters", TOC.level=2, font.size=fs2)
-	addTable(doc, likeLTD:::optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
+	addTable(doc, optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
     # system information
 	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
-	addTable(doc,  likeLTD:::system.info(), col.justify='L', header.col.justify='L')
+	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
     rtf.formater(names$filename)	
     }
