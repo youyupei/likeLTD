@@ -8,7 +8,7 @@
                         relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, 
                         doDoubleStutter=FALSE,doOverStutter=FALSE,
                         combineRare=TRUE, rareThreshold=0.05,
-                        kit=NULL, ...)
+                        kit=NULL, relationship=NULL, ...)
 }
 \arguments{
   \item{peaksFile}{Path to the crime scene profile.}
@@ -26,6 +26,9 @@
                     if \code{relatedness}=\code{c(0.5,0.25)} i.e. when Q and X are 
                     siblings.}
   \item{relatedness}{IBD1 and IBD2 values to take into account close relatedness.}
+  \item{relationship}{Specified relationship for relationship pairs that share IBD
+values e.g. a half sibling pair and uncle nephew pair both have IBD1=0.5 and IBD2=0. 
+Possible values are "sibling","uncle","half uncle","cousin","grandparent","half sibling".}
   \item{detectionThresh}{Detection threshold for peaks.}
   \item{doDropin}{Whether or not to model drop-in. Note dropin is not currently possible
                     with the peak heights model.}

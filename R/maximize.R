@@ -329,8 +329,6 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6){
 			{
 			globalBestVal = results$optim$bestval
 			globalBestMem = results$optim$bestmem	
-			GLOBALVAL <<- globalBestVal
-			GLOBALMEM <<- globalBestMem
 			}
 		# save current result
 		oldresult = results$optim$bestval

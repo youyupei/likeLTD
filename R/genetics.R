@@ -506,18 +506,18 @@ linkedMatchProb = function(hypothesis,linkedIndex,R)
         	p4 = (p4*(1+fst))-fst
 
 		# Z matrix
-		if(relationship=="sibling")
+		if(relationship==2)
 			{
 			Ztmp = Zsib(R[j])
-			} else if(relationship=="uncle") {
+			} else if(relationship==3) {
 			Ztmp = Zuncle(R[j])
-			} else if(relationship=="half uncle") {
+			} else if(relationship==4) {
 			Ztmp = Zhuncle(R[j])
-			} else if(relationship=="cousin") {
+			} else if(relationship==5) {
 			Ztmp = Zcousin(R[j])
-			} else if(relationship=="grandparent") {
+			} else if(relationship==6) {
 			Ztmp = Zgrandparent(R[j])
-			} else if(relationship=="half sibling") {
+			} else if(relationship==7) {
 			Ztmp = Zhsibs(R[j])
 			}
 

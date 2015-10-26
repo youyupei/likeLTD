@@ -303,22 +303,32 @@ make.allelic.calls = function(peaksProfile,stutterPercent=0.15)
     return(out)
     }
 
+convertRelationship = function(relationship)
+	{
+	if(relationship==0) return(c(0,0))
+	if(relationship==1) return(c(1,0))
+	if(relationship==2) return(c(0.5,0.25))
+	if(relationship==3) return(c(0.5,0))
+	if(relationship==4) return(c(0.25,0))
+	if(relationship==5) return(c(0.25,0))
+	if(relationship==6) return(c(0.5,0))
+	if(relationship==7) return(c(0.5,0))
+	}
+
 
 # Creates prosecution hypothesis.
 # Documentation is in man directory.
 prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
-                                   databaseFile=NULL, relatedness=c(0,0), detectionThresh=30, 
-                                   doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=NULL,...) {
+                                   databaseFile=NULL, detectionThresh=30, 
+                                   doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=0,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
-  if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
-  if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
-  if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
+  relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
   cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
   #cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
-if(!is.null(relationship))
+if(!relationship%in%c(0,1))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
 	rownames(linkageInfo) = linkageInfo[,1]
@@ -356,6 +366,7 @@ if(!is.null(relationship))
   result[["adj"]] = adj
   result[["fst"]] = fst
   result[["relatedness"]] = relatedness
+  result[["relationship"]] = relationship 
   result[["doDropin"]] = doDropin
   result[["doDoubleStutter"]] = doDoubleStutter
   result[["doOverStutter"]] = doOverStutter
@@ -364,10 +375,9 @@ if(!is.null(relationship))
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
   result[["detectionThresh"]] = detectionThresh
-if(!is.null(relationship))
+if(!relationship%in%c(0,1))
 	{
     result[["linkageInfo"]] = linkageInfo
-    result[["relationship"]] = relationship 
     }
 
   sanity.check.peaks(result) # makes sure hypothesis has right type.
@@ -379,17 +389,15 @@ if(!is.null(relationship))
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
-                               relatedness=c(0,0), detectionThresh=30, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
-			       rareThreshold=1, kit=NULL, relationship=NULL,...) {
+                               detectionThresh=30, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
+			       rareThreshold=1, kit=NULL, relationship=0,...) {
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
-  if(identical(relatedness,c(0.5,0.25))&is.null(relationship)) relationship = "sibling"
-  if(identical(relatedness,c(0.5,0))&is.null(relationship)) relationship = "half sibling"
-  if(identical(relatedness,c(0.25,0))&is.null(relationship)) relationship = "cousin"
+  relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
   cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
-if(!is.null(relationship))
+if(!relationship%in%c(0,1))
 	{
   	linkageInfo = load.linkage.info(linkageFile)
 	rownames(linkageInfo) = linkageInfo[,1]
@@ -423,6 +431,7 @@ if(!is.null(relationship))
   result[["adj"]] = adj
   result[["fst"]] = fst
   result[["relatedness"]] = relatedness
+  result[["relationship"]] = relationship 
   result[["doDropin"]] = doDropin
   result[["doDoubleStutter"]] = doDoubleStutter
   result[["doOverStutter"]] = doOverStutter
@@ -431,12 +440,10 @@ if(!is.null(relationship))
   result[["databaseFile"]] = databaseFile
   result[["kit"]] = kit
   result[["detectionThresh"]] = detectionThresh
-if(!is.null(relationship)) 
+if(!relationship%in%c(0,1)) 
 	{
-	result[["linkageInfo"]] = linkageInfo
-    	result[["relationship"]] = relationship 
+	result[["linkageInfo"]] = linkageInfo  	
 	}
-
 
   sanity.check.peaks(result) # makes sure hypothesis has right type.
   result

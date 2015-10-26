@@ -17,6 +17,7 @@
 #define FPMIN 1.0e-308  // Number near smallest representable double number 
 
 // Numerical Recipes standard error handler
+/*
 void nrerror(char error_text[])
     {
 	fprintf(stderr,"Numerical Recipes run-time error...\n");
@@ -24,6 +25,7 @@ void nrerror(char error_text[])
 	fprintf(stderr,"...now exiting to system...\n");
 	exit(1);
     }
+*/
 
 // Returns the value ln[Γ(xx)] for xx > 0.
 // Internal arithmetic will be done in double precision, a nicety that you can omit if five-figure
@@ -49,20 +51,22 @@ double gammp(double a, double x)
     {
     void gcf(double *gammcf, double a, double x, double *gln);
     void gser(double *gamser, double a, double x, double *gln);
-    void nrerror(char error_text[]);
+    //void nrerror(char error_text[]);
     double gamser,gammcf,gln;
     if((a>=0.0&&a<1.0e-30)||std::isinf(a)) return kf_gammap(a,x);
     if (x < 0.0 || a < 0.0) 
         {
-        fprintf(stderr,"a=%f\nx=%f\n",a,x);
+        //fprintf(stderr,"a=%f\nx=%f\n",a,x);
 	char message[] = "Invalid arguments in routine gammp";
-        nrerror(message);
+        //nrerror(message);
+	return 999;
         }
     if (x < (a+1.0)) { //Use the series representation.
         gser(&gamser,a,x,&gln);
         return gamser;
         } else { //Use the continued fraction representation
         gcf(&gammcf,a,x,&gln);
+	if(gammcf==999) return gammcf;
         return 1.0-gammcf; //and take its complement.
         }
     }
@@ -72,12 +76,13 @@ double gammq(double a, double x)
     {
     void gcf(double *gammcf, double a, double x, double *gln);
     void gser(double *gamser, double a, double x, double *gln);
-    void nrerror(char error_text[]);
+    //void nrerror(char error_text[]);
     double gamser,gammcf,gln;
     if (x < 0.0 || a <= 0.0) 
 	{
 	char message[] = "Invalid arguments in routine gammq";
-	nrerror(message);
+	//nrerror(message);
+	return 999;
 	}
     if (x < (a+1.0)) { //Use the series representation
         gser(&gamser,a,x,&gln);
@@ -95,7 +100,7 @@ double gammq(double a, double x)
 void gser(double *gamser, double a, double x, double *gln)
     {
     double new_gammln(double xx);
-    void nrerror(char error_text[]);
+    //void nrerror(char error_text[]);
     int n;
     double sum,del,ap;
     *gln=new_gammln(a);
@@ -103,7 +108,9 @@ void gser(double *gamser, double a, double x, double *gln)
         if (x < 0.0) 
 		{
 		char message[] = "x less than 0 in routine gser";
-		nrerror(message);
+		//nrerror(message);
+		*gamser=999;
+		return;
 		}
         *gamser=0.0;
         return;
@@ -119,9 +126,10 @@ void gser(double *gamser, double a, double x, double *gln)
                 return;
                 }
             }
-        fprintf(stderr,"a=%.30f\nx=%f\n",a,x);
+        //fprintf(stderr,"a=%.30f\nx=%f\n",a,x);
 	char message[] = "a too large, ITMAX too small in routine gser";
-	nrerror(message);
+	//nrerror(message);
+	*gamser=999;
         return;
         }
     }
@@ -131,7 +139,7 @@ void gser(double *gamser, double a, double x, double *gln)
 void gcf(double *gammcf, double a, double x, double *gln)
     {
     double new_gammln(double xx);
-    void nrerror(char error_text[]);
+    //void nrerror(char error_text[]);
     int i;
     double an,b,c,d,del,h;
     *gln=new_gammln(a);
@@ -154,9 +162,11 @@ void gcf(double *gammcf, double a, double x, double *gln)
     if (i > ITMAX) 
 	{
 	char message[] = "a too large, ITMAX too small in gcf";
-	nrerror(message);
+	//nrerror(message);
+	*gammcf=999;
+	} else {
+    	*gammcf=exp(-x+a*log(x)-(*gln))*h; //Put factors in front.
 	}
-    *gammcf=exp(-x+a*log(x)-(*gln))*h; //Put factors in front.
     }
 
 

@@ -119,7 +119,7 @@ simplify.locus.names = function(names)
     }
 
 # function to plot the CSP data as RFU against mean BP for each locus
-plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1)
+plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot=NULL,detectThresh=NULL,uncThresh=0.05,stutterThresh=0.15,doStutter=FALSE,replicate=1,...)
 	{
 	# get database
     if(is.null(dbFile)&is.null(kit)) kit = "DNA17"

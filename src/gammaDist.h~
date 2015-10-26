@@ -16,19 +16,19 @@ extern "C" {
     void nrerror(char error_text);
 
     //! \brief Returns the log gamma function
-    float new_gammln(float xx);
+    double new_gammln(double xx);
 
 	//! \brief Returns the incomplete gamma function P(a, x).
-    float gammp(float a, float x);
+    double gammp(double a, double x);
 
     //! \brief Returns the incomplete gamma function Q(a, x) ≡ 1 − P(a, x).
-    float gammq(float a, float x);
+    double gammq(double a, double x);
 
     //! \brief Returns the incomplete gamma function P(a, x) evaluated by its series representation as gamser.
-    void gser(float *gamser, float a, float x, float *gln);
+    void gser(double *gamser, double a, double x, double *gln);
 
     //! \brief Returns the incomplete gamma function Q(a, x) evaluated by its continued fraction representation
-    void gcf(float *gammcf, float a, float x, float *gln);
+    void gcf(double *gammcf, double a, double x, double *gln);
 
 
 #ifdef __cplusplus

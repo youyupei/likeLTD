@@ -844,13 +844,29 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -859,7 +875,6 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	    # ifdef OPENMP_STACK
 	    //    R_CStackLimit = oldstack;
 	    # endif	
-
 		}
 
 	// Make and return output object
@@ -1089,13 +1104,29 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -1331,14 +1362,30 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
-			            }   
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+			            }     
 			        }
 			    }
 			}
@@ -1564,13 +1611,29 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -1860,19 +1923,29 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-//fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg));
-//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
-			            } else {
-//fprintf(stderr,"%d: %.1f: %f\n",i,dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
-//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],(gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble)));
-//if(i==5) Rprintf("%.1f:%f\t",dbVals[j],doseArray[j][i]);
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -2145,13 +2218,29 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -2414,14 +2503,30 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
-			            }   
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+			            }      
 			        }
 			    }
 			}
@@ -2673,13 +2778,29 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }
@@ -3007,14 +3128,29 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
         	                    break;
         	                    }
         	                }
-		if(matchFlag==false)
-		    {
-                        // dropout dose
-                        outDouble[i] = outDouble[i] * gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
-			            } else {
-                        // non-dropout dose
-                        outDouble[i] = outDouble[i] * (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
-                                                        gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+			if(matchFlag==false)
+		    		{
+				double prob = gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,cdfArg);
+					}
+                    		// dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
+		    		} else {
+				double prob = (gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+					gammp((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+						(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+				if(std::abs(prob-999)<0.0001) // if error in gammp
+					{
+					prob = (kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]+0.5)/scaleDouble)-
+						kf_gammap((doseArray[j][i]*repadjustVec[k])/scaleDouble,
+							(heightsVec[k][matchIndex]-0.5)/scaleDouble));
+					}
+                    		// non-dropout dose
+                    		outDouble[i] = outDouble[i] * prob;
 			            }   
 			        }
 			    }

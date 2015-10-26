@@ -120,7 +120,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
     # Linkage adjustment if related
-    linkBool = doLinkage&!identical(hypothesis$relatedness,c(0,0))&hypothesis$hypothesis=="prosecution"
+    linkBool = doLinkage&!identical(!hypothesis$relationship%in%c(0,1))&hypothesis$hypothesis=="prosecution"
   if(linkBool)
     {
     linkFactor = linkage(hypothesis)
@@ -375,7 +375,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	}
 
 
-plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,LOG="")
+plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,LOG="",...)
 	{
 	# mean & sd from results
 	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
@@ -410,8 +410,8 @@ plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,LOG=
 		CIs = sapply(shapes,FUN=function(x) qgamma(p=c(0.025,0.25,0.5,0.75,0.975),shape=x,scale=scale))
 		YLIM = c(0,max(c(CIs,heights[!is.na(heights)])))
 		# plot
-		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0,log=LOG)
-		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE,log=LOG)
+		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0,log=LOG,...)
+		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE,log=LOG,...)
 		}
 	if(!is.null(fileName)) dev.off()
 

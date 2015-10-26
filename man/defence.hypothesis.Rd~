@@ -24,7 +24,7 @@
                     if \code{relatedness}=\code{c(0.5,0.25)} i.e. when Q and X are 
                     siblings.}
   \item{relatedness}{IBD1 and IBD2 values to take into account close relatedness.}
-  \item{relationship}{Specified relationship for relationship pairs that share IBD
+  \item{realtionship}{Specified relationship for relationship pairs that share IBD
 values e.g. a half sibling pair and uncle nephew pair both have IBD1=0.5 and IBD2=0. 
 Possible values are "sibling","uncle","half uncle","cousin","grandparent","half sibling".}
   \item{doDropin}{Whether or not to model drop-in.}
