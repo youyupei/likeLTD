@@ -874,7 +874,7 @@ print("overall likelihood")
     # max LR
 print("max likelihood")
 	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
-	addTable(doc, ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
+	addTable(doc, ideal(defenceHypothesis), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
 print("DNAcont Deg")

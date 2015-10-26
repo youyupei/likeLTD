@@ -173,7 +173,7 @@ plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,toPlot
 		XLIM = XLIM + c(-2,2)
 		flag = (j-1)%%dims[1]==0
 		# make an empty plot
-		plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=loci[j],yaxt=ifelse(flag,'s','n'))
+		plot(NA,ylim=YLIM,xlim=XLIM,ylab="RFU",xlab="Size",main=loci[j],yaxt=ifelse(flag,'s','n'),...)
 		# add baseline
 		abline(h=0)
 		# add detection threshold
@@ -874,7 +874,7 @@ print("overall likelihood")
     # max LR
 print("max likelihood")
 	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
-	addTable(doc, ideal(defenceHypothesis,defenceHypothesis$relatedness), col.justify='C', header.col.justify='C')
+	addTable(doc, ideal(defenceHypothesis), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
 print("DNAcont Deg")

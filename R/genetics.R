@@ -588,18 +588,29 @@ linkage = function(hypothesis,factor=TRUE)
 	# do not perform linkage if an unknown relationship
 	if(is.null(hypothesis$relationship)) toLink = NULL
 	R = unlist(R)[!is.na(unlist(R))]
-    # get linked match probability
+	# get non-linked match probability
+	nonLinked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+    	# get linked match probability
 	if(nrow(toLink)==0)
 	    {
-        linked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+        linked = nonLinked
 	    } else {
         linked = linkedMatchProb(hypothesis,toLink,R)
 	    }
-	# get non-linked match probability
-	nonLinked = matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
 	if(!factor) return(linked)
 	# return 
 	out = linked/nonLinked
     return(out)
+	}
+
+# wrapper to get linked or unlinked match probability
+getMatchProb = function(hypothesis)
+	{
+	if(hypothesis$relationship%in%c(0,1))
+		{
+		matchProb(hypothesis,hypothesis$relatedness,hypothesis$fst)
+		} else {
+		linkage(hypothesis,FALSE)
+		}
 	}
 
