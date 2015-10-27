@@ -1,7 +1,7 @@
 \name{plot.peaks.results} 
 \alias{plot.peaks.results} 
 \title{likeLTD::plot.peaks.results} 
-\usage{plot.peaks.results(x=NA,...,hyp,res,replicate=1,toplot=NULL,fileName=NULL)}
+\usage{peaks.results.plot(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)}
 \arguments{
     \item{hyp}{Hypothesis used to generate parameters for optimisation.}
     \item{res}{Either prosecution or defence results from \code{evaluate.peaks}
@@ -12,7 +12,6 @@
     \item{fileName}{Output file name for plot. If \code{NULL} the plot is output to 
 	a plot window instead.}
     \item{...}{Extra parameters to pass to \code{boxplot}.}
-    \item{x}{Not used.}
 }
 \value{
 Pdf file or plot window.

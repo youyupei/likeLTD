@@ -1,7 +1,7 @@
 \name{plot.peaks.results} 
 \alias{plot.peaks.results} 
 \title{likeLTD::plot.peaks.results} 
-\usage{plot.peaks.results(hyp,res,replicate=1,toplot=NULL,fileName=NULL,x=NA,...)}
+\usage{peaks.results.plot(x=NA,...,hyp,res,replicate=1,toplot=NULL,fileName=NULL)}
 \arguments{
     \item{hyp}{Hypothesis used to generate parameters for optimisation.}
     \item{res}{Either prosecution or defence results from \code{evaluate.peaks}

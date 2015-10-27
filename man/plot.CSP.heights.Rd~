@@ -1,11 +1,11 @@
 \name{plot.CSP.heights} 
 \alias{plot.CSP.heights} 
 \title{likeLTD::plot.CSP.heights} 
-\usage{plot.CSP.heights(csp, refs, dbFile = NULL, kit = NULL, 
+\usage{CSP.heights.plot(csp, refs, dbFile = NULL, kit = NULL, 
 			outputFile = NULL, toPlot = NULL, 
 			detectThresh = NULL, uncThresh = 0.05, 
 			stutterThresh = 0.15, doStutter = FALSE,
-			replicate = 1,x=NA,...)}
+			replicate = 1,...)}
 \arguments{
   \item{csp}{CSP as returned from \code{read.peaks.profile}.}
   \item{refs}{Reference profiles as returned by \code{read.known.profiles}.}

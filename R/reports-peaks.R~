@@ -119,10 +119,10 @@ simplify.locus.names = function(names)
     }
 
 # function to plot the CSP data as RFU against mean BP for each locus
-plot.CSP.heights = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
+CSP.heights.plot = function(x=NA,...,csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 				toPlot=NULL,detectThresh=NULL,
 				uncThresh=0.05,stutterThresh=0.15,
-				doStutter=FALSE,replicate=1,x=NA,...)
+				doStutter=FALSE,replicate=1)
 	{
 	# get database
     if(is.null(dbFile)&is.null(kit)) kit = "DNA17"
@@ -666,7 +666,7 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 		addText(doc,paste0("Replicate: ",names(gen$csp$alleles)[y]),bold=TRUE);
 		addNewLine(doc)
 		addPlot( doc, plot.fun = print, width = 5.5, height = 5, x = 
-			plot.CSP.heights(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
+			CSP.heights.plot(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
 					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
 		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): blue=allelic, purple=uncertain, red=non-allelic.")
