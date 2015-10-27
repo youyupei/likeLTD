@@ -120,7 +120,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
     template = args[-which(names(args) %in% fixed)]
   } else  fixedstuff = NULL
     # Linkage adjustment if related
-    linkBool = doLinkage&!identical(hypothesis$relatedness,c(0,0))&hypothesis$hypothesis=="prosecution"
+    linkBool = doLinkage&!identical(!hypothesis$relationship%in%c(0,1))&hypothesis$hypothesis=="prosecution"
   if(linkBool)
     {
     linkFactor = linkage(hypothesis)

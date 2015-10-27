@@ -160,7 +160,7 @@ optimisation.params <- function(hypothesis, verbose=FALSE, fixed=NULL,
   } else  fixedstuff = NULL
 
     # Linkage adjustment if brothers
-    linkBool = doLinkage&identical(hypothesis$relatedness,c(0.5,0.25))&hypothesis$hypothesis=="prosecution"
+    linkBool = doLinkage&!hypothesis$relationship%in%c(0,1)&hypothesis$hypothesis=="prosecution"
   if(linkBool)
     {
     linkFactor = linkage(hypothesis)
@@ -329,8 +329,6 @@ DEoptimLoop <- function(PARAMS, tolerance=1e-6){
 			{
 			globalBestVal = results$optim$bestval
 			globalBestMem = results$optim$bestmem	
-			GLOBALVAL <<- globalBestVal
-			GLOBALMEM <<- globalBestMem
 			}
 		# save current result
 		oldresult = results$optim$bestval

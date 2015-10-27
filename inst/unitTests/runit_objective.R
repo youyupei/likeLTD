@@ -56,7 +56,7 @@ test_regression1 <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(0.0, 0),
+    relationship  = 0,
     combineRare  = FALSE
   )
   if(! "defence.hypothesis" %in% ls(.GlobalEnv))
@@ -213,7 +213,7 @@ test_regression.relatedness <- svTest(function() {
     ethnic       = "EA1",
     adj          = 1.0,
     fst          = 0.02,
-    relatedness  = c(1, 1)/4,
+    relationship  = 2,
     combineRare  = FALSE
   )
   defenceHypothesis = do.call(defence.hypothesis, args)
@@ -259,7 +259,7 @@ test_regression.relatedness <- svTest(function() {
   checkEquals(prod(result$objectives * result$penalties), prod(objectives * penalty), checkNames=FALSE)
   # old result was 5.75589320779353e-25 (different penalties)
 
-  defenceHypothesis$relatedness = c(0.5, 0.75)/4
+  defenceHypothesis$relionship = 2
   likelihood <- create.likelihood.vectors(defenceHypothesis)
   # This also tests that refIndiv works. The objective function should be
   # inserting 1 at position 3 in rcont.
