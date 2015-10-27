@@ -1,11 +1,11 @@
 \name{plot.CSP.heights} 
 \alias{plot.CSP.heights} 
 \title{likeLTD::plot.CSP.heights} 
-\usage{plot.CSP.heights(csp, refs, dbFile = NULL, kit = NULL, 
+\usage{plot.CSP.heights(x=NA,...,csp, refs, dbFile = NULL, kit = NULL, 
 			outputFile = NULL, toPlot = NULL, 
 			detectThresh = NULL, uncThresh = 0.05, 
 			stutterThresh = 0.15, doStutter = FALSE,
-			replicate = 1,...)}
+			replicate = 1)}
 \arguments{
   \item{csp}{CSP as returned from \code{read.peaks.profile}.}
   \item{refs}{Reference profiles as returned by \code{read.known.profiles}.}
@@ -24,6 +24,7 @@
   \item{doStutter}{Logical. Specifies whether to suggest peaks as non-allelic/uncertain/allelic.}
   \item{replicate}{Which replicate to plot.}
   \item{...}{Extra parameters to pass to \code{plot}.}
+  \item{x}{Not used.}
 }
 \value{
 Pdf file or plot window.

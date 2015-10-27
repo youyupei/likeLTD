@@ -376,7 +376,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	}
 
 
-plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
+plot.peaks.results = function(x=NA,...,hyp,res,replicate=1,toplot=NULL,fileName=NULL)
 	{
 	# mean & sd from results
 	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
@@ -415,7 +415,6 @@ plot.peaks.results = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE,...)
 		}
 	if(!is.null(fileName)) dev.off()
-
 	}
 
 
