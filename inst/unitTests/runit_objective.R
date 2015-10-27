@@ -233,7 +233,7 @@ test_regression.relatedness <- svTest(function() {
 4.2746726857339074597e-04)
   names(objectives) = c("D3S1358", "vWA", "D16S539", "D2S1338", "D8S1179", "D21S11", "D18S51", "D19S433",
                         "TH01", "FGA")
-  penalty = 2.6078646479706
+  penalty = 2.6078646479705969163
   result <- do.call(likelihood, arguments)
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), prod(objectives * penalty), checkNames=FALSE)
@@ -247,19 +247,19 @@ test_regression.relatedness <- svTest(function() {
                    locusAdjustment=rep(1,times=10),
                    power=-4.35,
                    dropout=c(0.175, 0.105) )
-  objectives = c(1.80216091977255e-03, 3.60032286625716e-02, 3.91628936030574e-02,
-                 1.35921436545295e-03, 1.70921706383154e-01, 6.80165107428541e-06,
-                 2.21989141657041e-06, 1.31481378540658e-02, 5.01713248581239e-02,
-                 2.04269633599325e-03)
+  objectives = c(2.0324320110552429076e-03, 4.0692306250085193142e-02, 4.4262872552010612548e-02, 
+1.5005784145824823013e-03, 1.9188770082595565936e-01, 7.4396398032556112094e-06, 
+2.1466961591367787368e-06, 1.3734648258538964885e-02, 5.5349543045990240442e-02, 
+2.2848765693775441657e-03)
   names(objectives) = c("D3S1358", "vWA", "D16S539", "D2S1338", "D8S1179", "D21S11", "D18S51", "D19S433",
                         "TH01", "FGA")
-  penalty = 2.607865
+  penalty = 2.6078646479705969163
   result <- do.call(likelihood, arguments)
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), prod(objectives * penalty), checkNames=FALSE)
   # old result was 5.75589320779353e-25 (different penalties)
 
-  defenceHypothesis$relionship = 2
+  defenceHypothesis$relationship = 2
   likelihood <- create.likelihood.vectors(defenceHypothesis)
   # This also tests that refIndiv works. The objective function should be
   # inserting 1 at position 3 in rcont.
@@ -270,13 +270,13 @@ test_regression.relatedness <- svTest(function() {
                    locusAdjustment=rep(1,times=10),
                    power=-4.35,
                    dropout=c(0.175, 0.105) )
-  objectives = c(1.42928505786127e-03, 2.89308741853859e-02, 2.91781768719226e-02,
-                 1.07691206144212e-03, 1.40960034434433e-01, 5.21398235786849e-06,
-                 2.38633107944920e-06, 9.76030592868755e-03, 4.11927291159638e-02,
-                 1.61542861999956e-03)
+  objectives = c(2.0324320110552429076e-03, 4.0692306250085193142e-02, 4.4262872552010612548e-02, 
+1.5005784145824823013e-03, 1.9188770082595565936e-01, 7.4396398032556112094e-06, 
+2.1466961591367787368e-06, 1.3734648258538964885e-02, 5.5349543045990240442e-02, 
+2.2848765693775441657e-03)
   names(objectives) = c("D3S1358", "vWA", "D16S539", "D2S1338", "D8S1179", "D21S11", "D18S51", "D19S433",
                         "TH01", "FGA")
-  penalty = 2.607865
+  penalty = 2.6078646479705969163
   result <- do.call(likelihood, arguments)
   checkEquals(result$objectives, objectives)
   checkEquals(prod(result$objectives * result$penalties), prod(objectives * penalty), checkNames=FALSE)
