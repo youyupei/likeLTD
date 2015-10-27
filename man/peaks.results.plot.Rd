@@ -1,6 +1,6 @@
-\name{plot.peaks.results} 
-\alias{plot.peaks.results} 
-\title{likeLTD::plot.peaks.results} 
+\name{peaks.results.plot} 
+\alias{peaks.results.plot} 
+\title{likeLTD::peaks.results.plot} 
 \usage{peaks.results.plot(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)}
 \arguments{
     \item{hyp}{Hypothesis used to generate parameters for optimisation.}

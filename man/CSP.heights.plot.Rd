@@ -1,6 +1,6 @@
-\name{plot.CSP.heights} 
-\alias{plot.CSP.heights} 
-\title{likeLTD::plot.CSP.heights} 
+\name{CSP.heights.plot} 
+\alias{CSP.heights.plot} 
+\title{likeLTD::CSP.heights.plot} 
 \usage{CSP.heights.plot(csp, refs, dbFile = NULL, kit = NULL, 
 			outputFile = NULL, toPlot = NULL, 
 			detectThresh = NULL, uncThresh = 0.05, 
