@@ -692,8 +692,15 @@ interim = function(resultsP,resultsD,step,n.steps)
 
 evaluate.from.interim <- function(file){
 
-	# load the 'interim.RData' file produced by evaluate(..., interim=T)
+	# check if interim.RData exists
 	if(!grep(pattern = 'interim.RData', x=file))stop("File must be the 'interim.RData' file produced by evaluate() when interim=T")
+	# define variables to appease the CRAN gods
+	n.steps = NULL
+	CR.steps = NULL
+	tol.steps = NULL
+	progBar = NULL
+	pb = NULL
+	# load the 'interim.RData' file produced by evaluate(..., interim=T)
 	load(file)
 
 		for(n in n:n.steps){

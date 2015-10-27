@@ -113,7 +113,7 @@ plotline = function(height,size,contributors,colours)
    
 simplify.locus.names = function(names)
     {
-    index = grep("D[0-9]{1,}S{1}",tests)
+    index = grep("D[0-9]{1,}S{1}",names)
     names[index] = sapply(names[index],FUN=function(a) strsplit(a,split="S")[[1]][1])
     return(names)
     }
