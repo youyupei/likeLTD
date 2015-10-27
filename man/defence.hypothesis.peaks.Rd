@@ -6,8 +6,8 @@
                         adj=1e0, fst=0.03, databaseFile=NULL, 
                         linkageFile=NULL,
                         detectionThresh=30, doDropin=FALSE, 
-                        doDoubleStutter=FALSE,doOverStutter=FALSE,
-                        combineRare=TRUE, rareThreshold=0.05,
+                        doDoubleStutter=TRUE,doOverStutter=TRUE,
+                        combineRare=TRUE, rareThreshold=1,
                         kit=NULL, relationship=0, ...)
 }
 \arguments{

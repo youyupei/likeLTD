@@ -11,7 +11,7 @@
 	all loci are plotted.}
     \item{fileName}{Output file name for plot. If \code{NULL} the plot is output to 
 	a plot window instead.}
-    \item{...}{Extra parameters to pass to \code{boxplot}.}
+    \item{...}{Extra parameters to pass to \code{plot}.}
 }
 \value{
 Pdf file or plot window.

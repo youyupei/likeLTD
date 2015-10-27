@@ -3,7 +3,7 @@
 \title{likeLTD::pack.admin.input.peaks} 
 \usage{pack.admin.input.peaks(peaksFile, refFile, caseName='dummy',
                         databaseFile=NULL, kit=NULL, linkageFile=NULL,
-                        detectionThresh=30,outputPath=getwd())}
+                         outputPath=getwd(),detectionThresh=30)}
 \arguments{
   \item{peaksFile}{Crime scene profile with peak height data}
   \item{refFile}{Reference profiles}
