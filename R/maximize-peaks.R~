@@ -376,7 +376,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	}
 
 
-peaks.results.plot = function(x=NA,...,hyp,res,replicate=1,toplot=NULL,fileName=NULL)
+peaks.results.plot = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 	{
 	# mean & sd from results
 	diagParams = optimisation.params.peaks(hyp,diagnose=TRUE)
@@ -428,7 +428,7 @@ multiConverged = function(L,globalVal,tolerance,nConverged=5)
     any(sapply(L[(length(L)-nConverged):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL, nConverged=5){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
@@ -550,41 +550,44 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim
 			if(interim==TRUE) interim(P.step,D.step,n,n.steps)
 		    }
 		}
-        # check for convergence   
-        while(multiConverged(Ld,GlobalDval,tolerance,nConverged)|multiConverged(Lp,GlobalPval,tolerance,nConverged))
-            {
-	    n = n+1
-            D.step <- DEoptimLoop(D.pars,tolerance)
-            P.step <- DEoptimLoop(P.pars,tolerance)
-            Ld = c(Ld,D.step$optim$bestval)
-            Lp = c(Lp,P.step$optim$bestval)
-			# set global results
-			if(D.step$optim$bestval<GlobalDval)
-				{
-				GlobalDval = D.step$optim$bestval
-				GlobalDmem = D.step$optim$bestmem
-				}
-			if(P.step$optim$bestval<GlobalPval)
-				{
-				GlobalPval = P.step$optim$bestval
-				GlobalPmem = P.step$optim$bestmem
-				}
-			# put the Def outputs into the combined output	
-			D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
-			D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
-			D.iter <- c(D.iter, D.step$optim$iter)
-			D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
-			# put the Pros outputs into the combined output	
-			P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
-			P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
-			P.iter <- c(P.iter, P.step$optim$iter)
-			P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
-			# recycle the current pop into the next loop
-			D.pars$control$initialpop <- D.step$member$pop
-			P.pars$control$initialpop <- P.step$member$pop
-			# generate outputs if interim = TRUE
-			if(interim==TRUE) interim(P.step,D.step,n,n.steps)
-            }
+        # check for convergence
+	if(converge)
+		{   
+        	while(multiConverged(Ld,GlobalDval,tolerance,nConverged)|multiConverged(Lp,GlobalPval,tolerance,nConverged))
+	            {
+		    n = n+1
+	            D.step <- DEoptimLoop(D.pars,tolerance)
+	            P.step <- DEoptimLoop(P.pars,tolerance)
+	            Ld = c(Ld,D.step$optim$bestval)
+	            Lp = c(Lp,P.step$optim$bestval)
+		    # set global results
+		    if(D.step$optim$bestval<GlobalDval)
+			{
+			GlobalDval = D.step$optim$bestval
+			GlobalDmem = D.step$optim$bestmem
+			}
+		    if(P.step$optim$bestval<GlobalPval)
+			{
+			GlobalPval = P.step$optim$bestval
+			GlobalPmem = P.step$optim$bestmem
+			}
+		    # put the Def outputs into the combined output	
+		    D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+		    D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
+		    D.iter <- c(D.iter, D.step$optim$iter)
+		    D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+		    # put the Pros outputs into the combined output	
+		    P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+		    P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
+		    P.iter <- c(P.iter, P.step$optim$iter)
+		    P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
+		    # recycle the current pop into the next loop
+		    D.pars$control$initialpop <- D.step$member$pop
+		    P.pars$control$initialpop <- P.step$member$pop
+		    # generate outputs if interim = TRUE
+		    if(interim==TRUE) interim(P.step,D.step,n,n.steps)
+                    }
+		}
 
     # get WoE
     WoE = Ld-Lp

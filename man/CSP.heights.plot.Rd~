@@ -20,7 +20,7 @@
   \item{detectThresh}{Detection threshold used for electrophoresis analysis. If \code{NULL},
 	this is not plotted.}
   \item{uncThresh}{Threshold for suggesting that a peak is uncertain.}
-  \item{stutterThresh}{Threshold for suggesting a peak is allelic.}
+  \item{stutterThresh}{Threshold for suggesting an peak is allelic.}
   \item{doStutter}{Logical. Specifies whether to suggest peaks as non-allelic/uncertain/allelic.}
   \item{replicate}{Which replicate to plot.}
   \item{...}{Extra parameters to pass to \code{plot}.}
