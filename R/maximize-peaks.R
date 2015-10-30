@@ -489,7 +489,12 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim
 	#if(sdStep<1) sdStep = 1.5
 	# decide how many steps to run
 	#if(is.null(n.steps)) n.steps = ceiling(log2(sdStep))*8+length(grep("cont",names(D.pars$upper)))
-	if(is.null(n.steps)) n.steps = ceiling(sdStep+length(grep("cont",names(D.pars$upper))))
+	if(is.null(n.steps)) 
+		{
+		nCont = length(grep("DNAcont",names(D.pars$upper)))
+		nReps = length(grep("repAdjust",names(D.pars$upper)))+1
+		n.steps = ceiling(log2(sdStep)*nCont*(nReps+1))
+		}
 
 	# retain all the likelihood ratios
 	Ld <- numeric(n.steps)
