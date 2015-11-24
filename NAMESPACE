@@ -60,6 +60,13 @@ importFrom(tcltk, tkProgressBar)
 importFrom(tcltk, setTkProgressBar)
 import(rtf)
 
+importFrom("grDevices", "dev.off", "pdf", "rainbow")
+importFrom("graphics", "abline", "barplot", "boxplot", "lines", "par",
+             "plot", "text")
+importFrom("stats", "dexp", "dgamma", "dnorm", "na.omit", "pgamma",
+             "qgamma", "runif", "sd")
+importFrom("utils", "data", "getFromNamespace", "read.csv",
+             "read.table", "relist", "sessionInfo", "write.table")
 
 #export(.cpp.testCDF)
 #export(.cpp.testPDF)
