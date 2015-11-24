@@ -40,18 +40,4 @@ If using the peak heights model, there should be an extra column, "LUS", which
 gives the mean longest uninterrupted sequence for that allele. 
 }
 \seealso{read.unc.profile, read.known.profiles}
-\examples{
-# datapath to example files
-datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
-# File paths and case name for allele report
-admin = pack.admin.input(
-            cspFile = file.path(datapath, 'hammer-CSP.csv'),
-            refFile = file.path(datapath, 'hammer-reference.csv'),
-            caseName = "hammer",
-	    kit= "SGMplus"
-             )
-
-# get allele database
-load.allele.database(kit=admin$kit)
-}

@@ -50,5 +50,5 @@ admin = pack.admin.input(
              )
 
 # get CSP
-read.csp.profile(admin$cspFile)
+read.csp.profile{admin$cspFile}
 }

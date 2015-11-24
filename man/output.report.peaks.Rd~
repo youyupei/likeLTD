@@ -1,7 +1,7 @@
 \name{output.report.peaks}
 \alias{output.report.peaks}
 \title{likeLTD::output.report.peaks}
-\usage{output.report(prosecutionHypothesis,defenceHypothesis, 
+\usage{output.report.peaks(prosecutionHypothesis,defenceHypothesis, 
                       results,file=NULL)}
 \arguments{
   \item{prosecutionHypothesis}{The output from \code{prosecution.hypothesis.peaks}.}

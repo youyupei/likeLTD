@@ -12,7 +12,7 @@ likeMatrix=FALSE, diagnose=FALSE,\dots)}
   \item{likeMatrix}{Whether to return likelihoods for every genotype combination, or 
   a likelihood summed over all genotypes after optimisation. Set to TRUE 
   for individual genotype likelihoods. This is used for 
-  \code{get.likely.genotypes}.}
+  \code{get.likely.genotypes.peaks}.}
   \item{diagnose}{Logical. If \code{TRUE} returns a list of peak heights, 
 		estimated mean peak height and peak height standard deviation 
 		for each genotype combination. This can be used to obtain Z values 

@@ -71,8 +71,7 @@ paramsP = optimisation.params(hypP)
 paramsD = optimisation.params(hypD)
 
 # Run optimisation
-# n.steps set for demonstration purposes
-results = evaluate(paramsP, paramsD, n.steps=1)
+results = evaluate(paramsP, paramsD)
 }
 
 

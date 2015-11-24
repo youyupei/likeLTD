@@ -40,7 +40,7 @@
   \item{fn}{The objective function}
   \item{lower}{Lower bounds for the parameters}
   \item{upper}{Upper bounds for the parameters}
-  \item{control}{Control parameters for \code{stats::optim}}
+  \item{control}{Control parameters for \code{DEoptim::DEoptim}}
 }
 \description{Creates a list of parameters to use with \code{DEoptim::DEoptim}.}
 \details{

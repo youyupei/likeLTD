@@ -74,13 +74,5 @@ paramsD = optimisation.params(hypD)
 # n.steps set for demonstration purposes
 results = evaluate(paramsP, paramsD, n.steps=1)
 
-# get most likely marginal genotypes under defence
-get.likely.genotypes(hypD,paramsD,results$Def)
-
-# get most likely joint genotypes under defence
-get.likely.genotypes(hypD,paramsD,results$Def,joint=TRUE)
-
-# get full posterior likelihoods
-get.likely.genotypes(hypD,paramsD,results$Def,posterior=TRUE)
 }
 

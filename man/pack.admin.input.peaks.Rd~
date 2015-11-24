@@ -3,7 +3,7 @@
 \title{likeLTD::pack.admin.input.peaks} 
 \usage{pack.admin.input.peaks(peaksFile, refFile, caseName='dummy',
                         databaseFile=NULL, kit=NULL, linkageFile=NULL,
-                         outputPath=getwd(),detectionThresh=30)}
+                        detectionThresh=30,outputPath=getwd())}
 \arguments{
   \item{peaksFile}{Crime scene profile with peak height data}
   \item{refFile}{Reference profiles}
@@ -19,7 +19,15 @@
 }
 \description{Packs and verifies administrative information. Can be used as partial
 input for \code{defence.hypothesis.peaks} and \code{prosecution.hypothesis.peaks}}
+\examples{
+# datapath to example files
+datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
-
-
-
+# File paths and case name for allele report
+admin = pack.admin.input.peaks(
+            peaksFile = file.path(datapath, 'laboratory-CSP.csv'),
+            refFile = file.path(datapath, 'laboratory-reference.csv'),
+            caseName = "Laboratory",
+            detectionThresh = 20
+             )
+}

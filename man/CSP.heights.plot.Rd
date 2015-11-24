@@ -39,6 +39,36 @@ Plot one replicate from a peak heights CSP.
   uncertain, or non-allelic.
 }
 \seealso{allele.report.peaks}
+\examples{
+# datapath to example files
+datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
+# File paths and case name for allele report
+admin = pack.admin.input.peaks(
+            peaksFile = file.path(datapath, 'laboratory-CSP.csv'),
+            refFile = file.path(datapath, 'laboratory-reference.csv'),
+            caseName = "Laboratory",
+            detectionThresh = 20
+             )
+
+# plot CSP heights
+CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
+		ref=read.known.profiles(admin$refFile))
+
+# to plot just the first four loci
+CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
+		ref=read.known.profiles(admin$refFile),
+		toplot=1:4)
+
+# to estimate which peaks are non-allelic
+CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
+		ref=read.known.profiles(admin$refFile),
+		doStutter=TRUE)
+
+# to display detection threshold
+CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
+		ref=read.known.profiles(admin$refFile),
+		detectThresh=20)
+}
 
 

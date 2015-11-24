@@ -19,7 +19,15 @@
 }
 \description{Packs and verifies administrative information. Can be used as partial
 input for \code{defence.hypothesis.peaks} and \code{prosecution.hypothesis.peaks}}
+\examples{
+# datapath to example files
+datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
-
-
-
+# File paths and case name for allele report
+admin = pack.admin.input.peaks(
+            peaksFile = file.path(datapath, 'laboratory-CSP.csv'),
+            refFile = file.path(datapath, 'laboratory-reference.csv'),
+            caseName = "Laboratory",
+            detectionThresh = 20
+             )
+}

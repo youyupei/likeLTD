@@ -44,3 +44,29 @@ makes sure the relatedness factor is zero. It sets the reference individual to
 the first queried individual, unless it is not subject to dropout. In that
 case, the reference individual is the first individual with dropout. } 
 \seealso{defence.hypothesis}
+\examples{
+# datapath to example files
+datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
+
+# File paths and case name for allele report
+admin = pack.admin.input(
+            cspFile = file.path(datapath, 'hammer-CSP.csv'),
+            refFile = file.path(datapath, 'hammer-reference.csv'),
+            caseName = "hammer",
+	    kit= "SGMplus"
+             )
+
+# Enter arguments
+args = list(
+        nUnknowns = 1,
+        doDropin = FALSE,
+        ethnic = "EA1",
+        adj = 1,
+        fst = 0.02,
+        relatedness = c(0,0)
+        )
+
+# Create hypotheses
+hypP = do.call(prosecution.hypothesis, append(admin,args))
+hypD = do.call(defence.hypothesis, append(admin,args))
+}

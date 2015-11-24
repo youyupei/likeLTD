@@ -14,7 +14,6 @@ inputs for nUnknowns and doDropin are suggested.
 The report is placed in the directory specified by admin$outputPath.
 }
 \examples{
-# datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
 # File paths and case name for allele report
