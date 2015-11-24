@@ -41,6 +41,7 @@ Both prosecution and defence cases are optimized simultaneously.
 }
 \seealso{DEoptim,DEoptimLoop}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
@@ -73,6 +74,7 @@ paramsD = optimisation.params(hypD)
 # Run optimisation
 # n.steps set for demonstration purposes
 results = evaluate(paramsP, paramsD, n.steps=1)
+}
 }
 
 

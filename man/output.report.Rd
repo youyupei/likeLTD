@@ -19,6 +19,7 @@ profiles and the crime scene profile, and the post-evaluation results of the lik
 and weight of evidence.
 }
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
@@ -54,4 +55,5 @@ results = evaluate(paramsP, paramsD, n.steps=1)
 
 # Generate output report
 output.report(hypP,hypD,results)
+}
 }

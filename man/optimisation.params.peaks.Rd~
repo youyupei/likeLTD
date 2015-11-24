@@ -76,6 +76,7 @@
   \code{evaluate.peaks}.
 }
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 

@@ -76,6 +76,7 @@
   \code{evaluate.peaks}.
 }
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -102,6 +103,7 @@ paramsD = optimisation.params.peaks(hypD)
 
 # parameters without linkage adjustment
 paramsP = optimisation.params.peaks(hypP,doLinkage=FALSE)
+}
 }
 
 

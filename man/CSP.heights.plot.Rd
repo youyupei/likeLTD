@@ -40,6 +40,7 @@ Plot one replicate from a peak heights CSP.
 }
 \seealso{allele.report.peaks}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -69,6 +70,7 @@ CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
 CSP.heights.plot(csp=read.peaks.profile(admin$peaksFile),
 		ref=read.known.profiles(admin$refFile),
 		detectThresh=20)
+}
 }
 
 

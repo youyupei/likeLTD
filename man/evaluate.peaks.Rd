@@ -43,6 +43,7 @@ some of the parameters of the prosecution optiimisation.
 }
 \seealso{DEoptim,DEoptimLoop}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -75,6 +76,7 @@ paramsD$control$itermax=25
 # n.steps and converge set for demonstration purposes
 results = evaluate.peaks(paramsP, paramsD, n.steps=1, 
       converge=FALSE)
+}
 }
 
 

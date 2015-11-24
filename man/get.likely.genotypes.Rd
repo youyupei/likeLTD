@@ -41,6 +41,7 @@ contributors.}
 \seealso{defence.hypothesis, prosecution.hypothesis, 
 optimisation.params,DEoptimLoop}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
@@ -82,5 +83,6 @@ get.likely.genotypes(hypD,paramsD,results$Def,joint=TRUE)
 
 # get full posterior likelihoods
 get.likely.genotypes(hypD,paramsD,results$Def,posterior=TRUE)
+}
 }
 

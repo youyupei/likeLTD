@@ -25,6 +25,7 @@ Plot distribution of fitted peaks along with actual peak heights.
 }
 \seealso{plot.CSP.heights}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -66,6 +67,7 @@ peaks.results.plot(hypD,results$Def)
 
 # plot fitted results for first four loci
 peaks.results.plot(hypP,results$Pros,toplot=1:4)
+}
 }
 
 

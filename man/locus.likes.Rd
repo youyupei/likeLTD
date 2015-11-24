@@ -17,6 +17,7 @@ e.g. \code{results$Pros} or \code{results$Def}.}
 }
 \seealso{evaluate}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
@@ -50,10 +51,10 @@ paramsD = optimisation.params(hypD)
 # n.steps set for demonstration purposes
 results = evaluate(paramsP, paramsD, n.steps=1)
 
-
 # get locus likelihoods under prosecution
 locus.likes(hypP,results$Pros)
 
 # get locus LRs
 locus.likes(hypP,results$Pros)/locus.likes.peaks(hypD,results$Def)
+}
 }

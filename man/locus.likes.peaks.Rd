@@ -16,6 +16,7 @@
 }
 \seealso{evaluate.peaks}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -54,4 +55,5 @@ locus.likes.peaks(hypP,results$Pros)
 
 # get locus LRs
 locus.likes.peaks(hypP,results$Pros)/locus.likes.peaks(hypD,results$Def)
+}
 }

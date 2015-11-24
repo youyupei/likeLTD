@@ -53,13 +53,21 @@ paramsD = optimisation.params.peaks(hypD)
 paramsP$control$itermax=25
 paramsD$control$itermax=25
 
+\dontrun{
 # Run optimisation
 # n.steps and converge set for demonstration purposes
 results = evaluate.peaks(paramsP, paramsD, n.steps=1, 
       converge=FALSE)
 
 # plot fitted results under prosecution
+peaks.results.plot(hypP,results$Pros)
 
+# plot fitted results under defence
+peaks.results.plot(hypD,results$Def)
+
+# plot fitted results for first four loci
+peaks.results.plot(hypP,results$Pros,toplot=1:4)
+}
 }
 
 

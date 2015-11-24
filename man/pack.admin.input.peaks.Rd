@@ -20,6 +20,7 @@
 \description{Packs and verifies administrative information. Can be used as partial
 input for \code{defence.hypothesis.peaks} and \code{prosecution.hypothesis.peaks}}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -30,4 +31,5 @@ admin = pack.admin.input.peaks(
             caseName = "Laboratory",
             detectionThresh = 20
              )
+}
 }

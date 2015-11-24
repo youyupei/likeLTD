@@ -29,5 +29,5 @@ admin = pack.admin.input.peaks(
              )
 
 # generate allele report
-allele.report.peaks(admin)
+\dontrun{allele.report.peaks(admin)}
 }

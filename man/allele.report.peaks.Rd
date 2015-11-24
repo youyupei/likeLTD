@@ -17,6 +17,7 @@ inputs for nUnknowns and doDropin are suggested.
 The report is placed in the directory specified by admin$outputPath.
 }
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -29,5 +30,5 @@ admin = pack.admin.input.peaks(
              )
 
 # generate allele report
-allele.report.peaks(admin)
+allele.report.peaks(admin)}
 }

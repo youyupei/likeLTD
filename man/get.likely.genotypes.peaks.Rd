@@ -42,6 +42,7 @@ contributors.}
 \seealso{defence.hypothesis.peaks, prosecution.hypothesis.peaks, 
 optimisation.params.peaks,evaluate.peaks}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -86,4 +87,5 @@ gensJoint = get.likely.genotypes.peaks(hypD,paramsD,
 # get posterior likelihoods for all genotype combinations
   gensPosterior = get.likely.genotypes.peaks(hypD,paramsD,
       results$Def,posterior=TRUE)
+}
 }

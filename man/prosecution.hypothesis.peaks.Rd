@@ -48,6 +48,7 @@ prosecution.}
 } 
 \seealso{defence.hypothesis.peaks}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -67,5 +68,6 @@ args = list(
 # Create hypotheses
 hypP = do.call(prosecution.hypothesis.peaks, append(admin,args))
 hypD = do.call(defence.hypothesis.peaks, append(admin,args))
+}
 }
 

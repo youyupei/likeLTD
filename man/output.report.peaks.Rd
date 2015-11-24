@@ -18,6 +18,7 @@ Results include both the pre-evaluation assessment of the crime-stain and refere
 and weight of evidence.
 }
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -53,4 +54,5 @@ results = evaluate.peaks(paramsP, paramsD, n.steps=1,
 
 # generate output report
 output.report.peaks(hypP,hypD,results)
+}
 }
