@@ -25,7 +25,7 @@ search. Gradually moves towards CR.end to allow a broader initial search, gradua
 more localised in parameter space. See DEoptim for further details.}
 \item{CR.end}{Numerical, between 0 and 1,see details for CR.start.}
 \item{seed.input}{An integer that should be specified if the user wishes to set a particular seed. 
-If not specified, the program sets the seed to an integer representation of the present time and date.}
+If not specified, the program sets the seed to an integer representation of the present time, date and process ID.}
 
 }
 \value{
@@ -33,9 +33,8 @@ A list containing five elements:
 \item{Pros}{Prosecution results, structured as results from DEoptim::DEoptim.}
 \item{Def}{Defence results, structured as results from DEoptim::DEoptim.}
 \item{WoE}{WoE for each chunk. The final value if the final WoE.}
-\item{seed.used}{Seed that is set at the beginning of computation; this will no longer apply if evaluate.from.interim.peaks is used.}
-\item{seed.input}{Seed that is input by the user; this will no longer apply if 
-evaluate.from.interim.peaks is used.}
+\item{seed.used}{Seed that is set at the beginning of computation.}
+\item{seed.input}{Seed that is input by the user.}
 } 
 \description{
 Optimize both prosecution and defence likelihoods, returning the weight of evidence.

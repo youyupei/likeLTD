@@ -21,7 +21,7 @@ CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5)}
 	parameter space. See DEoptim for further details.}
   \item{CR.end}{Numerical, between 0 and 1,see details for CR.start.}
   \item{seed.input}{An integer that should be specified if the user wishes to set a particular seed. If not
-	specified, the program sets the seed to an integer representation of the present time and date.}
+	specified, the program sets the seed to an integer representation of the present time, date and process ID.}
   \item{converge}{Logical. Whether or not to check for convergence of the last nConverged steps to the global best values.}
   \item{nConverged}{The number of steps with relitive difference to the current results less than \code{tolerance}
 	that determines convergence.}
@@ -32,9 +32,9 @@ A list containing seven elements:
 \item{Pros}{Prosecution results, structured as results from DEoptim::DEoptim.}
 \item{Def}{Defence results, structured as results from DEoptim::DEoptim.}
 \item{WoE}{WoE for each chunk. The final value is the final WoE.}
-\item{Lp}{-\log_{10} prosecution likelihood at each step usually.}
-\item{Ld}{-\log_{10} defence likelihood at each step usually.}
-\item{seed.used}{Seed that is set at the beginning of computation; this will no longer apply if evaluate.from.interim.peaks is used.}
+\item{Lp}{-log_{10} prosecution likelihood at each step usually.}
+\item{Ld}{-log_{10} defence likelihood at each step usually.}
+\item{seed.used}{Seed that is set at the beginning of computation.}
 \item{seed.input}{Seed that is input by the user; this will no longer apply if evaluate.from.interim.peaks is used.}
 } 
 \description{

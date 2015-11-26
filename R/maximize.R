@@ -494,7 +494,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	# set seed
 	if(is.null(seed.input)) 
 	    {
-	    seed.used =  as.integer(Sys.time())
+	    seed.used =  as.integer(Sys.getpid()+as.integer(Sys.time()))
 	    } else {
         seed.used = as.integer(seed.input)
 	    }

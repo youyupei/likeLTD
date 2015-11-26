@@ -437,7 +437,7 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim
 	# set seed
 	if(is.null(seed.input)) 
 	    {
-	    seed.used =  as.integer(Sys.time())
+	    seed.used =  as.integer(Sys.getpid()+as.integer(Sys.time()))
 	    } else {
         seed.used = as.integer(seed.input)
 	    }
