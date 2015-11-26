@@ -138,7 +138,7 @@ Here {\tt n.steps} and {\tt converge} are specified to reduce run-time for demon
 
 \begin{description}
 \item[interim:] Logical, whether or not to generate interim reports after every step of optimisation. Defaults to FALSE. 
-\item[seed.input:] Integer specification of a seed to use before optimisation. If unspecified, \likeLTD\ uses a numeric representation of the current time and date. 
+\item[seed.input:] Integer specification of a seed to use before optimisation. If unspecified, \likeLTD\ uses a numeric representation of the current time, date and process ID. 
 \end{description}
 
 The behaviour of the optimisation algorithm may be modified by specifying {\tt tolerance}, {\tt CR.start}, {\tt CR.end} and {\tt nConverged}, although we do not recommend altering these parameters. 
