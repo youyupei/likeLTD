@@ -655,6 +655,8 @@ evaluate.from.interim.peaks <- function(file){
 	converge = NULL
 	tolerance = NULL
 	nConverged = NULL
+	seed.used = NULL
+	seed.input=NULL
 	# load the 'interim.RData' file produced by evaluate(..., interim=T)
 	load(file)
 

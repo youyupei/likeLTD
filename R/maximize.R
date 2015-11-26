@@ -708,6 +708,8 @@ evaluate.from.interim <- function(file){
 	tol.steps = NULL
 	progBar = NULL
 	pb = NULL
+	seed.used = NULL
+	seed.input=NULL
 	# load the 'interim.RData' file produced by evaluate(..., interim=T)
 	load(file)
 
