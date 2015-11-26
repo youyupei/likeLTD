@@ -49,6 +49,7 @@ export(evaluate.peaks)
 export(CSP.heights.plot)
 export(allele.report.peaks)
 export(output.report.peaks)
+export(evaluate.from.interim.peaks)
 
 importFrom(DEoptim, DEoptim)
 #importFrom(pscl, densigamma)

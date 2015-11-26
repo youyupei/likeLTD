@@ -28,10 +28,14 @@ CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5)}
 
 }
 \value{
-A list containing three elements:
+A list containing seven elements:
 \item{Pros}{Prosecution results, structured as results from DEoptim::DEoptim.}
 \item{Def}{Defence results, structured as results from DEoptim::DEoptim.}
-\item{WoE}{WoE for each chunk. The final value if the final WoE.}
+\item{WoE}{WoE for each chunk. The final value is the final WoE.}
+\item{Lp}{-log_{10} prosecution likelihood at each step usually.}
+\item{Ld}{-log_{10} defence likelihood at each step usually.}
+\item{seed.used}{Seed that is set at the beginning of computation; this will no longer apply if evaluate.from.interim.peaks is used.}
+\item{seed.input}{Seed that is input by the user; this will no longer apply if evaluate.from.interim.peaks is used.}
 } 
 \description{
 Optimize both prosecution and defence likelihoods, returning the weight of evidence for peak height data.

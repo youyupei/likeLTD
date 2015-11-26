@@ -956,6 +956,10 @@ output.report <- function(prosecutionHypothesis,defenceHypothesis,results,file=N
 	addTable(doc, file.inputs.table.reformatter(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 
+	# seed used
+	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
+	addTable(doc, seedTable(results), col.justify='L', header.col.justify='L')
+
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')

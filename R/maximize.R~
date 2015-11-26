@@ -484,13 +484,21 @@ geometric.series <- function(start,end,n){
 return(steps)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE, CR.start=0.1, CR.end=0.7){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL){
 
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
-	
 	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
+
+	# set seed
+	if(is.null(seed.input)) 
+	    {
+	    seed.used =  as.integer(Sys.time())
+	    } else {
+        seed.used = as.integer(seed.input)
+	    }
+    set.seed(seed.used)
 
 	# combine the outputs outside the loop
 	P.bestmemit <- D.bestmemit <- NULL
@@ -663,7 +671,7 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	D.results$optim$nfeval <- D.nfeval
 
 # return all results
-return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+return(list(Pros =P.results,Def =D.results, WoE =WoE, seed.used=seed.used,seed.input=seed.input))}
 
 # function to output interim report
 interim = function(resultsP,resultsD,step,n.steps)
@@ -798,6 +806,6 @@ evaluate.from.interim <- function(file){
 	D.results$optim$nfeval <- D.nfeval
 
 # return all results
-return(list(Pros =P.results,Def =D.results, WoE =WoE))}
+return(list(Pros =P.results,Def =D.results, WoE =WoE, seed.used=seed.used,seed.input=seed.input))}
 
 

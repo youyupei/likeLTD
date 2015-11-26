@@ -432,8 +432,9 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
-	
 	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
+
+	# set seed
 	if(is.null(seed.input)) 
 	    {
 	    seed.used =  as.integer(Sys.time())
@@ -638,9 +639,156 @@ evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim
 	print(Ld)
 	print(Lp)
 
-# return all results
-return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed.used=seed.used,seed.input=seed.input))}
+	# return all results
+	return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed.used=seed.used,seed.input=seed.input))
+	}
 
 
+
+evaluate.from.interim.peaks <- function(file){
+	# check if interim.RData exists
+	if(!grep(pattern = 'interim.RData', x=file))stop("File must be the 'interim.RData' file produced by evaluate() when interim=T")
+	# define variables to appease the CRAN gods
+	n.steps = NULL
+	CR.steps = NULL
+	tol.steps = NULL
+	converge = NULL
+	tolerance = NULL
+	nConverged = NULL
+	# load the 'interim.RData' file produced by evaluate(..., interim=T)
+	load(file)
+
+	if(n<=n.steps) {
+	for(n in n:n.steps){
+		# change DEoptim parameters
+		D.pars$control$CR <- CR.steps[n]
+		P.pars$control$CR <- CR.steps[n]
+		
+		# run DEoptimLoop until convergence at the required step
+		D.step <- DEoptimLoop(D.pars,tol.steps[n])
+            	Ld[n] = D.step$optim$bestval
+            	P.step <- DEoptimLoop(P.pars,tol.steps[n])
+            	Lp[n] = P.step$optim$bestval
+
+		# set global results
+		if(D.step$optim$bestval<GlobalDval)
+			{
+			GlobalDval = D.step$optim$bestval
+			GlobalDmem = D.step$optim$bestmem
+			}
+		if(P.step$optim$bestval<GlobalPval)
+			{
+			GlobalPval = P.step$optim$bestval
+			GlobalPmem = P.step$optim$bestmem
+			}
+
+		# put the Def outputs into the combined output	
+		D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+		D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
+		D.iter <- c(D.iter, D.step$optim$iter)
+		D.nfeval <- c(D.nfeval, D.step$optim$nfeval)
+
+		# put the Pros outputs into the combined output	
+		P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+		P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
+		P.iter <- c(P.iter, P.step$optim$iter)
+		P.nfeval <- c(P.nfeval, P.step$optim$nfeval)	
+
+		# recycle the current pop into the next loop
+		D.pars$control$initialpop <- D.step$member$pop
+		P.pars$control$initialpop <- P.step$member$pop
+
+		# generate outputs if interim = TRUE
+		if(interim==TRUE) interim(P.step,D.step,n,n.steps)
+		}
+	}
+
+
+	        # check for convergence
+	if(converge)
+		{   
+        	while(multiConverged(Ld,GlobalDval,tolerance,nConverged)|multiConverged(Lp,GlobalPval,tolerance,nConverged))
+	            {
+		    n = n+1
+	            D.step <- DEoptimLoop(D.pars,tolerance)
+	            P.step <- DEoptimLoop(P.pars,tolerance)
+	            Ld = c(Ld,D.step$optim$bestval)
+	            Lp = c(Lp,P.step$optim$bestval)
+		    # set global results
+		    if(D.step$optim$bestval<GlobalDval)
+			{
+			GlobalDval = D.step$optim$bestval
+			GlobalDmem = D.step$optim$bestmem
+			}
+		    if(P.step$optim$bestval<GlobalPval)
+			{
+			GlobalPval = P.step$optim$bestval
+			GlobalPmem = P.step$optim$bestmem
+			}
+		    # put the Def outputs into the combined output	
+		    D.bestmemit <- rbind(D.bestmemit, D.step$member$bestmemit)
+		    D.bestvalit <- c(D.bestvalit, D.step$member$bestvalit)
+		    D.iter <- c(D.iter, D.step$optim$iter)
+		    D.nfeval <- c(D.nfeval, D.step$optim$nfeval)	
+		    # put the Pros outputs into the combined output	
+		    P.bestmemit <- rbind(P.bestmemit, P.step$member$bestmemit)
+		    P.bestvalit <- c(P.bestvalit, P.step$member$bestvalit)
+		    P.iter <- c(P.iter, P.step$optim$iter)
+		    P.nfeval <- c(P.nfeval, P.step$optim$nfeval)
+		    # recycle the current pop into the next loop
+		    D.pars$control$initialpop <- D.step$member$pop
+		    P.pars$control$initialpop <- P.step$member$pop
+		    # generate outputs if interim = TRUE
+		    if(interim==TRUE) interim(P.step,D.step,n,n.steps)
+                    }
+		}
+
+    	# get WoE
+    	WoE = Ld-Lp
+
+	changeFlag=FALSE
+	# if global result is better than result from last chunk
+	if(P.step$optim$bestval>GlobalPval)
+		{
+		P.step$optim$bestval = GlobalPval
+		P.step$optim$bestmem = GlobalPmem
+		print("*** Final prosecution result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+	if(D.step$optim$bestval>GlobalDval)
+		{
+		D.step$optim$bestval = GlobalDval
+		D.step$optim$bestmem = GlobalDmem
+		print("*** Final defence result was not the global optimum - consider re-running optimisation ***")
+		changeFlag=TRUE
+		}
+
+	if(changeFlag) WoE <- c(WoE,D.step$optim$bestval - P.step$optim$bestval)
+
+
+	# update final Pros results
+	P.results <- P.step
+	P.results$optim$bestval = GlobalPval
+	P.results$optim$bestmem = GlobalPmem
+	P.results$member$bestmemit <- P.bestmemit
+	P.results$member$bestvalit <- P.bestvalit
+	P.results$optim$iter <- P.iter
+	P.results$optim$nfeval <- P.nfeval
+
+	# update final Pros results
+	D.results <- D.step
+	D.results$optim$bestval = GlobalDval
+	D.results$optim$bestmem = GlobalDmem
+	D.results$member$bestmemit <- D.bestmemit
+	D.results$member$bestvalit <- D.bestvalit
+	D.results$optim$iter <- D.iter
+	D.results$optim$nfeval <- D.nfeval
+
+	print(Ld)
+	print(Lp)
+
+	# return all results
+	return(list(Pros=P.results,Def=D.results, WoE=WoE, Lp=Lp, Ld=Ld, seed.used=seed.used,seed.input=seed.input))
+	}
 
 
