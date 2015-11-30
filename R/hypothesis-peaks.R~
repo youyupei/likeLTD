@@ -516,16 +516,15 @@ if(length(hypothesis$detectionThresh)==1)
     "Observed peak height below detection threshold.")
 	} else {
 	loci = colnames(hypothesis$binaryProfile)
-	sapply(loci,FUN=function(x) 
+	tmp = sapply(loci,FUN=function(x) 
 		sapply(1:length(hypothesis$heightsProfile), FUN=function(y) 
 			if(any(na.omit(unlist(hypothesis$heightsProfile[[y]][x,]))<
 				hypothesis$detectionThresh[[x]])) 
-					errors = c(errors,
     					paste0("Observed peak height below detection threshold: ", 
 					x, " replicate ", y)
-					)
 			)
 		)
+	errors = c(errors, unlist(tmp))
 	}
   if(any(unlist(hypothesis$detectionThresh)>100))
 	errors = c(errors,

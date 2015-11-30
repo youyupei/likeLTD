@@ -1,4 +1,4 @@
-pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, detectionThresh=30, outputPath=getwd() ) {
+pack.admin.input.peaks <- function(peaksFile, refFile, caseName='dummy',databaseFile=NULL, kit=NULL, linkageFile=NULL, detectionThresh=20, outputPath=getwd() ) {
 	# Packs and verifies administrative information.
 	# Documentation in man directory.
     	paths <- c(peaksFile, refFile) 

@@ -320,7 +320,7 @@ convertRelationship = function(relationship)
 # Documentation is in man directory.
 prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
                                    nUnknowns=0, adj=1e0, fst=0.03, linkageFile=NULL,
-                                   databaseFile=NULL, detectionThresh=30, 
+                                   databaseFile=NULL, detectionThresh=20, 
                                    doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, rareThreshold=1, kit=NULL, relationship=0,...) {
   if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
@@ -390,7 +390,7 @@ if(!relationship%in%c(0,1))
 # Documentation is in man directory.
 defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknowns=0,
                                adj=1e0, fst=0.03, databaseFile=NULL, linkageFile=NULL,
-                               detectionThresh=30, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
+                               detectionThresh=20, doDropin=FALSE, doDoubleStutter=TRUE,doOverStutter=TRUE, combineRare=TRUE, 
 			       rareThreshold=1, kit=NULL, relationship=0,...) {
   if(relationship>7|relationship<0) stop("Relationship must be specified between 0 and 7")
   if(is.null(databaseFile)&is.null(kit)) kit = "DNA17"
