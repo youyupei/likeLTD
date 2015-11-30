@@ -506,15 +506,32 @@ sanity.check.peaks = function(hypothesis) {
   if(ncol(hypothesis$binaryProfile) != ncol(hypothesis$queriedProfile))
       errors = c( errors,
                   "Number of loci of binaryProf and queriedProf do not match." )
-  if(hypothesis$detectionThresh<0)
+  if(any(unlist(hypothesis$detectionThresh)<0))
         errors = c( errors,
             "Detection threshold should not be set lower than 0." )
+if(length(hypothesis$detectionThresh)==1)
+	{
   if(any(as.numeric(unlist(hypothesis$heightsProfile))<hypothesis$detectionThresh,na.rm=TRUE))
 	errors = c(errors,
     "Observed peak height below detection threshold.")
-  if(hypothesis$detectionThresh>100)
+	} else {
+	loci = colnames(hypothesis$binaryProfile)
+	tmp = sapply(loci,FUN=function(x) 
+		sapply(1:length(hypothesis$heightsProfile), FUN=function(y) 
+			if(any(na.omit(unlist(hypothesis$heightsProfile[[y]][x,]))<
+				hypothesis$detectionThresh[[x]])) 
+    					paste0("Observed peak height below detection threshold: ", 
+					x, " replicate ", y)
+			)
+		)
+	errors = c(errors, unlist(tmp))
+	}
+  if(any(unlist(hypothesis$detectionThresh)>100))
 	errors = c(errors,
     "Detection threshold set unusually high.")
+  if(!length(hypothesis$detectionThresh)%in%c(1,ncol(hypothesis$binaryProfile)))
+	errors = c(errors,
+    "Detection threshold should be a vector with length 1 or a list with length ncol.")
   if(any(hypothesis$relatedness<0))
 	errors = c(errors,
 	"IBD probability cannot be < 0.")
@@ -584,8 +601,14 @@ transform.to.locus.centric.peaks = function(hypothesis) {
   # Transform hypothesis to locus centric modes.
   # 
   # This means we reorganise the data to be in lists of the loci.
+  loci =  colnames(hypothesis$binaryProfile)
+  if(length(hypothesis$detectionThresh)==1) 
+	{
+	hypothesis$detectionThresh = rep(list(hypothesis$detectionThresh),times=length(loci))
+	names(hypothesis$detectionThresh) = loci
+	}
   result = list()
-  for(locus in colnames(hypothesis$binaryProfile)) {
+  for(locus in loci) {
     # Value of the resulting list for a given locus 
     locusValue = list()
     # Loop over all items in original list.
