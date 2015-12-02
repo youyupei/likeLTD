@@ -497,11 +497,15 @@ local.likelihood.table.reformatter.peaks <- function(prosecutionHypothesis,defen
     {
 	P <- log10(locus.likes.peaks(prosecutionHypothesis,prosecutionResults))
 	D <- log10(locus.likes.peaks(defenceHypothesis,defenceResults))
-	table  <- t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=(P-D),Ratio=10^(P-D)))
-	extra <- data.frame(Likelihood=row.names(table))
-	result <- cbind(extra,sprintf("%.2f",round(table,2)))
-    return(result)
+	table  <- rbind(P,D,(P-D),10^(P-D))
+	#table <- sprintf("%.2f",round(table,2))
+	table <- cbind(c("Prosecution.log10","Defence.log10","Ratio.log10","Ratio"),table)
+	rownames(table) = c("Prosecution.log10","Defence.log10","Ratio.log10","Ratio")
+	colnames(table)[1] =  "Likelihood"
+	table[,-1] = sprintf("%.2f",round(as.numeric(table[,-1]),2))
+    return(table)
     }
+    
 
 # function to return table of user input parameters
 chosen.parameter.table.reformatter.peaks <- function(prosecutionHypothesis)
