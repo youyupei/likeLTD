@@ -880,7 +880,7 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
     # get genetics
     print("genetics")
-    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
+    gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
     # file name
     print("names")
     names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')

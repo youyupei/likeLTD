@@ -10,7 +10,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# convert hypothesis to locus specific
 	locusCentric = transform.to.locus.centric.peaks(hypothesis)
 	# functions to perform on each locus
-	functions <- mapply(likeLTD:::create.likelihood.per.locus.peaks, locusCentric,
+	functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 	#create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, 
 	#				likeMatrix=likeMatrix, diagnose=diagnose)
