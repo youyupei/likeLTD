@@ -3,7 +3,7 @@
 \title{likeLTD::pack.admin.input.peaks} 
 \usage{pack.admin.input.peaks(peaksFile, refFile, caseName='dummy',
                         databaseFile=NULL, kit=NULL, linkageFile=NULL,
-                        detectionThresh=30,outputPath=getwd())}
+                        detectionThresh=20,outputPath=getwd())}
 \arguments{
   \item{peaksFile}{Crime scene profile with peak height data}
   \item{refFile}{Reference profiles}
@@ -14,8 +14,10 @@
   \item{outputPath}{Path where the output should be stored. Defaults to current
   working directory.}
   \item{detectionThresh}{The detection threshold used to analyse peak heights from 
-	electrophoresis. No peaks in the CSP should have a peak height below this 
-	value.}
+	electrophoresis. This may be a single value, or a list of one value per locus. 
+	No peaks in the CSP should have a peak height below this 
+	value if a single value. No peaks in a given locus should have a peak height below
+	the specified locus value.}
 }
 \description{Packs and verifies administrative information. Can be used as partial
 input for \code{defence.hypothesis.peaks} and \code{prosecution.hypothesis.peaks}}

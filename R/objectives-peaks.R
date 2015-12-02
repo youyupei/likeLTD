@@ -10,7 +10,7 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 	# convert hypothesis to locus specific
 	locusCentric = transform.to.locus.centric.peaks(hypothesis)
 	# functions to perform on each locus
-	functions <- mapply(create.likelihood.per.locus.peaks, locusCentric,
+	functions <- mapply(likeLTD:::create.likelihood.per.locus.peaks, locusCentric,
                       MoreArgs=list(addAttr=addAttr, likeMatrix=likeMatrix, diagnose=diagnose))
 	#create.likelihood.per.locus.peaks(locusCentric[[1]],addAttr=addAttr, 
 	#				likeMatrix=likeMatrix, diagnose=diagnose)
@@ -34,7 +34,6 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 #					locusAdjust=NULL,
 					dropin=NULL, #interceptS=NULL, 
 					meanD=NULL, meanO=NULL, repAdjust=NULL, 
-					detectionThresh=hypothesis$detectionThresh, 
 					degradationPenalty=hypothesis$degradationPenalty,
 					gradientSshape=hypothesis$gradientSshape,
 					gradientSscale=hypothesis$gradientSscale,
@@ -51,7 +50,6 @@ create.likelihood.vectors.peaks <- function(hypothesis, addAttr=FALSE,
 				scale = scale, repAdjust=repAdjust,
 				gradientS = gradientS,#interceptS=interceptS, 
 				meanD = meanD,meanO=meanO,
-				detectionThresh = detectionThresh,
 				dropin=dropin,
 				degradationPenalty=degradationPenalty, 
 				gradientSshape=gradientSshape,
@@ -139,7 +137,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 				#interceptS,
 				meanD=NULL,meanO=NULL,repAdjust=NULL,
 				degradation=NULL, DNAcont=NULL, 
-				detectionThresh = NULL, dropin=NULL, ...) 
+				dropin=NULL, ...) 
 		{
 		# Likelihood function for a given hypothesis and locus
 		#
@@ -184,7 +182,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 							meanD = meanD, meanO=meanO,
 							degradation=degradation, 
 							repAdjust=repAdjust,
-							detectionThresh=detectionThresh,
+							detectionThresh=hypothesis$detectionThresh,
 							dropin=dropin,
 							doR=doR,diagnose=diagnose)
 			return(repRes)
@@ -195,7 +193,7 @@ create.likelihood.per.locus.peaks <- function(hypothesis, addAttr=FALSE,
 					#interceptAdjust=interceptAdjust,interceptS=interceptS, 
 					meanD = meanD,meanO=meanO,degradation=degradation, 
 					repAdjust=repAdjust,dropin=dropin,
-					detectionThresh=detectionThresh,doR=doR)
+					detectionThresh=hypothesis$detectionThresh,doR=doR)
 		# multiply by allele probabilities
 		factorsRes = res*cons$factors
 		# Figure out likelihood for good and return.

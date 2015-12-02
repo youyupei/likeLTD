@@ -35,7 +35,7 @@ A list containing seven elements:
 \item{Lp}{-log_{10} prosecution likelihood at each step usually.}
 \item{Ld}{-log_{10} defence likelihood at each step usually.}
 \item{seed.used}{Seed that is set at the beginning of computation.}
-\item{seed.input}{Seed that is input by the user; this will no longer apply if evaluate.from.interim.peaks is used.}
+\item{seed.input}{Seed that is input by the user.}
 } 
 \description{
 Optimize both prosecution and defence likelihoods, returning the weight of evidence for peak height data.

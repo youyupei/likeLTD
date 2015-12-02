@@ -699,10 +699,10 @@ return(table)}
 
 #--------------------------------------------------------------------------------------------------------------------
 optimised.parameter.table.reformatter <- function(hypothesis,result){
-	table <- t(rbind(result$optim$bestmem,result$member$upper,result$member$lower))
+	table <- t(rbind(result$optim$bestmem,result$member$lower,result$member$upper))
 	extra <- data.frame(parameter=rownames(table))
 	combined <- round.3(cbind(extra,table))
-	colnames(combined) <- c('parameter','estimate','upper bound','lower bound')
+	colnames(combined) <- c('parameter','estimate','lower bound','upper bound')
 return(combined)}
 
 #--------------------------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 \title{likeLTD::pack.admin.input.peaks} 
 \usage{pack.admin.input.peaks(peaksFile, refFile, caseName='dummy',
                         databaseFile=NULL, kit=NULL, linkageFile=NULL,
-                        detectionThresh=30,outputPath=getwd())}
+                        detectionThresh=20,outputPath=getwd())}
 \arguments{
   \item{peaksFile}{Crime scene profile with peak height data}
   \item{refFile}{Reference profiles}
@@ -20,6 +20,7 @@
 \description{Packs and verifies administrative information. Can be used as partial
 input for \code{defence.hypothesis.peaks} and \code{prosecution.hypothesis.peaks}}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"laboratory")
 
@@ -30,4 +31,5 @@ admin = pack.admin.input.peaks(
             caseName = "Laboratory",
             detectionThresh = 20
              )
+}
 }

@@ -5,7 +5,7 @@
 \usage{defence.hypothesis.peaks(peaksFile, refFile, ethnic='NDU1', nUnknowns=0,
                         adj=1e0, fst=0.03, databaseFile=NULL, 
                         linkageFile=NULL,
-                        detectionThresh=30, doDropin=FALSE, 
+                        detectionThresh=20, doDropin=FALSE, 
                         doDoubleStutter=TRUE,doOverStutter=TRUE,
                         combineRare=TRUE, rareThreshold=1,
                         kit=NULL, relationship=0, ...)
@@ -23,12 +23,13 @@
                       longest uninterrupted sequence (LUS) values for alleles.}
   \item{linkageFile}{Path to recombination rate information. If NULL then defaults
                     to the linkage file provided with \code{likeLTD}. Only used
-                    if \code{relatedness}=\code{c(0.5,0.25)} i.e. when Q and X are 
-                    siblings.}
+                    if \code{relationship} is not 0 or 1 i.e. when Q and X are 
+                    closely related but not parent/offspring.}
   \item{relationship}{Specified relationship between Q and X. Can take values of 0=unrelated,
 1=parent/offspring, 2=siblings, 3=uncle/nephew, 4=half-uncle/half-nephew, 5=cousins, 
 6=grandparent/grandchild, 7=half-siblings.}
-  \item{detectionThresh}{Detection threshold for peaks.}
+  \item{detectionThresh}{Detection threshold for peaks. Can be a single value, or a named list 
+		containing one value per locus.}
   \item{doDropin}{Whether or not to model drop-in. Note dropin is not currently possible
                     with the peak heights model.}
   \item{doDoubleStutter}{Logical. Whether or not to model double stutter.}

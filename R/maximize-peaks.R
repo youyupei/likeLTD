@@ -428,7 +428,7 @@ multiConverged = function(L,globalVal,tolerance,nConverged=5)
     any(sapply(L[(length(L)-nConverged):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=TRUE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds

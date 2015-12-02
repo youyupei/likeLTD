@@ -699,10 +699,10 @@ return(table)}
 
 #--------------------------------------------------------------------------------------------------------------------
 optimised.parameter.table.reformatter <- function(hypothesis,result){
-	table <- t(rbind(result$optim$bestmem,result$member$upper,result$member$lower))
+	table <- t(rbind(result$optim$bestmem,result$member$lower,result$member$upper))
 	extra <- data.frame(parameter=rownames(table))
 	combined <- round.3(cbind(extra,table))
-	colnames(combined) <- c('parameter','estimate','upper bound','lower bound')
+	colnames(combined) <- c('parameter','estimate','lower bound','upper bound')
 return(combined)}
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -955,6 +955,10 @@ output.report <- function(prosecutionHypothesis,defenceHypothesis,results,file=N
 	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
 	addTable(doc, file.inputs.table.reformatter(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
+
+	# seed used
+	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
+	addTable(doc, seedTable(results), col.justify='L', header.col.justify='L')
 
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)

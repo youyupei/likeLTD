@@ -146,6 +146,12 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 		} else {
 		loci = toPlot
 		}
+	# make detectionThresh for each locus
+	if(length(detectThresh)==1) 
+		{
+		detectThresh = rep(list(detectThresh),times=length(loci))
+		names(detectThresh) = loci
+		}
 	# stutter calls 
 	if(doStutter) 
 		{
@@ -180,7 +186,7 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 		# add baseline
 		abline(h=0)
 		# add detection threshold
-		if(!is.null(detectThresh)) abline(h=detectThresh,col="red",lty=3)
+		if(!is.null(detectThresh)) abline(h=detectThresh[[loci[j]]],col="red",lty=3)
 		# only bother plotting peaks if there are peaks
 		if(length(alleles>0))
 			{
@@ -207,10 +213,10 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 				calls = mapply(FUN=combineStutter,stutter,doubleStutter,overStutter)
 				labelCols = vector(length=length(calls))
 				certIndex = which(calls==2)
-				labelCols[certIndex] = "blue"
+				labelCols[certIndex] = "green3"
 				uncIndex = which(calls==1)
-				labelCols[uncIndex] = "purple"
-				labelCols[-c(certIndex,uncIndex)] = "red"
+				labelCols[uncIndex] = "orange1"
+				labelCols[-c(certIndex,uncIndex)] = "gray48"
 				# with predicted stutter (crude)
 				mapply(thisDB[dbIndex,2],heights,alleles,labelCols,FUN=function(x,y,a,c) text(x,y+(YLIM[2]/12),a,col=c))
 				}
@@ -493,7 +499,7 @@ local.likelihood.table.reformatter.peaks <- function(prosecutionHypothesis,defen
 	D <- log10(locus.likes.peaks(defenceHypothesis,defenceResults))
 	table  <- t(data.frame(Prosecution.log10=P,Defence.log10=D,Ratio.log10=(P-D),Ratio=10^(P-D)))
 	extra <- data.frame(Likelihood=row.names(table))
-	result <- cbind(extra,round(table,2))
+	result <- cbind(extra,sprintf("%.2f",round(table,2)))
     return(result)
     }
 
@@ -669,7 +675,7 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 			CSP.heights.plot(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
 					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
-		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): blue=allelic, purple=uncertain, red=non-allelic.")
+		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): green=allelic, orange=uncertain, grey=non-allelic.")
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 		})
 
@@ -682,7 +688,7 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	addText(doc,"After removal of peaks that are possibly non-allelic (intended as a guide only - not assumed by software)",bold=TRUE)
 	addNewLine(doc)
 	addTable(doc, t(gen$refTables$certains), col.justify='C', header.col.justify='C',font.size=fs3)
-	addParagraph(doc,"{\\chbrdr\\brdrs Missing}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
+	addParagraph(doc,"{\\chbrdr\\brdrs Unobserved}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
 	addNewLine(doc)
 	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# summary
@@ -694,13 +700,13 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	addParagraph( doc, "Approximate representation (observed/total) for each reference profile per replicate and overall.")
 	addNewLine(doc)
 	addTable(doc, gen$repTables$rfu, col.justify='C', header.col.justify='C',font.size=fs3)
-	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to masking. These values are not used by the software.")
+	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to sharing of alleles with other contributors. These values are for information purposes only, they are not used by the software.")
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# unnatributable
 	print("unnatributable")
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
 	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
-	addParagraph( doc, "Number of replicated (light grey) and unreplicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (blue allele labels shown in the CSP plots).")
+	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (blue allele labels shown in the CSP plots).")
 	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
 	addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
 	return(doc)
@@ -829,7 +835,7 @@ allele.report.peaks = function(admin,file=NULL)
     addNewLine(doc)
     addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
     addTable(doc, hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles)), col.justify='C', header.col.justify='C')
-    addParagraph( doc, "LikeLTD does not support an nU>2. If nU>2, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
+    addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
     addHeader(doc, "System information", TOC.level=1,font.size=fs1)
@@ -876,13 +882,13 @@ print("overall likelihood")
 	spacer(doc,3)
     # max LR
 print("max likelihood")
-	addHeader(doc, "Theoretical maximum LR", TOC.level=2, font.size=fs2)
+	addHeader(doc, "Theoretical maximum LR = Inverse Match Probability (IMP)", TOC.level=2, font.size=fs2)
 	addTable(doc, ideal(defenceHypothesis), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
 print("DNAcont Deg")
 	DNAcontTables = DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
-    addHeader(doc, "DNA contribution and degradation estimates", TOC.level=2, font.size=fs2)
+    addHeader(doc, "DNA contribution (RFU) and degradation estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, DNAcontTables$pros, col.justify='C', header.col.justify='C')
 	addTable(doc, DNAcontTables$def, col.justify='C', header.col.justify='C')
 	spacer(doc,3)	

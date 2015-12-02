@@ -484,7 +484,7 @@ geometric.series <- function(start,end,n){
 return(steps)}
 
 
-evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=FALSE, CR.start=0.1, CR.end=0.7, seed.input=NULL){
+evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRUE, interim=TRUE, CR.start=0.1, CR.end=0.7, seed.input=NULL){
 
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
