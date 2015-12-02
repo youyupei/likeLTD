@@ -664,7 +664,26 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 		addTable(doc, create.contributor.table(gen$refs), col.justify='C', header.col.justify='C',font.size=fs3)
 		}
 	# warnings
-	if(any(as.numeric(unlist(gen$csp$heights))<admin$detectionThresh,na.rm=TRUE)) addParagraph(doc, "WARNING: peaks observed in CSP lower than the detection threshold.")
+	errors = NULL
+	loci = rownames(gen$unattributable)
+if(length(admin$detectionThresh)==1)
+	{
+  if(any(as.numeric(unlist(gen$csp$heights))<admin$detectionThresh,na.rm=TRUE))
+	errors = c(errors,
+    "Observed peak height below detection threshold.")
+	} else {
+	loci = rownames(gen$unattributable)
+	tmp = sapply(loci,FUN=function(x) 
+		sapply(1:length(gen$csp$heights), FUN=function(y) 
+			if(any(na.omit(unlist(gen$csp$heights[[y]][x,]))<
+				admin$detectionThresh[[x]])) 
+    					paste0("WARNING: Observed peak height below detection threshold at ", 
+					x, " replicate ", y)
+			)
+		)
+	errors = c(errors, unlist(tmp))
+	}
+    if(length(errors)>0) sapply(1:length(errors),FUN=function(a) addParagraph(doc, errors[a]))
 	if(length(warnings)>0) sapply(1:length(warnings),FUN=function(a) addParagraph(doc, warnings[a]))
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# add hypothesis
@@ -682,7 +701,6 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): green=allelic, orange=uncertain, grey=non-allelic.")
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 		})
-
 	# table of reference profiles
 	print("references")
 	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
@@ -710,7 +728,7 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	print("unnatributable")
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
 	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
-	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (blue allele labels shown in the CSP plots).")
+	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
 	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
 	addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
 	return(doc)
@@ -862,7 +880,7 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
     # get genetics
     print("genetics")
-    gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
+    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
     # file name
     print("names")
     names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
