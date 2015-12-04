@@ -49,7 +49,8 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 		# add known profiles as last contributors
 		if(length(knownIndex)!=0) 
 			{
-			genCombs = rbind(genCombs,matrix(rep(knownIndex,times=ncol(genCombs)),ncol=ncol(genCombs)))
+			genCombs = rbind(genCombs,matrix(rep(knownIndex,times=ncol(genCombs)),
+					ncol=ncol(genCombs)))
 			}
 		return(genCombs)
 		}
@@ -57,7 +58,6 @@ explain.all.peaks = function(cspPresence,profPresence,knownProfs,alleleNames,nUn
 	index = apply(genCombs,MARGIN=2,FUN=function(x) allExplained(x,cspAlleles,knownWithStutter,alleleNames,doDoubleStutter,doOverStutter))
 	if(length(which(index))==0) stop(paste0("Not enough contributors to explain CSP at locus ", colnames(knownProfs)))
 	genCombs = genCombs[,index,drop=FALSE]
-
 	# add known profiles as last contributors
 	if(length(knownIndex)!=0) 
 		{
