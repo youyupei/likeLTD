@@ -416,7 +416,7 @@ pack.genetics.for.output.report <- function(P.hyp,D.hyp){
 	nameQ <- row.names(refData)[QvK]
 	nameK <- row.names(refData)[!QvK]
 	
-	doDropin = hypP$doDropin
+	doDropin = P.hyp$doDropin
 
 	output.report.genetics <- list( 
 	cspData = cspData, 

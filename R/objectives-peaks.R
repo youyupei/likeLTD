@@ -576,7 +576,8 @@ peaks.probabilities.combined = function(hypothesis,cons,DNAcont,scale,
 					detectionThresh=detectionThresh,
 					databaseVals = cons$dbVals,
 					fragProbs=hypothesis$alleleDb[,1], 
-					dropin=ifelse(hypothesis$doDropin,dropin,-1))
+					dropin=ifelse(hypothesis$doDropin,dropin,-1),
+					dropinDeg=ifelse(hypothesis$doDropin,dropinDeg,-1))
             }
 	# diagnose
 	if(diagnose==TRUE) return(probs)

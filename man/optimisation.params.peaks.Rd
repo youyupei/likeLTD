@@ -6,7 +6,8 @@
                            arguments=NULL, zero=1e-6, throwError=FALSE,
                            withPenalties=TRUE, doLinkage=TRUE,objective=NULL, iterMax=75, 
                            likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
-			   searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,\dots)}
+			   searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,
+				maxDropin=100,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -46,7 +47,9 @@
 	\code{DEoptim::DEoptim.control}.}
   \item{DEoptimC}{Parameter to control the speed of crossover adaptation for DEoptim. See 
 	\code{DEoptim::DEoptim.control}.}
-
+  \item{maxDropin}{Upper bound for the dropin parameter to be used by \code{evaluate.peaks}.
+	If you wish to explain a minor cnotributor as dropin this value may need to be greater
+	than the default of 100.}
 }
 \value{
   \item{fn}{The objective function}
