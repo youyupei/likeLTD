@@ -1,4 +1,4 @@
-upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) { 
+upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, maxDropin=100) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -21,7 +21,9 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0.1
   repAdjust   = rep(5,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 100
+  if(!is.null(arguments[["dropin"]])) dropin = maxDropin
+  dropinDeg      = NULL
+  if(!is.null(arguments[["dropinDeg"]])) dropinDeg = ifelse(logDegradation,-1,1-zero)
 
   list(degradation     = degradation,
        DNAcont           = DNAcont,
@@ -34,7 +36,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropin          = dropin)[names(arguments)]
+       dropin = dropin,
+       dropinDeg = dropinDeg)[names(arguments)]
 }
 
 
@@ -64,6 +67,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   repAdjust   = rep(0.2,length(arguments$repAdjust))
   dropin      = NULL
   if(!is.null(arguments[["dropin"]])) dropin = 5
+  dropinDeg      = NULL
+  if(!is.null(arguments[["dropinDeg"]])) dropinDeg = ifelse(logDegradation,-20,0)
 
   list(degradation     = degradation,
        DNAcont           = DNAcont, 
@@ -76,7 +81,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropin          = dropin)[names(arguments)]
+       dropin = dropin,
+       dropinDeg = dropinDeg)[names(arguments)]
 }
 
 
@@ -85,7 +91,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, doLinkage=TRUE, objective=NULL, 
 				iterMax=75,likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
-				searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,...) {
+				searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,maxDropin=100,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -228,7 +234,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 		-result
 	}
   lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
-  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
+  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, maxDropin=maxDropin)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
    # population size for optimisation
@@ -260,6 +266,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
                          nrow(hypothesis$knownProfs) + hypothesis$nUnknowns )
   DNAcont           = runif(nDNAcont, min=0.5, max=1.5)
   dropin          = NULL
+  dropinDeg  = NULL
   meanD    = NULL
   meanO    = NULL
   scale           = 1/4
@@ -269,7 +276,11 @@ initial.arguments.peaks <- function(hypothesis, ...) {
  #locusAdjust   = rep(1,times=ncol(hypothesis$queriedProfile))
  # interceptS = 0
   repAdjust       = rep(1,times=max(length(hypothesis$peaksProfile)-1,0))
-  if(hypothesis$doDropin) dropin = 20
+  if(hypothesis$doDropin) 
+	{
+	dropin = 20
+	dropinDeg = -5
+	}
   if(hypothesis$doDoubleStutter) meanD = 0.02
   if(hypothesis$doOverStutter) meanO = 0.02
 
@@ -285,7 +296,8 @@ initial.arguments.peaks <- function(hypothesis, ...) {
        repAdjust       = repAdjust,
        meanD = meanD,
        meanO = meanO,
-       dropin          = dropin)
+       dropin          = dropin,
+       dropinDeg   =  dropinDeg)
 }
 
 
@@ -300,6 +312,8 @@ relistArguments.peaks <- function( parameters, hypothesis, fixed=NULL,
   result <- relist(parameters, notempty)
   if(logDegradation && "degradation" %in% names(result))
     result[["degradation"]] = 10^result[["degradation"]]
+  if(logDegradation && "dropinDeg" %in% names(result))
+    result[["dropinDeg"]] = 10^result[["dropinDeg"]]
   if(!is.null(fixed)) result <- append(result, arguments[fixed])
   result
 }
@@ -376,6 +390,12 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 	}
 
 
+inRange = function(x,interval)
+	{
+	interval = sort(interval)
+	interval[1]<x&x<interval[2]
+	}
+
 peaks.results.plot = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 	{
 	# mean & sd from results
@@ -392,6 +412,9 @@ peaks.results.plot = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 	# plot for each locus
 	if(!is.null(fileName)) pdf(fileName)
 	par(mfrow=rep(ceiling(sqrt(length(torun))),times=2),mar=c(3,2,2,0))
+	ninetyfive = 0
+	fifty = 0
+	total = 0
 	for(i in torun)
 		{
 		# results from top genotype at this locus
@@ -413,8 +436,14 @@ peaks.results.plot = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 		# plot
 		boxplot(CIs,ylim=YLIM,main=names(hyp$alleleDb)[i],range=0,...)
 		boxplot(t(heights),ylim=YLIM,border="red",add=TRUE,...)
+		# probability interval information
+		ninetyfive = ninetyfive + sum(sapply(1:ncol(CIs),FUN=function(x) inRange(heights[x],CIs[c(1,5),x])),na.rm=TRUE)
+		fifty = fifty + sum(sapply(1:ncol(CIs),FUN=function(x) inRange(heights[x],CIs[c(2,4),x])),na.rm=TRUE)
+		total = total + length(which(!is.na(sapply(1:ncol(CIs),FUN=function(x) inRange(heights[x],CIs[c(2,3),x])))))
 		}
 	if(!is.null(fileName)) dev.off()
+	print("Proportion of peaks within 95% probability interval: ", ninetyfive/total)
+	print("Proportion of peaks within 50% probability interval: ", fifty/total)
 	}
 
 

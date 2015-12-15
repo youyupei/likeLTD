@@ -2,7 +2,7 @@
 subsetData = function(data,search)
 	{
 	# subset columns by search parameter
-	dataout = data[,grep(search,colnames(data))]
+	dataout = data[,grep(search,colnames(data)),drop=FALSE]
 	# add first column (for replicate names etc)
 	# can add this back in if necessary
 	#dataout = cbind(data[,1],dataout)

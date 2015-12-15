@@ -625,6 +625,11 @@ create.hypothesis.string.peaks = function(hypP)
 		pros = paste(pros,nameU,sep=" + ",collapse=" + ")
 		def = paste(def,nameU,sep=" + ",collapse=" + ")
 		}
+	if(hypP$doDropin)
+		{
+		pros = paste0(pros," + dropin")
+		def = paste0(def," + dropin")
+		}
 	return(list(pros=pros,def=def))
 	}
 
@@ -646,7 +651,7 @@ create.contributor.table = function(refs)
 	}
 
 # function to create the parts of the report documents that are present in both allele report and output report
-common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL)
+common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL,resTable=NULL)
 	{
 	# Create a new Docx. 
 	doc <- RTF(names$filename, width=11,height=8.5,omi=c(1,1,1,1))
@@ -685,6 +690,13 @@ if(length(admin$detectionThresh)==1)
 	}
     if(length(errors)>0) sapply(1:length(errors),FUN=function(a) addParagraph(doc, errors[a]))
 	if(length(warnings)>0) sapply(1:length(warnings),FUN=function(a) addParagraph(doc, warnings[a]))
+	# result
+	if(!is.null(resTable))
+		{
+		addHeader(doc, "Overall Likelihood", TOC.level=2, font.size=fs2)
+		addTable(doc, resTable ,col.justify='C', header.col.justify='C')
+		spacer(doc,3)
+		}
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# add hypothesis
 	# plot CSP
@@ -878,6 +890,8 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     WoE = results$WoE[length(results$WoE)]
     maxWoE = log10(matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
     if(maxWoE<WoE) warnings = c(warnings,paste0("WARNING: WoE>max(WoE) by ",round(WoE-maxWoE,3)," bans"))
+    # overall likelihood
+    resTable =  overall.likelihood.table.reformatter(prosecutionResults,defenceResults)
     # get genetics
     print("genetics")
     gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
@@ -890,17 +904,12 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
     print("doc")
-    doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames)
+    doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames,resTable)
     # section specific to the output report
     # locus likelihoods
     print("locus likelihoods")
     addHeader(doc, "Likelihoods at each locus", TOC.level=2, font.size=fs2)
 	addTable(doc, local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
-	spacer(doc,3)
-    # overall likelihood
-print("overall likelihood")
-	addHeader(doc, "Overall Likelihood", TOC.level=2, font.size=fs2)
-	addTable(doc, overall.likelihood.table.reformatter(prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C')
 	spacer(doc,3)
     # max LR
 print("max likelihood")

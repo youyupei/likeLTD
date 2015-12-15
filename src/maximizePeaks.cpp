@@ -1667,7 +1667,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 
 
 
-SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -1726,6 +1726,11 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	SEXP DROPIN = PROTECT(duplicate(dropin));
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
+
+	// convert dropinDeg to double
+	SEXP DROPINDEG = PROTECT(duplicate(dropinDeg));
+	double const * const dropindeg_ptr     = REAL(DROPINDEG);
+	double Dropindeg = dropindeg_ptr[0];
 
     // convert degradation to vector
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
@@ -1894,7 +1899,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
         	        }
 			    }
 		    //Rprintf("%d\t",matchIndex);
-		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin*pow(Dropindeg,-fragVecL[j]);
 		    }
 		}
     // get probabilities
@@ -1971,14 +1976,14 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(19);
+    UNPROTECT(20);
 	return result;
     }
 
 
 
 
-SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -2032,6 +2037,11 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	SEXP DROPIN = PROTECT(duplicate(dropin));
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
+
+	// convert dropinDeg to double
+	SEXP DROPINDEG = PROTECT(duplicate(dropinDeg));
+	double const * const dropindeg_ptr     = REAL(DROPINDEG);
+	double Dropindeg = dropindeg_ptr[0];
 
     // convert degradation to vector
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
@@ -2189,7 +2199,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         	        }
 			    }
 		    //Rprintf("%d\t",matchIndex);
-		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin*pow(Dropindeg,-fragVecL[j]);
 		    }
 		}
     // get probabilities
@@ -2259,11 +2269,11 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(18);
+    UNPROTECT(19);
 	return result;
     }
 
-SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -2317,6 +2327,11 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	SEXP DROPIN = PROTECT(duplicate(dropin));
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
+
+	// convert dropinDeg to double
+	SEXP DROPINDEG = PROTECT(duplicate(dropinDeg));
+	double const * const dropindeg_ptr     = REAL(DROPINDEG);
+	double Dropindeg = dropindeg_ptr[0];
 
     // convert degradation to vector
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
@@ -2474,7 +2489,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
         	        }
 			    }
 		    //Rprintf("%d\t",matchIndex);
-		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin*pow(Dropindeg,-fragVecL[j]);
 		    }
 		}
     // get probabilities
@@ -2544,12 +2559,12 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(18);
+    UNPROTECT(19);
 	return result;
     }
 
 
-SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -2598,6 +2613,11 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	SEXP DROPIN = PROTECT(duplicate(dropin));
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
+
+	// convert dropinDeg to double
+	SEXP DROPINDEG = PROTECT(duplicate(dropinDeg));
+	double const * const dropindeg_ptr     = REAL(DROPINDEG);
+	double Dropindeg = dropindeg_ptr[0];
 
     // convert degradation to vector
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
@@ -2749,7 +2769,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
         	        }
 			    }
 		    //Rprintf("%d\t",matchIndex);
-		    doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		    doseArray[matchIndex][i] += fragVecP[j]*Dropin*pow(Dropindeg,-fragVecL[j]);
 		    }
 		}
     // get probabilities
@@ -2819,7 +2839,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(17);
+    UNPROTECT(18);
 	return result;
     }
 
@@ -2827,7 +2847,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 
 
 
-SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin)
+SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg)
     {
     	# ifdef OPENMP_STACK
 	//    uintptr_t const oldstack = R_CStackLimit;
@@ -2886,6 +2906,11 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	SEXP DROPIN = PROTECT(duplicate(dropin));
 	double const * const dropin_ptr     = REAL(DROPIN);
 	double Dropin = dropin_ptr[0];
+
+	// convert dropinDeg to double
+	SEXP DROPINDEG = PROTECT(duplicate(dropinDeg));
+	double const * const dropindeg_ptr     = REAL(DROPINDEG);
+	double Dropindeg = dropindeg_ptr[0];
 
     // convert degradation to vector
 	SEXP DEGRADATION = PROTECT(duplicate(degradation));
@@ -3098,7 +3123,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
         	            }
 			        }
 		        //Rprintf("%d\t",matchIndex);
-		        doseArray[matchIndex][i] += fragVecP[j]*Dropin;
+		        doseArray[matchIndex][i] += fragVecP[j]*Dropin*pow(Dropindeg,-fragVecL[j]);
 		        }
 		    }
 		}
@@ -3176,7 +3201,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 		{
 		out_ptr[i] = outDouble[i];
 		}
-    UNPROTECT(19);
+    UNPROTECT(20);
 	return result;
     }
 
