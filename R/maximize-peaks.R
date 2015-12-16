@@ -254,7 +254,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 initial.arguments.peaks <- function(hypothesis, ...) {
   # Best(?) guess for initial arguments. 
   #
-  # Parameters: 
+  #  Parameters: 
   #    hypothesis: Hypothesis for which to guess nuisance paramters.
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
