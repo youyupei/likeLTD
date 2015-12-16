@@ -636,8 +636,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -698,9 +697,9 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -905,8 +904,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -962,9 +960,9 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -1163,8 +1161,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -1220,9 +1217,9 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -1422,8 +1419,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -1474,9 +1470,9 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -1681,8 +1677,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -1753,9 +1748,9 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -1997,8 +1992,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -2064,9 +2058,9 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -2287,8 +2281,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -2354,9 +2347,9 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -2578,8 +2571,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -2640,9 +2632,9 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
@@ -2861,8 +2853,7 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
-	double doseArray[nDat][nCombs];
-	memset( doseArray, '\0', sizeof( doseArray ) );
+    std::vector<std::vector<double> > doseArray(nDat, std::vector<double>(nCombs));
 
 	// convert genotypeArray to vector
 	SEXP GENOTYPEARRAY = PROTECT(duplicate(genotypeArray));
@@ -2933,9 +2924,9 @@ SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP mea
 	// get more parameters
 	int const nRep = length(repAdjust);
 	// create more objects
-	double outDouble[nCombs];
 	std::vector<double> tmpVec;
-	std::fill_n(outDouble,nCombs,1);
+	std::vector<double> outDouble;
+	outDouble.assign(nCombs,1);
 
 	// convert alleles to vector of vectors (equivalent to list)
 	SEXP ALLELES = PROTECT(duplicate(alleles));
