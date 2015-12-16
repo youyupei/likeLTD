@@ -2,8 +2,8 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimisation function. Used as a
-  #              template.
+  #   arguments: Arguments passed to the optimisation function. Used as a
+  #      template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
   degradation = if(logDegradation) { -1 } else { 1-zero }
@@ -45,8 +45,8 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   # Lower bounds of optimisation function.
   # 
   # Parameters:
-  #   arguments: Arguments passed to the optimisation function. Used as a
-  #              template.
+  #   arguments: Arguments passed to the optimisation function. Used as a
+  #         template.
   #   zero: Some bounds should be given as >, rather than >=. This arguments is
   #         an epsilon to simulate the first case.
   #   logDegradation: Wether degradation parameters are entered as exponents of
@@ -207,7 +207,7 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 		# Print out if requested.
 		if(verbose) 
 			{
-			# print(unlist(append(x, list(result=result))))
+            #print(unlist(append(x, list(result=result))))
 			print(result)
 			}
 		# If result is infinite, do throw
@@ -255,7 +255,7 @@ initial.arguments.peaks <- function(hypothesis, ...) {
   # Best(?) guess for initial arguments. 
   #
   # Parameters: 
-  #    hypothesis: Hypothesis for which to guess nuisance paramters. 
+  #    hypothesis: Hypothesis for which to guess nuisance paramters.
 
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
