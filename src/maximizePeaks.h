@@ -27,15 +27,6 @@ extern "C" {
 		double sizes;
 		} ;
 
-    //! \brief combine doses with single stutter
-	inline std::vector<genoStruct> combineDosesS(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS);	                                            
-	//! \brief combine doses with single and double stutter
-	inline std::vector<genoStruct> combineDosesSD(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS,std::vector<genoStruct> muSd);
-	//! \brief combine doses with single and over stutter
-	inline std::vector<genoStruct> combineDosesSO(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS,std::vector<genoStruct> muSo);
-	//! \brief combine doses with single, double and over stutter
-	inline std::vector<genoStruct> combineDosesSDO(std::vector<double> allPosVec,std::vector<genoStruct> muA,std::vector<genoStruct> muS,std::vector<genoStruct> muSd,std::vector<genoStruct> muSo);
-
 	//! \brief function to round a number
 	inline int myRound(double d);
 
@@ -73,41 +64,6 @@ inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<d
     SEXP testPDF(SEXP X, SEXP A, SEXP B);
 
     
-    //! \brief get mean dose with x-1, x-2 and x+1 stutter
-    inline std::vector<genoStruct> getDoseSDO(std::vector<double> genotypeVec, 
-                        std::vector<double> stutterPosVec,std::vector<double> doubleStutterVec,
-                        std::vector<double> overStutterVec,std::vector<double> allPosVec, 
-                        std::vector<double> DNAcontVec, double gradientS, double meanD, 
-                        double meanO,double interceptS, std::vector<double> degVec,
-                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
-                        std::vector<double> stutterIndex, int nGen, int nFrag);
-
-    //! \brief get mean dose with x-1 and x-2 stutter
-    inline std::vector<genoStruct> getDoseSD(std::vector<double> genotypeVec, 
-                        std::vector<double> stutterPosVec,std::vector<double> doubleStutterVec,
-                        std::vector<double> allPosVec, 
-                        std::vector<double> DNAcontVec, double gradientS, double meanD, 
-                        double interceptS, std::vector<double> degVec,
-                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
-                        std::vector<double> stutterIndex, int nGen, int nFrag);
-
-       //! \brief get mean dose with x-1 and x+1 stutter
-    inline std::vector<genoStruct> getDoseSO(std::vector<double> genotypeVec, 
-                        std::vector<double> stutterPosVec,
-                        std::vector<double> overStutterVec,std::vector<double> allPosVec, 
-                        std::vector<double> DNAcontVec, double gradientS,
-                        double meanO,double interceptS, std::vector<double> degVec,
-                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
-                        std::vector<double> stutterIndex, int nGen, int nFrag);
-
-       //! \brief get mean dose with x-1 stutter
-    inline std::vector<genoStruct> getDoseS(std::vector<double> genotypeVec, 
-                        std::vector<double> stutterPosVec,std::vector<double> allPosVec, 
-                        std::vector<double> DNAcontVec, double gradientS,
-                        double interceptS, std::vector<double> degVec,
-                        std::vector<double> fragVecL, std::vector<double> fragVecN, 
-                        std::vector<double> stutterIndex, int nGen, int nFrag);
-
 //! \brief get mean dose with x-1, x-2 and x+1 stutter with dropin
 SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg);
 //! \brief get mean dose with x-1 and x+1 stutter with dropin
@@ -125,9 +81,6 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
 //! \brief get mean dose with x-1 stutter
 SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals);
-
-//! \brief get mean dose with x-1, x-2 or x+1 stutter with possible dropin
-SEXP getProbabilities(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP meanD, SEXP meanO, SEXP interceptS, SEXP degradation, SEXP fragLengths, SEXP fragNames, SEXP LUSvals, SEXP alleles, SEXP heights, SEXP repAdjust, SEXP scale, SEXP detectionThresh, SEXP databaseVals,SEXP fragProbs,SEXP dropin,SEXP dropinDeg);
 
 
 #ifdef __cplusplus

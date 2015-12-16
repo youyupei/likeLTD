@@ -53,7 +53,7 @@ double gammp(double a, double x)
     void gser(double *gamser, double a, double x, double *gln);
     //void nrerror(char error_text[]);
     double gamser,gammcf,gln;
-    if((a>=0.0&&a<1.0e-30)||std::isinf(a)) return kf_gammap(a,x);
+    if((a>=0.0&&a<1.0e-30)||a>1e308) return kf_gammap(a,x);
     if (x < 0.0 || a < 0.0) 
         {
         //fprintf(stderr,"a=%f\nx=%f\n",a,x);

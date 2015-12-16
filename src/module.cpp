@@ -26,7 +26,6 @@ R_CallMethodDef callMethods[]  = {
 		{"getProbabilitiesSD_dropin", (DL_FUNC) &getProbabilitiesSD_dropin, 18},
 		{"getProbabilitiesSO_dropin", (DL_FUNC) &getProbabilitiesSO_dropin, 18},
 		{"getProbabilitiesS_dropin", (DL_FUNC) &getProbabilitiesS_dropin, 17},
-		{"getProbabilities", (DL_FUNC) &getProbabilities, 19},
 		{"testCDF", (DL_FUNC) &testCDF, 2},
 		{"testNewCDF", (DL_FUNC) &testNewCDF, 2},
 //		{"testPDF", (DL_FUNC) &testPDF, 3},
