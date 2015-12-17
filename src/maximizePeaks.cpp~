@@ -759,7 +759,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -1081,7 +1081,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -1394,7 +1394,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -1733,7 +1733,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -2109,7 +2109,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -2462,7 +2462,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
@@ -2807,7 +2807,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	for(int x=0; x<nGen; ++x)
 		{
 		// Do not compute dose again if homozygote
-		if((x>0)&&(x%2!=0)&&(genotypeVec[x]==genotypeVec[x-1]))
+		if((genotypeVec[x]==genotypeVec[x-1])&&(x%2!=0)&&(x>0))
 			{
 			
 			} else {
