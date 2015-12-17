@@ -1,7 +1,8 @@
-\name{prosecution.hypothesis}
-\alias{prosecution.hypothesis}
-\title{likeLTD::prosecution.hypothesis}
-\usage{prosecution.hypothesis(cspFile, refFile, ethnic='NDU1', nUnknowns=0,
+\name{defence.hypothesis}
+\alias{defence.hypothesis}
+\title{likeLTD::defence.hypothesis}
+\description{Helper function to create the input for the defence.}
+\usage{defence.hypothesis(cspFile, refFile, ethnic='NDU1', nUnknowns=0,
                         adj=1e0, fst=0.02, databaseFile=NULL, 
                         linkageFile=NULL,
                         doDropin=FALSE, 
@@ -9,7 +10,7 @@
                         kit=NULL, relationship=0, ...)
 }
 \arguments{
-   \item{cspFile}{Path to the crime scene profile.}
+  \item{cspFile}{Path to the crime scene profile.}
   \item{refFile}{Path to the known profiles.}
   \item{ethnic}{Ethnicity, e.g. subgroup within the allele frequency database.}
   \item{nUnknowns}{Number of unknown contributors for which to perform
@@ -37,19 +38,19 @@
   \item{...}{Other parameters to determine how to perform calculations.}
 }
 \value{A list of named input parameters, or hypothesis, suitable for the
-prosecution.}
-\description{Helper function to create the input for the prosecution.}
+defence.}
 \details{It loads the CSP, known profiles, and allele database from file. It
-makes sure the relatedness factor is zero. It sets the reference individual to
-the first queried individual, unless it is not subject to dropout. In that
-case, the reference individual is the first individual with dropout. } 
-\seealso{defence.hypothesis}
+removes the queried individual from the known profiles. It increments the
+number of unknown contributors by one (to make up for the queried individual).
+The reference individual is set to "X" (first unprofiled contributor) by
+default. 
+} 
+\seealso{prosecution.hypothesis}
 \examples{
-\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
-# File paths and case name for allele report
+# File paths and case name
 admin = pack.admin.input(
             cspFile = file.path(datapath, 'hammer-CSP.csv'),
             refFile = file.path(datapath, 'hammer-reference.csv'),
@@ -71,4 +72,7 @@ args = list(
 hypP = do.call(prosecution.hypothesis, append(admin,args))
 hypD = do.call(defence.hypothesis, append(admin,args))
 }
-}
+
+
+
+

@@ -47,6 +47,7 @@ default.
 } 
 \seealso{prosecution.hypothesis}
 \examples{
+\dontrun{
 # datapath to example files
 datapath = file.path(system.file("extdata", package="likeLTD"),"hammer")
 
@@ -71,6 +72,7 @@ args = list(
 # Create hypotheses
 hypP = do.call(prosecution.hypothesis, append(admin,args))
 hypD = do.call(defence.hypothesis, append(admin,args))
+}
 }
 
 
