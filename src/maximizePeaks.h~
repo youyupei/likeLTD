@@ -51,6 +51,9 @@ extern "C" {
     //! \brief get density
     inline double getDensity(std::vector<genoStruct> gammaMuVec, std::vector<cspStruct> cspModify, double scale, double cdfArg, double pdfArg);
 
+    //! \brief modify csp
+inline std::vector<cspStruct> modifyCSP(std::vector<cspStruct> csp,std::vector<double> allPosVec);
+
     //! \brief test cdf
     SEXP testCDF(SEXP S, SEXP Z);
 
