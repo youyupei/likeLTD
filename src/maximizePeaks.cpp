@@ -379,7 +379,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -703,7 +703,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -1014,7 +1014,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -1320,7 +1320,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -1355,7 +1355,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 		std::vector<genoStruct> muA(genotypeVec.size(),tmpMu),muS(genotypeVec.size(),tmpMu);
 		int matchIndex;
 		double diff;
-		double overStutterDose, stutterRate;
+		double stutterRate;
 		// effective dose for stutter and allelic
 		for(int x=0; x<nGen; ++x)
 			{
@@ -1638,7 +1638,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -1767,12 +1767,12 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -1991,7 +1991,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -2109,12 +2109,12 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -2333,7 +2333,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -2451,12 +2451,12 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -2671,7 +2671,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	SEXP lusvals = PROTECT(duplicate(LUSvals));
 	double * lusvals_ptr     = REAL(lusvals);
 	std::vector<double> fragVecN, fragVecL, fragVecP,lusVals;
-	for(int i=0; i<nFrag; ++i)
+	for(unsigned int i=0; i<nFrag; ++i)
 		{
 		fragVecN.push_back(fragNvec_ptr[i]);
 		fragVecL.push_back(fragLvec_ptr[i]);
@@ -2707,7 +2707,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 		std::vector<genoStruct> muA(genotypeVec.size(),tmpMu),muS(genotypeVec.size(),tmpMu);
 		int matchIndex;
 		double diff;
-		double overStutterDose, stutterRate;
+		double stutterRate;
 		// effective dose for stutter and allelic
 		for(int x=0; x<nGen; ++x)
 			{
@@ -2779,12 +2779,12 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
