@@ -516,8 +516,6 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -828,8 +826,6 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -1141,8 +1137,6 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -1439,8 +1433,6 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -1799,8 +1791,6 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -2144,8 +2134,6 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -2488,8 +2476,6 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
@@ -2818,8 +2804,6 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 			// loop over replicates
 			for(int k=0; k<nRep; k++)
 		    		{
-	        		int matchIndex = 0;   
-	        		bool matchFlag = false; 
 		    		// only do something if some hypothesised dose
 		    		if(doseArray[j][i]!='\0'&&doseArray[j][i]!=0)
 		        		{
