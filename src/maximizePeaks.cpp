@@ -257,7 +257,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -495,10 +495,10 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -525,7 +525,7 @@ SEXP getProbabilitiesSDO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP 
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -589,7 +589,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -807,10 +807,10 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -837,7 +837,7 @@ SEXP getProbabilitiesSO(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -901,7 +901,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -1120,10 +1120,10 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -1150,7 +1150,7 @@ SEXP getProbabilitiesSD(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP m
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -1214,7 +1214,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -1418,10 +1418,10 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -1448,7 +1448,7 @@ SEXP getProbabilitiesS(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, SEXP in
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -1512,7 +1512,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -1760,10 +1760,10 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -1808,7 +1808,7 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -1872,7 +1872,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -2104,10 +2104,10 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -2153,7 +2153,7 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -2216,7 +2216,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -2448,10 +2448,10 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{		       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -2497,7 +2497,7 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
@@ -2561,7 +2561,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 	int const nCombs = INTEGER(GET_DIM(genotypeArray))[1];
 	int const nGen = INTEGER(GET_DIM(genotypeArray))[0];
 	int const nCont = length(DNAcont);
-	int const nFrag = length(fragLengths);
+	unsigned int const nFrag = length(fragLengths);
 	int const nDeg = length(degradation);
         int const nDat = length(databaseVals);
 	// create some objects
@@ -2778,10 +2778,10 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 			gammaMuVec[x] = tmpMu2;
 			}
         	// slot doses into dose array
-        	for(int j=0; j<gammaMuVec.size(); j++)
+        	for(unsigned int j=0; j<gammaMuVec.size(); j++)
             		{       
             		int matchIndex = 0;         
-            		for(int k=0; k<dbVals.size(); k++)
+            		for(unsigned int k=0; k<dbVals.size(); k++)
                 		{
                 		double diff = std::fabs(dbVals[k]-gammaMuVec[j].genotype); 
                 		if(diff<0.0001)
@@ -2827,7 +2827,7 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
 		        		// which allele are we looking at?
 		        		int matchIndex = 0;   
 		        		bool matchFlag = false;     
-        				for(int l=0; l<allelesVec[k].size(); l++)
+        				for(unsigned int l=0; l<allelesVec[k].size(); l++)
         	                		{
         	                		double diff = std::fabs(dbVals[j]-allelesVec[k][l]);  
         	                		if(diff<0.0001)
