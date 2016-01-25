@@ -491,6 +491,8 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	# number of convergence thresholds
 	# for each step, run a DEoptimLoop both for P and D, until each converges at that steps accuracy
 
+	begin = Sys.time()
+
 	# set seed
 	if(is.null(seed.input)) 
 	    {
@@ -670,8 +672,13 @@ evaluate <- function(P.pars, D.pars, tolerance=1e-5, n.steps=NULL, progBar = TRU
 	D.results$optim$iter <- D.iter
 	D.results$optim$nfeval <- D.nfeval
 
+	end = Sys.time()
+	runtime = list(elapsed=difftime(end,begin),
+			start=begin,
+			end=end)
+
 # return all results
-return(list(Pros =P.results,Def =D.results, WoE =WoE, seed.used=seed.used,seed.input=seed.input))}
+return(list(Pros =P.results,Def =D.results, WoE =WoE, seed.used=seed.used,seed.input=seed.input,runtime=runtime))}
 
 # function to output interim report
 interim = function(resultsP,resultsD,step,n.steps)
