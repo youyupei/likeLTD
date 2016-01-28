@@ -859,7 +859,7 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
 allele.report.peaks = function(admin,file=NULL)
     {
     # get genetics
-    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit)
+    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit)
     # file name
     names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
