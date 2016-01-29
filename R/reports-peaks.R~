@@ -136,7 +136,7 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 	contColours = rainbow(nrow(refs))
 	nK = length(contColours)
 	cspProfile = sapply(csp$alleles,FUN=convert.to.binary,simplify=FALSE)
-        cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+        cspProfile = cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
         alleleDb = ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
         alleleDb = missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
 	# locus names
@@ -585,9 +585,9 @@ getDNAcontDeg = function(estimates,repNames,knownProfs,hyp)
     if(hyp=="prosecution") 
         {
         namesQ = rownames(knownProfs)[which(unlist(knownProfs[,1]))]
-        outNames = c(namesK,namesU,namesQ)
+        outNames = c(namesU,namesK,namesQ)
         } else {
-        outNames = c(namesK,namesU)
+        outNames = c(namesU,namesK)
         }
     colnames(out) = c(ifelse(hyp=="prosecution","Prosecution","Defence"),outNames)
     return(out)

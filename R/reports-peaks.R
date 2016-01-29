@@ -136,7 +136,7 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 	contColours = rainbow(nrow(refs))
 	nK = length(contColours)
 	cspProfile = sapply(csp$alleles,FUN=convert.to.binary,simplify=FALSE)
-        cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist)))
+        cspProfile = cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
         alleleDb = ethnic.database.lus(colnames(alleleDb)[5], colnames(cspProfile), alleleDb)
         alleleDb = missing.alleles.peaks(alleleDb, cspProfile, refs[which(unlist(refs[,1])),-1,drop=FALSE], refs)
 	# locus names
