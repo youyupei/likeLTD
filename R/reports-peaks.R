@@ -741,8 +741,15 @@ if(length(admin$detectionThresh)==1)
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
 	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
 	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
+	# unusual
+	print("unusual")
 	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
-	addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
+	if(nrow(gen$unusuals)>0)
+		{
+		addTable(doc, gen$unusuals, col.justify='C', header.col.justify='C',font.size=fs3)
+		} else {
+		addParagraph( doc, "No unusual alleles.")
+		}
 	return(doc)
 	}
 
@@ -866,12 +873,14 @@ allele.report.peaks = function(admin,file=NULL)
     # section common to allele and output report
     doc <- common.report.section.peaks(names,gen,admin)
     # section specific to the allele report
+    print("suggested parameters")
     addNewLine(doc)
     addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
     addTable(doc, hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles)), col.justify='C', header.col.justify='C')
     addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
+    print("system info")
     addHeader(doc, "System information", TOC.level=1,font.size=fs1)
     addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
