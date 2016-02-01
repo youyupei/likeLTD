@@ -655,7 +655,7 @@ create.contributor.table = function(refs)
 	}
 
 # function to create the parts of the report documents that are present in both allele report and output report
-common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL,resTable=NULL)
+common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL,resTable=NULL,figRes=300)
 	{
 	# Create a new Docx. 
 	doc <- RTF(names$filename, width=11,height=8.5,omi=c(1,1,1,1))
@@ -710,7 +710,7 @@ if(length(admin$detectionThresh)==1)
 		{
 		addText(doc,paste0("Replicate: ",names(gen$csp$alleles)[y]),bold=TRUE);
 		addNewLine(doc)
-		addPlot( doc, plot.fun = print, width = 5.5, height = 5, x = 
+		addPlot( doc, plot.fun = print, width = 5.5, height = 5, res=figRes, x = 
 			CSP.heights.plot(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
 					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
@@ -743,7 +743,7 @@ if(length(admin$detectionThresh)==1)
 	# unnatributable
 	print("unnatributable")
 	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
-	addPlot( doc, plot.fun = print, width = 9, height = 4, x = plotUnnatributablePeaks(gen$unattributable))
+	addPlot( doc, plot.fun = print, width = 9, height = 4, res=figRes, x = plotUnnatributablePeaks(gen$unattributable))
 	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
 	# unusual
 	print("unusual")
@@ -867,7 +867,7 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
 
 
 # function to generate the allele report
-allele.report.peaks = function(admin,file=NULL)
+allele.report.peaks = function(admin,file=NULL,figRes=300)
     {
     # get genetics
     gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit)
@@ -875,7 +875,7 @@ allele.report.peaks = function(admin,file=NULL)
     names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
     # section common to allele and output report
-    doc <- common.report.section.peaks(names,gen,admin)
+    doc <- common.report.section.peaks(names,gen,admin,figRes=figRes)
     # section specific to the allele report
     print("suggested parameters")
     addNewLine(doc)
@@ -893,7 +893,7 @@ allele.report.peaks = function(admin,file=NULL)
 
 
 # function to generate the allele report
-output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,file=NULL)
+output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,file=NULL,figRes=300)
     {
     prosecutionResults = results$Pros
     defenceResults = results$Def
@@ -917,7 +917,7 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
     print("doc")
-    doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames,resTable)
+    doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames,resTable,figRes=figRes)
     # section specific to the output report
     # locus likelihoods
     print("locus likelihoods")
@@ -968,5 +968,5 @@ print("optimised params")
 	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
 	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
-    rtf.formater(names$filename)	
+    #rtf.formater(names$filename)	
     }
