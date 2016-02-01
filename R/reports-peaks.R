@@ -305,7 +305,8 @@ formatAllele = function(allele,count)
 
 isSingleRefReplicatedAll = function(reference,csp)
 	{
-	sapply(1:length(reference), FUN=function(x)
+	loci=names(reference)
+	sapply(loci, FUN=function(x)
 		sapply(reference[[x]], FUN=function(y) 
 			length(which(as.numeric(unlist(sapply(csp$alleles,FUN=function(a) a[x,],simplify=FALSE)))==y))
 			),simplify=FALSE)
@@ -313,7 +314,8 @@ isSingleRefReplicatedAll = function(reference,csp)
 
 isSingleRefReplicatedCertain = function(reference,certain)
 	{
-	sapply(1:length(reference), FUN=function(x)
+	loci=names(reference)
+	sapply(loci, FUN=function(x)
 		sapply(reference[[x]], FUN=function(y) 
 			length(which(as.numeric(unlist(sapply(certain,FUN=function(a) a[[x]],simplify=FALSE)))==y))
 			),simplify=FALSE)
@@ -342,7 +344,8 @@ callLocusPeaks = function(alleles,heights)
 
 callReplicatePeaks = function(alleles,heights)
 	{
-	return(sapply(1:nrow(alleles), FUN=function(y) callLocusPeaks(alleles[y,],heights[y,])))
+	loci = rownames(alleles)
+	return(sapply(loci, FUN=function(y) callLocusPeaks(alleles[y,],heights[y,]),simplify=FALSE))
 	}
 
 # function to filter down from allelic calls to just keep the certain alleles
@@ -359,7 +362,8 @@ getLocusCertains = function(alleles,calls)
 
 getReplicateCertains = function(alleles,calls)
 	{
-	return(sapply(1:nrow(alleles), FUN=function(y) getLocusCertains(alleles[y,],calls[[y]])))
+	loci = rownames(alleles)
+	return(sapply(loci, FUN=function(y) getLocusCertains(alleles[y,],calls[[y]])))
 	}
 
 filterCertains = function(csp,ref)
@@ -373,16 +377,16 @@ unattribForRefs = function(csp,refs,certains)
 	# with estimation of stutters etc
 	# find the unnatributable alleles
 	unattributable1 = sapply(1:length(certains), FUN=function(x) 
-				sapply(1:length(certains[[x]]), FUN=function(y) 
-					filterCertains(certains[[x]][[y]],refs[,y+1]),
+				sapply(names(certains[[x]]), FUN=function(y) 
+					filterCertains(certains[[x]][[y]],refs[,y]),
 					simplify=FALSE),simplify=FALSE)
 	# unattributable counts with estimation
 	counts1 = sapply(do.call(Map,c(c,unattributable1)),FUN=table)
 	withEstimation = sapply(1:length(counts1),FUN=function(a) paste(formatAllele(names(counts1[[a]]),counts1[[a]]),collapse=","))
 	# without estimation of stutters etc
 	unattributable2 = sapply(1:length(csp$alleles), FUN=function(x) 
-				sapply(1:nrow(csp$alleles[[x]]), FUN=function(y) 
-					filterCertains(unlist(csp$alleles[[x]][y,][which(!is.na(csp$alleles[[x]][y,]))]),refs[,y+1]),
+				sapply(names(certains[[x]]), FUN=function(y) 
+					filterCertains(unlist(csp$alleles[[x]][y,][which(!is.na(csp$alleles[[x]][y,]))]),refs[,y]),
 					simplify=FALSE),simplify=FALSE)
 	# unattributable counts without estimation
 	counts2 = sapply(do.call(Map,c(c,unattributable2)),FUN=table)
@@ -396,8 +400,8 @@ unattributablePeaks = function(csp,refs,certains)
 	{
 	# find the unnatributable alleles
 	unnatributable = sapply(1:length(certains), FUN=function(x) 
-				sapply(1:length(certains[[x]]), FUN=function(y) 
-					filterCertains(certains[[x]][[y]],refs[,y+1]),
+				sapply(names(certains[[x]]), FUN=function(y) 
+					filterCertains(certains[[x]][[y]],refs[,y]),
 					simplify=FALSE),simplify=FALSE)
 	if(length(unnatributable)>1) 
 		{
