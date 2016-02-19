@@ -964,6 +964,18 @@ print("optimised params")
 	addHeader(doc, "Defence parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
+    # runtime
+    if(!is.null(results$runtime))
+	{
+	addHeader(doc, "Runtime", TOC.level=1,font.size=fs1)
+	runtime = results$runtime
+	runInfo = data.frame(Parameter=names(runtime),Time=c(paste(round(runtime$elapsed,2),
+					units(runtime$elapsed),sep=" "),
+					toString(runtime$start),
+					toString(runtime$end)))
+	addTable(doc,  runInfo, 
+			col.justify='L', header.col.justify='L')
+	}
     # system information
 	addHeader(doc, "System information", TOC.level=1,font.size=fs1)
 	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')

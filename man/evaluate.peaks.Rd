@@ -36,7 +36,7 @@ A list containing seven elements:
 \item{Ld}{-log_{10} defence likelihood at each step usually.}
 \item{seed.used}{Seed that is set at the beginning of computation.}
 \item{seed.input}{Seed that is input by the user.}
-\item{runtime}{List of three objects: elapsed, begin, end. \code{runtime$begin} and \code{runtime$end} are obtained through \code{Sys.time} at the beginning and end of computation, \code{runtime$elapsed} is obtained by \code{difftime} on \code{runtime$begin} and \code{runtime$end}.}
+\item{runtime}{List of three objects: elapsed, start, end. \code{runtime$start} and \code{runtime$end} are obtained through \code{Sys.time} at the beginning and end of computation, \code{runtime$elapsed} is obtained by \code{difftime} on \code{runtime$start} and \code{runtime$end}.}
 } 
 \description{
 Optimize both prosecution and defence likelihoods, returning the weight of evidence for peak height data.
