@@ -7,7 +7,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
-#include <iterator>
+//#include <iterator>
 #include <algorithm>
 #include <R_ext/Error.h>
 

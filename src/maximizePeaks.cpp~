@@ -1767,12 +1767,12 @@ SEXP getProbabilitiesSDO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -2109,12 +2109,12 @@ SEXP getProbabilitiesSO_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -2451,12 +2451,12 @@ SEXP getProbabilitiesSD_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS,
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
@@ -2779,12 +2779,12 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
             		doseArray[matchIndex][i] += gammaMuVec[j].dose;
             		}
 		// add dropin doses to dose array
-		for(int j=0; j<fragVecN.size(); j++)
+		for(unsigned int j=0; j<fragVecN.size(); j++)
 			{
 			if(!(fragVecN[j]<-1&&fragVecN[j]>-100))
 		    		{
 		    		int matchIndex=0;
-		    		for(int k=0; k<dbVals.size(); k++)
+		    		for(unsigned int k=0; k<dbVals.size(); k++)
 			    		{
 			    		double diff = std::fabs(dbVals[k]-fragVecN[j]); 
                 			if(diff<0.0001)
