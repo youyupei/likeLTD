@@ -16,6 +16,10 @@
 #define EPS 3.0e-7  // relative accuracy
 #define FPMIN 1.0e-308  // Number near smallest representable double number 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Numerical Recipes standard error handler
 /*
 void nrerror(char error_text[])
@@ -172,7 +176,9 @@ void gcf(double *gammcf, double a, double x, double *gln)
 
 
 
-
+#ifdef __cplusplus
+}
+#endif
 
 
 

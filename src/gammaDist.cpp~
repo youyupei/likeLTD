@@ -16,6 +16,10 @@
 #define EPS 3.0e-7  // relative accuracy
 #define FPMIN 1.0e-308  // Number near smallest representable double number 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Numerical Recipes standard error handler
 /*
 void nrerror(char error_text[])
@@ -57,7 +61,7 @@ double gammp(double a, double x)
     if (x < 0.0 || a < 0.0) 
         {
         //fprintf(stderr,"a=%f\nx=%f\n",a,x);
-	char message[] = "Invalid arguments in routine gammp";
+	//char message[] = "Invalid arguments in routine gammp";
         //nrerror(message);
 	return 999;
         }
@@ -80,7 +84,7 @@ double gammq(double a, double x)
     double gamser,gammcf,gln;
     if (x < 0.0 || a <= 0.0) 
 	{
-	char message[] = "Invalid arguments in routine gammq";
+	//char message[] = "Invalid arguments in routine gammq";
 	//nrerror(message);
 	return 999;
 	}
@@ -107,7 +111,7 @@ void gser(double *gamser, double a, double x, double *gln)
     if (x <= 0.0) {
         if (x < 0.0) 
 		{
-		char message[] = "x less than 0 in routine gser";
+		//char message[] = "x less than 0 in routine gser";
 		//nrerror(message);
 		*gamser=999;
 		return;
@@ -127,7 +131,7 @@ void gser(double *gamser, double a, double x, double *gln)
                 }
             }
         //fprintf(stderr,"a=%.30f\nx=%f\n",a,x);
-	char message[] = "a too large, ITMAX too small in routine gser";
+	//char message[] = "a too large, ITMAX too small in routine gser";
 	//nrerror(message);
 	*gamser=999;
         return;
@@ -161,7 +165,7 @@ void gcf(double *gammcf, double a, double x, double *gln)
         }
     if (i > ITMAX) 
 	{
-	char message[] = "a too large, ITMAX too small in gcf";
+	//char message[] = "a too large, ITMAX too small in gcf";
 	//nrerror(message);
 	*gammcf=999;
 	} else {
@@ -172,7 +176,9 @@ void gcf(double *gammcf, double a, double x, double *gln)
 
 
 
-
+#ifdef __cplusplus
+}
+#endif
 
 
 

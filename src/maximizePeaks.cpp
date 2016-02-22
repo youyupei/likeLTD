@@ -22,6 +22,10 @@
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sortByAlleleNameCSP
     {
     bool operator()(cspStruct const  &a, cspStruct const &b)
@@ -2865,5 +2869,8 @@ SEXP getProbabilitiesS_dropin(SEXP genotypeArray, SEXP DNAcont, SEXP gradientS, 
     	}
 
 
+#ifdef __cplusplus
+}
+#endif
 
 
