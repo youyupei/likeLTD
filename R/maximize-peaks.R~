@@ -442,8 +442,8 @@ peaks.results.plot = function(hyp,res,replicate=1,toplot=NULL,fileName=NULL,...)
 		total = total + length(which(!is.na(sapply(1:ncol(CIs),FUN=function(x) inRange(heights[x],CIs[c(2,3),x])))))
 		}
 	if(!is.null(fileName)) dev.off()
-	print("Proportion of peaks within 95% probability interval: ", ninetyfive/total)
-	print("Proportion of peaks within 50% probability interval: ", fifty/total)
+	print(paste0("Proportion of peaks within 95% probability interval: ", ninetyfive/total))
+	print(paste0("Proportion of peaks within 50% probability interval: ", fifty/total))
 	}
 
 
