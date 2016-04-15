@@ -239,7 +239,7 @@ representation = function(K,alleles,heights,loci)
 
 meanRfu = function(K,alleles,heights,loci)
     {
-    rfu = sapply(1:length(alleles), FUN=function(z) sapply(loci,FUN=function(x) sapply(K[[x]], FUN=function(y) ifelse(!y%in%alleles[[z]][x,],0,heights[[z]][x,which(alleles[[z]][x,]==y)]))))
+    rfu = sapply(1:length(alleles), FUN=function(z) sapply(loci,FUN=function(x) sapply(K[[x]], FUN=function(y) ifelse(!y%in%alleles[[z]][x,],0,as.numeric(heights[[z]][x,which(alleles[[z]][x,]==y)])))))
     rfu = c(colMeans(rfu),mean(rfu))
     names(rfu) = c(names(alleles),"Overall")
     return(rfu)
@@ -391,7 +391,7 @@ unattribForRefs = function(csp,refs,certains)
 	# unattributable counts without estimation
 	counts2 = sapply(do.call(Map,c(c,unattributable2)),FUN=table)
 	withoutEstimation = sapply(1:length(counts2),FUN=function(a) paste(formatAllele(names(counts2[[a]]),counts2[[a]]),collapse=","))
-	return(list(withEstimation=withEstimation,withoutEstimation=withoutEstimation))
+	return(list(withEstimation=withEstimation,withoutEstimation=withoutEstimation,simple=unattributable1))
 	}
 
 # function to determine which peaks are unnatributable while attempting to ignore stutter peaks
@@ -835,6 +835,25 @@ unusual.alleles.peaks = function(csp,refs,alleleDb)
 	return(do.call(rbind,unusuals))
 	}
 
+# get peak heights for Q at a single locus and replicate
+getHeightsQ = function(heights,alleles,Q)
+	{
+	index = alleles%in%Q
+	out = as.numeric(heights[which(index)])
+	index = which(Q%in%alleles)
+	if(length(index)==1) out = c(out,0)
+	if(length(index)==0&length(unique(Q))==2) out = c(0,0)
+	if(length(index)==0&length(unique(Q))==1) out = c(0)
+	return(out)
+	}
+
+# get peak heights for Q across replicates and loci
+getQpeaks = function(csp,Qref)
+	{
+	heightsQ = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsQ(csp$heights[[x]][y,],csp$alleles[[x]][y,],Qref[[y]])),simplify=FALSE)
+	return(heightsQ)
+	}
+
 
 pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,dbFile=NULL,kit=NULL)
     {
@@ -861,13 +880,39 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
     refTables$all = cbind(refTables$all,t(cbind("{\\i Other}",t(unattrib$withoutEstimation))))
     # representation tables
     repTables = get.representation.rfu(csp,refs)
-    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables,unusuals=unusuals))
+    # Q peak heights
+    Qheights = getQpeaks(csp,refs[which(unlist(refs[,"queried"])),-1])
+    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables,unusuals=unusuals,unattribAlleles=unattrib$simple,Qheights=Qheights))
     }
 
+# heights of unattributable alleles
+getHeightsUnattrib = function(heights,alleles,unattrib)
+	{
+	heights[which(alleles%in%unattrib)]
+	}
 
+# how many unknowns might be explainable as dropin
+minorAsDropin = function(csp,Qheights,unattributable,nU,dropinThresh=5)
+	{
+	if(nU==0) return(NULL)
+	unattribHeights = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) likeLTD:::getHeightsUnattrib(csp$heights[[x]][y,],csp$alleles[[x]][y,],unattributable[[x]][[y]])),simplify=FALSE)
+	Qmean = sum(unlist(Qheights))/(length(Qheights)*length(Qheights[[1]])*2)
+	if(nU==1) 
+		{
+		kMeans = mean(as.numeric(unlist(unattribHeights)))
+		} else {
+		#cluster = kmeans(unlist(unattribHeights),nU)
+		kMeans = multiKmeans(unattribHeights,nU)
+		}
+	canDropin = sum(Qmean/kMeans>dropinThresh)
+	out = round(c(Qmean,kMeans,canDropin))
+	names(out) = c("Mean RFU Q",paste0("Mean RFU U",1:nU),"# as dropin")
+	out = as.data.frame(t(out))
+	return(out)
+	}
 
 # function to generate the allele report
-allele.report.peaks = function(admin,file=NULL,figRes=300)
+allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     {
     # get genetics
     gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit)
@@ -880,8 +925,19 @@ allele.report.peaks = function(admin,file=NULL,figRes=300)
     print("suggested parameters")
     addNewLine(doc)
     addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
-    addTable(doc, hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles)), col.justify='C', header.col.justify='C')
+    hyps =  hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles))
+    addTable(doc,hyps, col.justify='C', header.col.justify='C')
     addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
+    print("minor as dropin")
+    nU = hyps[which(hyps[,"Recommendation"]=="Recommended"),"nU"]
+    minorsDropin = minorAsDropin(gen$csp,gen$Qheights,gen$unattribAlleles,nU,dropinThresh)
+    if(!is.null(minorsDropin))
+	{
+        addNewLine(doc)
+        addHeader(doc, "Minor as dropin", TOC.level=1, font.size=fs1)
+        addTable(doc, minorsDropin, col.justify='C', header.col.justify='C')
+	addParagraph( doc, paste0("Mean peak height for Q, clustered mean peak heights for unknowns using k-means clustering with ",nU," clusters, and the number of unknowns that may be explainable as dropin (mean Q peak height/mean U peak height > ",dropinThresh,")." ))
+	}
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
     print("system info")
@@ -892,7 +948,7 @@ allele.report.peaks = function(admin,file=NULL,figRes=300)
     }
 
 
-# function to generate the allele report
+# function to generate the output report
 output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,file=NULL,figRes=300)
     {
     prosecutionResults = results$Pros
@@ -969,7 +1025,7 @@ print("optimised params")
 	{
 	addHeader(doc, "Runtime", TOC.level=1,font.size=fs1)
 	runtime = results$runtime
-	runInfo = data.frame(Parameter=names(runtime),Time=c(paste(round(runtime$elapsed,2),
+	runInfo = data.frame(Parameter=names(runtime),Time=c(paste(round(runtime$elapsed,3),
 					units(runtime$elapsed),sep=" "),
 					toString(runtime$start),
 					toString(runtime$end)))
