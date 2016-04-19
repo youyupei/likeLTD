@@ -90,8 +90,8 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 logObjective=TRUE, logDegradation=TRUE,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, doLinkage=TRUE, objective=NULL, 
-				iterMax=75,likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
-				searchPopFactor=4,DEoptimF=0.8,DEoptimC=NULL,maxDropin=100,...) {
+				iterMax=25,likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
+				searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,maxDropin=100,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -459,7 +459,7 @@ multiConverged = function(L,globalVal,tolerance,nConverged=5)
 
 getSteps = function(sdStep,nCont,nReps)
 	{
-	ceiling(log2(sdStep)*nCont*(nReps+1))
+	ceiling(log(sdStep,8)*nCont*(nReps+1))
 	}
 
 evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=TRUE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5, stepsFun=NULL){
