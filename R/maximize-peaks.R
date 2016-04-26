@@ -459,10 +459,11 @@ multiConverged = function(L,globalVal,tolerance,nConverged=5)
 
 getSteps = function(sdStep,nCont,nReps)
 	{
-	ceiling(log(sdStep,8)*nCont*(nReps+1))
+	if(sdStep<=8) sdStep = 8
+	ceiling(log(sdStep,8)*(nCont+1)*(nReps+1))
 	}
 
-evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=TRUE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=5, stepsFun=NULL){
+evaluate.peaks <- function(P.pars, D.pars, tolerance=1e-6, n.steps=NULL, interim=TRUE, CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=4, stepsFun=NULL){
 	# P.pars D.pars: parameter object created by optimisation.params()
 	# the smallest convergence threshold (ie for the last step)
 	# number of convergence thresholds
