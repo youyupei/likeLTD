@@ -86,7 +86,7 @@ relatedness.factors <- function(input, genotypes, alleleDb, queriedProfile,
     frequencies = alleleDb[indices, 1]
     # treat all hom rares as het
     rareIndex = which(rownames(alleleDb)=="rares"|rownames(alleleDb)=="-1")
-    if(length(rareIndex)==0) rareIndex = as.integer(0)    
+    if(length(rareIndex)==0) rareIndex = 0    
 
     .Call(.cpp.relatednessFactors, input, relatedness, genotypes, indices,
           frequencies, rareIndex, PACKAGE="likeLTD")
