@@ -1,13 +1,17 @@
 \name{allele.report.peaks} 
 \alias{allele.report.peaks} 
 \title{likeLTD::allele.report.peaks} 
-\usage{allele.report.peaks(admin,file=NULL, figRes=300)}
+\usage{allele.report.peaks(admin,file=NULL, figRes=300, dropinThresh=3)}
 \arguments{
   \item{admin}{List containing administration data for peak heights inputs, 
 as packed by pack.admin.input.peaks()}
   \item{file}{A file name for the allele report. By default a sequential filename 
 is created to avoid accidental overwriting.}
 \item{figRes}{Resolution of figures in the allele report. Defaults to 300 DPI.}
+\item{dropinThresh}{If the estimated DNA contribution of Q is more than 
+\code{dropinThresh} times the estimated DNA contribution of any unknown (estimated
+by k-means) then it will be suggested that that unknown contributor could be 
+modelled as dropin instead.}
 }
 \description{Outputs a docx summary of the data inputs, to assist the user in choosing 
 parameter inputs for a full evaluation}

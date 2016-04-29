@@ -892,10 +892,10 @@ getHeightsUnattrib = function(heights,alleles,unattrib)
 	}
 
 # how many unknowns might be explainable as dropin
-minorAsDropin = function(csp,Qheights,unattributable,nU,dropinThresh=5)
+minorAsDropin = function(csp,Qheights,unattributable,nU,dropinThresh=3)
 	{
 	if(nU==0) return(NULL)
-	unattribHeights = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) likeLTD:::getHeightsUnattrib(csp$heights[[x]][y,],csp$alleles[[x]][y,],unattributable[[x]][[y]])),simplify=FALSE)
+	unattribHeights = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsUnattrib(csp$heights[[x]][y,],csp$alleles[[x]][y,],unattributable[[x]][[y]])),simplify=FALSE)
 	Qmean = sum(unlist(Qheights))/(length(Qheights)*length(Qheights[[1]])*2)
 	if(nU==1) 
 		{
