@@ -10,7 +10,10 @@
 //#include <iterator>
 #include <algorithm>
 #include <R_ext/Error.h>
-
+using std::floor;
+using std::log;
+using std::fabs;
+using std::pow;
 
 
 #ifdef _OPENMP
