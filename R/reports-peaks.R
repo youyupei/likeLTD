@@ -613,6 +613,7 @@ create.hypothesis.string.peaks = function(hypP)
 	if(hypP$nUnknowns>0)
 		{	
 		nameU = paste0("U",1:hypP$nUnknowns)
+		nameU = paste(nameU,collapse=" + ")
 		} else {
 		nameU = c()
 		}
@@ -621,6 +622,7 @@ create.hypothesis.string.peaks = function(hypP)
 	if(length(nameK)>0)
 		{
 		nameK = paste0(nameK," (K",1:length(nameK),")")
+		nameK = paste(nameK,collapse=" + ")
 		pros = paste(pros,nameK,sep=" + ",collapse=" + ")
 		def = paste(def,nameK,sep=" + ",collapse=" + ")
 		}
