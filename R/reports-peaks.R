@@ -594,6 +594,7 @@ getDNAcontDeg = function(estimates,repNames,knownProfs,hyp)
         outNames = c(namesU,namesK)
         }
     colnames(out) = c(ifelse(hyp=="prosecution","Prosecution","Defence"),outNames)
+    rownames(out) = 1:nrow(out)
     return(out)
     }
 
