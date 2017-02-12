@@ -657,6 +657,11 @@ create.contributor.table = function(refs)
 	return(out)
 	}
 
+contributor.peak.heights = function()
+	{
+	
+	}
+
 # function to create the parts of the report documents that are present in both allele report and output report
 common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL,resTable=NULL,figRes=300)
 	{
@@ -722,16 +727,36 @@ if(length(admin$detectionThresh)==1)
 		})
 	# table of reference profiles
 	print("references")
-	addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
-	addText(doc,"All peaks in the provided profiles",bold=TRUE)
-	addNewLine(doc)
-	addTable(doc, t(gen$refTables$all), col.justify='C', header.col.justify='C',font.size=fs3)
-	addText(doc,"After removal of peaks that are possibly non-allelic (intended as a guide only - not assumed by software)",bold=TRUE)
-	addNewLine(doc)
-	addTable(doc, t(gen$refTables$certains), col.justify='C', header.col.justify='C',font.size=fs3)
-	addParagraph(doc,"{\\chbrdr\\brdrs Unobserved}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
-	addNewLine(doc)
+	#addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
+	#addText(doc,"All peaks in the provided profiles",bold=TRUE)
+	#addNewLine(doc)
+	#addTable(doc, t(gen$refTables$all), col.justify='C', header.col.justify='C',font.size=fs3)
+	#addText(doc,"After removal of peaks that are possibly non-allelic (intended as a guide only - not assumed by software)",bold=TRUE)
+	#addNewLine(doc)
+	#addTable(doc, t(gen$refTables$certains), col.justify='C', header.col.justify='C',font.size=fs3)
+	#addParagraph(doc,"{\\chbrdr\\brdrs Unobserved}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
+	#addNewLine(doc)
 	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	print("TEST NEW TABLE")
+	addNewLine(doc)
+	addHeader(doc, "Known peak heights", TOC.level=1, font.size=fs1)
+	for(i in 1:length(Kheights))
+	{
+	  addNewLine(doc)
+	  addText(doc, names(Kheights)[i], bold=TRUE)
+	  addNewLine(doc)
+	  for(j in 1:length(Kheights[[i]]))
+	  {
+	    addText(doc, names(gen$csp$alleles)[j], bold=TRUE)
+	    addNewLine(doc)
+	    toAdd = rbind(sapply(Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
+	                  sapply(Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
+	    rownames(toAdd) = c("Allele","Height")
+	    colnames(toAdd) = sapply(colnames(toAdd),FUN=function(x) strsplit(x,split="S")[[1]][1])
+	    addTable(doc,  toAdd, col.justify='L', header.col.justify='L')
+	  }
+	}
+	print("FINISH TEST")
 	# summary
 	#print("summary")
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
@@ -744,10 +769,10 @@ if(length(admin$detectionThresh)==1)
 	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to sharing of alleles with other contributors. These values are for information purposes only, they are not used by the software.")
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# unnatributable
-	print("unnatributable")
-	addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
-	addPlot( doc, plot.fun = print, width = 9, height = 4, res=figRes, x = plotUnnatributablePeaks(gen$unattributable))
-	addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
+	#print("unnatributable")
+	#addHeader(doc, "Unattributable alleles", TOC.level=1,font.size=fs1)
+	#addPlot( doc, plot.fun = print, width = 9, height = 4, res=figRes, x = plotUnnatributablePeaks(gen$unattributable))
+	#addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
 	# unusual
 	print("unusual")
 	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
@@ -839,29 +864,46 @@ unusual.alleles.peaks = function(csp,refs,alleleDb)
 	}
 
 # get peak heights for Q at a single locus and replicate
-getHeightsQ = function(heights,alleles,Q)
+getHeightsQ = function(heights,alleles,Q,replace=0)
 	{
 	index = alleles%in%Q
 	out = as.numeric(heights[which(index)])
+	names(out) = alleles[which(index)]
 	index = which(Q%in%alleles)
-	if(length(index)==1) out = c(out,0)
-	if(length(index)==0&length(unique(Q))==2) out = c(0,0)
-	if(length(index)==0&length(unique(Q))==1) out = c(0)
+	if(length(index)==1) 
+	  {
+	  out = c(out,replace)
+	  names(out)[2] = Q[which(!Q%in%alleles)]
+	  }
+	if(length(index)==0&length(unique(Q))==2) 
+	  {
+	  out = rep(replace,times=2)
+	  names(out) = Q
+	  }
+	if(length(index)==0&length(unique(Q))==1) 
+	  {
+	  out = replace
+	  names(out) = unique(Q)
+	  }
 	return(out)
 	}
 
 # get peak heights for Q across replicates and loci
-getQpeaks = function(csp,Qref)
+getQpeaks = function(csp,Qref,replace=0)
 	{
-	heightsQ = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsQ(csp$heights[[x]][y,],csp$alleles[[x]][y,],Qref[[y]])),simplify=FALSE)
+	heightsQ = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsQ(csp$heights[[x]][y,],csp$alleles[[x]][y,],Qref[[y]],replace=replace)),simplify=FALSE)
 	return(heightsQ)
-	}
+}
 
 
-pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,dbFile=NULL,kit=NULL)
+pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,dbFile=NULL,kit=NULL,threshold=20)
     {
     # get csp
-    if(is.null(csp)) csp = read.peaks.profile(cspFile)
+    if(is.null(csp)) 
+      {
+      csp = read.peaks.profile(cspFile)
+      csp = filter.below.thresh.peaks(csp,threshold)
+      }
     # get references
     if(is.null(refs)) refs = read.known.profiles(refFile)
     # get allele database
@@ -885,7 +927,13 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
     repTables = get.representation.rfu(csp,refs)
     # Q peak heights
     Qheights = getQpeaks(csp,refs[which(unlist(refs[,"queried"])),-1])
-    return(list(csp=csp,refs=refs,calls=calls,certains=certains,unattributable=unattributable,refTables=refTables,repTables=repTables,unusuals=unusuals,unattribAlleles=unattrib$simple,Qheights=Qheights))
+    # peak heights of each contributor
+    Kheights = sapply(1:nrow(refs), FUN=function(x) getQpeaks(csp,refs[x,-1],replace=NA),simplify=FALSE)
+    names(Kheights) = rownames(refs)
+    return(list(csp=csp,refs=refs,calls=calls,
+                certains=certains,unattributable=unattributable,
+                refTables=refTables,repTables=repTables,unusuals=unusuals,
+                unattribAlleles=unattrib$simple,Qheights=Qheights,Kheights=Kheights))
     }
 
 # heights of unattributable alleles
@@ -918,7 +966,7 @@ minorAsDropin = function(csp,Qheights,unattributable,nU,dropinThresh=3)
 allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     {
     # get genetics
-    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit)
+    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh)
     # file name
     names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
@@ -932,7 +980,12 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     addTable(doc,hyps, col.justify='C', header.col.justify='C')
     addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
     print("minor as dropin")
+    if(any(hyps[,"Recommendation"]=="Recommended"))
+    {
     nU = hyps[which(hyps[,"Recommendation"]=="Recommended"),"nU"]
+    } else {
+      nU = min(hyps[,"nU"])
+    }
     minorsDropin = minorAsDropin(gen$csp,gen$Qheights,gen$unattribAlleles,nU,dropinThresh)
     if(!is.null(minorsDropin))
 	{
@@ -966,7 +1019,12 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     resTable =  overall.likelihood.table.reformatter(prosecutionResults,defenceResults)
     # get genetics
     print("genetics")
-    gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,refFile=prosecutionHypothesis$refFile,csp=list(alleles=prosecutionHypothesis$peaksProfile,heights=prosecutionHypothesis$heightsProfile),refs=prosecutionHypothesis$knownProfs)
+    gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,
+                                          refFile=prosecutionHypothesis$refFile,
+                                          csp=list(alleles=prosecutionHypothesis$peaksProfile,
+                                                   heights=prosecutionHypothesis$heightsProfile),
+                                          refs=prosecutionHypothesis$knownProfs,
+                                          threshold=prosecutionHypothesis$detectionThreshold)
     # file name
     print("names")
     names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
@@ -1040,4 +1098,5 @@ print("optimised params")
 	addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
     #rtf.formater(names$filename)	
-    }
+}
+

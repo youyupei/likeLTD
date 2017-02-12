@@ -60,7 +60,47 @@ read.peaks.profile = function(FILE)
 	if(check2) stop(paste("Error in the CSP provided - replicates do not match"))
 	# return data
 	return(list(alleles=alleles,heights=heights))
-	}
+}
+
+# function to filter out any peaks below detection threshold
+filter.below.thresh.peaks = function(csp,threshold=20)
+{
+  if(length(threshold)==1) threshold = rep(threshold,nrow(csp$alleles[[1]]))
+  subsetAll = sapply(1:length(csp$alleles),FUN=function(x) removeBelow(csp$heights[[x]],
+                                                                       csp$alleles[[x]],
+                                                                       threshold))
+  outHeights = subsetAll[1,]
+  names(outHeights) = names(csp$heights)
+  outAlleles = subsetAll[2,]
+  names(outAlleles) = names(csp$heights)
+  outcsp = list(alleles = outAlleles, heights = outHeights)
+  return(outcsp)
+}
+
+removeBelow=function(heights,alleles,threshold)
+{
+ subsetInfo = sapply(1:nrow(heights),FUN=function(x) removeOneRow(heights[x,],
+                                            alleles[x,],
+                                            which(heights[x,]<threshold[x])),simplify=FALSE)
+ subsetInfo = do.call(rbind,subsetInfo)
+ heights = do.call(rbind,subsetInfo[,1])
+ alleles = do.call(rbind,subsetInfo[,2])
+ return(list(heights=heights,alleles=alleles))
+}
+
+removeOneRow = function(heightsRow, allelesRow, indexBelow)
+{
+  if(length(indexBelow)==0) return(list(heightsRow,allelesRow))
+  print(paste0("Warning: alleles below detection threshold in locus ",rownames(heightsRow),
+               ". Below threshold alleles are being removed. Consider checking input CSP if this is unexpected."))
+  indexBelow = (1:length(heightsRow))[-indexBelow]
+  heightsRow[1:length(indexBelow)] = heightsRow[indexBelow]
+  allelesRow[1:length(indexBelow)] = allelesRow[indexBelow]
+  heightsRow[(length(indexBelow)+1):length(heightsRow)] = NA
+  allelesRow[(length(indexBelow)+1):length(allelesRow)] = NA
+  return(list(heightsRow,allelesRow))
+}
+
 
 convert.to.binary = function(data)
 	{
@@ -327,6 +367,7 @@ prosecution.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
+  peaksProfile = filter.below.thresh.peaks(peaksProfile,detectionThresh)
   cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
   #cspProfile = t(sapply(cspProfile,FUN=function(x) sapply(x,FUN=unlist,simplify=FALSE)))
 if(!relationship%in%c(0,1))
@@ -398,6 +439,7 @@ defence.hypothesis.peaks <- function(peaksFile, refFile, ethnic='NDU1',  nUnknow
   relatedness = convertRelationship(relationship)
   alleleDb = load.allele.database(databaseFile,kit)
   peaksProfile = read.peaks.profile(peaksFile)
+  peaksProfile = filter.below.thresh.peaks(peaksProfile,detectionThresh)
 #  cspProfile = mapply(convert.to.binary,data=peaksProfile$alleles,allelicCalls=allelicCalls,SIMPLIFY=FALSE)
   cspProfile = t(sapply(peaksProfile$alleles,FUN=convert.to.binary))
 if(!relationship%in%c(0,1))
@@ -510,23 +552,23 @@ sanity.check.peaks = function(hypothesis) {
   if(any(unlist(hypothesis$detectionThresh)<0))
         errors = c( errors,
             "Detection threshold should not be set lower than 0." )
-if(length(hypothesis$detectionThresh)==1)
-	{
-  if(any(as.numeric(unlist(hypothesis$heightsProfile))<hypothesis$detectionThresh,na.rm=TRUE))
-	errors = c(errors,
-    "Observed peak height below detection threshold.")
-	} else {
-	loci = colnames(hypothesis$binaryProfile)
-	tmp = sapply(loci,FUN=function(x) 
-		sapply(1:length(hypothesis$heightsProfile), FUN=function(y) 
-			if(any(na.omit(unlist(hypothesis$heightsProfile[[y]][x,]))<
-				hypothesis$detectionThresh[[x]])) 
-    					paste0("Observed peak height below detection threshold: ", 
-					x, " replicate ", y)
-			)
-		)
-	errors = c(errors, unlist(tmp))
-	}
+#if(length(hypothesis$detectionThresh)==1)
+#	{
+#  if(any(as.numeric(unlist(hypothesis$heightsProfile))<hypothesis$detectionThresh,na.rm=TRUE))
+#	errors = c(errors,
+#    "Observed peak height below detection threshold.")
+#	} else {
+#	loci = colnames(hypothesis$binaryProfile)
+#	tmp = sapply(loci,FUN=function(x) 
+#		sapply(1:length(hypothesis$heightsProfile), FUN=function(y) 
+#			if(any(na.omit(unlist(hypothesis$heightsProfile[[y]][x,]))<
+#				hypothesis$detectionThresh[[x]])) 
+#    					paste0("Observed peak height below detection threshold: ", 
+#					x, " replicate ", y)
+#			)
+#		)
+#	errors = c(errors, unlist(tmp))
+#	}
   if(any(unlist(hypothesis$detectionThresh)>100))
 	errors = c(errors,
     "Detection threshold set unusually high.")

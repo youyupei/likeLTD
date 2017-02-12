@@ -56,8 +56,8 @@ startKmeans = function(heights,nU,nIt=10)
 multiKmeans = function(heights,nU,nStart=10,nIt=10)
 	{
 	multi = replicate(nIt,startKmeans(heights,nU,nIt))
-	multi = apply(multi,MARGIN=2,FUN=sort)
-	return(rowMeans(multi))
+	multi = apply(multi,MARGIN=2,FUN=function(x) sort(x,na.last=TRUE))
+	return(rowMeans(multi,na.rm=TRUE))
 	}
 
 
