@@ -660,7 +660,7 @@ create.contributor.table = function(refs)
 contributor.peak.heights = function()
 	{
 	
-	}
+}
 
 # function to create the parts of the report documents that are present in both allele report and output report
 common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisString=NULL,resTable=NULL,figRes=300)
@@ -725,6 +725,30 @@ if(length(admin$detectionThresh)==1)
 		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): green=allelic, orange=uncertain, grey=non-allelic.")
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 		})
+	# CSP heights
+	addHeader(doc,"CSP alleles and peak heights", TOC.level=2, font.size=fs2)
+	for(i in 1:length(gen$csp$alleles))
+	{
+	  addNewLine(doc)
+	  addText(doc,names(gen$csp$alleles)[i],bold=TRUE,font.size=fs2)
+	  for(j in 1:nrow(gen$csp$alleles[[i]]))
+	  {
+	    addNewLine(doc)
+	    index = which(!is.na(gen$csp$alleles[[i]][j,]))
+	    allelesTmp=gen$csp$alleles[[i]][j,index]
+	    heightsTmp=gen$csp$heights[[i]][j,index]
+	    colnames(heightsTmp)= colnames(allelesTmp)
+	    toPrint = rbind(allelesTmp,heightsTmp)
+	    toPrint = cbind(c("Allele","Height"),toPrint)
+	    colnames(toPrint)[1] = rownames(gen$csp$alleles[[i]])[j]
+	    addTable(doc,  toPrint, col.justify='L', header.col.justify='L')
+	  }
+	}
+	if(gen$belowThreshold)
+	{
+	  addNewLine(doc)
+	  addText(doc,"***WARNING***: Some peaks in the provided CSP were below the specified detection threshold. These have been removed from the CSP displayed here, and will not be used for further calculation. If this is unexpected, please review the provided CSP.",bold=TRUE)
+	}
 	# table of reference profiles
 	print("references")
 	#addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
@@ -737,26 +761,29 @@ if(length(admin$detectionThresh)==1)
 	#addParagraph(doc,"{\\chbrdr\\brdrs Unobserved}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
 	#addNewLine(doc)
 	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
-	print("TEST NEW TABLE")
-	addNewLine(doc)
-	addHeader(doc, "Known peak heights", TOC.level=1, font.size=fs1)
+	print("known heights")
+	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	addHeader(doc, "Peak heights for profiled individuals", TOC.level=1, font.size=fs1)
 	for(i in 1:length(Kheights))
 	{
 	  addNewLine(doc)
 	  addText(doc, names(Kheights)[i], bold=TRUE)
 	  addNewLine(doc)
+	  heightsK = NULL
 	  for(j in 1:length(Kheights[[i]]))
 	  {
-	    addText(doc, names(gen$csp$alleles)[j], bold=TRUE)
-	    addNewLine(doc)
+	    #addText(doc, names(gen$csp$alleles)[j], bold=TRUE)
+	    #addNewLine(doc)
 	    toAdd = rbind(sapply(Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
 	                  sapply(Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
-	    rownames(toAdd) = c("Allele","Height")
-	    colnames(toAdd) = sapply(colnames(toAdd),FUN=function(x) strsplit(x,split="S")[[1]][1])
-	    addTable(doc,  toAdd, col.justify='L', header.col.justify='L')
+	    rownames(toAdd) = paste0(names(gen$csp$alleles)[j],": ",c("Profile Alleles","Heights"))
+	    #colnames(toAdd) = sapply(colnames(toAdd),FUN=function(x) strsplit(x,split="S")[[1]][1])
+	    heightsK = rbind(heightsK,toAdd)
 	  }
+	  heightsK = rbind(colnames(heightsK),heightsK)
+	  rownames(heightsK)[1] = "Locus"
+	  addTable(doc,  t(heightsK), col.justify='L', header.col.justify='L')
 	}
-	print("FINISH TEST")
 	# summary
 	#print("summary")
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
@@ -898,11 +925,13 @@ getQpeaks = function(csp,Qref,replace=0)
 
 pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,dbFile=NULL,kit=NULL,threshold=20)
     {
+    belowThreshold=FALSE
     # get csp
     if(is.null(csp)) 
       {
-      csp = read.peaks.profile(cspFile)
-      csp = filter.below.thresh.peaks(csp,threshold)
+      cspPre = read.peaks.profile(cspFile)
+      csp = filter.below.thresh.peaks(cspPre,threshold)
+      if(!identical(cspPre,csp)) belowThreshold=TRUE
       }
     # get references
     if(is.null(refs)) refs = read.known.profiles(refFile)
@@ -933,7 +962,7 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
     return(list(csp=csp,refs=refs,calls=calls,
                 certains=certains,unattributable=unattributable,
                 refTables=refTables,repTables=repTables,unusuals=unusuals,
-                unattribAlleles=unattrib$simple,Qheights=Qheights,Kheights=Kheights))
+                unattribAlleles=unattrib$simple,Qheights=Qheights,Kheights=Kheights,belowThreshold=belowThreshold))
     }
 
 # heights of unattributable alleles
@@ -943,12 +972,46 @@ getHeightsUnattrib = function(heights,alleles,unattrib)
 	}
 
 # how many unknowns might be explainable as dropin
-minorAsDropin = function(csp,Qheights,unattributable,nU,dropinThresh=3)
+minorAsDropin = function(csp,Qheights,unattributable,nU,ref,dropinThresh=3,minAllelesQ=5)
 	{
 	if(nU==0) return(NULL)
 	unattribHeights = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsUnattrib(csp$heights[[x]][y,],csp$alleles[[x]][y,],unattributable[[x]][[y]])),simplify=FALSE)
-	Qmean = sum(unlist(Qheights))/(length(Qheights)*length(Qheights[[1]])*2)
-	if(nU==1) 
+	# if have known profiles, only compute Qmean on alleles unshared between Q and Ks
+	if(any(!unlist(refs[,1])))
+	{
+	# number of alleles of Q (2 for hom, 1 for het)
+	nQ = sapply(Qheights,FUN=function(x) 
+	    sapply(x,FUN=function(y) rep((length(y)==1)+1,length(y))),simplify=FALSE)
+	# allele of Q in K
+	inK = sapply(1:length(Qheights),FUN=function(x) 
+	  sapply(1:length(Qheights[[x]]),FUN=function(y) 
+	    names(Qheights[[x]][[y]])%in%unlist(refs[which(!unlist(refs[,1])),names(Qheights[[x]])[y]])),
+	  simplify=FALSE)
+	# sum over whole CSP
+	totalHeight = 0
+	nAlleles = 0
+	for(i in 1:length(Qheights))
+	{
+	  for(j in 1:length(Qheights[[i]]))
+	  {
+	    totalHeight = totalHeight + sum(Qheights[[i]][[j]][which(!inK[[i]][[j]])])
+	    nAlleles = nAlleles + sum(nQ[[i]][[j]][which(!inK[[i]][[j]])])
+	  }
+	}
+	# only use unshared if there are enough
+	if(nAlleles>=minAllelesQ)
+	  {
+	  Qmean = totalHeight/nAlleles
+	  } else {
+	 # otherwise use whole profile
+	 Qmean = sum(unlist(Qheights))/(length(Qheights)*length(Qheights[[1]])*2)
+	  }
+	} else {
+	  # if no known profiles, use whole profile of Q
+	  Qmean = sum(unlist(Qheights))/(length(Qheights)*length(Qheights[[1]])*2) 
+	}
+	
+if(nU==1) 
 		{
 		kMeans = mean(as.numeric(unlist(unattribHeights)))
 		} else {
@@ -974,25 +1037,45 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     doc <- common.report.section.peaks(names,gen,admin,figRes=figRes)
     # section specific to the allele report
     print("suggested parameters")
-    addNewLine(doc)
-    addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
+    # get suggested hypotheses
     hyps =  hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles))
-    addTable(doc,hyps, col.justify='C', header.col.justify='C')
-    addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
-    print("minor as dropin")
     if(any(hyps[,"Recommendation"]=="Recommended"))
     {
     nU = hyps[which(hyps[,"Recommendation"]=="Recommended"),"nU"]
     } else {
       nU = min(hyps[,"nU"])
     }
-    minorsDropin = minorAsDropin(gen$csp,gen$Qheights,gen$unattribAlleles,nU,dropinThresh)
+    # get suggested number of contributors who can be explained by dropin
+    minorsDropin = minorAsDropin(gen$csp,gen$Qheights,gen$unattribAlleles,nU,gen$refs,dropinThresh)
     if(!is.null(minorsDropin))
 	{
+      # if some minors as dropin
+      nAdd = minorsDropin[,"# as dropin"]
+      if(nAdd>0)
+      {
+      for(i in 1:nAdd)
+      {
+        # modify suggested hypotheses
+        hyps = rbind(hyps,c(as.numeric(nU)-i,TRUE,"Good approximation"))
+      }
+      }
+      # print suggested hypotheses
+      addNewLine(doc)
+      addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
+      addTable(doc,hyps, col.justify='C', header.col.justify='C')
+      addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
+      # print minors as dropin recommendation in full
+      print("minor as dropin")
         addNewLine(doc)
         addHeader(doc, "Minor as dropin", TOC.level=1, font.size=fs1)
         addTable(doc, minorsDropin, col.justify='C', header.col.justify='C')
 	addParagraph( doc, paste0("Mean peak height for Q, clustered mean peak heights for unknowns using k-means clustering with ",nU," clusters, and the number of unknowns that may be explainable as dropin (mean Q peak height/mean U peak height > ",dropinThresh,")." ))
+    } else {
+      # if no minors as dropin, print suggested hypotheses
+      addNewLine(doc)
+      addHeader(doc, "Suggested parameter values", TOC.level=1, font.size=fs1)
+      addTable(doc,hyps, col.justify='C', header.col.justify='C')
+      addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
 	}
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
