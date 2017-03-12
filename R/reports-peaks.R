@@ -741,6 +741,7 @@ if(length(admin$detectionThresh)==1)
 	    toPrint = rbind(allelesTmp,heightsTmp)
 	    toPrint = cbind(c("Allele","Height"),toPrint)
 	    colnames(toPrint)[1] = rownames(gen$csp$alleles[[i]])[j]
+	    colnames(toPrint)[-1] = rep(" ",ncol(toPrint)-1)
 	    addTable(doc,  toPrint, col.justify='L', header.col.justify='L')
 	  }
 	}
@@ -764,18 +765,18 @@ if(length(admin$detectionThresh)==1)
 	print("known heights")
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	addHeader(doc, "Peak heights for profiled individuals", TOC.level=1, font.size=fs1)
-	for(i in 1:length(Kheights))
+	for(i in 1:length(gen$Kheights))
 	{
 	  addNewLine(doc)
-	  addText(doc, names(Kheights)[i], bold=TRUE)
+	  addText(doc, names(gen$Kheights)[i], bold=TRUE)
 	  addNewLine(doc)
 	  heightsK = NULL
-	  for(j in 1:length(Kheights[[i]]))
+	  for(j in 1:length(gen$Kheights[[i]]))
 	  {
 	    #addText(doc, names(gen$csp$alleles)[j], bold=TRUE)
 	    #addNewLine(doc)
-	    toAdd = rbind(sapply(Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
-	                  sapply(Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
+	    toAdd = rbind(sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
+	                  sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
 	    rownames(toAdd) = paste0(names(gen$csp$alleles)[j],": ",c("Profile Alleles","Heights"))
 	    #colnames(toAdd) = sapply(colnames(toAdd),FUN=function(x) strsplit(x,split="S")[[1]][1])
 	    heightsK = rbind(heightsK,toAdd)
@@ -792,8 +793,8 @@ if(length(admin$detectionThresh)==1)
 	addTable(doc, gen$repTables$repres, col.justify='C', header.col.justify='C',font.size=fs3)
 	addParagraph( doc, "Approximate representation (observed/total) for each reference profile per replicate and overall.")
 	addNewLine(doc)
-	addTable(doc, gen$repTables$rfu, col.justify='C', header.col.justify='C',font.size=fs3)
-	addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to sharing of alleles with other contributors. These values are for information purposes only, they are not used by the software.")
+	#addTable(doc, gen$repTables$rfu, col.justify='C', header.col.justify='C',font.size=fs3)
+	#addParagraph( doc, "Mean RFU for each reference profile per replicate and overall. This may be an over-estimate of the average DNA contribution of an assumed contributor due to sharing of alleles with other contributors. These values are for information purposes only, they are not used by the software.")
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# unnatributable
 	#print("unnatributable")
@@ -972,7 +973,7 @@ getHeightsUnattrib = function(heights,alleles,unattrib)
 	}
 
 # how many unknowns might be explainable as dropin
-minorAsDropin = function(csp,Qheights,unattributable,nU,ref,dropinThresh=3,minAllelesQ=5)
+minorAsDropin = function(csp,Qheights,unattributable,nU,refs,dropinThresh=3,minAllelesQ=5)
 	{
 	if(nU==0) return(NULL)
 	unattribHeights = sapply(1:length(csp$alleles),FUN=function(x) sapply(rownames(csp$alleles[[x]]),FUN=function(y) getHeightsUnattrib(csp$heights[[x]][y,],csp$alleles[[x]][y,],unattributable[[x]][[y]])),simplify=FALSE)
@@ -1140,6 +1141,18 @@ print("DNAcont Deg")
 print("Dropin")
 	addHeader(doc, "Dropin parameter estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, overall.dropin.table.reformatter(prosecutionResults,defenceResults), col.justify='C', header.col.justify='C')
+	checkPros = abs(prosecutionResults$member$upper["dropin"]-
+	                  prosecutionResults$optim$bestmem["dropin"])<0.1
+	checkDef = abs(defenceResults$member$upper["dropin"]-
+	                 defenceResults$optim$bestmem["dropin"])<0.1
+	if(!is.na(checkPros)&!is.na(checkDef))
+	  {
+	  if(checkPros|checkDef)
+	    {
+	    addNewLine(doc)
+	    addText(doc,"***WARNING***: Dropin parameter estimated close to maximum allowed dropin value. Consider re-running with a higher maximum dropin value.",bold=TRUE)
+	    }
+	}
 	spacer(doc,3)
     # user defined parameters
 print("user defined")

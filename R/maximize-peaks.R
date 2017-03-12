@@ -1,4 +1,4 @@
-upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, maxDropin=100) { 
+upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, maxDropin=250) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -91,7 +91,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, doLinkage=TRUE, objective=NULL, 
 				iterMax=25,likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
-				searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,maxDropin=100,...) {
+				searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,maxDropin=250,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
