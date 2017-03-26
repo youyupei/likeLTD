@@ -7,7 +7,7 @@
                            withPenalties=TRUE, doLinkage=TRUE,objective=NULL, iterMax=25, 
                            likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
 			   searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,
-				maxDropin=100,\dots)}
+				maxDropin=250,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -38,8 +38,6 @@ convergence within each step.}
   \code{get.likely.genotypes.peaks}.}
   \item{diagnose}{Logical. If \code{TRUE} a list of peak heights, estimated mean peak heights
   and standard deviation of peak heights is returned by \code{result$fn}.}
-  \item{\dots}{Any named parameter to modify the hypothesis, e.g.
-  \code{nUnknowns}}
   \item{DEoptimStrategy}{Parameter to control the strategy used by DEoptim. See 
 	\code{DEoptim::DEoptim.control}.}
   \item{searchPopFactor}{The population size used by DEoptim is \code{searchPopFactor} 
@@ -50,7 +48,9 @@ convergence within each step.}
 	\code{DEoptim::DEoptim.control}.}
   \item{maxDropin}{Upper bound for the dropin parameter to be used by \code{evaluate.peaks}.
 	If you wish to explain a minor cnotributor as dropin this value may need to be greater
-	than the default of 100.}
+	than the default of 250.}
+  \item{\dots}{Any named parameter to modify the hypothesis, e.g.
+  \code{nUnknowns}}
 }
 \value{
   \item{fn}{The objective function}
