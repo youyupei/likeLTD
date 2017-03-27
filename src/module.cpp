@@ -41,8 +41,10 @@ extern "C"
   void R_init_likeLTD(DllInfo *info)
   {
     R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+    R_useDynamicSymbols(info,FALSE);
   }
 #ifdef __cplusplus
 }
 #endif
+
 
