@@ -79,12 +79,19 @@ filter.below.thresh.peaks = function(csp,threshold=20)
 
 removeBelow=function(heights,alleles,threshold)
 {
+ locNames = rownames(heights)
+ alleleNames = colnames(alleles)
+ heightNames = colnames(heights)
  subsetInfo = sapply(1:nrow(heights),FUN=function(x) removeOneRow(heights[x,],
                                             alleles[x,],
                                             which(heights[x,]<threshold[x])),simplify=FALSE)
  subsetInfo = do.call(rbind,subsetInfo)
  heights = do.call(rbind,subsetInfo[,1])
  alleles = do.call(rbind,subsetInfo[,2])
+ rownames(heights) = rownames(alleles) = locNames
+ index = 1:ncol(alleles)
+ colnames(heights) = heightNames[index]
+ colnames(alleles) = alleleNames[index]
  return(list(heights=heights,alleles=alleles))
 }
 

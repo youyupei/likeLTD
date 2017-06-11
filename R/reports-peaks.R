@@ -716,7 +716,7 @@ if(length(admin$detectionThresh)==1)
 		addText(doc,paste0("Replicate: ",names(gen$csp$alleles)[y]),bold=TRUE);
 		addNewLine(doc)
 		addPlot( doc, plot.fun = print, width = 5.5, height = 5, res=figRes, x = 
-			CSP.heights.plot(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
+			likeLTD:::CSP.heights.plot(csp=gen$csp,refs=gen$refs,dbFile=admin$databaseFile,
 					kit=admin$kit,detectThresh=admin$detectionThresh,
 					doStutter=TRUE,replicate=y))
 		if(y==length(gen$csp$alleles)) addParagraph( doc, "The peak heights in RFU (y-axis) and mean adjusted allele length in base pairs (x-axis), with peaks at alleles in the profile of Q coloured in red, peaks at alleles of other assumed contributors shown with other colours, while black peaks are not attributable to Q or any other assumed contributor. Allele labels are coloured according to their possible allelic status (this is intended as a guide and is not assumed by the software): green=allelic, orange=uncertain, grey=non-allelic.")
@@ -736,6 +736,7 @@ if(length(admin$detectionThresh)==1)
 	    heightsTmp=gen$csp$heights[[i]][j,index]
 	    colnames(heightsTmp)= colnames(allelesTmp)
 	    toPrint = rbind(allelesTmp,heightsTmp)
+	    if(ncol(toPrint)==0) toPrint=matrix(NA,nrow=2,ncol=0)
 	    toPrint = cbind(c("Allele","Height"),toPrint)
 	    toPrint = as.data.frame(toPrint)
 	    colnames(toPrint)[1] = rownames(gen$csp$alleles[[i]])[j]
@@ -1029,12 +1030,12 @@ if(nU==1)
 allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     {
     # get genetics
-    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh)
+    gen = likeLTD:::pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh)
     # file name
-    names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
+    names <- likeLTD:::filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
     # section common to allele and output report
-    doc <- common.report.section.peaks(names,gen,admin,figRes=figRes)
+    doc <- likeLTD:::common.report.section.peaks(names,gen,admin,figRes=figRes)
     # section specific to the allele report
     print("suggested parameters")
     # get suggested hypotheses
