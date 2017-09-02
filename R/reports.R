@@ -341,7 +341,7 @@ hyp.P <- function(genetics){
 	Q <- paste(genetics$nameQ,'(Q)') 
 	U <- paste(genetics$P.hyp$nUnknowns,'U',sep='')
 	HP <- paste('Prosecution Hypothesis:',paste(c(Q,genetics$nameK,U),collapse=' + ')  )
-	if(genetics$doDropin)
+	if(!is.null(genetics$doDropin)&genetics$doDropin)
 		{
 		HP = paste0(HP," + dropin")
 		}
@@ -352,7 +352,7 @@ hyp.D <- function(genetics){
 	X <- 'Unknown (X)'
 	U <- paste(genetics$D.hyp$nUnknowns-1,'U',sep='')
 	HD <- paste('Defence Hypothesis:',paste(c(X,genetics$nameK,U),collapse=' + ') )
-	if(genetics$doDropin)
+	 if(!is.null(genetics$doDropin)&genetics$doDropin)
 		{
 		HD = paste0(HD," + dropin")
 		}
