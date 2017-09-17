@@ -363,7 +363,7 @@ getLocusCertains = function(alleles,calls)
 getReplicateCertains = function(alleles,calls)
 	{
 	loci = rownames(alleles)
-	return(sapply(loci, FUN=function(y) getLocusCertains(alleles[y,],calls[[y]])))
+	return(sapply(loci, FUN=function(y) getLocusCertains(alleles[y,],calls[[y]]),simplify=FALSE))
 	}
 
 filterCertains = function(csp,ref)
@@ -1030,7 +1030,7 @@ if(nU==1)
 allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     {
     # get genetics
-    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh)
+    gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh,dbFile=admin$databaseFile)
     # file name
     names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
@@ -1108,7 +1108,9 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
                                           csp=list(alleles=prosecutionHypothesis$peaksProfile,
                                                    heights=prosecutionHypothesis$heightsProfile),
                                           refs=prosecutionHypothesis$knownProfs,
-                                          threshold=prosecutionHypothesis$detectionThreshold)
+                                          threshold=prosecutionHypothesis$detectionThreshold,
+                                          dbFile=prosecutionHypothesis$databaseFile,
+                                          kit=prosecutionHypothesis$kit)
     # file name
     print("names")
     names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')

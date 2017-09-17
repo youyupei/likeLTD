@@ -770,22 +770,6 @@ hom <- function(pa, fst=0.02)
 
     }
 
-# homozygous match probability
-homAllele <- function(pa, fst=0.02)
-
-    {
-
-    numerator = ((2*fst)+((1-fst)*pa))*((2*fst)+((1-fst)*pa))
-
-    denominator = (1+fst)*(1+fst)
-
-    return(numerator/denominator)
-
-    }
-
-
-
-
 # heterozygous match probability
 het <- function(pa, pb, fst=0.02)
 
@@ -799,18 +783,6 @@ het <- function(pa, pb, fst=0.02)
 
     }
 
-# heterozygous match probability
-hetAllele <- function(pa, pb, fst=0.02)
-
-    {
-
-    numerator = (fst+((1-fst)*pa))*(fst+((1-fst)*pb))
-
-    denominator = (1+fst)*(1+fst)
-
-    return(2*(numerator/denominator))
-
-    }
 
 #singleFst = function(p,fst)
 #	{
@@ -822,6 +794,7 @@ matchProb = function(hypothesis,rr,fst=0.02,sep=FALSE)
 	ideal.match <- c()
 	for(j in 1:ncol(hypothesis$queriedProfile))
 	    {
+	    print(colnames(hypothesis$queriedProfile)[j])
 		af = hypothesis$alleleDb[j][[1]]
 		kn = hypothesis$queriedProfile[,j][[1]]
 		p1 = af[row.names(af)==kn[1],1]
@@ -831,20 +804,19 @@ matchProb = function(hypothesis,rr,fst=0.02,sep=FALSE)
         p1 = (p1*(1+fst))-fst
         p2 = (p2*(1+fst))-fst
 
-
         if(kn[1]==kn[2])
             {
             # undo last bit of fst adjustment
             p1 = (p1-fst)/(1-fst)
             p2 = (p2-fst)/(1-fst)
             # get match new fst adjusted match prob
-            ideal.match = c(ideal.match,rr[2]+(rr[1]*((2*fst+(1-fst)*p1)/(1+fst)))+((1-sum(rr))*homAllele(p1,fst=fst)))
+            ideal.match = c(ideal.match,rr[2]+(rr[1]*((2*fst+(1-fst)*p1)/(1+fst)))+((1-sum(rr))*hom(p1,fst=fst)))
             } else {
             # undo last bit of fst adjustment
             p1 = p1/(1-fst)
             p2 = p2/(1-fst)
             # get match new fst adjusted match prob
-            ideal.match = c(ideal.match,rr[2]+(rr[1]*((fst+(1-fst)*((p1+p2)/2))/(1+fst)))+((1-sum(rr))*hetAllele(p1,p2,fst=fst)))
+            ideal.match = c(ideal.match,rr[2]+(rr[1]*((fst+(1-fst)*((p1+p2)/2))/(1+fst)))+((1-sum(rr))*het(p1,p2,fst=fst)))
             }
 		}
 	if(sep)
