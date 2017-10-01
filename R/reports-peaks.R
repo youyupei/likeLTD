@@ -731,16 +731,28 @@ if(length(admin$detectionThresh)==1)
 	  for(j in 1:nrow(gen$csp$alleles[[i]]))
 	  {
 	    addNewLine(doc)
-	    index = which(!is.na(gen$csp$alleles[[i]][j,]))
-	    allelesTmp=gen$csp$alleles[[i]][j,index]
-	    heightsTmp=gen$csp$heights[[i]][j,index]
+	    locus = rownames(gen$csp$alleles[[i]])[j]
+	    # get CSP info for this locus
+	    index = which(!is.na(gen$csp$alleles[[i]][locus,]))
+	    allelesTmp=gen$csp$alleles[[i]][locus,index]
+	    heightsTmp=gen$csp$heights[[i]][locus,index]
 	    colnames(heightsTmp)= colnames(allelesTmp)
+	    # combine allele and heights
 	    toPrint = rbind(allelesTmp,heightsTmp)
 	    if(ncol(toPrint)==0) toPrint=matrix(NA,nrow=2,ncol=0)
 	    toPrint = cbind(c("Allele","Height"),toPrint)
 	    toPrint = as.data.frame(toPrint)
-	    colnames(toPrint)[1] = rownames(gen$csp$alleles[[i]])[j]
+	    colnames(toPrint)[1] = locus
 	    colnames(toPrint)[-1] = rep(" ",ncol(toPrint)-1)
+	    # get whether K has each allele
+	    #tmpK = t(sapply(gen$refs[,locus],FUN=function(x) allelesTmp%in%x))
+	    tmpK = t(sapply(gen$refs[,locus],FUN=function(x) sapply(allelesTmp,FUN=function(y) c(NA,"Het","Hom")[sum(x==y)+1])))
+	    if(!identical(dim(tmpK),c(nrow(gen$refs),length(allelesTmp)))) tmpK = t(tmpK) # matrix wrong way round when nK>1 & nAllele=1
+	    tmpK = as.data.frame(cbind(rownames(gen$refs),tmpK))
+	    colnames(tmpK)[1] = locus
+	    colnames(tmpK)[-1] = rep(" ",ncol(tmpK)-1)
+	    # combine
+	    toPrint = rbind(toPrint,tmpK)
 	    addTable(doc,  toPrint, col.justify='L', header.col.justify='L')
 	  }
 	}
@@ -750,7 +762,7 @@ if(length(admin$detectionThresh)==1)
 	  addText(doc,"***WARNING***: Some peaks in the provided CSP were below the specified detection threshold. These have been removed from the CSP displayed here, and will not be used for further calculation. If this is unexpected, please review the provided CSP.",bold=TRUE)
 	}
 	# table of reference profiles
-	print("references")
+	#print("references")
 	#addHeader(doc, "Reference profiles", TOC.level=2, font.size=fs2 )
 	#addText(doc,"All peaks in the provided profiles",bold=TRUE)
 	#addNewLine(doc)
@@ -761,29 +773,29 @@ if(length(admin$detectionThresh)==1)
 	#addParagraph(doc,"{\\chbrdr\\brdrs Unobserved}, {\\i unreplicated} and {\\b replicated} peaks in provided reference profiles and those unattributable to any reference profile.")
 	#addNewLine(doc)
 	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
-	print("known heights")
-	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
-	addHeader(doc, "Peak heights for profiled individuals", TOC.level=1, font.size=fs1)
-	for(i in 1:length(gen$Kheights))
-	{
-	  addNewLine(doc)
-	  addText(doc, names(gen$Kheights)[i], bold=TRUE)
-	  addNewLine(doc)
-	  heightsK = NULL
-	  for(j in 1:length(gen$Kheights[[i]]))
-	  {
+	#print("known heights")
+	#addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
+	#addHeader(doc, "Peak heights for profiled individuals", TOC.level=1, font.size=fs1)
+	#for(i in 1:length(gen$Kheights))
+	#{
+	#  addNewLine(doc)
+	#  addText(doc, names(gen$Kheights)[i], bold=TRUE)
+	#  addNewLine(doc)
+	#  heightsK = NULL
+	#  for(j in 1:length(gen$Kheights[[i]]))
+	#  {
 	    #addText(doc, names(gen$csp$alleles)[j], bold=TRUE)
 	    #addNewLine(doc)
-	    toAdd = rbind(sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
-	                  sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
-	    rownames(toAdd) = paste0(names(gen$csp$alleles)[j],": ",c("Profile Alleles","Heights"))
+	#    toAdd = rbind(sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(names(y),collapse=",")),
+	#                  sapply(gen$Kheights[[i]][[j]],FUN=function(y) paste(y,collapse=",")))
+	#    rownames(toAdd) = paste0(names(gen$csp$alleles)[j],": ",c("Profile Alleles","Heights"))
 	    #colnames(toAdd) = sapply(colnames(toAdd),FUN=function(x) strsplit(x,split="S")[[1]][1])
-	    heightsK = rbind(heightsK,toAdd)
-	  }
-	  heightsK = rbind(colnames(heightsK),heightsK)
-	  rownames(heightsK)[1] = "Locus"
-	  addTable(doc,  t(heightsK), col.justify='L', header.col.justify='L')
-	}
+	#    heightsK = rbind(heightsK,toAdd)
+	#  }
+	#  heightsK = rbind(colnames(heightsK),heightsK)
+	#  rownames(heightsK)[1] = "Locus"
+	#  addTable(doc,  t(heightsK), col.justify='L', header.col.justify='L')
+	#}
 	# summary
 	#print("summary")
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
