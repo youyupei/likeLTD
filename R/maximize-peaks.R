@@ -1,4 +1,4 @@
-upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, maxDropin=250) { 
+upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, maxDropin=250,maxDNAcont=5000) { 
   # Upper bounds of optimisation function.
   # 
   # Parameters:
@@ -8,7 +8,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
   #         an epsilon to simulate the first case.
   degradation = if(logDegradation) { -1 } else { 1-zero }
   degradation = rep(degradation, length(arguments$degradation))
-  DNAcont       = rep(5000, length(arguments$DNAcont))
+  DNAcont       = rep(maxDNAcont, length(arguments$DNAcont))
   scale        = 1000
   gradientS = 0.01
   gradientAdjust     = rep(5,nloc)
@@ -41,7 +41,7 @@ upper.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, 
 }
 
 
-lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) { 
+lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE, minDropin=5) { 
   # Lower bounds of optimisation function.
   # 
   # Parameters:
@@ -66,7 +66,7 @@ lower.bounds.peaks = function(arguments, nloc, zero=1e-6, logDegradation=FALSE) 
   if(!is.null(arguments[["meanO"]])) meanO = 0+zero
   repAdjust   = rep(0.2,length(arguments$repAdjust))
   dropin      = NULL
-  if(!is.null(arguments[["dropin"]])) dropin = 5
+  if(!is.null(arguments[["dropin"]])) dropin = minDropin
   dropinDeg      = NULL
   if(!is.null(arguments[["dropinDeg"]])) dropinDeg = ifelse(logDegradation,-20,0)
 
@@ -91,7 +91,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
                                 arguments=NULL, zero=1e-6, throwError=FALSE,
                                 withPenalties=TRUE, doLinkage=TRUE, objective=NULL, 
 				iterMax=25,likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
-				searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,maxDropin=250,...) {
+				searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,maxDropin=250,minDropin=5,maxDNAcont=NULL,...) {
   # Creates the optimisation parameters for optim.
   #
   # optim is the optimisation function from R's stat package.
@@ -107,7 +107,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    zero: An epsilonic number used to indicate lower and upper bounds which
   #          should be excluded.
   #    throwError: Throw an error if result is infinite
-
+if(is.null(maxDNAcont)) maxDNAcont=max(unlist(hypothesis$csp$heights))
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
@@ -233,8 +233,8 @@ condition1 = mapply(x$gradientAdjust*x$gradientS,hypothesis$alleleDb,
 		# return result
 		-result
 	}
-  lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation)
-  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, maxDropin=maxDropin)
+  lower = lower.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, minDropin=minDropin)
+  upper = upper.bounds.peaks(args, ncol(hypothesis$queriedProfile), zero, logDegradation, maxDropin=maxDropin, maxDNAcont=maxDNAcont)
   lower = lower[names(template)] 
   upper = upper[names(template)] 
    # population size for optimisation
