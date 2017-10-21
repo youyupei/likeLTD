@@ -107,7 +107,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    zero: An epsilonic number used to indicate lower and upper bounds which
   #          should be excluded.
   #    throwError: Throw an error if result is infinite
-if(is.null(maxDNAcont)) maxDNAcont=max(unlist(hypothesis$csp$heights))
+if(is.null(maxDNAcont)) maxDNAcont=max(unlist(hypothesis$heightsProfile))
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
