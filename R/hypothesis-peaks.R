@@ -101,6 +101,7 @@ removeOneRow = function(heightsRow, allelesRow, indexBelow)
   print(paste0("Warning: alleles below detection threshold in locus ",rownames(heightsRow),
                ". Below threshold alleles are being removed. Consider checking input CSP if this is unexpected."))
   indexBelow = (1:length(heightsRow))[-indexBelow]
+  if(length(indexBelow)==0) return(list(rep(NA,length(heightsRow)),rep(NA,length(heightsRow))))
   heightsRow[1:length(indexBelow)] = heightsRow[indexBelow]
   allelesRow[1:length(indexBelow)] = allelesRow[indexBelow]
   heightsRow[(length(indexBelow)+1):length(heightsRow)] = NA

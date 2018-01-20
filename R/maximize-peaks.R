@@ -107,7 +107,11 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    zero: An epsilonic number used to indicate lower and upper bounds which
   #          should be excluded.
   #    throwError: Throw an error if result is infinite
-if(is.null(maxDNAcont)) maxDNAcont=max(unlist(hypothesis$heightsProfile))
+  if(is.null(maxDNAcont))
+	{
+	maxDNAcont=max(unlist(hypothesis$heightsProfile),na.rm=TRUE)
+	if(is.null(maxDNAcont)|is.infinite(maxDNAcont)) maxDNAcont=5000
+	}
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
   sanity.check.peaks(hypothesis) # makes sure hypothesis has right type.
   # If the objective function has not been handed to optimizatio.params,
@@ -363,7 +367,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 		return(list(joint=outJoint,topGenotypes=list(genotype=topGenotypes,probability=topProbability)))
 		}
 	# function to get marginal probabilities and subset to those with prob>prob
-	marginalProbs = function(gens,probs,indiv=1,prob=0.1,top=FALSE)
+	marginalProbs = function(gens,probs,indiv=1,prob=prob,top=FALSE)
 		{
 		marginals = marginal(gens,probs,indiv)
 		if(top==TRUE)	
@@ -372,7 +376,7 @@ get.likely.genotypes.peaks = function(hypothesis,params,results,posterior=FALSE,
 			topProbability = max(marginals$probabilities)		
 			return(list(genotype=topMarginals,probability=topProbability))
 			}
-		subMarginals = subGens(marginals$genotypes,marginals$probabilities,prob)
+		subMarginals = subGens(marginals$genotypes,marginals$probabilities,prob=prob)
 		return(subMarginals)
 		}
 	# number of contributors

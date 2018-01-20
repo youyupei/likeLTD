@@ -1097,7 +1097,19 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
     #rtf.formater(names$filename)	
-    }
+}
+
+# check whether any parameters are close to boundaries
+checkParamNearBoundaries = function(results)
+{
+  vals = result$optim$bestmem
+  lower = result$member$lower
+  upper = result$member$upper
+  range = upper-lower
+  checkLower = vals<(lower+(0.001*range))
+  checkUpper = vals>(upper-(0.001*range))
+  return(checkLower|checkUpper)
+}
 
 
 # function to generate the output report
@@ -1191,7 +1203,12 @@ print("optimised params")
 	addHeader(doc, "Defence parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
-    # runtime
+	  # warning if parameters near boundary
+	nearBound = checkParamNearBoundaries(prosecutionResults)
+	if(any(nearBound)) addText(doc,paste("***WARNING***: The following prosecution parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",names(nearBound)[which(nearBound)],collapse=";",sep=" "),bold=TRUE)
+	nearBound = checkParamNearBoundaries(defenceResults)
+	if(any(nearBound)) addText(doc,paste("***WARNING***: The following defence parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",names(nearBound)[which(nearBound)],collapse=";",sep=" "),bold=TRUE)
+	    # runtime
     if(!is.null(results$runtime))
 	{
 	addHeader(doc, "Runtime", TOC.level=1,font.size=fs1)

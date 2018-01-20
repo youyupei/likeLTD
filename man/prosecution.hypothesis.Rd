@@ -32,8 +32,8 @@
                         below which an allele is classed as rare, and therefore 
                         combined with other rare unobserved alleles.}
   \item{kit}{Parameter specifying which allele database supplied with likeLTD to use if 
-            \code{linkageFile} is not specified. Possibilities are "DNA17", "Identifiler" 
-            and "SGMplus".}
+            \code{linkageFile} is not specified. Possibilities are "DNA17", "Identifiler", 
+            "SGMplus", "NISTidentifiler" and "NISTglobalfiler".}
   \item{...}{Other parameters to determine how to perform calculations.}
 }
 \value{A list of named input parameters, or hypothesis, suitable for the

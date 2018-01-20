@@ -8,7 +8,8 @@
               \pkg{likeLTD}.}
   \item{kit}{Only used if \code{path=NULL}. Specifies one of the allele database
             supplied with \code{likeLTD} to use. Possibilities are "DNA17",
-            "Identifiler" and "SGMplus". Defaults to "DNA17" if both \code{path=NULL}
+            "Identifiler", "SGMplus", "NISTidentifiler" and "NISTglobalfiler".
+		 Defaults to "DNA17" if both \code{path=NULL}
             and \code{kit=NULL}.}
 }
 \value{A table, as read from the file.}
