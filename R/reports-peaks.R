@@ -1064,9 +1064,9 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
 	{
       # if some minors as dropin
       minnU = minorsDropin[,"min U required with dropin"]
-      if(minnU!=nU)
+      if(minnU!=as.numeric(nU))
       {
-      for(i in minnU:(nU-1))
+      for(i in minnU:(as.numeric(nU)-1))
       {
         # modify suggested hypotheses
         hyps = rbind(hyps,c(i,TRUE,"Good approximation"))
