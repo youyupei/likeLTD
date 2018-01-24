@@ -1082,7 +1082,7 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
         addNewLine(doc)
         addHeader(doc, "Minor as dropin", TOC.level=1, font.size=fs1)
         addTable(doc, minorsDropin, col.justify='C', header.col.justify='C')
-	addParagraph( doc, paste0("Mean peak height for Q, clustered mean peak heights for unknowns using k-means clustering with ",nU," clusters, and the number of unknowns that may be explainable as dropin (mean Q peak height/mean U peak height > ",dropinThresh,")." ))
+	addParagraph( doc, paste0("Mean peak height for Q, clustered mean peak heights for unknowns using k-means clustering with ",nU," clusters, and the minimum number of unknowns required to explain the CSP with dropin (mean Q peak height/mean U peak height <= ",dropinThresh,")." ))
     } else {
       # if no minors as dropin, print suggested hypotheses
       addNewLine(doc)
@@ -1102,9 +1102,9 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
 # check whether any parameters are close to boundaries
 checkParamNearBoundaries = function(results)
 {
-  vals = result$optim$bestmem
-  lower = result$member$lower
-  upper = result$member$upper
+  vals = results$optim$bestmem
+  lower = results$member$lower
+  upper = results$member$upper
   range = upper-lower
   checkLower = vals<(lower+(0.001*range))
   checkUpper = vals>(upper-(0.001*range))
@@ -1197,18 +1197,30 @@ print("seed")
     # optimised parameters
 print("optimised params")
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
+	# prosecution params
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, optimised.parameter.table.reformatter(prosecutionHypothesis,prosecutionResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
+          # warning if parameters near boundary
+        nearBound = checkParamNearBoundaries(prosecutionResults)
+        if(any(nearBound))
+                {
+                addText(doc,paste("***WARNING***: The following prosecution parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",paste(names(nearBound)[which(nearBound)],collapse=";"),sep=" "),bold=TRUE)
+                spacer(doc,3)
+                }
+	# defence params
 	addHeader(doc, "Defence parameters", TOC.level=2, font.size=fs2)
 	addTable(doc, optimised.parameter.table.reformatter(defenceHypothesis,defenceResults), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
-	  # warning if parameters near boundary
-	nearBound = checkParamNearBoundaries(prosecutionResults)
-	if(any(nearBound)) addText(doc,paste("***WARNING***: The following prosecution parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",names(nearBound)[which(nearBound)],collapse=";",sep=" "),bold=TRUE)
+	# warning if parameters near boundary
 	nearBound = checkParamNearBoundaries(defenceResults)
-	if(any(nearBound)) addText(doc,paste("***WARNING***: The following defence parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",names(nearBound)[which(nearBound)],collapse=";",sep=" "),bold=TRUE)
-	    # runtime
+        if(any(nearBound))
+                {
+                addText(doc,paste("***WARNING***: The following defence parameters are close to their upper or lower boundary. Consider rerunning with relaxed boundaries.",paste(names(nearBound)[which(nearBound)],collapse=";"),sep=" "),bold=TRUE)
+                spacer(doc,3)
+                }
+	
+# runtime
     if(!is.null(results$runtime))
 	{
 	addHeader(doc, "Runtime", TOC.level=1,font.size=fs1)
