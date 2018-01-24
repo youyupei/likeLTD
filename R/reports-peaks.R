@@ -1031,9 +1031,9 @@ if(nU==1)
 		#cluster = kmeans(unlist(unattribHeights),nU)
 		kMeans = multiKmeans(unattribHeights,nU)
 		}
-	canDropin = sum(Qmean/kMeans>dropinThresh)
-	out = round(c(Qmean,kMeans,canDropin))
-	names(out) = c("Mean RFU Q",paste0("Mean RFU U",1:nU),"# as dropin")
+	neededU = sum(Qmean/kMeans<=dropinThresh)
+	out = round(c(Qmean,kMeans,neededU))
+	names(out) = c("Mean RFU Q",paste0("Mean RFU U",1:nU),"min U required with dropin")
 	out = as.data.frame(t(out))
 	return(out)
 	}
