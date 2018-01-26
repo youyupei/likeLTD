@@ -1066,7 +1066,8 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
       minnU = minorsDropin[,"estimated # U required with dropin"]
       if(minnU!=as.numeric(nU))
       {
-	hyps[,3] = gsub("Recommended","Estimated U without dropin",hyps[,3])
+	toReplace = ifelse(hyps[which(hyps[,3]=="Recommended"),2],"Good approximation","Estimated U without dropin")
+	hyps[,3] = gsub("Recommended",toReplace,hyps[,3])
       for(i in minnU:(as.numeric(nU)-1))
       {
 	toAdd = ifelse(i==minnU,"Estimated U if dropin modelled","Good approximation") 
