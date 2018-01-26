@@ -1033,7 +1033,7 @@ if(nU==1)
 		}
 	neededU = sum(Qmean/kMeans<=dropinThresh)
 	out = round(c(Qmean,kMeans,neededU))
-	names(out) = c("Mean RFU Q",paste0("Mean RFU U",1:nU),"min U required with dropin")
+	names(out) = c("Mean RFU Q",paste0("Mean RFU U",1:nU),"estimated # U required with dropin")
 	out = as.data.frame(t(out))
 	return(out)
 	}
@@ -1063,13 +1063,15 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     if(!is.null(minorsDropin))
 	{
       # if some minors as dropin
-      minnU = minorsDropin[,"min U required with dropin"]
+      minnU = minorsDropin[,"estimated # U required with dropin"]
       if(minnU!=as.numeric(nU))
       {
+	hyps[,3] = gsub("Recommended","Estimated U without dropin",hyps[,3])
       for(i in minnU:(as.numeric(nU)-1))
       {
+	toAdd = ifelse(i==minnU,"Estimated U if dropin modelled","Good approximation") 
         # modify suggested hypotheses
-        hyps = rbind(hyps,c(i,TRUE,"Good approximation"))
+        hyps = rbind(hyps,c(i,TRUE,toAdd))
       }
       }
       # print suggested hypotheses
