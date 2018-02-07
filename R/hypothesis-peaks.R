@@ -9,12 +9,15 @@ subsetData = function(data,search)
 	#colnames(dataout)[1] = "info"
 	# set rownames to marker names
 	rownames(dataout) = data$Marker
-	# remove columns that have no data
-	index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
-	if(length(index!=0)) dataout = dataout[,-index,drop=FALSE]
 	# remove AMEL data
 	index = which(rownames(dataout)%in%c("AMEL","amel","Amel"))
 	if(length(index)!=0) dataout = dataout[-index,,drop=FALSE]
+	# remove columns that have no data
+	if(!all(is.na(dataout)))
+		{
+		index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
+		if(length(index!=0)) dataout = dataout[,-index,drop=FALSE]
+		}	
 	return(dataout)
 	}
 
