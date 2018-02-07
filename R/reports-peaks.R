@@ -428,7 +428,7 @@ plotUnnatributablePeaks = function(replicated)
 hypothesis.generator.peaks = function(unattrib,nReps)
 	{
 	out = matrix(NA,ncol=3,nrow=0)
-	colnames(out) = c("nU","doDropin","Recommendation")
+	colnames(out) = c("nU","doDropin","Guidance")
 	nU = ceiling(max(rowSums(unattrib))/2)
 	dropin = "FALSE"
 	if(nU==3)
@@ -943,8 +943,10 @@ pack.genetics.for.peaks.reports = function(cspFile,refFile,csp=NULL,refs=NULL,db
     if(is.null(csp)) 
       {
       cspPre = read.peaks.profile(cspFile)
+      if(is.null(unlist(cspPre$alleles))) return(NA) # empty CSP
       csp = filter.below.thresh.peaks(cspPre,threshold)
       if(!identical(cspPre,csp)) belowThreshold=TRUE
+      if(all(is.na(unlist(csp$alleles)))) return(NA) # empty CSP
       }
     # get references
     if(is.null(refs)) refs = read.known.profiles(refFile)
@@ -1043,6 +1045,10 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     {
     # get genetics
     gen = pack.genetics.for.peaks.reports(cspFile=admin$peaksFile,refFile=admin$refFile,kit=admin$kit,threshold=admin$detectionThresh,dbFile=admin$databaseFile)
+    if(is.na(gen))
+	{
+	stop("ERROR: No above threshold peaks in CSP. Please check input.")
+	}
     # file name
     names <- filename.maker(admin$outputPath,admin$caseName,file,type='allele')
     names$subtitle <- admin$caseName
@@ -1052,9 +1058,9 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     print("suggested parameters")
     # get suggested hypotheses
     hyps =  hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles))
-    if(any(hyps[,"Recommendation"]=="Recommended"))
+    if(any(hyps[,"Guidance"]=="Recommended"))
     {
-    nU = hyps[which(hyps[,"Recommendation"]=="Recommended"),"nU"]
+    nU = hyps[which(hyps[,"Guidance"]=="Recommended"),"nU"]
     } else {
       nU = min(hyps[,"nU"])
     }
@@ -1066,11 +1072,11 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
       minnU = minorsDropin[,"estimated # U required with dropin"]
       if(minnU!=as.numeric(nU))
       {
-	toReplace = ifelse(hyps[which(hyps[,3]=="Recommended"),2],"Good approximation","Estimated U without dropin")
+	toReplace = ifelse(hyps[which(hyps[,3]=="Recommended"),2],"Inefficient approximation","Estimated U without dropin")
 	hyps[,3] = gsub("Recommended",toReplace,hyps[,3])
       for(i in minnU:(as.numeric(nU)-1))
       {
-	toAdd = ifelse(i==minnU,"Estimated U if dropin modelled","Good approximation") 
+	toAdd = ifelse(i==minnU,"Estimated U if dropin modelled","Inefficient approximation") 
         # modify suggested hypotheses
         hyps = rbind(hyps,c(i,TRUE,toAdd))
       }
