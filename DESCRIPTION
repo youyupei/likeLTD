@@ -8,7 +8,7 @@ Depends: R (>= 2.10), DEoptim, ggplot2, gtools, rtf
 Suggests: svUnit, scales
 Imports: gdata, tools, tcltk
 Version: 6.3.0
-Date: 2017-06-11
+Date: 2018-09-02
 Author: David Balding, Adrian Timpson, Christopher Steele, Mayeul d'Avezac, James Hetherington.
 Maintainer: Christopher Steele <c.steele.11@ucl.ac.uk>
 License: GPL-3

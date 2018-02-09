@@ -15,7 +15,8 @@ created to avoid over writing a previous file.}
 \details{
 Creates a docx containing all results, placed in the directory specified 
 by admin$outputPath.
-Results include both the pre-evaluation assessment of the crime-stain and reference profiles, and the post-evaluation results of the likelihoods 
+Results include both the pre-evaluation assessment of the crime-stain and reference profiles, 
+and the post-evaluation results of the likelihoods 
 and weight of evidence.
 }
 \examples{

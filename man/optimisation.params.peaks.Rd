@@ -7,7 +7,7 @@
                            withPenalties=TRUE, doLinkage=TRUE,objective=NULL, iterMax=25, 
                            likeMatrix=FALSE,diagnose=FALSE,DEoptimStrategy=3,
 			   searchPopFactor=1,DEoptimF=0.8,DEoptimC=NULL,
-				maxDropin=250,\dots)}
+				maxDropin=250, minDropin=5, maxDNAcont=NULL,\dots)}
 \arguments{
   \item{hypothesis}{Hypothesis from which to perform maximization}
   \item{verbose}{Wether to print likelihood each and every time the objective
@@ -49,6 +49,12 @@ convergence within each step.}
   \item{maxDropin}{Upper bound for the dropin parameter to be used by \code{evaluate.peaks}.
 	If you wish to explain a minor cnotributor as dropin this value may need to be greater
 	than the default of 250.}
+  \item{minDropin}{Lower bound of the dropin parameter to be used by \code{evaluate.peaks}, 
+	if dropin modelled.}
+  \item{maxDNAcont}{Maximum DNA contribution for all individuals to be used by 
+	\code{evaluate.peaks}. If \code{NULL}, the maximum peak height in the CSP 
+	will be used, unless there are no peaks, in which case 5000 will be used. 
+	Defaults to \code{NULL}.}
   \item{\dots}{Any named parameter to modify the hypothesis, e.g.
   \code{nUnknowns}}
 }

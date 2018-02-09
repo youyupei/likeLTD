@@ -25,7 +25,9 @@ CR.start=0.1, CR.end=0.7, seed.input=NULL, converge=TRUE, nConverged=4, stepsFun
   \item{converge}{Logical. Whether or not to check for convergence of the last nConverged steps to the global best values.}
   \item{nConverged}{The number of steps with relitive difference to the current results less than \code{tolerance}
 	that determines convergence.}
-\item{stepsFun}{Custom function to determine the number of steps to run after the first. Should have arguments \code{sdStep}, the standard deviation of the first step, \code{nCont}, the number of hypothesised contributors, and \code{nReps}, the number of replicates in the CSP.}
+\item{stepsFun}{Custom function to determine the number of steps to run after the first. Should have arguments \code{sdStep}, 
+the standard deviation of the first step, \code{nCont}, the number of hypothesised contributors, and \code{nReps}, the 
+number of replicates in the CSP.}
 
 }
 \value{
@@ -37,7 +39,9 @@ A list containing seven elements:
 \item{Ld}{-log_{10} defence likelihood at each step usually.}
 \item{seed.used}{Seed that is set at the beginning of computation.}
 \item{seed.input}{Seed that is input by the user.}
-\item{runtime}{List of three objects: elapsed, start, end. \code{runtime$start} and \code{runtime$end} are obtained through \code{Sys.time} at the beginning and end of computation, \code{runtime$elapsed} is obtained by \code{difftime} on \code{runtime$start} and \code{runtime$end}.}
+\item{runtime}{List of three objects: elapsed, start, end. \code{runtime$start} and \code{runtime$end} are obtained through 
+\code{Sys.time} at the beginning and end of computation, \code{runtime$elapsed} is obtained by \code{difftime} on 
+\code{runtime$start} and \code{runtime$end}.}
 } 
 \description{
 Optimize both prosecution and defence likelihoods, returning the weight of evidence for peak height data.
