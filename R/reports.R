@@ -794,7 +794,7 @@ matchProb = function(hypothesis,rr,fst=0.02,sep=FALSE)
 	ideal.match <- c()
 	for(j in 1:ncol(hypothesis$queriedProfile))
 	    {
-	    print(colnames(hypothesis$queriedProfile)[j])
+	    print(paste0("...",colnames(hypothesis$queriedProfile)[j],"..."))
 		af = hypothesis$alleleDb[j][[1]]
 		kn = hypothesis$queriedProfile[,j][[1]]
 		p1 = af[row.names(af)==kn[1],1]

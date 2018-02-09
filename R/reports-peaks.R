@@ -159,13 +159,15 @@ CSP.heights.plot = function(csp,refs,dbFile=NULL,kit=NULL,outputFile=NULL,
 		}
 	# set plotting parameters that are constant across loci
 	dims = rep(ceiling(sqrt(length(loci))),times=2)
-	YLIM = c(0,range(as.numeric(unlist(csp$heights[[replicate]][loci,])),na.rm=TRUE)[2])
+	YLIM = c(0,max(as.numeric(unlist(csp$heights[[replicate]][loci,])),na.rm=TRUE))
 	YLIM = YLIM + c(0,YLIM[2]/10)
+	if(is.na(YLIM[2])|is.infinite(YLIM[2])) YLIM[2] = max(unlist(detectThresh))*2
 	if(!is.null(outputFile)) pdf(outputFile)
 	par(mfrow=dims,mar=c(2,2,2,0.5))
 	# loop over loci
 	for(j in 1:length(loci))
 		{
+		print(paste0("...",loci[j],"..."))
 		# remove NAs
 		index = which(!is.na(csp$alleles[[replicate]][loci[j],]))
 		alleles = as.numeric(unlist(csp$alleles[[replicate]][loci[j],][index]))
@@ -665,7 +667,7 @@ common.report.section.peaks = function(names,gen,admin,warnings=NULL,hypothesisS
 	# Create a new Docx. 
 	doc <- RTF(names$filename, width=11,height=8.5,omi=c(1,1,1,1))
 	# add title
-	print("title")
+	print("Creating title...")
 	addParagraph(doc, line)
 	spacer(doc,3)
 	addHeader( doc, title=substr(names$title,1,nchar(names$title)-1), subtitle=names$subtitle, font.size=fs0 )
@@ -709,7 +711,7 @@ if(length(admin$detectionThresh)==1)
 	addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 	# add hypothesis
 	# plot CSP
-	print("CSP")	
+	print("Plotting CSP...")	
 	addHeader(doc, "Crime scene profiles (CSP)",TOC.level=2,font.size=fs2)
 	sapply(1:length(gen$csp$alleles),FUN=function(y) 
 		{
@@ -723,39 +725,51 @@ if(length(admin$detectionThresh)==1)
 		addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
 		})
 	# CSP heights
+	print("Printing CSP/ref tables...")
 	addHeader(doc,"CSP alleles and peak heights", TOC.level=2, font.size=fs2)
-	for(i in 1:length(gen$csp$alleles))
-	{
-	  addNewLine(doc)
-	  addText(doc,names(gen$csp$alleles)[i],bold=TRUE,font.size=fs2)
-	  for(j in 1:nrow(gen$csp$alleles[[i]]))
-	  {
-	    addNewLine(doc)
-	    locus = rownames(gen$csp$alleles[[i]])[j]
-	    # get CSP info for this locus
-	    index = which(!is.na(gen$csp$alleles[[i]][locus,]))
-	    allelesTmp=gen$csp$alleles[[i]][locus,index]
-	    heightsTmp=gen$csp$heights[[i]][locus,index]
-	    colnames(heightsTmp)= colnames(allelesTmp)
-	    # combine allele and heights
-	    toPrint = rbind(allelesTmp,heightsTmp)
-	    if(ncol(toPrint)==0) toPrint=matrix(NA,nrow=2,ncol=0)
-	    toPrint = cbind(c("Allele","Height"),toPrint)
-	    toPrint = as.data.frame(toPrint)
-	    colnames(toPrint)[1] = locus
-	    colnames(toPrint)[-1] = rep(" ",ncol(toPrint)-1)
+	if(!all(is.na(unlist(gen$csp$alleles))))
+		{
+		for(i in 1:length(gen$csp$alleles))
+		{
+		  addNewLine(doc)
+		  addText(doc,names(gen$csp$alleles)[i],bold=TRUE,font.size=fs2)
+		  for(j in 1:nrow(gen$csp$alleles[[i]]))
+		  {
+		    addNewLine(doc)
+		    locus = rownames(gen$csp$alleles[[i]])[j]
+		    # get CSP info for this locus
+		    index = which(!is.na(gen$csp$alleles[[i]][locus,]))
+		    if(length(index)==0)
+			{
+			addText(doc,paste0("No observed alleles in ",locus),bold=TRUE)
+			next
+			}
+		    allelesTmp=gen$csp$alleles[[i]][locus,index]
+		    heightsTmp=gen$csp$heights[[i]][locus,index]
+		    colnames(heightsTmp)= colnames(allelesTmp)
+		    # combine allele and heights
+		    toPrint = rbind(allelesTmp,heightsTmp)
+		    if(ncol(toPrint)==0) toPrint=matrix(NA,nrow=2,ncol=0)
+		    toPrint = cbind(c("Allele","Height"),toPrint)
+		    toPrint = as.data.frame(toPrint)
+		    colnames(toPrint)[1] = locus
+		    colnames(toPrint)[-1] = rep(" ",ncol(toPrint)-1)
 	    # get whether K has each allele
 	    #tmpK = t(sapply(gen$refs[,locus],FUN=function(x) allelesTmp%in%x))
-	    tmpK = t(sapply(gen$refs[,locus],FUN=function(x) sapply(allelesTmp,FUN=function(y) c(NA,"Het","Hom")[sum(x==y)+1])))
-	    if(!identical(dim(tmpK),c(nrow(gen$refs),length(allelesTmp)))) tmpK = t(tmpK) # matrix wrong way round when nK>1 & nAllele=1
-	    tmpK = as.data.frame(cbind(rownames(gen$refs),tmpK))
-	    colnames(tmpK)[1] = locus
-	    colnames(tmpK)[-1] = rep(" ",ncol(tmpK)-1)
-	    # combine
-	    toPrint = rbind(toPrint,tmpK)
-	    addTable(doc,  toPrint, col.justify='L', header.col.justify='L')
-	  }
-	}
+		    tmpK = t(sapply(gen$refs[,locus],FUN=function(x) sapply(allelesTmp,FUN=function(y) c(NA,"Het","Hom")[sum(x==y)+1])))
+		    if(!identical(dim(tmpK),c(nrow(gen$refs),length(allelesTmp)))) tmpK = t(tmpK) # matrix wrong way round when nK>1 & nAllele=1
+		    tmpK = as.data.frame(cbind(rownames(gen$refs),tmpK))
+		    colnames(tmpK)[1] = locus
+		    colnames(tmpK)[-1] = rep(" ",ncol(tmpK)-1)
+		    # combine
+		    toPrint = rbind(toPrint,tmpK)
+		    addTable(doc,  toPrint, col.justify='L', header.col.justify='L')
+		  }
+		}
+		} else {
+		addNewLine(doc)
+	  addText(doc,"***WARNING***: There are no peaks above the detection threshold in this CSP. Please check input files/parameters if this is unintended.",bold=TRUE)
+		}
 	if(gen$belowThreshold)
 	{
 	  addNewLine(doc)
@@ -800,7 +814,7 @@ if(length(admin$detectionThresh)==1)
 	#print("summary")
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	# representation
-	print("representation")
+	print("Calculating representation...")
 	addTable(doc, gen$repTables$repres, col.justify='C', header.col.justify='C',font.size=fs3)
 	addParagraph( doc, "Approximate representation (observed/total) for each reference profile per replicate and overall.")
 	addNewLine(doc)
@@ -813,7 +827,7 @@ if(length(admin$detectionThresh)==1)
 	#addPlot( doc, plot.fun = print, width = 9, height = 4, res=figRes, x = plotUnnatributablePeaks(gen$unattributable))
 	#addParagraph( doc, "Number of unreplicated (light grey) and replicated (dark grey) unattributable alleles per locus, for the  likely-allelic peaks (green allele labels shown in the CSP plots).")
 	# unusual
-	print("unusual")
+	print("Generating unusual alleles table...")
 	addHeader(doc, "Alleles that are rare in at least one database", TOC.level=1,font.size=fs1)
 	if(nrow(gen$unusuals)>0)
 		{
@@ -1055,7 +1069,7 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
     # section common to allele and output report
     doc <- common.report.section.peaks(names,gen,admin,figRes=figRes)
     # section specific to the allele report
-    print("suggested parameters")
+    print("Generating suggested parameters...")
     # get suggested hypotheses
     hyps =  hypothesis.generator.peaks(gen$unattributable,length(gen$csp$alleles))
     if(any(hyps[,"Guidance"]=="Recommended"))
@@ -1087,7 +1101,7 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
       addTable(doc,hyps, col.justify='C', header.col.justify='C')
       addParagraph( doc, "If an nU value >2 is indicated, an approximate result can be obtained using nU=2 and doDropin=TRUE. Please check the allele designations shown in the CSP plots that were used to generate these hypotheses; if you disagree with the suggested designations the recommendations here may need to be altered.")
       # print minors as dropin recommendation in full
-      print("minor as dropin")
+      print("Calculating minor as dropin...")
         addNewLine(doc)
         addHeader(doc, "Minor as dropin", TOC.level=1, font.size=fs1)
         addTable(doc, minorsDropin, col.justify='C', header.col.justify='C')
@@ -1101,7 +1115,7 @@ allele.report.peaks = function(admin,file=NULL,figRes=300,dropinThresh=3)
 	}
     addPageBreak(doc, width=11,height=8.5,omi=c(1,1,1,1) )
     # system info
-    print("system info")
+    print("Printing system info...")
     addHeader(doc, "System information", TOC.level=1,font.size=fs1)
     addTable(doc,  system.info(), col.justify='L', header.col.justify='L')
     done(doc)
@@ -1127,7 +1141,7 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     prosecutionResults = results$Pros
     defenceResults = results$Def
     # some checks
-    print("warning")
+    print("Checking warnings...")
     warnings = NULL
     WoE = results$WoE[length(results$WoE)]
     maxWoE = log10(matchProb(prosecutionHypothesis,prosecutionHypothesis$relatedness,prosecutionHypothesis$fst))
@@ -1135,7 +1149,7 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
     # overall likelihood
     resTable =  overall.likelihood.table.reformatter(prosecutionResults,defenceResults)
     # get genetics
-    print("genetics")
+    print("Preprocessing genetics...")
     gen = pack.genetics.for.peaks.reports(cspFile=prosecutionHypothesis$peaksFile,
                                           refFile=prosecutionHypothesis$refFile,
                                           csp=list(alleles=prosecutionHypothesis$peaksProfile,
@@ -1145,35 +1159,35 @@ output.report.peaks <- function(prosecutionHypothesis,defenceHypothesis,results,
                                           dbFile=prosecutionHypothesis$databaseFile,
                                           kit=prosecutionHypothesis$kit)
     # file name
-    print("names")
+    print("Generating file names...")
     names <- filename.maker(prosecutionHypothesis$outputPath,prosecutionHypothesis$caseName,file,type='results')
     names$subtitle <- prosecutionHypothesis$caseName
     # hypotheses names
-    print("hyps")
+    print("Generating hypotheses...")
     hypNames = create.hypothesis.string.peaks(prosecutionHypothesis)
     # section common to allele and output report
-    print("doc")
+    print("Running common documentation...")
     doc = common.report.section.peaks(names,gen,list(databaseFile=prosecutionHypothesis$databaseFile,kit=prosecutionHypothesis$kit,detectionThresh=prosecutionHypothesis$detectionThresh),warnings,hypNames,resTable,figRes=figRes)
     # section specific to the output report
     # locus likelihoods
-    print("locus likelihoods")
+    print("Printing locus likelihoods...")
     addHeader(doc, "Likelihoods at each locus", TOC.level=2, font.size=fs2)
 	addTable(doc, local.likelihood.table.reformatter.peaks(prosecutionHypothesis,defenceHypothesis,prosecutionResults,defenceResults) ,col.justify='C', header.col.justify='C',font.size=8)
 	spacer(doc,3)
     # max LR
-print("max likelihood")
+print("Printing max likelihood...")
 	addHeader(doc, "Theoretical maximum LR = Inverse Match Probability (IMP)", TOC.level=2, font.size=fs2)
 	addTable(doc, ideal(defenceHypothesis), col.justify='C', header.col.justify='C')
 	spacer(doc,3)
 	# DNAcont and degradation
-print("DNAcont Deg")
+print("Printing DNAcont & Deg...")
 	DNAcontTables = DNAcontDeg(results,names(prosecutionHypothesis$peaksProfile),prosecutionHypothesis$knownProfs,defenceHypothesis$knownProfs)
     addHeader(doc, "DNA contribution (RFU) and degradation estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, DNAcontTables$pros, col.justify='C', header.col.justify='C')
 	addTable(doc, DNAcontTables$def, col.justify='C', header.col.justify='C')
 	spacer(doc,3)	
 	# dropin
-print("Dropin")
+print("Printing dropin...")
 	addHeader(doc, "Dropin parameter estimates", TOC.level=2, font.size=fs2)
 	addTable(doc, overall.dropin.table.reformatter(prosecutionResults,defenceResults), col.justify='C', header.col.justify='C')
 	checkPros = abs(prosecutionResults$member$upper["dropin"]-
@@ -1190,21 +1204,21 @@ print("Dropin")
 	}
 	spacer(doc,3)
     # user defined parameters
-print("user defined")
+print("Printing user defined parameters...")
 	addHeader(doc, "User defined parameters", TOC.level=1, font.size=fs1)
 	addTable(doc, chosen.parameter.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
     # input files
-print("input files")
+print("Printing input files...")
 	addHeader(doc, "Input files", TOC.level=1, font.size=fs1)
 	addTable(doc, file.inputs.table.reformatter.peaks(prosecutionHypothesis), col.justify='L', header.col.justify='L')
 	spacer(doc,3)
 	# seed used
-print("seed")
+print("Printing seed...")
 	addHeader(doc, "Seed used", TOC.level=1, font.size=fs1)
 	addTable(doc, seedTable(results), col.justify='L', header.col.justify='L')
     # optimised parameters
-print("optimised params")
+print("Printing optimised params...")
 	addHeader(doc, "Optimised parameters", TOC.level=1, font.size=fs1)
 	# prosecution params
 	addHeader(doc, "Prosecution parameters", TOC.level=2, font.size=fs2)
