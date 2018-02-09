@@ -742,6 +742,7 @@ if(length(admin$detectionThresh)==1)
 		    if(length(index)==0)
 			{
 			addText(doc,paste0("No observed alleles in ",locus),bold=TRUE)
+			addNewLine(doc)
 			next
 			}
 		    allelesTmp=gen$csp$alleles[[i]][locus,index]
@@ -812,6 +813,7 @@ if(length(admin$detectionThresh)==1)
 	#}
 	# summary
 	#print("summary")
+	addNewLine(doc)
 	addHeader(doc, "Summary", TOC.level=1,font.size=fs1)
 	# representation
 	print("Calculating representation...")
