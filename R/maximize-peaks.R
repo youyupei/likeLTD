@@ -458,7 +458,10 @@ checkConverged = function(new,old,tol)
     }
 multiConverged = function(L,globalVal,tolerance,nConverged=5)
     {
-    any(sapply(L[(length(L)-nConverged):(length(L)-1)],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
+    index = (length(L)-nConverged):(length(L)-1)
+    index = index[-which(index<1)]
+    if(length(index)<1) return(TRUE)
+    any(sapply(L[index],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
 getSteps = function(sdStep,nCont,nReps)
