@@ -460,7 +460,7 @@ multiConverged = function(L,globalVal,tolerance,nConverged=5)
     {
     index = (length(L)-nConverged):(length(L)-1)
     index = index[-which(index<1)]
-    if(length(index)<1) return(TRUE)
+    if(length(index)<1) return(FALSE)
     any(sapply(L[index],FUN=function(x) !checkConverged(L[length(L)],x,tolerance)))|!checkConverged(L[length(L)],globalVal,tolerance)
     }
 
