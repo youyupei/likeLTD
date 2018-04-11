@@ -109,7 +109,7 @@ optimisation.params.peaks <- function(hypothesis, verbose=TRUE, fixed=NULL,
   #    throwError: Throw an error if result is infinite
   if(is.null(maxDNAcont))
 	{
-	maxDNAcont=max(unlist(hypothesis$heightsProfile),na.rm=TRUE)
+	maxDNAcont=max(as.numeric(unlist(hypothesis$heightsProfile)),na.rm=TRUE)
 	if(is.null(maxDNAcont)|is.infinite(maxDNAcont)) maxDNAcont=5000
 	}
   hypothesis = add.args.to.hypothesis(hypothesis, ...)
