@@ -18,6 +18,7 @@ subsetData = function(data,search)
 		index = which(apply(dataout,MARGIN=2,FUN=function(x) all(is.na(x))))
 		if(length(index!=0)) dataout = dataout[,-index,drop=FALSE]
 		}	
+	dataout = as.data.frame(sapply(dataout,as.numeric),row.names = rownames(dataout))
 	return(dataout)
 	}
 
